@@ -39,7 +39,7 @@ export const TabsNavigator = createBottomTabNavigator({
         SafelyBetaScreen: {
             screen: SafelyBetaScreen,
             linking: {
-                path: 'beta'
+                path: 'updates'
             },
             options: () => ({
                 title: i18next.t('tabs.updates'),

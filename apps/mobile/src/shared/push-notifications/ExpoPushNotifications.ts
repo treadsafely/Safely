@@ -1,3 +1,4 @@
+import { createURL } from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
@@ -28,6 +29,19 @@ export class ExpoPushNotifications implements IPushNotifications {
                 shouldSetBadge: false
             })
         });
+    }
+
+    public static openTappedNotificationUrls(): void {
+        const openUrl = (response: Notifications.NotificationResponse | null) => {
+            const url = response?.notification.request.content.data?.url;
+
+            if (typeof url === 'string' && url.startsWith(createURL('/'))) {
+                void Linking.openURL(url);
+            }
+        };
+
+        openUrl(Notifications.getLastNotificationResponse());
+        Notifications.addNotificationResponseReceivedListener(openUrl);
     }
 
     public async getPermissionStatus(): Promise<PushPermissionStatus> {

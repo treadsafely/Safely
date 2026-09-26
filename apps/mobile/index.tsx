@@ -11,5 +11,6 @@ import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
 
 SplashScreen.preventAutoHideAsync();
 ExpoPushNotifications.configureForegroundPresentation();
+ExpoPushNotifications.openTappedNotificationUrls();
 
 registerRootComponent(App);
