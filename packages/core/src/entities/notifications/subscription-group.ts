@@ -2,7 +2,7 @@ import type { NotificationEventKey } from './notification-settings';
 import type { NotificationSettings } from './notification-settings';
 import type { NotificationEventType, SubscriptionGroup } from '../../api/notifications';
 import { BtcXpub } from '../../blockchain-api';
-import type { Portfolio } from '../portfolio';
+import type { Portfolio, PortfolioMetaIcon } from '../portfolio';
 import { PortfolioNetworkType, PortfolioType } from '../portfolio';
 
 const EVENT_BY_KEY: Readonly<
@@ -41,14 +41,21 @@ export function resolvePortfolioNotificationTargetNames(
         return Object.fromEntries(
             portfolio.derivations.map(derivation => [
                 BtcXpub.toZpub(derivation.chains.btc.xpub),
-                derivation.meta.name
+                formatWalletName(derivation.meta.name, portfolio.meta.icon)
             ])
         );
     }
 
     return Object.fromEntries(
-        resolvePortfolioNotificationTargets(portfolio).map(target => [target, portfolio.meta.name])
+        resolvePortfolioNotificationTargets(portfolio).map(target => [
+            target,
+            formatWalletName(portfolio.meta.name, portfolio.meta.icon)
+        ])
     );
+}
+
+function formatWalletName(name: string, icon: PortfolioMetaIcon): string {
+    return icon.type === 'emoji' ? `${icon.value} ${name}` : name;
 }
 
 export function buildSubscriptionGroup(

@@ -216,11 +216,11 @@ describe('PushSubscriptionSyncer', () => {
         api.replaceGroup.mockResolvedValueOnce({ [ADDRESS]: 'ref-1' });
 
         await syncer.sync(active([readyAccount('a', [portfolio(ADDRESS, 'Reserve')])]));
-        expect(setWalletNames).toHaveBeenLastCalledWith({ 'ref-1': 'Reserve' });
+        expect(setWalletNames).toHaveBeenLastCalledWith({ 'ref-1': '🐶 Reserve' });
 
         await syncer.sync(active([readyAccount('a', [portfolio(ADDRESS, 'Family')])]));
         expect(api.replaceGroup).toHaveBeenCalledTimes(1);
-        expect(setWalletNames).toHaveBeenLastCalledWith({ 'ref-1': 'Family' });
+        expect(setWalletNames).toHaveBeenLastCalledWith({ 'ref-1': '🐶 Family' });
         expect(setWalletNames).toHaveBeenCalledTimes(2);
 
         await syncer.reset();

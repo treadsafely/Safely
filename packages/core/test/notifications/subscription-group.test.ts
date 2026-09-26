@@ -51,7 +51,7 @@ describe('resolvePortfolioNotificationTargets', () => {
 describe('resolvePortfolioNotificationTargetNames', () => {
     it('maps every target of a portfolio to its display name', () => {
         const named = watchOnly({ xpub: XPUB });
-        expect(resolvePortfolioNotificationTargetNames(named)).toEqual({ [ZPUB]: 'w' });
+        expect(resolvePortfolioNotificationTargetNames(named)).toEqual({ [ZPUB]: '🐶 w' });
         expect(Object.keys(resolvePortfolioNotificationTargetNames(named))).toEqual(
             resolvePortfolioNotificationTargets(named)
         );
