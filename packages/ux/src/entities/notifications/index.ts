@@ -15,6 +15,7 @@ export {
 } from './device';
 export {
     PushSubscriptionSyncProvider,
-    usePushSubscriptionReset
+    usePushSubscriptionReset,
+    useAnnounceSyncEvent
 } from './PushSubscriptionSyncProvider';
 export { PushSubscriptionSyncer, type PushSyncInput } from './push-subscription-syncer';

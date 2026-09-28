@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IPushNotifications, NotificationsApi, Portfolio } from '@safely/core';
 import {
+    deriveNotificationSyncId,
     NotificationSettings,
     PortfolioNetworkType,
     PortfolioWatchOnlyBtc,
@@ -44,7 +45,10 @@ function createHarness() {
         deleteGroup: vi.fn<NotificationsApi['deleteGroup']>(async () => undefined),
         deleteDevice: vi.fn<NotificationsApi['deleteDevice']>(async () => undefined),
         replaceGeneral: vi.fn<NotificationsApi['replaceGeneral']>(async () => undefined),
-        deleteGeneral: vi.fn<NotificationsApi['deleteGeneral']>(async () => undefined)
+        deleteGeneral: vi.fn<NotificationsApi['deleteGeneral']>(async () => undefined),
+        replaceSync: vi.fn<NotificationsApi['replaceSync']>(async () => undefined),
+        deleteSync: vi.fn<NotificationsApi['deleteSync']>(async () => undefined),
+        announceSyncEvent: vi.fn<NotificationsApi['announceSyncEvent']>(async () => undefined)
     };
     const getPushToken = vi.fn<IPushNotifications['getPushToken']>(
         async () => 'ExponentPushToken[test]'
@@ -179,6 +183,48 @@ describe('PushSubscriptionSyncer', () => {
         expect(api.deleteDevice).toHaveBeenCalledTimes(1);
         expect(await stored('deviceId')).toBeNull();
         expect(await stored('groupIds')).toBeNull();
+        expect(await stored('syncIds')).toBeNull();
+    });
+
+    it('subscribes every enabled account to sync device events and unsubscribes removed ones', async () => {
+        const { syncer, api, stored } = createHarness();
+        const syncA = deriveNotificationSyncId('a');
+        const syncB = deriveNotificationSyncId('b');
+        const events = ['device-connected', 'device-disconnected'];
+
+        await syncer.sync(active([readyAccount('a'), readyAccount('b', [])]));
+
+        expect(api.replaceSync.mock.calls.map(([, id, sub]) => [id, sub])).toEqual([
+            [syncA, { events }],
+            [syncB, { events }]
+        ]);
+        expect(await stored('syncIds')).toBe(JSON.stringify({ a: syncA, b: syncB }));
+
+        await syncer.sync(active([readyAccount('a'), pendingAccount('b')]));
+        expect(api.replaceSync).toHaveBeenCalledTimes(2);
+        expect(api.deleteSync).not.toHaveBeenCalled();
+
+        await syncer.sync(active([readyAccount('a')]));
+        expect(api.deleteSync).toHaveBeenCalledWith(expect.any(String), syncB);
+        expect(await stored('syncIds')).toBe(JSON.stringify({ a: syncA }));
+    });
+
+    it('announces with the enrolled device id, or null when pushes are off', async () => {
+        const { syncer, api } = createHarness();
+
+        await syncer.announceSyncEvent('a', 'device-connected');
+        const [syncId, first] = api.announceSyncEvent.mock.calls[0]!;
+        expect(syncId).toBe(deriveNotificationSyncId('a'));
+        expect(first.type).toBe('device-connected');
+
+        await syncer.sync(active([readyAccount('a')]));
+        const [deviceId] = api.replaceGroup.mock.calls[0]!;
+        await syncer.announceSyncEvent('a', 'device-disconnected');
+        const [, second] = api.announceSyncEvent.mock.calls[1]!;
+
+        expect(second.sender_device_id).toBe(deviceId);
+        expect(first.sender_device_id).toBeNull();
+        expect(first.event_id).not.toBe(second.event_id);
     });
 
     it('replays the general subscription once per change and registers a device without groups', async () => {

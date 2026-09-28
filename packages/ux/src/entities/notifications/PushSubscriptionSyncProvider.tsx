@@ -1,6 +1,7 @@
 import type { FC, PropsWithChildren } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 
+import type { SyncEventType } from '@safely/core';
 import { NotificationSettings } from '@safely/core';
 
 import {
@@ -103,6 +104,15 @@ export function usePushSubscriptionReset(): () => Promise<void> {
     const syncer = useContext(PushSubscriptionSyncContext);
 
     return useCallback(() => syncer?.reset() ?? Promise.resolve(), [syncer]);
+}
+
+export function useAnnounceSyncEvent(): (accountId: string, type: SyncEventType) => Promise<void> {
+    const syncer = useContext(PushSubscriptionSyncContext);
+
+    return useCallback(
+        (accountId, type) => syncer?.announceSyncEvent(accountId, type) ?? Promise.resolve(),
+        [syncer]
+    );
 }
 
 export const PushSubscriptionSyncProvider: FC<PropsWithChildren> = ({ children }) => {
