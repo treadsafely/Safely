@@ -24,6 +24,20 @@ export const replaceGroupResponseSchema = z.looseObject({
     target_refs: targetRefsSchema
 });
 
+export const syncEventTypeSchema = z.enum(['device-connected', 'device-disconnected']);
+export type SyncEventType = z.infer<typeof syncEventTypeSchema>;
+
+export const syncSubscriptionSchema = z.object({
+    events: z.array(syncEventTypeSchema).min(1).max(2)
+});
+export type SyncSubscription = z.infer<typeof syncSubscriptionSchema>;
+
+export type SyncAnnouncement = {
+    event_id: string;
+    type: SyncEventType;
+    sender_device_id: string;
+};
+
 export const generalSubscriptionSchema = z.object({
     news: z.boolean()
 });

@@ -2,6 +2,7 @@ import type { NotificationEventKey } from './notification-settings';
 import type { NotificationSettings } from './notification-settings';
 import type { NotificationEventType, SubscriptionGroup } from '../../api/notifications';
 import { BtcXpub } from '../../blockchain-api';
+import { sha256PrefixString } from '../../utils';
 import type { Portfolio, PortfolioMetaIcon } from '../portfolio';
 import { PortfolioNetworkType, PortfolioType } from '../portfolio';
 
@@ -15,6 +16,10 @@ const EVENT_BY_KEY: Readonly<
     sentConfirmed: { type: 'sent', confirmations: 1 },
     sentFinalized: { type: 'sent', confirmations: 6 }
 };
+
+export function deriveNotificationSyncId(accountId: string): string {
+    return sha256PrefixString(accountId, 32);
+}
 
 export function resolvePortfolioNotificationTargets(portfolio: Portfolio): string[] {
     if (portfolio.networkType !== PortfolioNetworkType.MAINNET) {

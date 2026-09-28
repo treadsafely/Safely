@@ -4,6 +4,8 @@ import type {
     GeneralSubscription,
     PushDeviceCredentials,
     SubscriptionGroup,
+    SyncAnnouncement,
+    SyncSubscription,
     TargetRefs
 } from './models';
 import { replaceGroupResponseSchema } from './models';
@@ -61,6 +63,25 @@ export class NotificationsApi extends ApiClient implements IIdentifiable {
 
     public deleteGroup(deviceId: string, groupId: string): Promise<void> {
         return this.deleteRequest(`/api/v1/devices/${deviceId}/subscriptions/${groupId}`);
+    }
+
+    public async replaceSync(
+        deviceId: string,
+        syncId: string,
+        subscription: SyncSubscription,
+        credentials: PushDeviceCredentials
+    ): Promise<void> {
+        await this.putJson(`/api/v1/devices/${deviceId}/syncs/${syncId}`, subscription, {
+            headers: this.credentialHeaders(credentials)
+        });
+    }
+
+    public deleteSync(deviceId: string, syncId: string): Promise<void> {
+        return this.deleteRequest(`/api/v1/devices/${deviceId}/syncs/${syncId}`);
+    }
+
+    public announceSyncEvent(syncId: string, announcement: SyncAnnouncement): Promise<void> {
+        return this.postJson(`/api/v1/syncs/${syncId}/announce`, announcement);
     }
 
     public deleteDevice(deviceId: string): Promise<void> {

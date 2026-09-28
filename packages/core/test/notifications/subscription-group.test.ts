@@ -4,6 +4,7 @@ import type { Portfolio } from '../../src';
 import {
     BtcXpub,
     buildSubscriptionGroup,
+    deriveNotificationSyncId,
     NotificationSettings,
     PortfolioNetworkType,
     PortfolioWatchOnlyBtc,
@@ -17,6 +18,7 @@ const XPUB =
 const ZPUB = BtcXpub.toZpub(XPUB);
 const ADDRESS = 'bc1q5v68nzc6rjgcl8ug0slpx77ucm4spnwzkwkqy2';
 const TESTNET_ADDRESS = 'tb1q4tvt7x6veyr96kj3deph5av03czytyw5ssalr6';
+const SYNC_ID = deriveNotificationSyncId('account-1');
 
 function watchOnly(
     id: { xpub: string } | { address: string },
@@ -60,6 +62,14 @@ describe('resolvePortfolioNotificationTargetNames', () => {
                 watchOnly({ address: TESTNET_ADDRESS }, PortfolioNetworkType.TESTNET)
             )
         ).toEqual({});
+    });
+});
+
+describe('deriveNotificationSyncId', () => {
+    it('is a stable one-way hash of the account id', () => {
+        expect(SYNC_ID).toMatch(/^[0-9a-f]{64}$/);
+        expect(deriveNotificationSyncId('account-1')).toBe(SYNC_ID);
+        expect(deriveNotificationSyncId('account-2')).not.toBe(SYNC_ID);
     });
 });
 

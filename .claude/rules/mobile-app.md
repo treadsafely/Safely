@@ -104,6 +104,15 @@ update it when adding a language.
   `project(':expo-notifications')` dependency only resolves because `expo.autolinking.android.buildFromSource`
   in `package.json` lists `expo-notifications` — keep that entry while `safely-push-content` subclasses
   its service.
+- Sync-device events (device linked / device signed out) are pushes from the backend, not local
+  notifications. The syncer keeps a `PUT /devices/{id}/syncs/{sync_id}` per enabled account
+  (`sync_id = sha256(accountId)`, `deriveNotificationSyncId`; `syncIds` stored like `groupIds`),
+  independent of wallet groups. The acting device announces through `useAnnounceSyncEvent` —
+  the joining device in `SignInScreen`, the archiving device in `DeviceSupportWizardModal`, the
+  leaving device in `useSignOutAccountConfirmation`; observers never announce, so nothing to
+  dedupe. The announce carries only ids (no device name: the backend text is fixed) and is
+  best-effort (one attempt, logged); with pushes off it sends a throwaway `sender_device_id`,
+  since an unenrolled sender has nothing to be excluded from.
 - Android push tokens need Firebase: `android.googleServicesFile` points at the committed
   `apps/mobile/google-services.json` (client config of the Firebase project `safely-wallet`, no
   secrets — the FCM service account for sending lives in EAS credentials). Without it

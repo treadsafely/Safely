@@ -7,6 +7,7 @@ export {
 } from './notification-settings';
 export {
     buildSubscriptionGroup,
+    deriveNotificationSyncId,
     resolvePortfolioNotificationTargetNames,
     resolvePortfolioNotificationTargets
 } from './subscription-group';
