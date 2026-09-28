@@ -6,7 +6,7 @@ import { View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
 import type { OnboardedAccount, OnboardingConnector } from '@safely/ux';
-import { useAccountConnectedCallback, useAnnounceSyncEvent, useToast } from '@safely/ux';
+import { useAccountConnectedCallback, useToast } from '@safely/ux';
 
 import { DeviceLink, Screen, Text, TouchableOpacity } from '@mobile/shared/ui';
 import { Icon } from '@mobile/shared/ui/Icon';
@@ -27,7 +27,6 @@ export const SignInScreen = (props: SignInScreenProps) => {
     const copy = useCopy();
     const toast = useToast();
     const navigation = useNavigation();
-    const announceSyncEvent = useAnnounceSyncEvent();
 
     const connectedRef = useRef(false);
 
@@ -48,10 +47,9 @@ export const SignInScreen = (props: SignInScreenProps) => {
     const handleConnected = useCallback(
         (onboarded: OnboardedAccount) => {
             connectedRef.current = true;
-            void announceSyncEvent(onboarded.account.accountId, 'device-connected');
             onSuccess(onboarded.inviterIkPubHex);
         },
-        [onSuccess, announceSyncEvent]
+        [onSuccess]
     );
 
     const handleError = useCallback(() => {

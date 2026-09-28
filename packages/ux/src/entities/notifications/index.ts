@@ -13,9 +13,5 @@ export {
     useNewsNotificationsEnabledQuery,
     useSetNewsNotificationsEnabled
 } from './device';
-export {
-    PushSubscriptionSyncProvider,
-    usePushSubscriptionReset,
-    useAnnounceSyncEvent
-} from './PushSubscriptionSyncProvider';
+export { PushSubscriptionSyncProvider } from './PushSubscriptionSyncProvider';
 export { PushSubscriptionSyncer, type PushSyncInput } from './push-subscription-syncer';

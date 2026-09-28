@@ -2,13 +2,12 @@ import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useEraseAllData, usePushSubscriptionReset } from '@safely/ux';
+import { useEraseAllData } from '@safely/ux';
 
 export function useLogOutAllConfirmation() {
     const { t } = useTranslation();
     const navigation = useNavigation();
     const { mutateAsync: eraseAllData } = useEraseAllData();
-    const resetPushSubscription = usePushSubscriptionReset();
 
     return useCallback(() => {
         navigation.navigate('DestructiveConfirmSheet', {
@@ -18,9 +17,8 @@ export function useLogOutAllConfirmation() {
             sliderDescription: t('logOutAllAccounts.slider.description'),
             cancelLabel: t('logOutAllAccounts.cancel'),
             onConfirm: async () => {
-                await resetPushSubscription();
                 await eraseAllData();
             }
         });
-    }, [eraseAllData, resetPushSubscription, navigation, t]);
+    }, [eraseAllData, navigation, t]);
 }

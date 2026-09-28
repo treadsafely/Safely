@@ -22,4 +22,4 @@ export const allActualised = (queries: readonly DerivedQueryResult[]) =>
     queries.every(q => q.isActualised !== false);
 
 export const useRefetchAll = (queries: readonly DerivedQueryResult[]) =>
-    useCallback(() => Promise.all(queries.map(q => q.refetch())), [queries]);
+    useCallback(() => Promise.all(queries.map(q => q.refetch())), [...queries]);

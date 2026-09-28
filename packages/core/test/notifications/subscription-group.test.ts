@@ -67,8 +67,7 @@ describe('resolvePortfolioNotificationTargetNames', () => {
 
 describe('deriveNotificationSyncId', () => {
     it('is a stable one-way hash of the account id', () => {
-        expect(SYNC_ID).toMatch(/^[0-9a-f]{64}$/);
-        expect(deriveNotificationSyncId('account-1')).toBe(SYNC_ID);
+        expect(SYNC_ID).toBe('07e998012c1137decdf3efbbb1c3ee6d79b015638cbc197bdbcce1875de4faad');
         expect(deriveNotificationSyncId('account-2')).not.toBe(SYNC_ID);
     });
 });

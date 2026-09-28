@@ -23,6 +23,7 @@ import type { Logger } from '@safely/sync';
 
 import type { PushSubscriptionStorageStructure } from './storage';
 import { pushSubscriptionStorageStructure } from './storage';
+import type { IPushSubscriptionSyncer } from '../../shared';
 
 const RETRY_DELAY_MS = 30_000;
 
@@ -62,9 +63,7 @@ const GENERAL_KEY = 'general';
 
 const SYNC_SUBSCRIPTION: SyncSubscription = { events: ['device-connected', 'device-disconnected'] };
 
-const syncKey = (accountId: string) => `sync:${accountId}`;
-
-export class PushSubscriptionSyncer {
+export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
     private readonly storage: ITreeStorage;
 
     private readonly lastSent = new Map<string, string>();
@@ -99,8 +98,8 @@ export class PushSubscriptionSyncer {
         this.cancelRetry();
     }
 
-    public announceSyncEvent(accountId: string, type: SyncEventType): Promise<void> {
-        return this.attempt('announce', async () => {
+    public async announceSyncEvent(accountId: string, type: SyncEventType): Promise<void> {
+        await this.attempt('announce', async () => {
             const deviceId = await this.read('deviceId');
             this.deps.logger.info('push_subscription.announce', { type });
             await this.deps.api.announceSyncEvent(deriveNotificationSyncId(accountId), {
@@ -108,7 +107,7 @@ export class PushSubscriptionSyncer {
                 type,
                 ...(deviceId && { sender_device_id: deviceId })
             });
-        }).then(() => undefined);
+        });
     }
 
     private async drain(): Promise<void> {
@@ -190,7 +189,10 @@ export class PushSubscriptionSyncer {
 
         const syncSignature = JSON.stringify({ credentials, sync: SYNC_SUBSCRIPTION });
         for (const [accountId, isWanted] of desiredSyncs) {
-            if (isWanted !== true || this.lastSent.get(syncKey(accountId)) === syncSignature) {
+            if (
+                isWanted !== true ||
+                this.lastSent.get(this.getSyncKey(accountId)) === syncSignature
+            ) {
                 continue;
             }
             failures += await this.attempt('replace_sync', () =>
@@ -287,7 +289,7 @@ export class PushSubscriptionSyncer {
 
         this.deps.logger.info('push_subscription.replace_sync', { accountId });
         await this.deps.api.replaceSync(deviceId, syncId, SYNC_SUBSCRIPTION, credentials);
-        this.lastSent.set(syncKey(accountId), signature);
+        this.lastSent.set(this.getSyncKey(accountId), signature);
     }
 
     private async deleteSync(deviceId: string, accountId: string): Promise<void> {
@@ -298,7 +300,7 @@ export class PushSubscriptionSyncer {
         this.deps.logger.info('push_subscription.delete_sync', { accountId });
         await this.deps.api.deleteSync(deviceId, syncId);
         await this.write('syncIds', rest);
-        this.lastSent.delete(syncKey(accountId));
+        this.lastSent.delete(this.getSyncKey(accountId));
     }
 
     private async deleteGroup(deviceId: string, accountId: string): Promise<void> {
@@ -364,7 +366,13 @@ export class PushSubscriptionSyncer {
         return deviceId;
     }
 
-    private async readIds(key: 'groupIds' | 'syncIds'): Promise<Record<string, string> | null> {
+    private getSyncKey(accountId: string): string {
+        return `sync:${accountId}`;
+    }
+
+    private async readIds(
+        key: Extract<StorageKey, 'groupIds' | 'syncIds'>
+    ): Promise<Record<string, string> | null> {
         try {
             return (await this.read(key)) ?? {};
         } catch (e) {

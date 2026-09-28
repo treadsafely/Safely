@@ -31,17 +31,20 @@ export class ExpoPushNotifications implements IPushNotifications {
         });
     }
 
-    public static openTappedNotificationUrls(): void {
-        const openUrl = (response: Notifications.NotificationResponse | null) => {
-            const url = response?.notification.request.content.data?.url;
+    public static subscribeToTappedUrls(onUrl: (url: string) => void): () => void {
+        let handledId: string | null = null;
+        const handle = (response: Notifications.NotificationResponse | null) => {
+            if (!response || response.notification.request.identifier === handledId) return;
+            handledId = response.notification.request.identifier;
 
-            if (typeof url === 'string' && url.startsWith(createURL('/'))) {
-                void Linking.openURL(url);
-            }
+            const url = response.notification.request.content.data?.url;
+            if (typeof url === 'string' && url.startsWith(createURL('/'))) onUrl(url);
         };
 
-        openUrl(Notifications.getLastNotificationResponse());
-        Notifications.addNotificationResponseReceivedListener(openUrl);
+        handle(Notifications.getLastNotificationResponse());
+        const subscription = Notifications.addNotificationResponseReceivedListener(handle);
+
+        return () => subscription.remove();
     }
 
     public async getPermissionStatus(): Promise<PushPermissionStatus> {

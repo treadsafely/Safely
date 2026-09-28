@@ -10,7 +10,7 @@ import {
     useArchiveDevice,
     useBootConfig,
     useLinking,
-    useAnnounceSyncEvent,
+    usePushSubscriptionSyncer,
     useSecurityCheck,
     useSyncedDeviceDetails,
     useToast
@@ -44,7 +44,7 @@ const WizardContent = ({ details }: { details: SyncedDeviceDetails }) => {
     const check = useSecurityCheck();
     const navigation = useNavigation();
     const { accountId } = useActiveAccount();
-    const announceSyncEvent = useAnnounceSyncEvent();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const { mutateAsync: archiveDevice } = useArchiveDevice();
 
     const [deviceAccess, setDeviceAccess] = useState<DeviceAccessAnswer | null>(null);
@@ -72,7 +72,7 @@ const WizardContent = ({ details }: { details: SyncedDeviceDetails }) => {
     const handleArchive = async () => {
         await check({ subtitle: t('deviceSupportWizard.archive.verify', { deviceName }) });
         await archiveDevice(details.ikPubHex);
-        void announceSyncEvent(accountId, 'device-disconnected');
+        void pushSubscriptionSyncer?.announceSyncEvent(accountId, 'device-disconnected');
 
         navigation.goBack();
         toast(t('deviceSupportWizard.archive.done', { deviceName }));

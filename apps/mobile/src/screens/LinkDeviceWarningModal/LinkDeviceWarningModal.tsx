@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import {
+    useActiveAccount,
     useActiveAccountMeta,
     useAppContext,
     useConnectAccountToNewDevice,
     useContacts,
-    usePortfolios
+    usePortfolios,
+    usePushSubscriptionSyncer
 } from '@safely/ux';
 
 import { PortfolioName } from '@mobile/entities/portfolio';
@@ -35,6 +37,8 @@ export const LinkDeviceWarningModal = () => {
         }
     } = useAppContext();
     const { mutateAsync: connectToNewDevice } = useConnectAccountToNewDevice();
+    const { accountId } = useActiveAccount();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
 
     const accountName = useActiveAccountMeta().name;
     const portfolios = usePortfolios();
@@ -45,6 +49,7 @@ export const LinkDeviceWarningModal = () => {
         await secureEncryptedStorage.unlock();
 
         const ikPubHex = await connectToNewDevice({ secureEncryptedStorage });
+        void pushSubscriptionSyncer?.announceSyncEvent(accountId, 'device-connected');
         navigation.dispatch(StackActions.replace('DeviceLinkedModal', { ikPubHex }));
     };
 

@@ -48,6 +48,7 @@ import {
     SecretEncryptor,
     useAppContext,
     useLogger,
+    usePushSubscriptionSyncer,
     useSharedUxStorage,
     useTranslate
 } from '../../shared';
@@ -561,12 +562,14 @@ export function useEraseAllData() {
     } = useAppContext();
     const toast = useToast();
     const accounts = useAccounts();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation({
         async mutationFn() {
             scopedLogger.info('erasing all data');
 
+            await pushSubscriptionSyncer?.reset();
             await archiveOwnDevices(accounts, scopedLogger);
 
             try {

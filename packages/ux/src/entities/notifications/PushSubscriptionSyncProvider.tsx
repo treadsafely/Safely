@@ -1,7 +1,6 @@
 import type { FC, PropsWithChildren } from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import type { SyncEventType } from '@safely/core';
 import { NotificationSettings } from '@safely/core';
 
 import {
@@ -11,14 +10,17 @@ import {
 } from './device';
 import type { AccountSubscriptionState } from './push-subscription-syncer';
 import { PushSubscriptionSyncer } from './push-subscription-syncer';
-import { useAppContext, useAppState, useNotificationsApi } from '../../shared';
+import {
+    PushSubscriptionSyncContextProvider,
+    useAppContext,
+    useAppState,
+    useNotificationsApi
+} from '../../shared';
 import { useAccounts } from '../account/account-state';
 import type { AccountStoreData } from '../account/sync-storage/account-store';
 import { accountStore } from '../account/sync-storage/account-store';
 
 const SYNC_DEBOUNCE_MS = 1000;
-
-const PushSubscriptionSyncContext = createContext<PushSubscriptionSyncer | null>(null);
 
 function toSubscriptionState(data: AccountStoreData | undefined): AccountSubscriptionState {
     if (!data) return { kind: 'pending' };
@@ -30,7 +32,7 @@ function toSubscriptionState(data: AccountStoreData | undefined): AccountSubscri
     };
 }
 
-function usePushSubscriptionSyncer(): PushSubscriptionSyncer | null {
+function useCreatePushSubscriptionSyncer(): PushSubscriptionSyncer | null {
     const api = useNotificationsApi();
     const { pushNotifications, build, version, storage, logger } = useAppContext();
 
@@ -100,24 +102,13 @@ function usePushSubscriptionTriggers(syncer: PushSubscriptionSyncer | null): voi
     }, [syncer, accounts, permission, isPushEnabled, isNewsEnabled, language, current]);
 }
 
-export function usePushSubscriptionReset(): () => Promise<void> {
-    const syncer = useContext(PushSubscriptionSyncContext);
-
-    return useCallback(() => syncer?.reset() ?? Promise.resolve(), [syncer]);
-}
-
-export function useAnnounceSyncEvent(): (accountId: string, type: SyncEventType) => Promise<void> {
-    const syncer = useContext(PushSubscriptionSyncContext);
-
-    return useCallback(
-        (accountId, type) => syncer?.announceSyncEvent(accountId, type) ?? Promise.resolve(),
-        [syncer]
-    );
-}
-
 export const PushSubscriptionSyncProvider: FC<PropsWithChildren> = ({ children }) => {
-    const syncer = usePushSubscriptionSyncer();
+    const syncer = useCreatePushSubscriptionSyncer();
     usePushSubscriptionTriggers(syncer);
 
-    return <PushSubscriptionSyncContext value={syncer}>{children}</PushSubscriptionSyncContext>;
+    return (
+        <PushSubscriptionSyncContextProvider value={syncer}>
+            {children}
+        </PushSubscriptionSyncContextProvider>
+    );
 };

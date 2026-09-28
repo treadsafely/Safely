@@ -34,6 +34,17 @@ function readyAccount(accountId: string, portfolios: Portfolio[] = [portfolio()]
     };
 }
 
+function disabledAccount(accountId: string) {
+    return {
+        accountId,
+        state: {
+            kind: 'ready' as const,
+            portfolios: [],
+            settings: NotificationSettings.fromStored({ enabled: false })
+        }
+    };
+}
+
 function pendingAccount(accountId: string) {
     return { accountId, state: { kind: 'pending' as const } };
 }
@@ -207,6 +218,17 @@ describe('PushSubscriptionSyncer', () => {
         await syncer.sync(active([readyAccount('a')]));
         expect(api.deleteSync).toHaveBeenCalledWith(expect.any(String), syncB);
         expect(await stored('syncIds')).toBe(JSON.stringify({ a: syncA }));
+
+        await syncer.sync(active([disabledAccount('a')]));
+        expect(api.deleteSync).toHaveBeenLastCalledWith(expect.any(String), syncA);
+        expect(await stored('syncIds')).toBe(JSON.stringify({}));
+    });
+
+    it('announce never rejects', async () => {
+        const { syncer, api } = createHarness();
+        api.announceSyncEvent.mockRejectedValueOnce(new Error('429'));
+
+        await expect(syncer.announceSyncEvent('a', 'device-connected')).resolves.toBeUndefined();
     });
 
     it('announces with the enrolled device id, or without one when pushes are off', async () => {
