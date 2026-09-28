@@ -35,7 +35,7 @@ jobs:
       number: ${{ steps.number.outputs.number }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The counter is the repository variable `DESKTOP_BUILD_NUMBER_MACOS` — GitHub's own storage,
       # so no commit, tag or cache holds build state. Unset reads as an empty string, which starts
@@ -64,12 +64,12 @@ jobs:
           echo "artifact=safely-desktop-qa-b$number-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.nvmrc'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           run_install: false
 
@@ -144,7 +144,7 @@ jobs:
         run: apps/desktop/signing/verify-signature.sh apps/desktop/out/Safely-darwin-arm64/Safely.app
 
       - name: Upload build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.number.outputs.artifact }}
           path: apps/desktop/out/make/zip/darwin/arm64/*.zip
