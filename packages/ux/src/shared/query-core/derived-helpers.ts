@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import type { DerivedQueryResult } from './types';
 
@@ -23,9 +23,3 @@ export const allActualised = (queries: readonly DerivedQueryResult[]) =>
 
 export const useRefetchAll = (queries: readonly DerivedQueryResult[]) =>
     useCallback(() => Promise.all(queries.map(q => q.refetch())), [queries]);
-
-export const usePromises = <TResult>(queries: readonly DerivedQueryResult<TResult>[]) =>
-    useMemo(
-        () => queries.map(q => q.promise ?? q.refetch().then(() => q.data as TResult)),
-        [queries]
-    );

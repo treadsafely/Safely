@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { allActualised, minUpdatedAt, usePromises, useRefetchAll } from '../derived-helpers';
+import { allActualised, minUpdatedAt, useRefetchAll } from '../derived-helpers';
 import type { DerivedQueryResult } from '../types';
 
 type SettledStatus = 'pending' | 'fulfilled' | 'rejected';
@@ -60,26 +60,6 @@ export function useDerivedSettledQuery<const Qs extends readonly DerivedQueryRes
     }, [isPending, snapshots, isQueryFnReactive ? queryFn : null]);
 
     const refetch = useRefetchAll(queries) as () => Promise<unknown[]>;
-    const promises = usePromises(queries);
-
-    const promise = useMemo(async () => {
-        const results = await Promise.allSettled(promises);
-        const resultSnapshots = results.map<QuerySnapshot<unknown>>((res, idx) => {
-            if (res.status === 'fulfilled') {
-                return {
-                    status: 'fulfilled',
-                    data: res.value
-                };
-            }
-
-            return {
-                status: 'rejected',
-                error: res.reason ?? queries[idx].error ?? null
-            };
-        }) as SnapshotTuple<Qs>;
-
-        return queryFn(resultSnapshots);
-    }, [isQueryFnReactive ? queryFn : null, ...promises]);
 
     return useMemo(
         () => ({
@@ -92,7 +72,6 @@ export function useDerivedSettledQuery<const Qs extends readonly DerivedQueryRes
             dataUpdatedAt,
             isActualised,
             refetch,
-            promise,
             settledStatuses
         }),
         [
@@ -104,7 +83,6 @@ export function useDerivedSettledQuery<const Qs extends readonly DerivedQueryRes
             dataUpdatedAt,
             isActualised,
             refetch,
-            promise,
             settledStatuses
         ]
     );
