@@ -31,11 +31,14 @@ export class ExpoPushNotifications implements IPushNotifications {
         });
     }
 
+    private static handledTapId: string | null = null;
+
     public static subscribeToTappedUrls(onUrl: (url: string) => void): () => void {
-        let handledId: string | null = null;
         const handle = (response: Notifications.NotificationResponse | null) => {
-            if (!response || response.notification.request.identifier === handledId) return;
-            handledId = response.notification.request.identifier;
+            if (!response || response.notification.request.identifier === this.handledTapId) {
+                return;
+            }
+            this.handledTapId = response.notification.request.identifier;
 
             const url = response.notification.request.content.data?.url;
             if (typeof url === 'string' && url.startsWith(createURL('/'))) onUrl(url);

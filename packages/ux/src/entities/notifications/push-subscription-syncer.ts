@@ -51,6 +51,7 @@ type StorageKey = keyof PushSubscriptionStorageStructure;
 type StoredValue<K extends StorageKey> = z.output<PushSubscriptionStorageStructure[K]>;
 
 type DesiredGroup = SubscriptionGroup | 'pending' | null;
+type DesiredSync = 'wanted' | 'unwanted' | 'pending';
 
 const RESET_INPUT: PushSyncInput = {
     isPushActive: false,
@@ -62,6 +63,26 @@ const RESET_INPUT: PushSyncInput = {
 const GENERAL_KEY = 'general';
 
 const SYNC_SUBSCRIPTION: SyncSubscription = { events: ['device-connected', 'device-disconnected'] };
+
+function toDesiredGroups(input: PushSyncInput): Map<string, DesiredGroup> {
+    return new Map(
+        input.accounts.map(({ accountId, state }) => [
+            accountId,
+            state.kind === 'pending'
+                ? 'pending'
+                : buildSubscriptionGroup(state.settings, state.portfolios)
+        ])
+    );
+}
+
+function toDesiredSyncs(input: PushSyncInput): Map<string, DesiredSync> {
+    return new Map(
+        input.accounts.map(({ accountId, state }) => [
+            accountId,
+            state.kind === 'pending' ? 'pending' : state.settings.enabled ? 'wanted' : 'unwanted'
+        ])
+    );
+}
 
 export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
     private readonly storage: ITreeStorage;
@@ -139,30 +160,43 @@ export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
         const pushToken = await this.resolvePushToken();
         if (pushToken === null) return 1;
 
-        const credentials: PushDeviceCredentials = {
+        const credentials = this.buildCredentials(input, pushToken);
+        const desiredGroups = toDesiredGroups(input);
+
+        let failures = 0;
+        failures += await this.reconcileGroups(deviceId, groupIds, desiredGroups, credentials);
+        failures += await this.reconcileSyncs(
+            deviceId,
+            syncIds,
+            toDesiredSyncs(input),
+            credentials
+        );
+        failures += await this.reconcileGeneral(deviceId, input.isNewsEnabled, credentials);
+        failures += await this.attempt('wallet_names', () =>
+            this.publishWalletNames(input, desiredGroups)
+        );
+
+        return failures;
+    }
+
+    private buildCredentials(input: PushSyncInput, pushToken: string): PushDeviceCredentials {
+        return {
             pushToken,
             platform: this.deps.platform,
             lang: input.lang,
             appVersion: this.deps.appVersion
         };
-        const desired = new Map<string, DesiredGroup>(
-            input.accounts.map(({ accountId, state }) => [
-                accountId,
-                state.kind === 'pending'
-                    ? 'pending'
-                    : buildSubscriptionGroup(state.settings, state.portfolios)
-            ])
-        );
-        const desiredSyncs = new Map<string, boolean | 'pending'>(
-            input.accounts.map(({ accountId, state }) => [
-                accountId,
-                state.kind === 'pending' ? 'pending' : state.settings.enabled
-            ])
-        );
+    }
 
+    private async reconcileGroups(
+        deviceId: string,
+        storedIds: Record<string, string>,
+        desired: Map<string, DesiredGroup>,
+        credentials: PushDeviceCredentials
+    ): Promise<number> {
         let failures = 0;
 
-        for (const accountId of Object.keys(groupIds)) {
+        for (const accountId of Object.keys(storedIds)) {
             if (desired.get(accountId)) continue;
             failures += await this.attempt('delete_group', () =>
                 this.deleteGroup(deviceId, accountId)
@@ -180,44 +214,69 @@ export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
             );
         }
 
-        for (const accountId of Object.keys(syncIds)) {
-            if (desiredSyncs.get(accountId)) continue;
+        return failures;
+    }
+
+    private async reconcileSyncs(
+        deviceId: string,
+        storedIds: Record<string, string>,
+        desired: Map<string, DesiredSync>,
+        credentials: PushDeviceCredentials
+    ): Promise<number> {
+        let failures = 0;
+
+        for (const accountId of Object.keys(storedIds)) {
+            const state = desired.get(accountId) ?? 'unwanted';
+            if (state !== 'unwanted') continue;
             failures += await this.attempt('delete_sync', () =>
                 this.deleteSync(deviceId, accountId)
             );
         }
 
-        const syncSignature = JSON.stringify({ credentials, sync: SYNC_SUBSCRIPTION });
-        for (const [accountId, isWanted] of desiredSyncs) {
-            if (
-                isWanted !== true ||
-                this.lastSent.get(this.getSyncKey(accountId)) === syncSignature
-            ) {
+        const signature = JSON.stringify({ credentials, sync: SYNC_SUBSCRIPTION });
+        for (const [accountId, state] of desired) {
+            if (state !== 'wanted' || this.lastSent.get(this.getSyncKey(accountId)) === signature) {
                 continue;
             }
             failures += await this.attempt('replace_sync', () =>
-                this.replaceSync(deviceId, accountId, credentials, syncSignature)
+                this.replaceSync(deviceId, accountId, credentials, signature)
             );
         }
-
-        const generalSignature = JSON.stringify({ credentials, news: input.isNewsEnabled });
-        if (this.lastSent.get(GENERAL_KEY) !== generalSignature) {
-            failures += await this.attempt('replace_general', () =>
-                this.replaceGeneral(deviceId, input.isNewsEnabled, credentials, generalSignature)
-            );
-        }
-
-        failures += await this.attempt('wallet_names', () =>
-            this.publishWalletNames(input, desired)
-        );
 
         return failures;
+    }
+
+    private reconcileGeneral(
+        deviceId: string,
+        isNewsEnabled: boolean,
+        credentials: PushDeviceCredentials
+    ): Promise<number> {
+        const signature = JSON.stringify({ credentials, news: isNewsEnabled });
+        if (this.lastSent.get(GENERAL_KEY) === signature) return Promise.resolve(0);
+
+        return this.attempt('replace_general', () =>
+            this.replaceGeneral(deviceId, isNewsEnabled, credentials, signature)
+        );
     }
 
     private async publishWalletNames(
         input: PushSyncInput,
         desired: Map<string, DesiredGroup>
     ): Promise<void> {
+        const names = this.collectWalletNames(input, desired);
+        if (names === null) return;
+
+        const signature = JSON.stringify(names);
+        if (signature === this.lastWalletNames) return;
+
+        await this.deps.pushNotifications.setWalletNames(names);
+        this.lastWalletNames = signature;
+    }
+
+    private collectWalletNames(
+        input: PushSyncInput,
+        desired: Map<string, DesiredGroup>
+    ): Record<string, string> | null {
         const names: Record<string, string> = {};
 
         for (const { accountId, state } of input.accounts) {
@@ -225,7 +284,7 @@ export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
             if (state.kind === 'pending' || group === 'pending' || group === null) continue;
 
             const refs = this.targetRefs.get(accountId);
-            if (!refs) return;
+            if (!refs) return null;
 
             for (const portfolio of state.settings.selectPortfolios(state.portfolios)) {
                 for (const [target, name] of Object.entries(
@@ -237,11 +296,7 @@ export class PushSubscriptionSyncer implements IPushSubscriptionSyncer {
             }
         }
 
-        const signature = JSON.stringify(names);
-        if (signature === this.lastWalletNames) return;
-
-        await this.deps.pushNotifications.setWalletNames(names);
-        this.lastWalletNames = signature;
+        return names;
     }
 
     private async replaceGeneral(
