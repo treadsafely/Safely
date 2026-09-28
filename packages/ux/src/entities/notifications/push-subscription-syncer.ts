@@ -101,11 +101,12 @@ export class PushSubscriptionSyncer {
 
     public announceSyncEvent(accountId: string, type: SyncEventType): Promise<void> {
         return this.attempt('announce', async () => {
+            const deviceId = await this.read('deviceId');
             this.deps.logger.info('push_subscription.announce', { type });
             await this.deps.api.announceSyncEvent(deriveNotificationSyncId(accountId), {
                 event_id: uuid4(),
                 type,
-                sender_device_id: await this.read('deviceId')
+                ...(deviceId && { sender_device_id: deviceId })
             });
         }).then(() => undefined);
     }

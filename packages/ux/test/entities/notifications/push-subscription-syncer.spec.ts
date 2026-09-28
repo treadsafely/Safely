@@ -209,7 +209,7 @@ describe('PushSubscriptionSyncer', () => {
         expect(await stored('syncIds')).toBe(JSON.stringify({ a: syncA }));
     });
 
-    it('announces with the enrolled device id, or null when pushes are off', async () => {
+    it('announces with the enrolled device id, or without one when pushes are off', async () => {
         const { syncer, api } = createHarness();
 
         await syncer.announceSyncEvent('a', 'device-connected');
@@ -223,7 +223,7 @@ describe('PushSubscriptionSyncer', () => {
         const [, second] = api.announceSyncEvent.mock.calls[1]!;
 
         expect(second.sender_device_id).toBe(deviceId);
-        expect(first.sender_device_id).toBeNull();
+        expect(first).not.toHaveProperty('sender_device_id');
         expect(first.event_id).not.toBe(second.event_id);
     });
 

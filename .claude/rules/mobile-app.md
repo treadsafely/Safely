@@ -111,8 +111,8 @@ update it when adding a language.
   the joining device in `SignInScreen`, the archiving device in `DeviceSupportWizardModal`, the
   leaving device in `useSignOutAccountConfirmation`; observers never announce, so nothing to
   dedupe. The announce carries only ids (no device name: the backend text is fixed) and is
-  best-effort (one attempt, logged); with pushes off it sends a throwaway `sender_device_id`,
-  since an unenrolled sender has nothing to be excluded from.
+  best-effort (one attempt, logged); with pushes off `sender_device_id` is omitted, since an
+  unenrolled sender has nothing to be excluded from.
 - Android push tokens need Firebase: `android.googleServicesFile` points at the committed
   `apps/mobile/google-services.json` (client config of the Firebase project `safely-wallet`, no
   secrets — the FCM service account for sending lives in EAS credentials). Without it

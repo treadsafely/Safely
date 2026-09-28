@@ -35,7 +35,7 @@ export type SyncSubscription = z.infer<typeof syncSubscriptionSchema>;
 export type SyncAnnouncement = {
     event_id: string;
     type: SyncEventType;
-    sender_device_id: string;
+    sender_device_id?: string;
 };
 
 export const generalSubscriptionSchema = z.object({
