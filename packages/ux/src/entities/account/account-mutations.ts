@@ -48,6 +48,7 @@ import {
     SecretEncryptor,
     useAppContext,
     useLogger,
+    usePushSubscriptionSyncer,
     useSharedUxStorage,
     useTranslate
 } from '../../shared';
@@ -432,6 +433,7 @@ export function useConnectAccountToNewDevice() {
     });
     const { withLoader } = useLoader();
     const { qrScanner } = useAppContext();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation<string, Error, { secureEncryptedStorage: ITreeStorage }, unknown>({
@@ -450,6 +452,10 @@ export function useConnectAccountToNewDevice() {
                 );
                 const ikPubHex = newDeviceIkPub.toString('hex');
                 await waitForDeviceMeta(activeAccount.accountId, ikPubHex, scopedLogger);
+                void pushSubscriptionSyncer?.announceSyncEvent(
+                    activeAccount.accountId,
+                    'device-connected'
+                );
 
                 return ikPubHex;
             });
@@ -561,12 +567,14 @@ export function useEraseAllData() {
     } = useAppContext();
     const toast = useToast();
     const accounts = useAccounts();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation({
         async mutationFn() {
             scopedLogger.info('erasing all data');
 
+            await pushSubscriptionSyncer?.reset();
             await archiveOwnDevices(accounts, scopedLogger);
 
             try {

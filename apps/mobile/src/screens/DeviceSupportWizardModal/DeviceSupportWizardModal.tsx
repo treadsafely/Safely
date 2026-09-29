@@ -6,9 +6,11 @@ import { View } from 'react-native';
 
 import type { SyncedDeviceDetails } from '@safely/ux';
 import {
+    useActiveAccount,
     useArchiveDevice,
     useBootConfig,
     useLinking,
+    usePushSubscriptionSyncer,
     useSecurityCheck,
     useSyncedDeviceDetails,
     useToast
@@ -41,6 +43,8 @@ const WizardContent = ({ details }: { details: SyncedDeviceDetails }) => {
     const { t } = useTranslation();
     const check = useSecurityCheck();
     const navigation = useNavigation();
+    const { accountId } = useActiveAccount();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const { mutateAsync: archiveDevice } = useArchiveDevice();
 
     const [deviceAccess, setDeviceAccess] = useState<DeviceAccessAnswer | null>(null);
@@ -68,6 +72,7 @@ const WizardContent = ({ details }: { details: SyncedDeviceDetails }) => {
     const handleArchive = async () => {
         await check({ subtitle: t('deviceSupportWizard.archive.verify', { deviceName }) });
         await archiveDevice(details.ikPubHex);
+        void pushSubscriptionSyncer?.announceSyncEvent(accountId, 'device-disconnected');
 
         navigation.goBack();
         toast(t('deviceSupportWizard.archive.done', { deviceName }));

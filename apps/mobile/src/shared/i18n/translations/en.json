@@ -543,6 +543,11 @@
                 "title": "Re-enter passcode",
                 "description": "Set a passcode to protect your data. It will be required to unlock the app."
             }
+        },
+        "notifications": {
+            "title": "Notifications",
+            "description": "Get notified about transactions and important updates.",
+            "enable": "Enable notifications"
         }
     },
     "addWallet": {
@@ -711,7 +716,8 @@
                 "title": "Settings",
                 "options": {
                     "editAccount": "Edit account",
-                    "addressBook": "Address book"
+                    "addressBook": "Address book",
+                    "notifications": "Notifications"
                 }
             },
             "application": {
@@ -960,5 +966,85 @@
         "title": "Legal",
         "privacyPolicy": "Privacy Policy",
         "termsOfUse": "Terms of Use"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "disabledBanner": {
+            "text": "Notifications are off.",
+            "action": "Settings"
+        },
+        "device": {
+            "title": "This device",
+            "push": {
+                "title": "Push notifications",
+                "subtitle": "Receive push notifications on this device."
+            }
+        },
+        "account": {
+            "title": "Account “{{name}}”",
+            "enabled": {
+                "title": "Account notifications",
+                "subtitle": "Enable notifications for wallets in this account. These preferences sync across your linked devices."
+            },
+            "allWallets": {
+                "title": "All wallets",
+                "subtitle": "Receive notifications for every wallet, including new ones."
+            },
+            "selectedWallets": {
+                "title": "Selected wallets",
+                "more": "{{names}}, and {{count}} more"
+            },
+            "transactions": {
+                "title": "Transactions",
+                "none": "No transaction notifications."
+            }
+        },
+        "application": {
+            "title": "Application",
+            "news": {
+                "title": "Safely updates",
+                "subtitle": "Receive release notes and security updates."
+            }
+        },
+        "transactions": {
+            "title": "Transactions",
+            "incoming": "Incoming transactions",
+            "outgoing": "Outgoing transactions",
+            "events": {
+                "receivedDetected": {
+                    "title": "Detected",
+                    "subtitle": "When funds arrive.",
+                    "summary": "Incoming detected"
+                },
+                "receivedConfirmed": {
+                    "title": "Confirmed",
+                    "subtitle": "After the first confirmation.",
+                    "summary": "Incoming confirmed"
+                },
+                "receivedFinalized": {
+                    "title": "Finalized",
+                    "subtitle": "After 6 confirmations.",
+                    "summary": "Incoming finalized"
+                },
+                "sentBroadcast": {
+                    "title": "Sent",
+                    "subtitle": "Notify when a transaction is broadcast.",
+                    "summary": "Outgoing sent"
+                },
+                "sentConfirmed": {
+                    "title": "Confirmed",
+                    "subtitle": "After the first confirmation.",
+                    "summary": "Outgoing confirmed"
+                },
+                "sentFinalized": {
+                    "title": "Finalized",
+                    "subtitle": "After 6 confirmations.",
+                    "summary": "Outgoing finalized"
+                }
+            }
+        },
+        "wallets": {
+            "title": "Selected wallets"
+        }
     }
 }

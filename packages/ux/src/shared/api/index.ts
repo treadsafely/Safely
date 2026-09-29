@@ -6,6 +6,7 @@ export { useAboutQuery } from './useAbout';
 export { useBtcApi, useGetBtcApi } from './useBtcApi';
 export { usePriceApi } from './usePriceApi';
 export { useExchangeApi } from './useExchangeApi';
+export { useNotificationsApi } from './useNotificationsApi';
 export { useAvailableFiats } from './useAvailableFiats';
 export { useIsDevVersion } from './useIsDevVersion';
 export { useFlag } from './useFlag';

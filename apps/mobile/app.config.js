@@ -43,6 +43,7 @@ module.exports = {
                 backgroundImage: './assets/android-icon-bg.png'
             },
             package: 'com.safely.wallet',
+            googleServicesFile: './google-services.json',
             allowBackup: false
         },
         plugins: [
@@ -69,7 +70,8 @@ module.exports = {
             [
                 'expo-notifications',
                 {
-                    icon: './assets/icon.png'
+                    icon: './assets/notification-icon.png',
+                    color: '#0178FF'
                 }
             ],
             [
@@ -79,11 +81,29 @@ module.exports = {
                         '$(PRODUCT_NAME) needs access to Bluetooth to connect to your Ledger hardware wallet.'
                 }
             ],
-            './plugins/withMMKVNoBackup'
+            './plugins/withMMKVNoBackup',
+            './plugins/withPushContentExtension'
         ],
         extra: {
             eas: {
-                projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658'
+                projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658',
+                build: {
+                    experimental: {
+                        ios: {
+                            appExtensions: [
+                                {
+                                    targetName: 'SafelyNotificationService',
+                                    bundleIdentifier: 'com.safely.wallet.NotificationService',
+                                    entitlements: {
+                                        'com.apple.security.application-groups': [
+                                            'group.com.safely.wallet'
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         },
         owner: 'treadsafely'
