@@ -108,7 +108,7 @@ update it when adding a language.
   notifications. The syncer keeps a `PUT /devices/{id}/syncs/{sync_id}` per enabled account
   (`sync_id = sha256(accountId)`, `deriveNotificationSyncId`; `syncIds` stored like `groupIds`),
   independent of wallet groups. The acting device announces through `usePushSubscriptionSyncer()?.announceSyncEvent` —
-  the inviting device in `LinkDeviceWarningModal`, the archiving device in `DeviceSupportWizardModal`, the
+  the inviting device in `useConnectAccountToNewDevice`, the archiving device in `DeviceSupportWizardModal`, the
   leaving device in `useSignOutAccountConfirmation`; observers never announce, so nothing to
   dedupe. The announce carries only ids (no device name: the backend text is fixed) and is
   best-effort (one attempt, logged); with pushes off `sender_device_id` is omitted, since an

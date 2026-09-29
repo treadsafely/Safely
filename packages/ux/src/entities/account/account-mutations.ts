@@ -433,6 +433,7 @@ export function useConnectAccountToNewDevice() {
     });
     const { withLoader } = useLoader();
     const { qrScanner } = useAppContext();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation<string, Error, { secureEncryptedStorage: ITreeStorage }, unknown>({
@@ -451,6 +452,10 @@ export function useConnectAccountToNewDevice() {
                 );
                 const ikPubHex = newDeviceIkPub.toString('hex');
                 await waitForDeviceMeta(activeAccount.accountId, ikPubHex, scopedLogger);
+                void pushSubscriptionSyncer?.announceSyncEvent(
+                    activeAccount.accountId,
+                    'device-connected'
+                );
 
                 return ikPubHex;
             });
