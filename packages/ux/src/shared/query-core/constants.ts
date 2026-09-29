@@ -12,6 +12,5 @@ export const QUERIES_STALE_TIME = {
 export const QUERIES_REFETCH_INTERVAL = {
     DEFAULT: 1000 * 30,
     TRANSACTION: 1000 * 60,
-    LAST_BTC_TX: 1000 * 5,
     UTXO: 1000 * 5
 };
