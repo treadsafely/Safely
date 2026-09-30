@@ -44,6 +44,7 @@ import {
     useClearActiveAccountLocalStorage
 } from './local-storage';
 import { accountStore } from './sync-storage/account-store';
+import type { IPushSubscriptionSyncer } from '../../shared';
 import {
     SecretEncryptor,
     useAppContext,
@@ -191,6 +192,21 @@ async function buildFirstPortfolio(params: {
     };
 
     return { portfolio, nextDerivingInfo };
+}
+
+async function announceOwnDisconnect(
+    accounts: SyncAccount[],
+    syncer: IPushSubscriptionSyncer | null
+): Promise<void> {
+    if (!syncer) return;
+
+    const announcing = accounts
+        .filter(
+            account => account.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE
+        )
+        .map(account => syncer.announceSyncEvent(account.accountId, 'device-disconnected'));
+
+    await Promise.allSettled(announcing);
 }
 
 async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promise<void> {
@@ -574,6 +590,7 @@ export function useEraseAllData() {
         async mutationFn() {
             scopedLogger.info('erasing all data');
 
+            await announceOwnDisconnect(accounts, pushSubscriptionSyncer);
             await pushSubscriptionSyncer?.reset();
             await archiveOwnDevices(accounts, scopedLogger);
 
