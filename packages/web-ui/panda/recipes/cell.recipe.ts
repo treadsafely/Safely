@@ -56,6 +56,7 @@ export const cellRecipe = defineSlotRecipe({
         },
         title: {
             textStyle: 'labelL',
+            minWidth: '0',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
@@ -70,6 +71,7 @@ export const cellRecipe = defineSlotRecipe({
         value: {
             textStyle: 'bodyL',
             color: 'text.tertiary',
+            flexShrink: 0,
             whiteSpace: 'nowrap'
         },
         subvalue: {

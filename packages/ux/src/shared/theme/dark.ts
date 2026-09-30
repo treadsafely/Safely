@@ -53,7 +53,7 @@ export const darkTheme = {
         },
         badge: {
             neutral: {
-                background: 'rgba(38, 38, 43, 1)',
+                background: 'rgba(160, 160, 166, 0.16)',
                 foreground: 'rgba(160, 160, 166, 1)'
             },
             warning: {

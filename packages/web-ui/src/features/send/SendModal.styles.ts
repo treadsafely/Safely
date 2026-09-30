@@ -15,6 +15,8 @@ export const headingStyles = css({
 
 export const titleStyles = css({ textStyle: 'titleS' });
 
+export const subtitleStyles = css({ display: 'flex', alignItems: 'center', gap: '6' });
+
 export const bodyStyles = css({
     display: 'flex',
     flexDirection: 'column',

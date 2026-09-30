@@ -17,13 +17,10 @@ import { Icon, List, Modal, ScreenProtection, TableCell, Text } from '../../shar
 
 export type RecoveryPhraseModalProps = {
     mnemonic: string[];
-    walletName: string;
     onClose: () => void;
 };
 
-export const RecoveryPhraseModal: FC<RecoveryPhraseModalProps> = props => {
-    const { mnemonic, walletName, onClose } = props;
-
+export const RecoveryPhraseModal: FC<RecoveryPhraseModalProps> = ({ mnemonic, onClose }) => {
     const t = useTranslate();
 
     return (
@@ -32,7 +29,7 @@ export const RecoveryPhraseModal: FC<RecoveryPhraseModalProps> = props => {
                 <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                     <div className={headerStyles}>
                         <Modal.Title className={titleStyles}>
-                            {`“${walletName}” ${t('security.phraseSheet.titleSuffix')}`}
+                            {t('security.phraseSheet.title')}
                         </Modal.Title>
                     </div>
 

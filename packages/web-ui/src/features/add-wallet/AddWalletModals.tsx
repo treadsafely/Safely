@@ -59,7 +59,7 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
                         defaultName={flow.draft.name}
                         defaultIcon={flow.draft.icon}
                         onSave={meta => void flow.save(meta).catch(() => undefined)}
-                        onClose={flow.close}
+                        onClose={flow.open}
                     />
                 )
             );

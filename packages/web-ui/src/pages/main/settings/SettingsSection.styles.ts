@@ -22,3 +22,5 @@ export const currencyRowStyles = css({
     alignItems: 'baseline',
     gap: '8'
 });
+
+export const walletRowStyles = css({ justifyContent: 'flex-start' });

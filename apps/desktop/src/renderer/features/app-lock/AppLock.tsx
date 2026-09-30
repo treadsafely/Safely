@@ -5,7 +5,8 @@ import {
     SecurityCheckCancelledError,
     useAppState,
     useEnteredBackground,
-    useEraseAllData
+    useEraseAllData,
+    useLoader
 } from '@safely/ux';
 import { EraseDataModal, LockScreen, PasscodeVerification } from '@safely/web-ui';
 
@@ -48,6 +49,7 @@ type AppLockScreenProps = {
 
 /* signing out properly needs the keys this screen is guarding, so the only way out is erasing */
 const AppLockScreen: FC<AppLockScreenProps> = props => {
+    const { withLoader } = useLoader();
     const { mutateAsync: eraseAllData } = useEraseAllData();
     const [isErasing, setIsErasing] = useState(false);
     const isAppSettled = useSettledActiveAppState();
@@ -72,7 +74,7 @@ const AppLockScreen: FC<AppLockScreenProps> = props => {
 
             {isErasing && (
                 <EraseDataModal
-                    onConfirm={() => void eraseAllData()}
+                    onConfirm={() => void withLoader(() => eraseAllData())}
                     onClose={() => setIsErasing(false)}
                 />
             )}

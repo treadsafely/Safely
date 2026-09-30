@@ -7,6 +7,7 @@ export const badgeRecipe = defineRecipe({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0,
         minWidth: '18px',
         paddingInline: '4',
         paddingBlock: '1px',

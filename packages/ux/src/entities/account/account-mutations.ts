@@ -190,7 +190,11 @@ async function buildFirstPortfolio(params: {
 }
 
 async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promise<void> {
-    const archiving = accounts.map(async account => {
+    const synced = accounts.filter(
+        account => account.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE
+    );
+
+    const archiving = synced.map(async account => {
         const ikPubHex = account.getMyDeviceIkPub().toString('hex');
 
         await account.syncProvider.transaction(draft => {
@@ -209,7 +213,7 @@ async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promi
     const failed = results.filter(result => result.status === 'rejected').length;
 
     if (failed > 0) {
-        logger.warn('erase_all_data.archive_failed', { failed, total: accounts.length });
+        logger.warn('erase_all_data.archive_failed', { failed, total: synced.length });
     }
 }
 

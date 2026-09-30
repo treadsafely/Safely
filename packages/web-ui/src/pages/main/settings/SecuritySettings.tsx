@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
-import { useEraseAllData, useTranslate } from '@safely/ux';
+import { useEraseAllData, useLoader, useTranslate } from '@safely/ux';
 
 import { adjacentGroupStyles, listStyles } from './SettingsSection.styles';
 import { EraseDataModal } from '../../../features';
@@ -25,6 +25,7 @@ export const SecuritySettings: FC<SecuritySettingsProps> = props => {
     const { isLockScreenEnabled, biometry, onToggleLockScreen, onChangePasscode } = props;
 
     const t = useTranslate();
+    const { withLoader } = useLoader();
     const { mutateAsync: eraseAllData } = useEraseAllData();
 
     const [isErasing, setIsErasing] = useState(false);
@@ -91,7 +92,7 @@ export const SecuritySettings: FC<SecuritySettingsProps> = props => {
 
             {isErasing && (
                 <EraseDataModal
-                    onConfirm={() => void eraseAllData()}
+                    onConfirm={() => void withLoader(() => eraseAllData())}
                     onClose={() => setIsErasing(false)}
                 />
             )}

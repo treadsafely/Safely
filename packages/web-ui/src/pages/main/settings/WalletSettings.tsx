@@ -4,8 +4,8 @@ import { PortfolioType } from '@safely/core';
 import { useActivePortfolioEntitiesQuery, useDateFormatter, useTranslate } from '@safely/ux';
 import Switch16 from '@safely/ux/assets/icons/16/switch-16.svg?react';
 
-import { destructiveGroupStyles, listStyles } from './SettingsSection.styles';
-import { WalletIcon } from '../../../entities';
+import { destructiveGroupStyles, listStyles, walletRowStyles } from './SettingsSection.styles';
+import { PortfolioTypeBadge, WalletIcon } from '../../../entities';
 import { useWalletFlow, WalletModals } from '../../../features';
 import { Cell, Icon, List, PageHeader } from '../../../shared';
 
@@ -40,7 +40,10 @@ export const WalletSettings: FC = () => {
                             <WalletIcon icon={portfolio.meta.icon} />
                         </Cell.Leading>
                         <Cell.Content>
-                            <Cell.Title>{portfolio.meta.name}</Cell.Title>
+                            <Cell.Row className={walletRowStyles}>
+                                <Cell.Title>{portfolio.meta.name}</Cell.Title>
+                                <PortfolioTypeBadge type={portfolio.type} />
+                            </Cell.Row>
                         </Cell.Content>
                         <Cell.Trailing>
                             <Icon asset={Switch16} tone="tertiary" />

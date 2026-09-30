@@ -3,13 +3,7 @@ import { useState } from 'react';
 
 import { resolveSignOutCopy, useHasActivePeer, useTranslate } from '@safely/ux';
 
-import {
-    acknowledgementStyles,
-    actionsStyles,
-    contentStyles,
-    descriptionStyles,
-    titleStyles
-} from './SignOutModal.styles';
+import { acknowledgementStyles } from './SignOutModal.styles';
 import { Button, Checkbox, Modal, Text } from '../../shared';
 
 export type SignOutModalProps = {
@@ -29,26 +23,21 @@ export const SignOutModal: FC<SignOutModalProps> = props => {
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup closeLabel={t('common.close')}>
-                <div className={contentStyles}>
-                    <Modal.Title className={titleStyles}>
+                <Modal.Content>
+                    <Modal.Title>
                         {t('settings.signOutAccount.sheet.title', { name: accountName })}
                     </Modal.Title>
-                    <Modal.Description className={descriptionStyles}>
-                        {t(copy.subtitleKey)}
-                    </Modal.Description>
+                    <Modal.Description>{t(copy.subtitleKey)}</Modal.Description>
+                </Modal.Content>
 
-                    {copy.checkboxKey !== undefined && (
-                        <label className={acknowledgementStyles}>
-                            <Text variant="bodyM">{t(copy.checkboxKey)}</Text>
-                            <Checkbox
-                                checked={isAcknowledged}
-                                onCheckedChange={setIsAcknowledged}
-                            />
-                        </label>
-                    )}
-                </div>
+                {copy.checkboxKey !== undefined && (
+                    <label className={acknowledgementStyles}>
+                        <Text variant="bodyM">{t(copy.checkboxKey)}</Text>
+                        <Checkbox checked={isAcknowledged} onCheckedChange={setIsAcknowledged} />
+                    </label>
+                )}
 
-                <div className={actionsStyles}>
+                <Modal.Actions>
                     <Button
                         variant="destructive"
                         isFullWidth
@@ -60,7 +49,7 @@ export const SignOutModal: FC<SignOutModalProps> = props => {
                     <Button variant="secondary" isFullWidth onClick={onClose}>
                         {t('settings.signOutAccount.sheet.cancelButton')}
                     </Button>
-                </div>
+                </Modal.Actions>
             </Modal.Popup>
         </Modal>
     );

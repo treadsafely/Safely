@@ -55,11 +55,5 @@ export const RecoveryPhraseFlow: FC<RecoveryPhraseFlowProps> = props => {
         return <RecoveryConfirmModal onReveal={() => void handleReveal()} onClose={handleClose} />;
     }
 
-    return (
-        <RecoveryPhraseModal
-            mnemonic={mnemonic.current}
-            walletName={portfolio.meta.name}
-            onClose={handleClose}
-        />
-    );
+    return <RecoveryPhraseModal mnemonic={mnemonic.current} onClose={handleClose} />;
 };

@@ -1,6 +1,6 @@
-import type { FC } from 'react';
+import type { FC, KeyboardEvent } from 'react';
 
-import { useImportSeedPhrase, useTranslate } from '@safely/ux';
+import { sanitizeSeedPhraseInput, useImportSeedPhrase, useTranslate } from '@safely/ux';
 
 import { bodyStyles, errorStyles, fieldStyles, popupStyles } from './ImportWalletModal.styles';
 import { Button, Input, Modal, ScreenProtection, Text } from '../../shared';
@@ -15,6 +15,13 @@ export const ImportWalletModal: FC<ImportWalletModalProps> = props => {
 
     const t = useTranslate();
     const { value, error, isDirty, onChange, handleSubmit } = useImportSeedPhrase({ onSubmit });
+
+    const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleSubmit();
+        }
+    };
 
     return (
         <ScreenProtection>
@@ -52,7 +59,10 @@ export const ImportWalletModal: FC<ImportWalletModalProps> = props => {
                                 placeholder={t('onboarding.importWallet.placeholder')}
                                 autoComplete="off"
                                 spellCheck={false}
-                                onChange={event => onChange(event.target.value)}
+                                onChange={event =>
+                                    onChange(sanitizeSeedPhraseInput(event.target.value))
+                                }
+                                onKeyDown={onKeyDown}
                             />
                         </Input>
 

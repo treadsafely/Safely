@@ -771,7 +771,7 @@
         }
     },
     "logOutAllAccounts": {
-        "title": "Erase all app data on this device?",
+        "title": "Erase all app data on this device?",
         "message": "All accounts, wallets, and app data stored in Safely on this device will be permanently removed. Only backed up accounts can be restored.",
         "slider": {
             "label": "Erase all app data",

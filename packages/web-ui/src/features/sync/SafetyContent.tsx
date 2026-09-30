@@ -194,7 +194,10 @@ export const SafetyContent: FC<SafetyContentProps> = ({ onAddAccount }) => {
             {step?.kind === 'wizard' && (
                 <DeviceSupportWizardModal
                     ikPubHex={step.ikPubHex}
-                    onAddAccount={onAddAccount}
+                    onAddAccount={() => {
+                        setStep(null);
+                        onAddAccount();
+                    }}
                     onClose={() => setStep(null)}
                 />
             )}

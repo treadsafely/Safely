@@ -12,3 +12,16 @@ export const listStyles = css({
     padding: '8',
     overflowY: 'auto'
 });
+
+export const walletRowStyles = css({ justifyContent: 'flex-start' });
+
+export const valueRowStyles = css({ gap: '16' });
+
+export const valueRowTitleStyles = css({ flexShrink: 0 });
+
+export const valueRowValueStyles = css({
+    flexShrink: 1,
+    minWidth: '0',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+});

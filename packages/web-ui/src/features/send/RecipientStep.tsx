@@ -17,7 +17,7 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
     const t = useTranslate();
 
     const suggestions = resolveVisibleSuggestions(view);
-    const hasMatches = hasSuggestionMatches(suggestions);
+    const hasMatches = hasSuggestionMatches(view.suggestions);
     const error = hasMatches ? undefined : view.errors.recipient;
 
     const selectedPortfolio = suggestions.portfolios.find(

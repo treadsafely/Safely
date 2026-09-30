@@ -3,6 +3,8 @@ import type { FC } from 'react';
 import type { Portfolio } from '@safely/core';
 import { resolveBtcWallet, useBtcWalletFiatBalance, useNumberFormatter } from '@safely/ux';
 
+import { PortfolioTypeBadge } from './PortfolioTypeBadge';
+import { valueStyles } from './WalletCell.styles';
 import { WalletIcon } from './WalletIcon';
 import { Cell } from '../../shared';
 
@@ -26,7 +28,8 @@ export const WalletCell: FC<WalletCellProps> = props => {
             <Cell.Content>
                 <Cell.Row>
                     <Cell.Title>{portfolio.meta.name}</Cell.Title>
-                    <Cell.Value>{balance?.format(formatter)}</Cell.Value>
+                    <PortfolioTypeBadge type={portfolio.type} />
+                    <Cell.Value className={valueStyles}>{balance?.format(formatter)}</Cell.Value>
                 </Cell.Row>
             </Cell.Content>
         </Cell>

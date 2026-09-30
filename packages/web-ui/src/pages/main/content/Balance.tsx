@@ -2,6 +2,7 @@ import type { FC } from 'react';
 
 import {
     useActiveWalletBtcBalance,
+    useIsActivePortfolioWatchOnly,
     useMainBalanceUnit,
     useNumberFormatter,
     useTotalBalance,
@@ -21,6 +22,7 @@ export const Balance: FC<BalanceProps> = props => {
 
     const { data: totalBalance } = useTotalBalance();
     const { data: btcBalance } = useActiveWalletBtcBalance();
+    const isWatchOnly = useIsActivePortfolioWatchOnly();
 
     const formatter = useNumberFormatter();
     const mainBalanceUnit = useMainBalanceUnit();
@@ -41,7 +43,12 @@ export const Balance: FC<BalanceProps> = props => {
             </div>
 
             <div className={actionsStyles}>
-                <Button variant="secondary" size="small" onClick={props.onSend}>
+                <Button
+                    variant="secondary"
+                    size="small"
+                    disabled={isWatchOnly}
+                    onClick={props.onSend}
+                >
                     {t('home.actions.send')}
                 </Button>
                 <Button variant="secondary" size="small" onClick={props.onReceive}>

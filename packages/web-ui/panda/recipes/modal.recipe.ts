@@ -73,7 +73,8 @@ export const modalRecipe = defineSlotRecipe({
         title: {
             textStyle: 'titleM',
             color: 'text.primary',
-            textAlign: 'center'
+            textAlign: 'center',
+            textWrap: 'balance'
         },
         description: {
             textStyle: 'bodyL',
