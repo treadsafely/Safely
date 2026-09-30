@@ -3,6 +3,7 @@ import type { InfiniteData } from '@tanstack/react-query';
 import type {
     BtcApiTx,
     BtcAsset,
+    CryptoFiatRate,
     DateGroupMeta,
     DatedGroup,
     PendingGroupMeta,
@@ -25,6 +26,7 @@ export interface BtcActivityItem {
         toAddress: string;
         value: CryptoAssetAmount;
         fee: TransactionFeeCrypto<BtcAsset> | undefined;
+        rate: CryptoFiatRate | null;
         raw: BtcApiTx;
     };
 }

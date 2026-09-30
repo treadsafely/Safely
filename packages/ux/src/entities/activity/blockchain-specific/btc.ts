@@ -1,16 +1,6 @@
-import type { InfiniteData } from '@tanstack/react-query';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import type { BtcApiTx } from '@safely/core';
-import { BLOCKCHAIN_NAME } from '@safely/core';
 
-import { QUERIES_REFETCH_INTERVAL, useBtcApi } from '../../../shared';
 import { useActualBtcBlockNumber } from '../../btc-blockchain';
-import { useActiveBtcWallet } from '../../portfolio';
-import { fetchBtcActivity } from '../api';
-import { activityKeys } from '../keys';
-import type { ActivityItem, ActivityPage, IActivityPageParam } from '../types';
-import { isBtcActivityItem } from '../types';
 
 export type BtcTransactionDisplayStatus =
     | { type: 'pending' }
@@ -46,46 +36,4 @@ export function useBtcTransactionDisplayStatus(
 ): BtcTransactionDisplayStatus {
     const { data: currentBlockNumber } = useActualBtcBlockNumber();
     return getBtcTransactionDisplayStatus(tx, currentBlockNumber);
-}
-
-function extractTimestamp(items: ActivityItem[]) {
-    const btcItem = items.find(
-        item =>
-            isBtcActivityItem(item) &&
-            item.transaction.value.asset.id.blockchain === BLOCKCHAIN_NAME.BTC
-    );
-    return btcItem?.timestamp ?? null;
-}
-
-export function useLastBtcTransactionTimestamp() {
-    const queryClient = useQueryClient();
-    const btcWallet = useActiveBtcWallet();
-    const btcApi = useBtcApi(btcWallet.network);
-    const walletId = btcWallet.id.toString();
-
-    const historyQueryKey = activityKeys.all(walletId, {}).toKey();
-
-    return useQuery({
-        queryKey: activityKeys.all(walletId, {}).btcTxLastTimestamp.toKey(),
-        queryFn: async () => {
-            const state = queryClient.getQueryState(historyQueryKey);
-            const cachedData =
-                queryClient.getQueryData<InfiniteData<ActivityPage, IActivityPageParam>>(
-                    historyQueryKey
-                );
-
-            if (
-                cachedData &&
-                state &&
-                Date.now() - state.dataUpdatedAt < QUERIES_REFETCH_INTERVAL.LAST_BTC_TX
-            ) {
-                const items = cachedData.pages.flatMap(page => page.items);
-                return extractTimestamp(items);
-            }
-
-            const page = await fetchBtcActivity(btcApi, btcWallet, 1, {});
-            return extractTimestamp(page.items);
-        },
-        refetchInterval: QUERIES_REFETCH_INTERVAL.LAST_BTC_TX
-    });
 }
