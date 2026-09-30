@@ -33,6 +33,7 @@ export function getBiggestBtcIOAddress(io: BtcApiTx['vin' | 'vout']) {
     return io.slice().sort((a, b) => toBigOrZero(b.value).cmp(toBigOrZero(a.value)))[0]
         ?.addresses?.[0];
 }
+
 export function btcTxToActivityItem(
     tx: BtcApiTx,
     rate: CryptoFiatRate | null
@@ -83,10 +84,6 @@ export function btcTxToActivityItem(
     };
 }
 
-function historicalRate(tx: BtcApiTxWithBtcRate, fiat: FiatAsset): CryptoFiatRate | null {
-    return tx.btcRate === undefined ? null : new Rate(BTC_ASSET, fiat, toBig(tx.btcRate));
-}
-
 export function orderToActivityItem(order: RampOrder): OrderActivityItem {
     let cryptoAmount: CryptoAssetAmount | null = null;
     try {
@@ -111,6 +108,10 @@ const ACTIVE_ORDER_STATUSES: ReadonlySet<RampOrder['status']> = new Set(['pendin
 
 export function isRampOrderActive(order: Pick<RampOrder, 'status'>): boolean {
     return ACTIVE_ORDER_STATUSES.has(order.status);
+}
+
+function historicalRate(tx: BtcApiTxWithBtcRate, fiat: FiatAsset): CryptoFiatRate | null {
+    return tx.btcRate === undefined ? null : new Rate(BTC_ASSET, fiat, toBig(tx.btcRate));
 }
 
 export async function fetchBtcActivity(

@@ -34,13 +34,14 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
     const btcWallet = useActiveBtcWallet();
     const btcApi = useBtcApi(btcWallet.network);
     const fiat = useActiveFiat();
-    const { data: currentRate } = useActivePortfolioRate(BTC_ASSET);
     const signer = useReadOnlyRequestSigner();
     const exchangeApi = useExchangeApi(signer);
 
     const { i18n, logger } = useAppContext();
     const userCountryInfo = useUserCountryInfo();
     const broadcastedTx = useLastBroadcastedBtcTx();
+    const { data: rate } = useActivePortfolioRate(BTC_ASSET);
+    const broadcastedTxRate = broadcastedTx ? (rate ?? null) : null;
 
     const ordersRequest = {
         lang: i18n.language,
@@ -78,14 +79,20 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
             (data: InfiniteData<ActivityPage, IActivityPageParam>) => {
                 const patched = prependBroadcastedTx(
                     data,
-                    broadcastedTx?.toActivityItem(btcWallet.address, currentRate ?? null) ?? null,
+                    broadcastedTx?.toActivityItem(btcWallet.address, broadcastedTxRate) ?? null,
                     filters
                 );
 
                 const visible = dedupeOrderTxs(applyActivityWaterline(patched));
                 return options?.select ? options.select(visible) : (visible as TData);
             },
-            [broadcastedTx, currentRate, options?.select, filters.isInitiator, btcWallet.address]
+            [
+                broadcastedTx,
+                broadcastedTxRate,
+                options?.select,
+                filters.isInitiator,
+                btcWallet.address
+            ]
         )
     });
 }
