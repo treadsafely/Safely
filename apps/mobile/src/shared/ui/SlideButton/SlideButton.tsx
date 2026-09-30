@@ -1,4 +1,3 @@
-import Color from 'color';
 import {
     impactAsync,
     ImpactFeedbackStyle,
@@ -153,7 +152,7 @@ export const SlideButton = (props: SlideButtonProps) => {
     ]);
 
     const activeBg = knobColor ?? theme.colors.button.primary.background;
-    const inactiveBg = Color(activeBg).alpha(0.16).toString();
+    const inactiveBg = theme.colors.button.tertiary.background;
 
     const knobStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],
