@@ -1,6 +1,8 @@
 import type { InfiniteData, QueryKey } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { BTC_ASSET } from '@safely/core';
+
 import { fetchBtcActivity, fetchOrdersActivity } from './api';
 import { activityKeys } from './keys';
 import { dedupeOrderTxs, prependBroadcastedTx } from './merge';
@@ -19,8 +21,10 @@ import {
     useInfinitePersistQuery,
     useUserCountryInfo
 } from '../../shared';
+import { useActivePortfolioRate } from '../asset';
 import { useLastBroadcastedBtcTx } from '../btc-blockchain';
 import { useReadOnlyRequestSigner } from '../exchange';
+import { useActiveFiat } from '../fiat/useActiveFiat';
 import { useActiveBtcWallet } from '../portfolio';
 
 export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam>>(
@@ -29,6 +33,8 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
 ) {
     const btcWallet = useActiveBtcWallet();
     const btcApi = useBtcApi(btcWallet.network);
+    const fiat = useActiveFiat();
+    const { data: currentRate } = useActivePortfolioRate(BTC_ASSET);
     const signer = useReadOnlyRequestSigner();
     const exchangeApi = useExchangeApi(signer);
 
@@ -47,14 +53,14 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
     };
 
     return useInfinitePersistQuery<ActivityPage, unknown, TData, QueryKey, IActivityPageParam>({
-        queryKey: activityKeys.all(btcWallet.id.toString(), filters).toKey(),
+        queryKey: activityKeys.all(btcWallet.id.toString(), fiat.id.toString(), filters).toKey(),
         staleTime: QUERIES_STALE_TIME.ACTIVITY,
         queryFn: async ({ pageParam }) => {
             const { fetch, btcPage, ordersCursor } = pageParam;
 
             const [btcResult, ordersResult] = await Promise.all([
                 ['btc', 'both'].includes(fetch) && btcPage !== null
-                    ? fetchBtcActivity(btcApi, btcWallet, btcPage, filters)
+                    ? fetchBtcActivity(btcApi, btcWallet, fiat, btcPage, filters)
                     : null,
                 ['orders', 'both'].includes(fetch) && signer
                     ? fetchOrdersActivity(exchangeApi, ordersRequest, ordersCursor, filters).catch(
@@ -72,14 +78,14 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
             (data: InfiniteData<ActivityPage, IActivityPageParam>) => {
                 const patched = prependBroadcastedTx(
                     data,
-                    broadcastedTx?.toActivityItem(btcWallet.address) ?? null,
+                    broadcastedTx?.toActivityItem(btcWallet.address, currentRate ?? null) ?? null,
                     filters
                 );
 
                 const visible = dedupeOrderTxs(applyActivityWaterline(patched));
                 return options?.select ? options.select(visible) : (visible as TData);
             },
-            [broadcastedTx, options?.select, filters.isInitiator, btcWallet.address]
+            [broadcastedTx, currentRate, options?.select, filters.isInitiator, btcWallet.address]
         )
     });
 }

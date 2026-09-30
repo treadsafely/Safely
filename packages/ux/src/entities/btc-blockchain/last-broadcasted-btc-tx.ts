@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 
-import type { BtcApiUtxo, BtcTransactionTemplate, BtcWallet } from '@safely/core';
+import type { BtcApiUtxo, BtcTransactionTemplate, BtcWallet, CryptoFiatRate } from '@safely/core';
 import { BtcAssetAmount, toBig, toBigOrZero } from '@safely/core';
 import type { BtcApiTx, BtcApiUtxoWithOptionalTx } from '@safely/core/api/btc';
 
@@ -120,7 +120,10 @@ export class BroadcastedBtcTx {
         };
     }
 
-    public toActivityItem(walletAddress: string): BtcActivityItem | null {
+    public toActivityItem(
+        walletAddress: string,
+        rate: CryptoFiatRate | null
+    ): BtcActivityItem | null {
         const btcApiTx = this.toBtcApiTx(walletAddress);
 
         const isInitiator = !!btcApiTx.vin?.some(input => input.isOwn);
@@ -152,6 +155,7 @@ export class BroadcastedBtcTx {
                 fee: this.fee
                     ? { type: 'crypto', amount: BtcAssetAmount.fromWeiAmount(this.fee) }
                     : undefined,
+                rate,
                 raw: btcApiTx
             }
         };

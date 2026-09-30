@@ -32,6 +32,7 @@ export interface GetAddressParams {
     details?: 'basic' | 'tokens' | 'tokenBalances' | 'txids' | 'txslight' | 'txs';
     pageSize?: number;
     page?: number;
+    currency?: string;
 }
 
 export type BtcDescriptor = BtcXpubDescriptor | BtcAddressDescriptor;

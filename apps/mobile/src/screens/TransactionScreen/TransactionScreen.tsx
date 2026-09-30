@@ -3,11 +3,10 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { BLOCKCHAIN_NAME, BTC_ASSET, SPACE, ellipsisMiddle } from '@safely/core';
+import { BLOCKCHAIN_NAME, SPACE, ellipsisMiddle } from '@safely/core';
 import {
     type BtcActivityItem,
     isBtcTransactionPending,
-    useActivePortfolioRate,
     useDateFormatter,
     useExplorer,
     useLinking,
@@ -48,7 +47,7 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
     const isInitiator = activity.transaction.isInitiator;
     const isPending = isBtcTransactionPending(activity.transaction.raw);
     const formatter = useNumberFormatter();
-    const { data: rate } = useActivePortfolioRate(BTC_ASSET);
+    const rate = activity.transaction.rate;
     const explorer = useExplorer(BLOCKCHAIN_NAME.BTC);
     const dateFormatter = useDateFormatter({
         day: 'numeric',
