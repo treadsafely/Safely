@@ -62,9 +62,9 @@ patchedDependencies:
 overrides:
   # dev / build tooling
   'handlebars@4': '^4.7.9' # GHSA-2w6w-674q-4c4q (critical) + 4 more, via eslint-plugin-boundaries
-  'brace-expansion@1': '^1.1.18' # GHSA-3jxr-9vmj-r5cp, GHSA-mh99-v99m-4gvg, GHSA-rgw5-rvv9-x895
-  'brace-expansion@2': '^2.1.4'
-  'brace-expansion@5': '^5.0.9'
+  'brace-expansion@1': '^1.1.21' # GHSA-3jxr-9vmj-r5cp, GHSA-mh99-v99m-4gvg, GHSA-rgw5-rvv9-x895, GHSA-6j4f-fj2g-mc7p, GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr
+  'brace-expansion@2': '^2.1.7'
+  'brace-expansion@5': '^5.0.12'
   'minimatch@3': '^3.1.5' # GHSA-3ppc-4f35-3m26, GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74
   'minimatch@9': '^9.0.9'
   'flatted@3': '^3.4.2' # GHSA-25h7-pfq9-p65f, GHSA-rf6f-7fwh-wjgh

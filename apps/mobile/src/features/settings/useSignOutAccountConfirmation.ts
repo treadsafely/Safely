@@ -38,20 +38,16 @@ export function useSignOutAccountConfirmation() {
                 using secureEncryptedStorage = storage.sync.getSecureEncrypted();
                 await secureEncryptedStorage.unlock();
 
-                if (isSyncAccount) {
-                    await pushSubscriptionSyncer?.announceSyncEvent(
-                        activeAccount.accountId,
-                        'device-disconnected'
-                    );
-                }
-
                 if (isLastAccount) {
-                    if (isSyncAccount) {
-                        await deleteAccount(secureEncryptedStorage);
-                    }
-
                     await eraseAllData();
                 } else {
+                    if (isSyncAccount) {
+                        await pushSubscriptionSyncer?.announceSyncEvent(
+                            activeAccount.accountId,
+                            'device-disconnected'
+                        );
+                    }
+
                     await deleteAccount(secureEncryptedStorage);
                     toast(t('settings.signOutAccount.toastAccountRemoved'));
                 }

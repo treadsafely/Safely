@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { PortfolioNetworkType } from '@safely/core';
 import {
     useActiveAccountMeta,
-    useActivePortfolioEntitiesIdsQuery,
     useNotificationSettings,
     usePortfolios,
     useSetAllWalletsNotifications,
@@ -50,18 +49,18 @@ export const AccountSection = () => {
     const accountName = useActiveAccountMeta().name;
     const settings = useNotificationSettings();
     const portfolios = usePortfolios();
-    const { data: activePortfolio } = useActivePortfolioEntitiesIdsQuery();
     const { mutate: setEnabled } = useSetNotificationsEnabled();
     const { mutate: setAllWallets } = useSetAllWalletsNotifications();
     const selectedWalletsSummary = useSelectedWalletsSummary();
     const transactionsSummary = useTransactionsSummary();
 
     const handleAllWalletsToggle = () => {
-        const selectedPortfolioIds = activePortfolio
-            ? [activePortfolio.portfolioId]
-            : portfolios.map(portfolio => portfolio.id.toString());
-
-        setAllWallets({ isEnabled: !settings.allWallets, selectedPortfolioIds });
+        setAllWallets({
+            isEnabled: !settings.allWallets,
+            selectedPortfolioIds: portfolios
+                .filter(portfolio => portfolio.networkType === PortfolioNetworkType.MAINNET)
+                .map(portfolio => portfolio.id.toString())
+        });
     };
 
     return (
