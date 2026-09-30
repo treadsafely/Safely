@@ -3,11 +3,10 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 
 import type { BtcApiUtxo, BtcTransactionTemplate, BtcWallet, CryptoFiatRate } from '@safely/core';
-import { BtcAssetAmount, toBig, toBigOrZero } from '@safely/core';
 import type { BtcApiTx, BtcApiUtxoWithOptionalTx } from '@safely/core/api/btc';
 
 import { useActiveAccount } from '../account';
-import { getBiggestBtcIOAddress } from '../activity/api';
+import { btcTxToActivityItem } from '../activity/api';
 import type { BtcActivityItem } from '../activity/types';
 import { useActiveBtcWallet } from '../portfolio';
 import { utxo } from './keys';
@@ -76,7 +75,7 @@ export class BroadcastedBtcTx {
 
         return new BroadcastedBtcTx(
             template.sendResult.txId,
-            Date.now(),
+            Math.floor(Date.now() / 1000),
             template.inputs.map(u => ({
                 txid: u.txid,
                 vout: u.vout,
@@ -91,7 +90,7 @@ export class BroadcastedBtcTx {
 
     private constructor(
         public readonly txId: string,
-        public readonly timestamp: number,
+        public readonly blockTime: number,
         public readonly inputs: { txid: string; vout: number; value: string; address: string }[],
         public readonly outputs: { address: string; value: string }[],
         public readonly fee: string,
@@ -115,7 +114,8 @@ export class BroadcastedBtcTx {
             })),
             blockHeight: -1,
             confirmations: 0,
-            blockTime: this.timestamp,
+            fees: this.fee,
+            blockTime: this.blockTime,
             confirmationETABlocks: 1
         };
     }
@@ -124,41 +124,7 @@ export class BroadcastedBtcTx {
         walletAddress: string,
         rate: CryptoFiatRate | null
     ): BtcActivityItem | null {
-        const btcApiTx = this.toBtcApiTx(walletAddress);
-
-        const isInitiator = !!btcApiTx.vin?.some(input => input.isOwn);
-
-        const fromAddress = getBiggestBtcIOAddress(
-            btcApiTx.vin.filter(v => Boolean(v.isOwn) === isInitiator)
-        );
-        const toAddress =
-            getBiggestBtcIOAddress(btcApiTx.vout.filter(v => Boolean(v.isOwn) === !isInitiator)) ??
-            getBiggestBtcIOAddress(btcApiTx.vout);
-
-        if (!fromAddress || !toAddress) {
-            return null;
-        }
-
-        const weiAmount = btcApiTx.vout
-            .filter(v => Boolean(v.isOwn) === !isInitiator)
-            .reduce((acc, v) => acc.plus(toBigOrZero(v.value)), toBig(0));
-
-        return {
-            type: 'transaction',
-            timestamp: this.timestamp,
-            key: btcApiTx.txid,
-            transaction: {
-                isInitiator,
-                fromAddress,
-                toAddress,
-                value: BtcAssetAmount.fromWeiAmount(weiAmount),
-                fee: this.fee
-                    ? { type: 'crypto', amount: BtcAssetAmount.fromWeiAmount(this.fee) }
-                    : undefined,
-                rate,
-                raw: btcApiTx
-            }
-        };
+        return btcTxToActivityItem(this.toBtcApiTx(walletAddress), rate);
     }
 }
 
