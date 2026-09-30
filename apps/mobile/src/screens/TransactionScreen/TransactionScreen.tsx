@@ -212,9 +212,9 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                             )}
                         </TableCell>
                     </List.Group>
-                    {isFiatFirst && showFullSentAmount && (
+                    {rate && (
                         <List.Footer>
-                            <Text variant="bodyM" color="tertiary">
+                            <Text variant="bodyM" color="tertiary" textAlign="center">
                                 {t('history.transactionInfo.fiatRateNote')}
                             </Text>
                         </List.Footer>
