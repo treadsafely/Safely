@@ -37,6 +37,7 @@ export const modalRecipe = defineSlotRecipe({
             overflow: 'hidden',
             borderRadius: 'lg',
             backgroundColor: 'background.primary',
+            outline: 'none',
             transform: 'translate(-50%, -50%) scale(0.96)',
             opacity: 0,
             transition: 'opacity 150ms, transform 150ms',
