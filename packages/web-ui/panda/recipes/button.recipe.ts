@@ -16,6 +16,11 @@ export const buttonRecipe = defineRecipe({
         textAlign: 'center',
         whiteSpace: 'nowrap',
         userSelect: 'none',
+        _focusVisible: {
+            outline: '2px solid',
+            outlineColor: 'input.focused.border',
+            outlineOffset: '2px'
+        },
 
         '& svg [fill]:not([fill="none"])': { fill: 'currentcolor' },
         '& svg [stroke]:not([stroke="none"])': { stroke: 'currentcolor' },
