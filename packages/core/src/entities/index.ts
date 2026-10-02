@@ -5,6 +5,7 @@ export * from './blockchain';
 export * from './contact';
 export * from './derivation';
 export * from './mnemonic';
+export * from './notifications';
 export * from './portfolio';
 export * from './recipient';
 export * from './errors';

@@ -114,6 +114,48 @@ export class ApiClient {
         return await this.parseAndValidate(response, schema);
     }
 
+    protected async putJson(
+        path: string,
+        body: unknown,
+        opts?: { headers?: Record<string, string> }
+    ): Promise<void>;
+    protected async putJson<T extends z.ZodTypeAny>(
+        path: string,
+        body: unknown,
+        schema: T,
+        opts?: { headers?: Record<string, string> }
+    ): Promise<z.infer<T>>;
+    protected async putJson<T extends z.ZodTypeAny>(
+        path: string,
+        body: unknown,
+        schemaOrOpts?: T | { headers?: Record<string, string> },
+        maybeOpts?: { headers?: Record<string, string> }
+    ): Promise<z.infer<T> | void> {
+        const schema = schemaOrOpts instanceof z.ZodType ? schemaOrOpts : undefined;
+        const opts = schema ? maybeOpts : (schemaOrOpts as { headers?: Record<string, string> });
+        const url = this.buildUrl(path);
+        const response = await this.performFetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...opts?.headers },
+            body: JSON.stringify(body)
+        });
+
+        if (!schema) {
+            if (!response.ok) await this.parseAndThrow(response);
+
+            return;
+        }
+
+        return await this.parseAndValidate(response, schema);
+    }
+
+    protected async deleteRequest(path: string): Promise<void> {
+        const url = this.buildUrl(path);
+        const response = await this.performFetch(url, { method: 'DELETE' });
+
+        if (!response.ok) await this.parseAndThrow(response);
+    }
+
     private async authHeaders(
         method: string,
         url: string,

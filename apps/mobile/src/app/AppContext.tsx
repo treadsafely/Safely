@@ -16,6 +16,7 @@ import { build, deviceInfo, environment, getDeviceCountryCode } from '@mobile/sh
 import { eraseLogs, logger } from '@mobile/shared/logger';
 import { useLoaderServiceContext } from '@mobile/shared/providers/loader';
 import { useToastServiceContext } from '@mobile/shared/providers/toast';
+import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
 import { useMobileLayerSynchronousGlobalStorage } from '@mobile/shared/storage';
 import { MobileNumberFormatLocale, MobileAppLinking } from '@mobile/shared/utils';
 
@@ -28,6 +29,8 @@ import {
 } from './storage';
 import { getStoreCountryAsync } from '../../modules/safely-store-country/src';
 import packageJson from '../../package.json';
+
+const pushNotifications = new ExpoPushNotifications();
 
 const security: Security = {
     check() {
@@ -106,6 +109,7 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
                         });
                     })
             },
+            pushNotifications,
             toast: {
                 show: toastService.show
             },
@@ -125,6 +129,9 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
             },
             clearAllData: async () => {
                 await CLEAR_ALL_MOBILE_STORAGE_ONLY_APP_LEVEL_USE_DANGER();
+                await pushNotifications
+                    .setWalletNames({})
+                    .catch(e => logger.error('push_wallet_names.clear_failed', e));
                 eraseLogs();
             },
             reloadApp,

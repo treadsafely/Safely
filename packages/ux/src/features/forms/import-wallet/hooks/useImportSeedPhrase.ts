@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { useLogger } from '../../../../shared';
+import { InvalidMnemonicError, MNEMONIC_TYPE, validateMnemonic } from '@safely/core';
+
+import { useLogger, useTranslate } from '../../../../shared';
 import { isValidMnemonicWord, normalizeInput } from '../utils';
 
 export interface UseImportSeedPhraseParams {
@@ -19,6 +21,7 @@ export interface UseImportSeedPhraseResult {
 export const useImportSeedPhrase = ({
     onSubmit
 }: UseImportSeedPhraseParams): UseImportSeedPhraseResult => {
+    const t = useTranslate();
     const logger = useLogger('import-seed');
     const [value, setValue] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -56,8 +59,21 @@ export const useImportSeedPhrase = ({
             return;
         }
 
+        try {
+            validateMnemonic(MNEMONIC_TYPE.BIP39, words);
+        } catch (e) {
+            if (!(e instanceof InvalidMnemonicError)) {
+                throw e;
+            }
+
+            logger.warn('seed phrase rejected: checksum mismatch');
+            setError(t('importWalletScreen.errors.invalidMnemonic'));
+
+            return;
+        }
+
         onSubmit(words);
-    }, [words, onSubmit, logger]);
+    }, [words, onSubmit, logger, t]);
 
     return {
         value,

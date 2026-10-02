@@ -2,6 +2,8 @@ import type { LinkingOptions, ParamListBase } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
+
 export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamListBase> {
     const pendingUrlRef = useRef<string | null>(null);
     const listenerRef = useRef<((url: string) => void) | null>(null);
@@ -13,7 +15,7 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
     }, [isLocked]);
 
     useEffect(() => {
-        const subscription = Linking.addEventListener('url', ({ url }) => {
+        const handleUrl = (url: string) => {
             const listener = listenerRef.current;
 
             if (isLockedRef.current || listener === null) {
@@ -23,9 +25,14 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
             }
 
             listener(url);
-        });
+        };
+        const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+        const unsubscribePush = ExpoPushNotifications.subscribeToTappedUrls(handleUrl);
 
-        return () => subscription.remove();
+        return () => {
+            subscription.remove();
+            unsubscribePush();
+        };
     }, []);
 
     useEffect(() => {

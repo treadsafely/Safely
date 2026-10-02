@@ -13,7 +13,6 @@ import {
     toPortfolioIdWatchOnly
 } from '@safely/core';
 import { PortfolioMnemonicFactory } from '@safely/core';
-import { toPortfolioId } from '@safely/core';
 import { assertUnreachable, delay, PortfolioNetworkType } from '@safely/core';
 import type {
     ISyncAccount,
@@ -39,12 +38,18 @@ import { useAccounts } from './account-state';
 import { useAccountsFactory, useActiveAccount } from './account-state';
 import { accountKey } from './keys';
 import type { SActivePortfolioSchema } from './local-storage';
-import { useClearActiveAccountLocalStorage } from './local-storage';
+import {
+    resolveActivePortfolio,
+    useAccountLocalStorageFactory,
+    useClearActiveAccountLocalStorage
+} from './local-storage';
 import { accountStore } from './sync-storage/account-store';
+import type { IPushSubscriptionSyncer } from '../../shared';
 import {
     SecretEncryptor,
     useAppContext,
     useLogger,
+    usePushSubscriptionSyncer,
     useSharedUxStorage,
     useTranslate
 } from '../../shared';
@@ -187,6 +192,21 @@ async function buildFirstPortfolio(params: {
     };
 
     return { portfolio, nextDerivingInfo };
+}
+
+async function announceOwnDisconnect(
+    accounts: SyncAccount[],
+    syncer: IPushSubscriptionSyncer | null
+): Promise<void> {
+    if (!syncer) return;
+
+    const announcing = accounts
+        .filter(
+            account => account.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE
+        )
+        .map(account => syncer.announceSyncEvent(account.accountId, 'device-disconnected'));
+
+    await Promise.allSettled(announcing);
 }
 
 async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promise<void> {
@@ -429,6 +449,7 @@ export function useConnectAccountToNewDevice() {
     });
     const { withLoader } = useLoader();
     const { qrScanner } = useAppContext();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation<string, Error, { secureEncryptedStorage: ITreeStorage }, unknown>({
@@ -447,6 +468,10 @@ export function useConnectAccountToNewDevice() {
                 );
                 const ikPubHex = newDeviceIkPub.toString('hex');
                 await waitForDeviceMeta(activeAccount.accountId, ikPubHex, scopedLogger);
+                void pushSubscriptionSyncer?.announceSyncEvent(
+                    activeAccount.accountId,
+                    'device-connected'
+                );
 
                 return ikPubHex;
             });
@@ -465,6 +490,7 @@ export function useSetActiveAccount() {
     const { set } = useSharedUxStorage('activeAccount');
     const client = useQueryClient();
     const accountsQuery = useAccountsQueryConfig();
+    const createLocalStorage = useAccountLocalStorageFactory();
     const logger = useLogger('account');
 
     return useMutation<void, Error, string>({
@@ -473,24 +499,22 @@ export function useSetActiveAccount() {
             await delay();
             await set(id);
 
-            const activePortfolioKey = accountKey.accountId(id).activePortfolio.toKey();
-            if (client.getQueryData(activePortfolioKey) === undefined) {
-                const accounts = await client.fetchQuery(accountsQuery);
-                const account = accounts.find(a => a.accountId === id);
-                if (!account) {
-                    throw new Error('Account not found');
-                }
-
-                const portfolio = account.syncProvider.get('portfolios')[0];
-                client.setQueryData<SActivePortfolioSchema>(
-                    activePortfolioKey,
-                    portfolio
-                        ? {
-                              portfolioId: toPortfolioId(portfolio).toString()
-                          }
-                        : null
-                );
+            const accounts = await client.fetchQuery(accountsQuery);
+            const account = accounts.find(a => a.accountId === id);
+            if (!account) {
+                throw new Error('Account not found');
             }
+
+            const localStorage = createLocalStorage(id);
+            const stored = await localStorage.get('activePortfolio');
+            const next = resolveActivePortfolio(stored, account.syncProvider.get('portfolios'));
+            if (next !== stored) {
+                await localStorage.set('activePortfolio', next);
+            }
+            client.setQueryData<SActivePortfolioSchema>(
+                accountKey.accountId(id).activePortfolio.toKey(),
+                next
+            );
 
             await client.refetchQueries({
                 queryKey: accountKey.list.active.toKey()
@@ -516,6 +540,7 @@ export function useDeleteAccount() {
     const accountFactory = useAccountsFactory();
     const client = useQueryClient();
     const ikPub = useCurrentDeviceIkPub();
+    const { set: setActiveAccountId } = useSharedUxStorage('activeAccount');
     const clearActiveAccountLocalStorage = useClearActiveAccountLocalStorage();
     const update = useActiveAccountSyncStorageUpdate();
     const logger = useLogger('account');
@@ -539,8 +564,10 @@ export function useDeleteAccount() {
             logger.info('account deleted', { remainingAccounts: remaining.length });
 
             if (remaining.length > 0) {
+                await setActiveAccountId(remaining[0].accountId);
                 client.setQueryData(accountKey.list.toKey(), remaining);
                 client.setQueryData(accountKey.list.active.toKey(), remaining[0]);
+                client.removeQueries({ queryKey: accountKey.accountId(account.accountId).toKey() });
             }
         }
     });
@@ -556,12 +583,15 @@ export function useEraseAllData() {
     } = useAppContext();
     const toast = useToast();
     const accounts = useAccounts();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation({
         async mutationFn() {
             scopedLogger.info('erasing all data');
 
+            await announceOwnDisconnect(accounts, pushSubscriptionSyncer);
+            await pushSubscriptionSyncer?.reset();
             await archiveOwnDevices(accounts, scopedLogger);
 
             try {

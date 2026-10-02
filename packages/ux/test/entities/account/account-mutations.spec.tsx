@@ -12,6 +12,7 @@ import {
     MnemonicResource,
     PortfolioNetworkType,
     PortfolioType,
+    PortfolioWatchOnlyBtc,
     WatchOnlySource
 } from '@safely/core';
 
@@ -398,6 +399,73 @@ describe('useSetActiveAccount (change)', () => {
         expect(stored).toBe(JSON.stringify('B'));
     });
 
+    it('overwrites a stale active portfolio left by a previous life of the same account id', async () => {
+        const a = createMockSyncAccount({ accountId: 'A' });
+        const b = createMockSyncAccount({ accountId: 'B', initial: { portfolios: [] } });
+        setupAccountState({ accounts: [a, b], account: a });
+        setupSyncedDevice();
+
+        const queryClient = createTestQueryClient();
+        queryClient.setQueryData(accountKey.list.active.toKey(), a);
+        queryClient.setQueryData(accountKey.accountId('B').activePortfolio.toKey(), {
+            portfolioId: 'from-previous-life'
+        });
+
+        const { result } = renderHookWithProviders(() => useSetActiveAccount(), {
+            appContext: createTestAppContext(),
+            queryClient
+        });
+
+        await act(async () => {
+            await result.current.mutateAsync('B');
+        });
+
+        expect(queryClient.getQueryData(accountKey.accountId('B').activePortfolio.toKey())).toBe(
+            null
+        );
+    });
+
+    it('restores the selection stored for the account and seeds the cache with it', async () => {
+        const watched = PortfolioWatchOnlyBtc.create(
+            PortfolioWatchOnlyBtc.resolveUserInput(
+                'bc1qcleg3jtmvlar6cgm24vpq6n8ew3d0hame0av83',
+                PortfolioNetworkType.MAINNET
+            ),
+            { name: 'Watched', icon: { type: 'emoji', value: '👀' } }
+        );
+        const a = createMockSyncAccount({ accountId: 'A' });
+        const b = createMockSyncAccount({
+            accountId: 'B',
+            initial: { portfolios: [watched.toJSON()] }
+        });
+        setupAccountState({ accounts: [a, b], account: a });
+        setupSyncedDevice();
+
+        const selection = { portfolioId: watched.id.toString(), derivationIndex: 2 };
+        const appContext = createTestAppContext();
+        await appContext.storage.ux.regular
+            .child(['account', 'B'])
+            .setItem('activePortfolio', JSON.stringify(selection));
+        const queryClient = createTestQueryClient();
+        queryClient.setQueryData(accountKey.list.active.toKey(), a);
+        queryClient.setQueryData(accountKey.accountId('B').activePortfolio.toKey(), {
+            portfolioId: 'from-previous-life'
+        });
+
+        const { result } = renderHookWithProviders(() => useSetActiveAccount(), {
+            appContext,
+            queryClient
+        });
+
+        await act(async () => {
+            await result.current.mutateAsync('B');
+        });
+
+        expect(queryClient.getQueryData(accountKey.accountId('B').activePortfolio.toKey())).toEqual(
+            selection
+        );
+    });
+
     it('throws when target accountId is not in the list', async () => {
         const a = createMockSyncAccount({ accountId: 'A' });
         setupAccountState({ accounts: [a], account: a });
@@ -468,6 +536,42 @@ describe('useDeleteAccount (remove)', () => {
         expect(listCache).toEqual([b]);
         const activeCache = queryClient.getQueryData(accountKey.list.active.toKey());
         expect(activeCache).toBe(b);
+
+        const storedActive = await appContext.storage.ux.regular
+            .child('shared')
+            .getItem('activeAccount');
+        expect(storedActive).toBe(JSON.stringify('survivor'));
+    });
+
+    it('removes the cached queries of the deleted account', async () => {
+        const a = createMockSyncAccount({ accountId: 'to-delete' });
+        const b = createMockSyncAccount({ accountId: 'survivor' });
+        setupAccountState({ accounts: [a, b], account: a, factory: createFactoryStub() });
+        setupSyncedDevice({ ikPub: 'MY_IK_HEX' });
+
+        const appContext = createTestAppContext();
+        const queryClient = createTestQueryClient();
+        queryClient.setQueryData(accountKey.list.toKey(), [a, b]);
+        queryClient.setQueryData(accountKey.accountId('to-delete').activePortfolio.toKey(), {
+            portfolioId: 'stale'
+        });
+
+        const { result } = renderHookWithProviders(() => useDeleteAccount(), {
+            appContext,
+            queryClient
+        });
+
+        await act(async () => {
+            await result.current.mutateAsync(
+                appContext.storage.sync.encrypted as Parameters<
+                    typeof result.current.mutateAsync
+                >[0]
+            );
+        });
+
+        expect(
+            queryClient.getQueryData(accountKey.accountId('to-delete').activePortfolio.toKey())
+        ).toBeUndefined();
     });
 
     it('keeps stale account queries in cache when no accounts remain', async () => {
@@ -560,10 +664,12 @@ describe('useConnectAccountToNewDevice (add device)', () => {
         const qrScan = vi.fn(async () => 'ZHVtbXk=');
         const appContext = createTestAppContext({ qrScan });
 
-        accountStoreActions.attachSnapshot({
-            accountId: account.accountId,
-            devicesMeta: {}
-        } as AccountStoreData);
+        accountStoreActions.attachAll([
+            {
+                accountId: account.accountId,
+                devicesMeta: {}
+            } as AccountStoreData
+        ]);
         (account.connectToNewDevice as Mock).mockImplementationOnce(async () => {
             setTimeout(() => {
                 accountStoreActions.setSlot(account.accountId, 'devicesMeta', {

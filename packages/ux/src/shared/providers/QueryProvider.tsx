@@ -36,8 +36,7 @@ export function createQueryClient(logger: Logger): QueryClient {
             queries: {
                 networkMode: 'offlineFirst',
                 gcTime: CACHE_LIVE_TIME,
-                staleTime: QUERIES_STALE_TIME.DEFAULT,
-                experimental_prefetchInRender: true
+                staleTime: QUERIES_STALE_TIME.DEFAULT
             },
             mutations: {
                 networkMode: 'offlineFirst'

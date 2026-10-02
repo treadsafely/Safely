@@ -2,47 +2,30 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { FC, PropsWithChildren } from 'react';
 import { useEffect } from 'react';
 
-import type { ISyncAccount } from '@safely/sync';
-import type { SyncedStorageStructure } from '@safely/sync-storage';
-
 import { accountStore, accountStoreActions, SYNCED_SLOT_KEYS } from './account-store';
-import { AccountStoreTransform } from './account-store-transform';
-import { SecretEncryptor, useAppContext } from '../../../shared';
+import { useAccountStoreTransformFactory, useAttachAccountsToStore } from './useAccountStoreSync';
 import { useAppState } from '../../../shared/app/useAppState';
-import { useLedgerSessionPort } from '../../ledger';
 import { useDeviceSyncStateChecker } from '../../synced-device/device-sync-state';
 import { useAccounts } from '../account-state';
 import { accountKey } from '../keys';
 
 function useSyncObserver() {
-    const { storage } = useAppContext();
     const accounts = useAccounts();
     const queryClient = useQueryClient();
-    const ledgerSessionPort = useLedgerSessionPort();
+    const createTransform = useAccountStoreTransformFactory();
+    const attachAccountsToStore = useAttachAccountsToStore();
 
     useEffect(() => {
-        if (!accounts || accounts.length === 0) {
+        if (accounts.length === 0) {
             accountStoreActions.clear();
             return;
         }
 
-        accountStoreActions.retainAccounts(new Set(accounts.map(a => a.accountId)));
+        const unsubscribes = accounts.flatMap(account => {
+            const transform = createTransform(account);
 
-        const unsubscribes: (() => void)[] = [];
-
-        accounts.forEach((account: ISyncAccount<SyncedStorageStructure>) => {
-            const transform = new AccountStoreTransform(
-                () =>
-                    new SecretEncryptor(account.secretEncryptor, storage.sync.getSecureEncrypted()),
-                () => ledgerSessionPort
-            );
-
-            accountStoreActions.attachSnapshot(
-                transform.restoreAll(account.accountId, account.syncProvider.getAll())
-            );
-
-            SYNCED_SLOT_KEYS.forEach(key => {
-                const unsub = account.syncProvider.onChange(key, () => {
+            return SYNCED_SLOT_KEYS.map(key =>
+                account.syncProvider.onChange(key, () => {
                     const slotJson = account.syncProvider.get(key);
                     const prev = accountStore.getState().accountsData.get(account.accountId);
                     const next = transform.restore(key, slotJson, prev ?? null);
@@ -55,15 +38,16 @@ function useSyncObserver() {
                                 .activePortfolio.toKey()
                         });
                     }
-                });
-                unsubscribes.push(unsub);
-            });
+                })
+            );
         });
+
+        attachAccountsToStore(accounts);
 
         return () => {
             unsubscribes.forEach(fn => fn());
         };
-    }, [accounts, storage.sync, queryClient, ledgerSessionPort]);
+    }, [accounts, queryClient, createTransform, attachAccountsToStore]);
 }
 
 function useSyncRestartOnForeground() {

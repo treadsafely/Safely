@@ -1,12 +1,6 @@
 import { useMemo } from 'react';
 
-import {
-    aggregateFlags,
-    allActualised,
-    minUpdatedAt,
-    usePromises,
-    useRefetchAll
-} from '../derived-helpers';
+import { aggregateFlags, allActualised, minUpdatedAt, useRefetchAll } from '../derived-helpers';
 import type { DerivedQueryResult } from '../types';
 
 export type DataTuple<Qs extends readonly DerivedQueryResult[]> = {
@@ -41,13 +35,6 @@ export function useDerivedQuery<
 
     const refetch = useRefetchAll(queries) as () => Promise<unknown[]>;
 
-    const promises = usePromises(queries);
-    const promise = useMemo(async () => {
-        const resolved = await Promise.all(promises);
-        const computed = queryFn(resolved as DataTuple<Qs>);
-        return select ? select(computed) : (computed as unknown as TData);
-    }, [queryFn, select, ...promises]);
-
     return useMemo(
         () => ({
             data,
@@ -58,8 +45,7 @@ export function useDerivedQuery<
             error,
             dataUpdatedAt,
             isActualised,
-            refetch,
-            promise
+            refetch
         }),
         [
             data,
@@ -70,8 +56,7 @@ export function useDerivedQuery<
             error,
             dataUpdatedAt,
             isActualised,
-            refetch,
-            promise
+            refetch
         ]
     );
 }

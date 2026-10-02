@@ -384,7 +384,7 @@
             "contactsCount_one": "{{count}} контакт",
             "contactsCount_few": "{{count}} контакта",
             "contactsCount_many": "{{count}} контактов",
-            "accountId": "Убедитесь, что ID аккаунтов совпадают: {{id}}",
+            "accountId": "Для дополнительной проверки сравните ID аккаунта на обоих устройствах: {{id}}",
             "accountIdCopied": "ID аккаунта скопирован",
             "unknownDevice": "Новое устройство",
             "viewLinkedDevices": "Привязанные устройства"
@@ -834,7 +834,7 @@
             "sender": "Отправитель",
             "fee": "Комиссия сети",
             "hash": "Транзакция",
-            "fiatRateNote": "Суммы в фиате рассчитаны по текущему курсу.",
+            "fiatRateNote": "Сумма в фиате рассчитана по курсу на момент транзакции.",
             "status": {
                 "title": "Статус",
                 "pending": {

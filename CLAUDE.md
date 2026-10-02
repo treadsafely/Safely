@@ -20,9 +20,9 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
 Platform capabilities reach the domain through DI interfaces from `@safely/core` (`src/di/`:
-`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`). Implementations live in the app,
-never in a package: a package that needs a native API declares an interface instead of importing the
-platform.
+`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`, `IPushNotifications`).
+Implementations live in the app, never in a package: a package that needs a native API declares an
+interface instead of importing the platform.
 
 ## Commands
 

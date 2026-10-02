@@ -25,7 +25,7 @@ export function useRestrictionGuard() {
         if (!navigationRef.isReady()) return;
 
         const rootState = navigationRef.getRootState();
-        const rootRoute = rootState.routes[rootState.index]?.name;
+        const rootRoute = rootState?.routes[rootState.index]?.name;
 
         if (rootRoute === undefined) return;
 

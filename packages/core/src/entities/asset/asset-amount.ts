@@ -253,8 +253,7 @@ export class CryptoAssetAmount<T extends CryptoAsset = CryptoAsset> extends Base
 
     constructor(
         params:
-            | { relativeAmount: BigSource; asset: T }
-            | { weiAmount: bigint | string | Big; asset: T }
+            { relativeAmount: BigSource; asset: T } | { weiAmount: bigint | string | Big; asset: T }
     ) {
         const asset = params.asset;
 

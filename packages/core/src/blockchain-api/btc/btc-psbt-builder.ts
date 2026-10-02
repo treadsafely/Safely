@@ -38,8 +38,7 @@ export class BtcPsbtBuilder {
     private build(
         { inputs, outputs }: PsbtRequest,
         options:
-            | { forEstimation: true }
-            | { forEstimation: false; prevTxs?: Map<string, Uint8Array> }
+            { forEstimation: true } | { forEstimation: false; prevTxs?: Map<string, Uint8Array> }
     ): Transaction {
         const tx = new Transaction();
 

@@ -28,7 +28,7 @@ export type BottomSheetRef = {
     close: () => void;
 };
 
-export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(function BottomSheet(
+export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(function (
     {
         children,
         containerStyle,

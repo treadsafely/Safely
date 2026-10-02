@@ -74,11 +74,11 @@ export default [
        requires type information"). Keep them on the TS sources only. */
     ...tseslint.configs.recommendedTypeChecked.map(config => ({
         ...config,
-        files: ['**/*.ts', '**/*.tsx']
+        files: ['**/*.ts', '**/*.mts', '**/*.tsx']
     })),
 
     {
-        files: ['**/*.ts', '**/*.tsx'],
+        files: ['**/*.ts', '**/*.mts', '**/*.tsx'],
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
@@ -101,7 +101,7 @@ export default [
                node_modules — RN ships Flow .js files the TS parser chokes on */
             'import/ignore': ['node_modules'],
             'import/parsers': {
-                '@typescript-eslint/parser': ['.ts', '.tsx']
+                '@typescript-eslint/parser': ['.ts', '.mts', '.tsx']
             },
             'import/resolver': {
                 typescript: {
@@ -351,7 +351,7 @@ export default [
 
     /* prettier */
     {
-        files: ['**/*.{js,cjs,mjs,jsx,ts,tsx}'],
+        files: ['**/*.{js,cjs,mjs,jsx,ts,mts,tsx}'],
         plugins: { prettier: prettierPlugin },
         rules: {
             'prettier/prettier': 'error'
