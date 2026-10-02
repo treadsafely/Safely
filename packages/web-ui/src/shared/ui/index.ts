@@ -10,6 +10,7 @@ export * from './Icon';
 export * from './Input';
 export * from './List';
 export * from './LockoutContent';
+export * from './RootErrorBoundary';
 export * from './Modal';
 export * from './PageHeader';
 export * from './Passcode';

@@ -59,6 +59,12 @@ out of a `DesktopPlatform` implementation, whose shape this app declares itself
 are ours (`src/renderer/platform/unsupported.ts`), because the extension will lack a different set.
 The extension will repeat this wiring with its own platform.
 
+`AppProviders` also mounts `RootErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
+`FatalErrorPage` as the fallback — restart, or erase all data and restart, the recovery path
+`desktop-secret-store.md` requires when the keychain and `regular.json` disagree. It only works
+because `useSuspenseQuery` in `@safely/ux` rethrows a failed query instead of re-suspending into a
+refetch: before that, a missing keychain item meant a black screen and a retry loop, not an error.
+
 **The renderer's platform is a module-level value, not something a component creates.**
 `src/renderer/platform/index.ts` builds it once while the module graph loads, and the logger
 (`src/renderer/logger.ts`), the i18next instance (`src/renderer/i18n.ts`), the security storage
