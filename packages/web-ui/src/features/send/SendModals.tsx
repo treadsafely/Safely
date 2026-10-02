@@ -8,4 +8,4 @@ export type SendModalsProps = {
 };
 
 export const SendModals: FC<SendModalsProps> = ({ flow }) =>
-    flow.isOpen ? <SendModal onClose={flow.onClose} /> : null;
+    flow.isOpen ? <SendModal initialValues={flow.initialValues} onClose={flow.onClose} /> : null;

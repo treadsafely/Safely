@@ -13,12 +13,14 @@ export type MainContentProps = {
     selectedActivityKey?: string;
     onSend: () => void;
     onReceive: () => void;
+    onScan: () => void;
     onSelectActivity: (activity: ActivityItem) => void;
     onPortfolioChange: () => void;
 };
 
 export const MainContent: FC<MainContentProps> = props => {
-    const { selectedActivityKey, onSend, onReceive, onSelectActivity, onPortfolioChange } = props;
+    const { selectedActivityKey, onSend, onReceive, onScan, onSelectActivity, onPortfolioChange } =
+        props;
 
     const portfolioId = useActivePortfolio().id.toString();
 
@@ -28,7 +30,7 @@ export const MainContent: FC<MainContentProps> = props => {
         <>
             <div className={headerStyles}>
                 <Header />
-                <Balance onSend={onSend} onReceive={onReceive} />
+                <Balance onSend={onSend} onReceive={onReceive} onScan={onScan} />
             </div>
 
             <History

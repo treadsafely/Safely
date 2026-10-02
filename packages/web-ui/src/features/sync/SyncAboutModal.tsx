@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
 
@@ -38,9 +38,25 @@ export const SyncAboutModal: FC<SyncAboutModalProps> = ({ onClose }) => {
         setIndex(current => current + 1);
     };
 
+    const goBack = (): void => setIndex(current => Math.max(current - 1, 0));
+
+    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            goNext();
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            goBack();
+        }
+    };
+
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
-            <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
+            <Modal.Popup
+                className={popupStyles}
+                closeLabel={t('common.close')}
+                onKeyDown={onKeyDown}
+            >
                 <img src={step.cover} alt="" className={coverStyles} />
 
                 <div className={panelStyles}>
@@ -69,11 +85,7 @@ export const SyncAboutModal: FC<SyncAboutModalProps> = ({ onClose }) => {
 
                     <div className={footerStyles}>
                         {index > 0 && (
-                            <Button
-                                variant="secondary"
-                                size="small"
-                                onClick={() => setIndex(current => current - 1)}
-                            >
+                            <Button variant="secondary" size="small" onClick={goBack}>
                                 {t('common.back')}
                             </Button>
                         )}
