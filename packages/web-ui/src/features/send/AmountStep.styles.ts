@@ -22,7 +22,7 @@ export const boxStyles = css({
         borderColor: 'input.focused.border',
         boxShadow: 'inset 0 0 0 0.5px token(colors.input.focused.border)'
     },
-    '&[data-invalid]': {
+    '&[data-invalid], &[data-invalid]:focus-within': {
         borderColor: 'input.error.border',
         boxShadow: 'inset 0 0 0 0.5px token(colors.input.error.border)'
     }
