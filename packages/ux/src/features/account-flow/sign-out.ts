@@ -19,7 +19,7 @@ export function resolveSignOutPlan(params: {
 
     return {
         isSynced,
-        shouldDeleteAccount: !isLastAccount || isSynced,
+        shouldDeleteAccount: !isLastAccount,
         shouldEraseAllData: isLastAccount,
         toastKey: isLastAccount ? null : 'settings.signOutAccount.toastAccountRemoved'
     };

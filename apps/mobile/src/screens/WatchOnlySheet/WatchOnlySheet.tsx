@@ -5,7 +5,8 @@ import { View } from 'react-native';
 
 import { PortfolioNetworkType } from '@safely/core';
 
-import { BottomSheet, Button, Text, useBottomSheet, useCloseOnReturn } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Text, useBottomSheet, useCloseOnReturn } from '@mobile/shared/ui';
 
 import { styles } from './WatchOnlySheet.styles';
 
@@ -52,8 +53,8 @@ const WatchOnlyContent = () => {
 
 export const WatchOnlySheet = () => {
     return (
-        <BottomSheet>
+        <BottomSheetScreen>
             <WatchOnlyContent />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

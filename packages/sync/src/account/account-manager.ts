@@ -2,13 +2,13 @@ import type { AssertVersionHList, HCons, StorageVersion } from '@safely/slottree
 
 import type { ISyncAccount } from './I-sync-account';
 import { getSyncAccountStorage } from './sync-account-storage';
-import { createSyncContainer, type SyncApiImplementationsFactory } from '../sync-container';
+import type { SyncContainerConfig } from '../sync-container';
+import { createSyncContainer } from '../sync-container';
 import type { CreateAccountService } from './create-account-service';
 import { SyncAccount } from './sync-account';
 import type { SyncAccountRepository } from './sync-account-repository';
-import type { Configuration } from '../api/generated';
 import type { ITreeStorage } from '../I-storage';
-import type { Logger, SyncFlowLogger } from '../logger';
+import type { SyncFlowLogger } from '../logger';
 import type { OnboardingMessagePayload } from '../onboarding/onboarding-message-payload';
 import { OfflineSyncProvider } from '../sync-provider/offline-sync-provider';
 import { OnlineSyncProvider } from '../sync-provider/online-sync-provider';
@@ -22,11 +22,8 @@ export class AccountManager<Latest extends StorageVersion, Rest> {
         private readonly encryptedStorage: ITreeStorage,
         private readonly syncAccountIdRepository: SyncAccountRepository,
         private readonly versions: HCons<Latest, Rest> & AssertVersionHList<HCons<Latest, Rest>>,
-        private readonly apiConfiguration: Configuration,
-        private readonly apiImplementationsFactory: SyncApiImplementationsFactory | undefined,
         private readonly createAccountService: CreateAccountService<Latest, Rest>,
-        private readonly pollingTimeout: number,
-        private readonly logger: Logger
+        private readonly syncContainerConfig: SyncContainerConfig
     ) {}
 
     public async getAccounts(): Promise<ISyncAccount<Latest>[]> {
@@ -76,10 +73,7 @@ export class AccountManager<Latest extends StorageVersion, Rest> {
             versions: this.versions,
             storage,
             encryptedStorage,
-            apiConfiguration: this.apiConfiguration,
-            pollingTimeout: this.pollingTimeout,
-            apiImplementationsFactory: this.apiImplementationsFactory,
-            logger: this.logger
+            ...this.syncContainerConfig
         });
 
         const syncProvider = accountInfo.online

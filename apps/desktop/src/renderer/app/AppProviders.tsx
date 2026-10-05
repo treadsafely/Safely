@@ -32,7 +32,11 @@ import {
 } from '../features';
 import { logger } from '../logger';
 import { platform } from '../platform';
-import { unsupportedLedgerSessionPort, unsupportedLedgerTransport } from '../platform/unsupported';
+import {
+    unsupportedLedgerSessionPort,
+    unsupportedLedgerTransport,
+    unsupportedPushNotifications
+} from '../platform/unsupported';
 import { desktopLayerEncryptedStorage } from '../shared';
 
 export interface AppProvidersProps {
@@ -122,6 +126,7 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
             i18n: { language, t },
             logger,
             ledgerTransport: platform.ledgerTransport ?? unsupportedLedgerTransport,
+            pushNotifications: unsupportedPushNotifications,
             security: securityGate,
             clearAllData: () => platform.clearAllData(),
             reloadApp: () => platform.reloadApp(),

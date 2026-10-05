@@ -24,10 +24,10 @@ describe('resolveSignOutPlan', () => {
         });
     });
 
-    it('deletes the last synced account on the server and then wipes the device', () => {
+    it('wipes the device for the last synced account without a separate server delete', () => {
         expect(resolveSignOutPlan({ isLastAccount: true, isSynced: true })).toEqual({
             isSynced: true,
-            shouldDeleteAccount: true,
+            shouldDeleteAccount: false,
             shouldEraseAllData: true,
             toastKey: null
         });

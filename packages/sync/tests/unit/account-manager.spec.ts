@@ -15,6 +15,7 @@ import { generateAccountID, generateMasterKey, initializeSyncAccount } from '../
 import { Logger } from '../../src/logger/logger';
 import { SyncFlowLogger } from '../../src/logger/sync-flow-logger';
 import { QRMessageCodec, QRMessageOperation } from '../../src/onboarding/onboarding-codec';
+import type { SyncContainerConfig } from '../../src/sync-container';
 import { InMemStorage } from '../mocks/server-mock/storage';
 import { SyncServer } from '../mocks/server-mock/sync-server';
 import { createSyncServerApiImplementations } from '../mocks/server-mock/sync-server-api-implementations';
@@ -63,26 +64,26 @@ async function createInitializedAccountManager(server = new SyncServer()) {
     const apiConfiguration = new Configuration({ basePath: 'mock://sync' });
     const apiImplementationsFactory = (requesterIk: Buffer) =>
         createSyncServerApiImplementations(server, requesterIk);
+    const syncContainerConfig: SyncContainerConfig = {
+        logger,
+        apiConfiguration,
+        pollingTimeout: 1,
+        apiImplementationsFactory
+    };
     const createAccountService = new CreateAccountService(
         storage,
         encryptedStorage,
         repository,
         knownVersions,
-        apiConfiguration,
-        1,
-        apiImplementationsFactory,
-        logger
+        syncContainerConfig
     );
     const manager = new AccountManager(
         storage,
         encryptedStorage,
         repository,
         knownVersions,
-        apiConfiguration,
-        apiImplementationsFactory,
         createAccountService,
-        1,
-        logger
+        syncContainerConfig
     );
 
     return {

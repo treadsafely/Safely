@@ -1,6 +1,9 @@
 import { StyleSheet } from 'react-native-unistyles';
 
 export const styles = StyleSheet.create((theme, rt) => ({
+    captureScreen: {
+        flex: 1
+    },
     content: {
         flex: 1,
         paddingHorizontal: theme.spacing[16],

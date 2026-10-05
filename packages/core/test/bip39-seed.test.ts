@@ -26,7 +26,13 @@ describe('mnemonicToSeed', () => {
 
     it('applies BIP39 framing and delegates to globalThis.safelyCrypto.pbkdf2Sha512', async () => {
         const expected = new Uint8Array(64).fill(7);
-        const spy = vi.fn<SafelyCrypto['pbkdf2Sha512']>().mockResolvedValue(expected);
+        // The password bytes are zeroed once the KDF resolves, so snapshot them
+        // while the call is still in flight rather than reading the retained arg.
+        let passwordText: string | undefined;
+        const spy = vi.fn<SafelyCrypto['pbkdf2Sha512']>().mockImplementation(password => {
+            passwordText = Buffer.from(password).toString('utf8');
+            return Promise.resolve(expected);
+        });
         const previous = globalThis.safelyCrypto;
         globalThis.safelyCrypto = { pbkdf2Sha512: spy };
 
@@ -36,10 +42,11 @@ describe('mnemonicToSeed', () => {
             expect(seed).toBe(expected);
             expect(spy).toHaveBeenCalledTimes(1);
             const [password, salt, iterations, keyLength] = spy.mock.calls[0];
-            expect(Buffer.from(password).toString('utf8')).toBe('abandon about');
+            expect(passwordText).toBe('abandon about');
             expect(Buffer.from(salt).toString('utf8')).toBe('mnemonic');
             expect(iterations).toBe(2048);
             expect(keyLength).toBe(64);
+            expect(password.every(byte => byte === 0)).toBe(true);
         } finally {
             globalThis.safelyCrypto = previous;
         }

@@ -70,6 +70,12 @@ export function isTombstoneSlot(slot: Slot | undefined): slot is TombstoneSlot {
     return slot !== undefined && slot.s === SlotKind.Tombstone;
 }
 
+export function assertValidTimestamp(timestamp: unknown): asserts timestamp is number {
+    if (typeof timestamp !== 'number' || !Number.isSafeInteger(timestamp) || timestamp < 0) {
+        throw new Error('Slot timestamp must be a non-negative safe integer');
+    }
+}
+
 export function isOrderedArrayOrderIndex(value: unknown): value is number {
     return (
         typeof value === 'number' &&

@@ -1,4 +1,4 @@
-import type { AssertVersionHList, HCons, StorageVersion } from '@safely/slottree';
+import type { AssertVersionHList, Clock, HCons, StorageVersion } from '@safely/slottree';
 
 import { ApiSigner } from './api/api-signer';
 import { AccountsApi, type Configuration, SnapshotsApi } from './api/generated';
@@ -70,6 +70,14 @@ export type SyncContainer<Latest extends StorageVersion, Rest> = {
     secretEncryptor: SecretEncryptor;
 };
 
+export type SyncContainerConfig = {
+    logger: Logger;
+    apiConfiguration?: Configuration;
+    pollingTimeout: number;
+    apiImplementationsFactory?: SyncApiImplementationsFactory;
+    crdtClock?: Clock;
+};
+
 export async function createSyncContainer<Latest extends StorageVersion, Rest>(opts: {
     accountId: string;
     versions: HCons<Latest, Rest> & AssertVersionHList<HCons<Latest, Rest>>;
@@ -79,6 +87,7 @@ export async function createSyncContainer<Latest extends StorageVersion, Rest>(o
     apiConfiguration?: Configuration;
     pollingTimeout: number;
     apiImplementationsFactory?: SyncApiImplementationsFactory;
+    crdtClock?: Clock;
 }): Promise<SyncContainer<Latest, Rest>> {
     const keyRepository = await EncryptedKeyRepository.initialize(opts.encryptedStorage);
     const syncStateRepository = new SyncStateRepository(opts.storage, opts.logger);
@@ -98,13 +107,20 @@ export async function createSyncContainer<Latest extends StorageVersion, Rest>(o
         apiImplementations?.snapshotsSse ??
         new SnapshotsSse(syncStateRepository, snapshotsApi, apiSigner, opts.logger);
 
-    const crdtRepository = new CrdtRepository(opts.storage, ikService.getPub(), opts.versions);
+    const crdtRepository = new CrdtRepository(
+        opts.storage,
+        ikService.getPub(),
+        opts.versions,
+        'crdt',
+        opts.crdtClock
+    );
     const yManager = await CrdtManager.create(crdtRepository);
     const deviceCrdtRepository = new CrdtRepository<tDevicesLatest, tDevicesRest>(
         opts.storage,
         ikService.getPub(),
         DevicesVersions,
-        'devices_crdt'
+        'devices_crdt',
+        opts.crdtClock
     );
     const deviceYManager = await CrdtManager.create<tDevicesLatest, tDevicesRest>(
         deviceCrdtRepository

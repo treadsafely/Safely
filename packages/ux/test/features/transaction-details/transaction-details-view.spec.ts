@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BtcApiTx, BtcAsset, CryptoAssetAmount as CryptoAssetAmountType } from '@safely/core';
+import type {
+    CryptoFiatRate, BtcApiTx, BtcAsset, CryptoAssetAmount as CryptoAssetAmountType } from '@safely/core';
 import {
     BTC_ASSET,
     CryptoAssetAmount,
@@ -52,7 +53,6 @@ const baseContext: TransactionDetailsContext = {
     t,
     confirmedAtFormatter: stubFormatter(CONFIRMED_AT_LABEL),
     numberFormatter,
-    rate: null,
     showFullSentAmount: false,
     amountOrder: 'crypto',
     status,
@@ -75,6 +75,7 @@ const btcActivity = (params: {
     isInitiator: boolean;
     blockHeight?: number;
     fee?: CryptoAssetAmountType<BtcAsset>;
+    rate?: CryptoFiatRate;
 }): BtcActivityItem => ({
     type: 'transaction',
     timestamp: TIMESTAMP,
@@ -85,6 +86,7 @@ const btcActivity = (params: {
         toAddress: COUNTERPARTY_ADDRESS,
         value: btcAmount(0.23),
         fee: params.fee && { type: 'crypto', amount: params.fee },
+        rate: params.rate ?? null,
         raw: rawTx(params.blockHeight ?? 100)
     }
 });
@@ -126,7 +128,7 @@ describe('buildTransactionDetailsView', () => {
     });
 
     it('leads with the fiat amount and demotes the crypto one', () => {
-        const view = buildView(btcActivity({ isInitiator: true }), { rate, amountOrder: 'fiat' });
+        const view = buildView(btcActivity({ isInitiator: true, rate }), { amountOrder: 'fiat' });
 
         expect(view.primaryAmount).toBe(
             btcAmount(0.23).convert(rate).format(numberFormatter, { currencyDisplay: 'code' })
@@ -135,7 +137,7 @@ describe('buildTransactionDetailsView', () => {
     });
 
     it('marks the crypto amount approximate when it is the secondary one', () => {
-        const view = buildView(btcActivity({ isInitiator: true }), { rate });
+        const view = buildView(btcActivity({ isInitiator: true, rate }));
 
         expect(view.primaryAmount).toBe(btcAmount(0.23).format(numberFormatter));
         expect(view.secondaryAmount).toBe(
@@ -143,10 +145,9 @@ describe('buildTransactionDetailsView', () => {
         );
     });
 
-    it('adds the fee to a sent amount and notes the rate when full precision is on', () => {
+    it('adds the fee to a sent amount and notes the historical rate', () => {
         const fee = btcAmount(0.0000077);
-        const view = buildView(btcActivity({ isInitiator: true, fee }), {
-            rate,
+        const view = buildView(btcActivity({ isInitiator: true, fee, rate }), {
             amountOrder: 'fiat',
             showFullSentAmount: true
         });

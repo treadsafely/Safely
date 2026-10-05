@@ -5,7 +5,8 @@ import { View } from 'react-native';
 
 import { resolveSignOutCopy, useHasActivePeer } from '@safely/ux';
 
-import { BottomSheet, Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { styles } from './SignOutAccountSheet.styles';
 
@@ -78,8 +79,8 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
 
 export const SignOutAccountSheet = (props: SignOutAccountSheetProps) => {
     return (
-        <BottomSheet>
+        <BottomSheetScreen>
             <SignOutAccountContent {...props.route.params} />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

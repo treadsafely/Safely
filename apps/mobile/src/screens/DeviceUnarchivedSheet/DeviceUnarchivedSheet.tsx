@@ -2,7 +2,8 @@ import type { StaticScreenProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { BottomSheet, Button, Checkmark96, Icon, Text, useBottomSheet } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Checkmark96, Icon, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { styles } from './DeviceUnarchivedSheet.styles';
 
@@ -40,8 +41,8 @@ const DeviceUnarchivedContent = ({ archivedFromDeviceName }: ArchivedFromDeviceN
 
 export const DeviceUnarchivedSheet = (props: DeviceUnarchivedSheetProps) => {
     return (
-        <BottomSheet shortHeader>
+        <BottomSheetScreen shortHeader>
             <DeviceUnarchivedContent {...props.route.params} />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

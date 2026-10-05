@@ -13,19 +13,39 @@ export class BtcBip32NodeProducer implements IBtcNodeProducer {
         private readonly derivationIndex: number
     ) {}
 
-    private getDerivationPath(): string {
-        return new BtcDerivationPath(this.walletType, this.network, this.derivationIndex).account();
+    private getDerivationIndexes(): number[] {
+        return new BtcDerivationPath(
+            this.walletType,
+            this.network,
+            this.derivationIndex
+        ).accountIndexes();
     }
 
     public async getPortfolioDerivation(): Promise<HDKey> {
         const seed = await this.seedProducer.getSeed();
-        const root = HDKey.fromMasterSeed(seed);
+        const chain: HDKey[] = [];
 
-        const child = root.derive(this.getDerivationPath());
+        try {
+            chain.push(HDKey.fromMasterSeed(seed));
 
-        if (!child.privateKey || !child.publicKey) {
-            throw new Error('Derived node has no private key (invalid derivation or seed).');
+            for (const index of this.getDerivationIndexes()) {
+                const parent = chain[chain.length - 1];
+
+                chain.push(parent.deriveChild(index));
+                parent.wipePrivateData();
+            }
+
+            const account = chain[chain.length - 1];
+
+            if (!account.privateKey || !account.publicKey) {
+                throw new Error('Derived node has no private key (invalid derivation or seed).');
+            }
+            return account;
+        } catch (error) {
+            chain.forEach(node => node.wipePrivateData());
+            throw error;
+        } finally {
+            seed.fill(0);
         }
-        return child;
     }
 }

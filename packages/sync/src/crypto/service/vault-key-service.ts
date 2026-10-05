@@ -8,17 +8,26 @@ export class VaultKeyService {
     public async encrypt(data: Buffer): Promise<{ ciphertext: Buffer; nonce: Buffer }> {
         const nonce = crypto.getRandomValues(new Uint8Array(24));
 
-        const encryptionKey = await this.keyRepository.getVaultKey();
-        const ciphertext = xchacha20poly1305(encryptionKey, nonce).encrypt(data);
-        encryptionKey.fill(0);
-
-        return { ciphertext: Buffer.from(ciphertext), nonce: Buffer.from(nonce) };
+        return await this.withVaultKey(key => {
+            const ciphertext = xchacha20poly1305(key, nonce).encrypt(data);
+            return { ciphertext: Buffer.from(ciphertext), nonce: Buffer.from(nonce) };
+        });
     }
 
     public async decrypt(ciphertext: Buffer, nonce: Buffer): Promise<Buffer> {
-        const decryptionKey = await this.keyRepository.getVaultKey();
-        const decrypted = xchacha20poly1305(decryptionKey, nonce).decrypt(ciphertext);
-        decryptionKey.fill(0);
-        return Buffer.from(decrypted);
+        return await this.withVaultKey(key => {
+            const decrypted = xchacha20poly1305(key, nonce).decrypt(ciphertext);
+            return Buffer.from(decrypted);
+        });
+    }
+
+    private async withVaultKey<T>(operation: (key: Buffer) => T): Promise<T> {
+        const key = await this.keyRepository.getVaultKey();
+
+        try {
+            return operation(key);
+        } finally {
+            key.fill(0);
+        }
     }
 }

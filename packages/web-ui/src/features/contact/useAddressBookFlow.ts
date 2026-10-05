@@ -4,9 +4,7 @@ import type { Contact } from '@safely/core';
 import { useDeleteContact, useErrorToast } from '@safely/ux';
 
 type AddressBookDraft =
-    | { kind: 'create' }
-    | { kind: 'edit'; contact: Contact }
-    | { kind: 'delete'; contact: Contact };
+    { kind: 'create' } | { kind: 'edit'; contact: Contact } | { kind: 'delete'; contact: Contact };
 
 export function useAddressBookFlow() {
     const { mutateAsync: deleteContact } = useDeleteContact();

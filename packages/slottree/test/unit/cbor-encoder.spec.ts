@@ -55,6 +55,22 @@ describe('CborEncoder', () => {
         expect(roundtrip(root)).toEqual(root);
     });
 
+    it.each([Number.MAX_VALUE, -1, 1.5])('rejects invalid timestamp %s', timestamp => {
+        const root = createOriginContainer({
+            value: atomic('invalid timestamp', timestamp)
+        });
+
+        expect(() => roundtrip(root)).toThrow();
+    });
+
+    it('roundtrips the greatest safe timestamp', () => {
+        const root = createOriginContainer({
+            value: atomic('safe timestamp', Number.MAX_SAFE_INTEGER)
+        });
+
+        expect(roundtrip(root)).toEqual(root);
+    });
+
     it('roundtrips ordered array item __setId as a regular slot', () => {
         const root = createOriginContainer({
             orderedItems: createOrderedArraySlot(2, stringAuthor, {

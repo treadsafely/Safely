@@ -1,5 +1,4 @@
 import GHBottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useNavigation } from '@react-navigation/core';
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -16,7 +15,7 @@ import { BottomSheetContext } from './context';
 
 export { useBottomSheet, useBottomSheetContext } from './context';
 
-type ModalSheetProps = {
+export type BottomSheetProps = {
     children: React.ReactNode;
     containerStyle?: ViewStyle;
     closeOnBackdropPress?: boolean;
@@ -29,7 +28,7 @@ export type BottomSheetRef = {
     close: () => void;
 };
 
-export const BottomSheet = forwardRef<BottomSheetRef, ModalSheetProps>(function BottomSheet(
+export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(function (
     {
         children,
         containerStyle,
@@ -40,7 +39,6 @@ export const BottomSheet = forwardRef<BottomSheetRef, ModalSheetProps>(function 
     },
     forwardedRef
 ) {
-    const nav = useNavigation();
     const ref = useRef<GHBottomSheet>(null);
     const { theme } = useUnistyles();
 
@@ -56,10 +54,9 @@ export const BottomSheet = forwardRef<BottomSheetRef, ModalSheetProps>(function 
         };
     });
 
-    const dismissRoute = useCallback(() => {
+    const handleClosed = useCallback(() => {
         onClose?.();
-        nav.goBack();
-    }, [nav, onClose]);
+    }, [onClose]);
 
     const requestClose = useCallback(() => {
         if (index.value >= 0) ref.current?.close();
@@ -83,7 +80,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, ModalSheetProps>(function 
                     index={0}
                     enableDynamicSizing
                     enablePanDownToClose
-                    onClose={dismissRoute}
+                    onClose={handleClosed}
                     onChange={i => {
                         index.value = i;
                     }}
@@ -92,7 +89,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, ModalSheetProps>(function 
                     animatedIndex={index}
                 >
                     <BottomSheetView style={containerStyle}>
-                        <Screen background="transparent">
+                        <Screen background="transparent" layout="sheet">
                             <Screen.Header variant="left" shortHeader={shortHeader}>
                                 {headerTitle ? (
                                     <Screen.Header.Title>{headerTitle}</Screen.Header.Title>

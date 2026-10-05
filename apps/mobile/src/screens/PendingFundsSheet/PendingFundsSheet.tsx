@@ -5,7 +5,8 @@ import { View } from 'react-native';
 import { BtcAssetAmount, btcBlockWaitingTimeMinutes } from '@safely/core';
 import { useActiveBtcWalletUtxo, useActiveWalletBtcBalance, useNumberFormatter } from '@safely/ux';
 
-import { BottomSheet, Button, List, TableCell, Text, useBottomSheet } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, List, TableCell, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { styles } from './PendingFundsSheet.styles';
 
@@ -99,8 +100,8 @@ const PendingFundsContent = () => {
 
 export const PendingFundsSheet = () => {
     return (
-        <BottomSheet>
+        <BottomSheetScreen>
             <PendingFundsContent />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

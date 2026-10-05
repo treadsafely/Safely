@@ -65,6 +65,11 @@ When a new slot timestamp is needed, the replica MUST set its clock to:
 
 The resulting clock value MUST be used as the slot timestamp.
 
+A timestamp MUST be a non-negative safe integer as defined by the ECMAScript `Number.isSafeInteger` operation. A
+snapshot containing any other timestamp MUST be rejected as invalid. If a replica cannot increment its clock while 
+keeping the result a safe integer, the local operation MUST fail with a logical-clock exhaustion error instead of 
+reusing the current timestamp.
+
 When a replica observes incoming slots during merge, it MUST advance its clock to at least the greatest observed incoming
 timestamp before creating any later local timestamp.
 

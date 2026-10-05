@@ -31,8 +31,10 @@ export class DmkSignerService {
         if (ik === null) {
             throw new Error('Identity key not found.');
         }
-        const sig = ed25519_sign(data, ik);
-        ik.fill(0);
-        return sig;
+        try {
+            return ed25519_sign(data, ik);
+        } finally {
+            ik.fill(0);
+        }
     }
 }

@@ -28,8 +28,7 @@ import { useAppContext } from '../../shared';
 export type NewPortfolioSource = Exclude<AccountPortfolioSource, { kind: 'ledger' }>;
 
 export type NewPortfolioResolution =
-    | { kind: 'duplicate'; portfolio: Portfolio }
-    | { kind: 'new'; icon: PortfolioMetaIcon };
+    { kind: 'duplicate'; portfolio: Portfolio } | { kind: 'new'; icon: PortfolioMetaIcon };
 
 export function resolveGeneratedPortfolioIcon(
     nextDerivingInfo: SNextDerivingPortfolioInfo | undefined

@@ -2,6 +2,7 @@ import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { assertUnreachable } from '@safely/core';
 import { PASSCODE_LENGTH, useSubmitWhenComplete } from '@safely/ux';
 
 import { PasscodeView } from '@mobile/shared/ui/PasscodeView';
@@ -10,13 +11,28 @@ import { Text } from '@mobile/shared/ui/Text';
 
 import { usePasscodeState } from './usePasscodeState';
 
+export type PasscodeSetupHeaderType = 'back' | 'close' | 'placeholder';
+
 type PasscodeSetupProps = {
-    headerType: 'back' | 'close';
+    headerType: PasscodeSetupHeaderType;
     title: string;
     reenterTitle: string;
     description?: string;
     reenterDescription?: string;
     onComplete: (passcode: string) => void | Promise<void>;
+};
+
+const PasscodeSetupHeaderButton = ({ type }: { type: PasscodeSetupHeaderType }) => {
+    switch (type) {
+        case 'back':
+            return <Screen.Header.BackButton />;
+        case 'close':
+            return <Screen.Header.CloseButton />;
+        case 'placeholder':
+            return <Screen.Header.ButtonPlaceholder />;
+        default:
+            return assertUnreachable(type);
+    }
 };
 
 export const PasscodeSetup = ({
@@ -79,11 +95,7 @@ export const PasscodeSetup = ({
     return (
         <Screen>
             <Screen.Header variant="left">
-                {headerType === 'back' ? (
-                    <Screen.Header.BackButton />
-                ) : (
-                    <Screen.Header.CloseButton />
-                )}
+                <PasscodeSetupHeaderButton type={headerType} />
 
                 {!isReenterStep && (
                     <Screen.Header.Button type="small" onPress={passcodeState.switchDigitsAmount}>

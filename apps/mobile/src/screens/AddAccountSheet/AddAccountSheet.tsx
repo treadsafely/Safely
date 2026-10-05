@@ -11,7 +11,8 @@ import {
     useNewAccountDefaultName
 } from '@safely/ux';
 
-import { BottomSheet, Button, Text, useCloseOnReturn } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Text, useCloseOnReturn } from '@mobile/shared/ui';
 
 import { styles } from './AddAccountSheet.styles';
 
@@ -71,10 +72,11 @@ const AddAccountContent = ({ onAccountAdded }: AddAccountSheetParams) => {
                 params: {
                     connector,
                     closeStorage: () => secureEncryptedStorage[Symbol.dispose](),
-                    onSuccess: () =>
+                    onSuccess: (inviterIkPubHex: string | null) =>
                         navigation.navigate('SignInModal', {
                             screen: 'SignInSuccessModal',
                             params: {
+                                inviterIkPubHex,
                                 onContinue: () => (onAccountAdded ?? navigation.goBack)()
                             }
                         })
@@ -109,8 +111,8 @@ const AddAccountContent = ({ onAccountAdded }: AddAccountSheetParams) => {
 
 export const AddAccountSheet = (props: AddAccountSheetProps) => {
     return (
-        <BottomSheet shortHeader>
+        <BottomSheetScreen shortHeader>
             <AddAccountContent onAccountAdded={props.route.params?.onAccountAdded} />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

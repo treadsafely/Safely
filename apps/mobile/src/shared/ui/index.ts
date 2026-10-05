@@ -30,5 +30,6 @@ export * from './PasscodeKeypad';
 export * from './PasscodeView';
 export * from './PasscodeSetup';
 export { LockoutContent } from './LockoutContent';
+export { DestructiveConfirm, type DestructiveConfirmProps } from './DestructiveConfirm';
 export { CircularSpinner } from './CircularSpinner';
 export { StepsList, type Step } from './StepsList';

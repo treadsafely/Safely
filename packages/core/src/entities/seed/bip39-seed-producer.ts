@@ -7,7 +7,12 @@ export class BtcBip39SeedProducer implements ISeedProducer {
 
     public async getSeed(): Promise<Buffer> {
         const mnemonic = await this.vault.getMnemonic();
+        const seed = await mnemonicToSeed(mnemonic.join(' '));
 
-        return Buffer.from(await mnemonicToSeed(mnemonic.join(' ')));
+        try {
+            return Buffer.from(seed);
+        } finally {
+            seed.fill(0);
+        }
     }
 }

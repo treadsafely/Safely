@@ -80,6 +80,7 @@ const btcActivity = (params: {
         toAddress: COUNTERPARTY_ADDRESS,
         value: btcAmount(0.03),
         fee: params.fee && { type: 'crypto', amount: params.fee },
+        rate: null,
         raw: rawTx(params.blockHeight ?? 100)
     }
 });

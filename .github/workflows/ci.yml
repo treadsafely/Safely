@@ -6,23 +6,26 @@ on:
       - master
       - 'release/**'
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24.10.0'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
@@ -60,7 +63,10 @@ jobs:
           ROOT_CHANGED: ${{ steps.base.outputs.root_changed }}
         # "!safely" excludes the root project: its lint is "pnpm -r run lint",
         # which would re-lint every package and defeat the changed-only filter.
+        # scripts/ belongs to no package and "pnpm -r" skips the root project,
+        # so it is linted by its own always-on call.
         run: |
+          pnpm run lint:scripts
           if [ "$ROOT_CHANGED" = "true" ]; then
             pnpm -r run lint
           else
@@ -89,12 +95,29 @@ jobs:
           fi
 
 
+  dependency-advisories:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.10.0'
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      # `pnpm audit` resolves the graph from the lockfile, so no install is needed.
+      - name: Check dependency advisories
+        run: node scripts/audit-gate.mjs
+
   resolve-changes:
     runs-on: ubuntu-latest
     outputs:
       mobile: ${{ steps.filter.outputs.mobile }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Detect apps/mobile changes
@@ -117,13 +140,16 @@ jobs:
     if: needs.resolve-changes.outputs.mobile == 'true'
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run Swift core tests
         run: swift test
         working-directory: apps/mobile/modules/safely-crypto/ios
       - name: Run Swift mask engine tests
         run: swift test
         working-directory: apps/mobile/modules/safely-masked-input/ios
+      - name: Run Swift push content tests
+        run: swift test
+        working-directory: apps/mobile/modules/safely-push-content/ios
 
   # Kotlin: pure *Core.kt on a plain JVM via the host-only Gradle harness. No
   # Android SDK, Expo, RN or node — just JDK + Gradle.
@@ -132,15 +158,18 @@ jobs:
     if: needs.resolve-changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Run Kotlin core tests
         run: ./gradlew test
         working-directory: apps/mobile/modules/safely-crypto/android/host-test
       - name: Run Kotlin mask engine tests
         run: ./gradlew test
         working-directory: apps/mobile/modules/safely-masked-input/android/host-test
+      - name: Run Kotlin push content tests
+        run: ./gradlew test
+        working-directory: apps/mobile/modules/safely-push-content/android/host-test

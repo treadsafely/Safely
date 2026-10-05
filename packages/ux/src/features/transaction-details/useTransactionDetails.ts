@@ -1,10 +1,10 @@
-import { BLOCKCHAIN_NAME, BTC_ASSET } from '@safely/core';
+import { BLOCKCHAIN_NAME } from '@safely/core';
 
 import { useBtcTransactionStatusView } from './btc-transaction-status';
 import { buildTransactionDetailsView } from './transaction-details-view';
 import type { TransactionDetailsView } from './types';
 import type { BtcActivityItem } from '../../entities';
-import { useActivePortfolioRate, useExplorer, useNumberFormatter } from '../../entities';
+import { useExplorer, useNumberFormatter } from '../../entities';
 import { useDateFormatter, useTranslate } from '../../shared';
 import { useShowFullSentAmount, useTransactionHistoryAmountOrder } from '../amount-display';
 
@@ -19,7 +19,6 @@ export function useTransactionDetails(activity: BtcActivityItem): TransactionDet
     const t = useTranslate();
     const numberFormatter = useNumberFormatter();
     const confirmedAtFormatter = useDateFormatter(CONFIRMED_AT_FORMAT);
-    const { data: rate } = useActivePortfolioRate(BTC_ASSET);
     const explorer = useExplorer(BLOCKCHAIN_NAME.BTC);
     const showFullSentAmount = useShowFullSentAmount();
     const amountOrder = useTransactionHistoryAmountOrder();
@@ -29,7 +28,6 @@ export function useTransactionDetails(activity: BtcActivityItem): TransactionDet
         t,
         confirmedAtFormatter,
         numberFormatter,
-        rate,
         showFullSentAmount,
         amountOrder,
         status,

@@ -8,6 +8,7 @@ import { BtcXpub } from '../blockchain-api';
 import { BtcNetwork, BtcWalletType } from '../entities/blockchain';
 import { BtcWalletId } from '../entities/derivation/btc/btc-wallet-id';
 import type { BtcWalletReadOnly } from '../entities/derivation/btc/I-btc-wallet';
+import { LedgerAppVersionUnknownError } from '../entities/errors';
 
 export type LedgerAccount = {
     index: number;
@@ -21,6 +22,7 @@ export type DiscoverLedgerAccountsOptions = {
 };
 
 const LEDGER_DISCOVERY_OWNER = 'ledger-discovery';
+const APP_VERSION_PATTERN = /^\d+\.\d+/;
 
 export class LedgerController {
     constructor(
@@ -68,13 +70,17 @@ export class LedgerController {
         return Buffer.from(masterFingerprint);
     }
 
-    public async getAppVersion(): Promise<string | undefined> {
+    public async getAppVersion(): Promise<string> {
         const result = await this.ledgerKit.sendCommand({
             sessionId: this.sessionId,
             command: new GetAppAndVersionCommand()
         });
 
-        return isSuccessCommandResult(result) ? result.data.version : undefined;
+        if (!isSuccessCommandResult(result) || !APP_VERSION_PATTERN.test(result.data.version)) {
+            throw new LedgerAppVersionUnknownError();
+        }
+
+        return result.data.version;
     }
 
     private buildBitcoinApp() {

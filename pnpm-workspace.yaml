@@ -13,17 +13,19 @@ catalog:
   react-dom: '19.2.3'
   '@types/react': '19.2.14'
   '@types/react-dom': '19.2.3'
-  '@tanstack/react-query': '^5.90.16'
-  '@tanstack/query-async-storage-persister': '^5.90.18'
-  '@tanstack/react-query-persist-client': '^5.90.18'
+  '@tanstack/react-query': '^5.102.8'
+  '@tanstack/query-async-storage-persister': '^5.102.8'
+  '@tanstack/react-query-persist-client': '^5.102.8'
   xstate: '^5.26.0'
   '@xstate/react': '^6.1.0'
   zustand: '^5.0.0'
   typescript: '~6.0.3'
+  vite: '^8.3.0'
+  vitest: '^4.1.11'
   eslint: '^9.39.2'
   '@eslint/js': '^9.39.2'
-  eslint-plugin-react-hooks: '^7.0.1'
-  typescript-eslint: '^8.58.0'
+  eslint-plugin-react-hooks: '^7.1.1'
+  typescript-eslint: '^8.70.0'
   uuid: "^14.0.0"
   '@ledgerhq/device-management-kit': '^1.5.1'
   '@ledgerhq/device-signer-kit-bitcoin': '^1.3.1'
@@ -31,10 +33,6 @@ catalog:
   # i18n: the strings live in @safely/ux, each app creates its own i18next instance
   i18next: '^26.3.0'
   react-i18next: '^17.0.8'
-  # shared by packages/web-ui and every web target (apps/desktop, later apps/browser).
-  # Pinned to 6.x on purpose: electron-forge 7 is published as CommonJS and does
-  # `require('vite')`, while vite 7 dropped the `require` export condition.
-  vite: '6.4.3'
   # icons ship as .svg and are imported as components (`?react`) by every web target,
   # and by packages/web-ui's own vitest run.
   vite-plugin-svgr: '^5.2.0'
@@ -56,9 +54,6 @@ autoInstallPeers: true
 # same fork is published to the registry, so pin it there instead of switching the
 # guard off for the whole workspace. `rebuildConfig` in `apps/desktop/forge.config.ts`
 # switches the rebuild step off, so this dependency only has to resolve.
-overrides:
-  '@electron/rebuild>@electron/node-gyp': '10.2.0-electron.2'
-
 peerDependencyRules:
   allowedVersions:
     react-native-ble-plx: '>=3.4.0'
@@ -76,3 +71,45 @@ allowBuilds:
 
 patchedDependencies:
   expo-blur@15.0.8: patches/expo-blur@15.0.8.patch
+
+# Security overrides: every entry forces a transitive dependency past a known
+# advisory that its own parent has not picked up yet. The major is pinned in the
+# selector (`pkg@N`) so an override can never silently jump a major in a graph
+# that only needed a patch. Each is checked by `pnpm dependencies-audit`; drop an
+# entry once the parent ships the fix on its own — the gate fails on leftovers as
+# STALE.
+overrides:
+  '@electron/rebuild>@electron/node-gyp': '10.2.0-electron.2'
+
+  # dev / build tooling
+  'handlebars@4': '^4.7.9' # GHSA-2w6w-674q-4c4q (critical) + 4 more, via eslint-plugin-boundaries
+  'brace-expansion@1': '^1.1.21' # GHSA-3jxr-9vmj-r5cp, GHSA-mh99-v99m-4gvg, GHSA-rgw5-rvv9-x895, GHSA-6j4f-fj2g-mc7p, GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr
+  'brace-expansion@2': '^2.1.7'
+  'brace-expansion@5': '^5.0.12'
+  'minimatch@3': '^3.1.5' # GHSA-3ppc-4f35-3m26, GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74
+  'minimatch@9': '^9.0.9'
+  'flatted@3': '^3.4.2' # GHSA-25h7-pfq9-p65f, GHSA-rf6f-7fwh-wjgh
+  # vitest declares vite as `^6 || ^7 || ^8`, and a `vite@7` selector only matches a
+  # parent range that is a subset of 7 — so this one has to be unscoped.
+  vite: 'catalog:' # GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583, GHSA-fx2h-pf6j-xcff
+  'rollup@4': '^4.59.0' # GHSA-mw96-cpmx-2vgc
+
+  # production graph — Expo / React Native transitive deps
+  'shell-quote@1': '^1.8.5' # GHSA-w7jw-789q-3m8p (critical), GHSA-395f-4hp3-45gv
+  '@xmldom/xmldom@0.8': '^0.8.13' # GHSA-wh4c-j3r5-mjhp + 4 more
+  'node-forge@1': '^1.4.0' # GHSA-2328-f5f3-gj25, GHSA-q67f-28xg-22rw, GHSA-5m6q-g25r-mvwx, GHSA-ppp5-5v6c-4jwp
+  # GHSA-96hv-2xvq-fx4p. ws@7 has to be scoped per parent: selectors match by
+  # range *intersection*, so a bare `ws@7` also rewrites isomorphic-ws's `*` peer
+  # range — and that one carries the Ledger transport, which runs on ws 8.
+  'metro>ws': '^7.5.13'
+  'react-native>ws': '^7.5.13'
+  'react-devtools-core>ws': '^7.5.13'
+  '@react-native/dev-middleware>ws': '^7.5.13'
+  'ws@8': '^8.21.0'
+  'js-yaml@4': '^4.3.2' # GHSA-52cp-r559-cp3m, GHSA-5p4m-2wfm-xmqj
+  'nanoid@3': '^3.3.18' # GHSA-28wg-ghj8-5hjv, GHSA-2v37-7h3g-55p8
+  'picomatch@2': '^2.3.2' # GHSA-c2c7-rcm5-vvqj
+  'postcss@8': '^8.5.18' # GHSA-6g55-p6wh-862q, GHSA-r28c-9q8g-f849
+  # Babel's target resolver, reached through @babel/core in metro and in the root's
+  # eslint plugins alike, which is why one unscoped major selector covers both.
+  'browserslist@4': '^4.28.7' # GHSA-73wf-gq98-2v4g, GHSA-c83g-rgw3-j3cx

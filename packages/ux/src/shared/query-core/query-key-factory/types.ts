@@ -3,9 +3,7 @@ export type FinalKey = typeof finalKey;
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
-    | JsonPrimitive
-    | readonly JsonValue[]
-    | { readonly [key: string]: JsonValue };
+    JsonPrimitive | readonly JsonValue[] | { readonly [key: string]: JsonValue };
 
 export type KeyPart = JsonPrimitive;
 export type KeyPath = readonly (string | KeyPart)[];

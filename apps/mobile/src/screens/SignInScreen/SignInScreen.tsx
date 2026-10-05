@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
-import type { OnboardingConnector } from '@safely/ux';
+import type { OnboardedAccount, OnboardingConnector } from '@safely/ux';
 import { useAccountConnectedCallback, useToast } from '@safely/ux';
 
 import { DeviceLink, Screen, Text, TouchableOpacity } from '@mobile/shared/ui';
@@ -17,7 +17,7 @@ import { styles } from './SignInScreen.styles';
 type SignInScreenProps = StaticScreenProps<{
     connector: OnboardingConnector;
     closeStorage: () => void;
-    onSuccess: () => void;
+    onSuccess: (inviterIkPubHex: string | null) => void;
 }>;
 
 export const SignInScreen = (props: SignInScreenProps) => {
@@ -44,10 +44,13 @@ export const SignInScreen = (props: SignInScreenProps) => {
         copy(connector.connectionString);
     }, [copy, connector.connectionString]);
 
-    const handleConnected = useCallback(() => {
-        connectedRef.current = true;
-        onSuccess();
-    }, [onSuccess]);
+    const handleConnected = useCallback(
+        (onboarded: OnboardedAccount) => {
+            connectedRef.current = true;
+            onSuccess(onboarded.inviterIkPubHex);
+        },
+        [onSuccess]
+    );
 
     const handleError = useCallback(() => {
         navigation.goBack();

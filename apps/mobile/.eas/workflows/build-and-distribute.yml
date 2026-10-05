@@ -93,10 +93,122 @@ jobs:
       profile: production
       message: ${{ needs.prepare.outputs.notes }}
 
+  # Scans the native dependency graphs the builds captured via buildArtifactPaths;
+  # blocks distribution on production builds, warns on staging.
+  security_gate:
+    name: Native dependency gate
+    needs: [prepare, build_ios, build_android]
+    # `needs` on a skipped job skips the dependent, and the bundle is master-only.
+    after: [build_android_play]
+    runs_on: linux-medium
+    # Holds EXPO_TOKEN and SONATYPE_TOKEN.
+    environment: production
+    outputs:
+      summary: ${{ steps.gate.outputs.summary }}
+    steps:
+      - uses: eas/checkout
+      # The only step with EXPO_TOKEN, and it only downloads. Fails softly: the
+      # scan step records the verdict, so a missing capture reaches the same one.
+      - name: Download what the builds captured
+        run: |
+          export EXPO_TOKEN="${{ env.EXPO_TOKEN }}"
+          unset SONATYPE_TOKEN
+
+          # By status: a missing output interpolates as the literal `undefined`.
+          set -- --ios "${{ needs.build_ios.outputs.build_id }}"
+          set -- "$@" --android "${{ needs.build_android.outputs.build_id }}"
+          if [ "${{ after.build_android_play.status }}" = "success" ]; then
+            set -- "$@" --aab "${{ after.build_android_play.outputs.build_id }}"
+          fi
+          echo "capturing: $*"
+
+          set +e
+          node --permission \
+            --allow-fs-read="scripts/native-audit/*" \
+            --allow-fs-write="capture/*" \
+            scripts/native-audit/fetch-graphs.mjs --out capture "$@"
+          code=$?
+          set -e
+          echo "capture exit: $code"
+      # Records a verdict instead of failing, so the upload below runs either way.
+      # `unset EXPO_TOKEN`: EAS scopes secrets per job, not per step.
+      - name: Parse and scan the resolved graphs
+        id: gate
+        run: |
+          unset EXPO_TOKEN
+          export SONATYPE_TOKEN="${{ env.SONATYPE_TOKEN }}"
+          BUILD_TYPE="${{ needs.prepare.outputs.build_type }}"
+          echo "build type: $BUILD_TYPE"
+          mkdir -p native-graphs
+
+          audit() {
+            node --permission \
+              --allow-fs-read="scripts/native-audit/*" \
+              --allow-fs-read="capture/*" \
+              --allow-fs-read="native-graphs/*" \
+              --allow-fs-write="native-graphs/*" \
+              scripts/native-audit/index.mjs "$@"
+          }
+
+          set +e
+          (
+            set -e
+            audit parse --ios capture/Podfile.lock \
+              --build-meta capture/build-ios.json --out native-graphs/ios-pods.json
+            audit parse --android capture/sdkDependencies.txt \
+              --build-meta capture/build-android.json --out native-graphs/android-coordinates.json
+            set -- --graph native-graphs/android-coordinates.json
+
+            # A bundle that built and left no graph must fail, not scan the APK alone.
+            if [ "${{ after.build_android_play.status }}" = "success" ]; then
+              audit parse --aab capture/dependencies.pb \
+                --build-meta capture/build-aab.json --out native-graphs/aab-coordinates.json
+              set -- "$@" --graph native-graphs/aab-coordinates.json
+            fi
+
+            audit gate "$@" \
+              --pods native-graphs/ios-pods.json \
+              --markdown native-graphs/native-dependencies.md \
+              --summary native-graphs/summary.txt
+          )
+          code=$?
+          set -e
+          cat native-graphs/native-dependencies.md 2> /dev/null || true
+
+          # Stripped for the same reason `prepare` strips them.
+          SUMMARY=$(sed "s/[()\`\$\"'\\\\]//g" native-graphs/summary.txt 2> /dev/null || true)
+          set-output summary "${SUMMARY:-the native dependency scan did not finish - read the job log}"
+
+          # Findings and scan failures share this path — neither may pass silently.
+          if [ "$code" -eq 0 ]; then
+            set-output verdict "pass"
+          elif [ "$BUILD_TYPE" = "production" ]; then
+            set-output verdict "block"
+          else
+            echo "not blocking a $BUILD_TYPE build"
+            set-output verdict "warn"
+          fi
+      - uses: eas/upload_artifact
+        with:
+          type: other
+          name: native-dependency-graphs
+          # Globbed from the checkout root, not from the step's working directory
+          # (which eas/checkout moved to apps/mobile, where the graphs are written).
+          # `working_directory:` would not help — the function ignores it.
+          path: apps/mobile/native-graphs/**/*
+          # A scan that failed early leaves nothing to upload.
+          ignore_error: true
+      - name: Block distribution
+        run: |
+          if [ "${{ steps.gate.outputs.verdict }}" = "block" ]; then
+            echo "the native dependency gate did not pass - see the report above"
+            exit 1
+          fi
+
   submit_android_play:
     name: Submit to Google Play (internal)
     type: submit
-    needs: [build_android_play]
+    needs: [build_android_play, security_gate]
     if: ${{ github.ref_name == 'master' }}
     params:
       build_id: ${{ needs.build_android_play.outputs.build_id }}
@@ -109,18 +221,19 @@ jobs:
   distribute_ios:
     type: testflight
     name: Upload to TestFlight
-    needs: [prepare, build_ios]
+    needs: [prepare, build_ios, security_gate]
     params:
       build_id: ${{ needs.build_ios.outputs.build_id }}
       profile: production
       changelog: ${{ needs.prepare.outputs.notes }}
 
-  # testflight upload may fail with unknown at this moment reasons, but retry should help
+  # testflight upload may fail with unknown at this moment reasons, but retry should help.
   distribute_ios_crutch:
     type: testflight
     name: Upload to TestFlight (crutch)
-    after: [build_ios, distribute_ios]
-    if: ${{ after.distribute_ios.status == 'failure' }}
+    after: [build_ios, distribute_ios, security_gate]
+    # `after` ignores upstream status, so security_gate needs an explicit check.
+    if: ${{ after.distribute_ios.status == 'failure' && after.security_gate.status == 'success' }}
     params:
       build_id: ${{ after.build_ios.outputs.build_id }}
       profile: production
@@ -155,6 +268,7 @@ jobs:
       - prepare
       - build_ios
       - build_android
+      - security_gate
       - distribute_ios
       - distribute_ios_crutch
       - e2e_android
@@ -178,4 +292,6 @@ jobs:
           export STATUS_IOS_CRUTCH="${{ after.distribute_ios_crutch.status }}"
           export STATUS_ANDROID="${{ after.build_android.status }}"
           export STATUS_E2E="${{ after.e2e_android.status }}"
+          export STATUS_SECURITY="${{ after.security_gate.status }}"
+          export SECURITY_SUMMARY="${{ after.security_gate.outputs.summary }}"
           node scripts/eas-report.mjs

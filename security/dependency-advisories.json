@@ -1,0 +1,69 @@
+{
+    "readme": "Reviewed exceptions to the JavaScript dependency advisory gate. See .claude/rules/dependency-security.md before editing. Checked by scripts/audit-gate.mjs.",
+    "policy": {
+        "blockingSeverities": [
+            "critical",
+            "high"
+        ]
+    },
+    "exceptions": [
+        {
+            "id": "GHSA-5p2g-fcmc-qvqq",
+            "package": "image-size",
+            "severity": "high",
+            "context": "rn-dev",
+            "paths": [
+                "apps/mobile > expo > @expo/metro > metro > image-size",
+                "apps/mobile > react-native > @react-native/community-cli-plugin > metro > image-size"
+            ],
+            "rationale": "image-size is Metro's asset-dimension reader: it parses image headers while the bundler resolves assets, and behind the dev-server asset endpoint under `expo start`. It reaches the production graph only because Metro is a transitive dependency of react-native and expo — no Metro code is in a release bundle, which carries the computed dimensions rather than the parser. The images it parses are the assets committed to this repository; the dev-server path exists on a developer machine only and is not present in any shipped build. Metro declares `image-size: ^1.0.2` and resolves 1.2.1, the newest release of the 1.x line (npm's `legacy` tag). The advisory names `>=2.0.3` as patched and npm has no such version — `latest` is 2.0.2, itself inside the vulnerable range — so no `overrides` entry can close this; the only fix on offer would be forcing Metro across a major.",
+            "owner": "sergey@andreevco.com",
+            "expires": "2026-11-30",
+            "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"
+        },
+        {
+            "id": "GHSA-w3rx-r6r6-pgpr",
+            "package": "image-size",
+            "severity": "high",
+            "context": "rn-dev",
+            "paths": [
+                "apps/mobile > expo > @expo/metro > metro > image-size",
+                "apps/mobile > react-native > @react-native/community-cli-plugin > metro > image-size"
+            ],
+            "rationale": "Same package and same reachability as GHSA-5p2g-fcmc-qvqq: Metro's bundle-time and dev-server image-header parser, reachable through react-native and expo but absent from every release bundle, and fed only by assets committed to this repository. Metro declares `image-size: ^1.0.2` and resolves 1.2.1, the newest release of the 1.x line (npm's `legacy` tag). The advisory names `>=2.0.3` as patched and npm has no such version — `latest` is 2.0.2, itself inside the vulnerable range — so no `overrides` entry can close this; the only fix on offer would be forcing Metro across a major.",
+            "owner": "sergey@andreevco.com",
+            "expires": "2026-11-30",
+            "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"
+        },
+        {
+            "id": "GHSA-86w9-cpqp-85rv",
+            "package": "node-forge",
+            "severity": "high",
+            "context": "rn-dev",
+            "paths": [
+                "apps/mobile > expo > @expo/cli > node-forge",
+                "apps/mobile > expo > @expo/cli > @expo/code-signing-certificates > node-forge"
+            ],
+            "rationale": "node-forge is reached only through @expo/cli: `expo run:ios` code-signing helpers (`run/ios/codeSigning/Security.js`) and the dev-server manifest signing in `utils/codesigning.js`, which signs the manifests the dev client fetches during `expo start`. The advisory is in RSA PKCS#1 v1.5 signature *verification*; the CLI only signs and generates certificates, and verification of EAS Update manifests happens natively in expo-updates, not in this package. @expo/cli is a developer-machine tool pulled in transitively by `expo` and is in no release bundle. The advisory names `>=1.4.1` as patched and npm has no such version — `latest` is 1.4.0 — so the existing `node-forge@1` override cannot close it; drop this entry once 1.4.1 is published and the override picks it up.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2026-12-31",
+            "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
+        },
+        {
+            "id": "GHSA-vfj7-8cjw-p6xm",
+            "package": "braces",
+            "severity": "high",
+            "context": "rn-dev",
+            "paths": [
+                ". > eslint-plugin-boundaries > micromatch > braces",
+                ". > eslint-plugin-boundaries > @boundaries/elements > micromatch > braces",
+                "apps/mobile > react-native > @react-native/community-cli-plugin > metro > metro-file-map > micromatch > braces",
+                "apps/mobile > @expo/metro-runtime > @expo/metro > @expo/metro-file-map > micromatch > braces"
+            ],
+            "rationale": "braces is micromatch's brace-expansion step, reached in two places: eslint-plugin-boundaries at the repository root (lint only) and Metro's file map (`metro-file-map`, `@expo/metro-file-map`), which crawls the project tree while the bundler runs. It is in the production graph only because Metro is a transitive dependency of react-native and expo — no Metro or micromatch code is in a release bundle. The advisory is a stack-exhaustion DoS on deeply nested brace patterns, and every pattern braces sees here is written in this repository (eslint and Metro config globs), not supplied by a user or a network. micromatch declares `braces: ^3.0.3` and resolves 3.0.3, the newest release; the advisory names `>=3.0.4` as patched and npm has no such version — `latest` is 3.0.3 — so no `overrides` entry can close this. Drop this entry once 3.0.4 is published.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2026-12-31",
+            "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+        }
+    ]
+}

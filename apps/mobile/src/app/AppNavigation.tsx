@@ -1,24 +1,26 @@
 import type { Theme } from '@react-navigation/native';
 import { DarkTheme } from '@react-navigation/native';
-import * as Linking from 'expo-linking';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect, useMemo } from 'react';
+import { Activity, useEffect, useMemo } from 'react';
 import { useUnistyles } from 'react-native-unistyles';
 
-import { LedgerSessionProvider, SyncStorageProvider } from '@safely/ux';
+import { PushSubscriptionSyncProvider, SyncStorageProvider } from '@safely/ux';
 
-import { LockScreenProvider } from '@mobile/entities/security';
+import { useLockScreenControl } from '@mobile/entities/security';
 import { BleManagerProvider } from '@mobile/features/ledger';
 
 import Navigation from './navigation';
 import { navigationRef } from './navigation/navigationRef';
 import { useInitialNavigationState } from './navigation/useInitialNavigationState';
+import { useLockAwareLinking } from './navigation/useLockAwareLinking';
 import { useRestrictionGuard } from './navigation/useRestrictionGuard';
 import { SelfUnarchiveWatcher } from './SelfUnarchiveWatcher';
 
 export function AppNavigation() {
     const { theme } = useUnistyles();
+    const { isLocked } = useLockScreenControl();
+    const linking = useLockAwareLinking(isLocked);
     const initialState = useInitialNavigationState();
     const enforceRestriction = useRestrictionGuard();
 
@@ -42,13 +44,17 @@ export function AppNavigation() {
         SystemUI.setBackgroundColorAsync(theme.colors.background.primary);
     }, [theme.colors.background.primary]);
 
+    useEffect(() => {
+        if (isLocked) {
+            SplashScreen.hideAsync();
+        }
+    }, [isLocked]);
+
     return (
-        <LockScreenProvider>
-            <BleManagerProvider>
-                <LedgerSessionProvider
-                    openConnectScreen={() => navigationRef.navigate('ConnectToSignSheet')}
-                >
-                    <SyncStorageProvider>
+        <BleManagerProvider>
+            <SyncStorageProvider>
+                <PushSubscriptionSyncProvider>
+                    <Activity mode={isLocked ? 'hidden' : 'visible'}>
                         <SelfUnarchiveWatcher />
                         <Navigation
                             ref={navigationRef}
@@ -58,14 +64,11 @@ export function AppNavigation() {
                                 SplashScreen.hideAsync();
                             }}
                             theme={NavigationTheme}
-                            linking={{
-                                enabled: true,
-                                prefixes: [Linking.createURL('/')]
-                            }}
+                            linking={linking}
                         />
-                    </SyncStorageProvider>
-                </LedgerSessionProvider>
-            </BleManagerProvider>
-        </LockScreenProvider>
+                    </Activity>
+                </PushSubscriptionSyncProvider>
+            </SyncStorageProvider>
+        </BleManagerProvider>
     );
 }

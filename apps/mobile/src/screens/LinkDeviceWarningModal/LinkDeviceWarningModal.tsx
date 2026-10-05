@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/core';
+import { StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -43,8 +44,8 @@ export const LinkDeviceWarningModal = () => {
         using secureEncryptedStorage = getSecureEncrypted();
         await secureEncryptedStorage.unlock();
 
-        await connectToNewDevice({ secureEncryptedStorage });
-        navigation.goBack();
+        const ikPubHex = await connectToNewDevice({ secureEncryptedStorage });
+        navigation.dispatch(StackActions.replace('DeviceLinkedModal', { ikPubHex }));
     };
 
     return (

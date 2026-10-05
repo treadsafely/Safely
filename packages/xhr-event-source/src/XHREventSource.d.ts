@@ -64,10 +64,7 @@ export type XHREventSourceListener<T extends string> = (
 ) => void;
 
 export type GetAuthorizationHeader = () =>
-    | string
-    | null
-    | undefined
-    | Promise<string | null | undefined>;
+    string | null | undefined | Promise<string | null | undefined>;
 
 declare class XHREventSource {
     readonly ERROR: -1;

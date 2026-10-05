@@ -14,5 +14,4 @@ export type DerivedQueryResult<TData = unknown, TError = unknown> = {
     dataUpdatedAt: number;
     isActualised?: boolean;
     refetch: () => Promise<unknown>;
-    promise?: Promise<TData>;
 };

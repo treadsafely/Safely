@@ -94,6 +94,43 @@ describe('filterSensitiveData', () => {
             const tprv = 'tprv' + 'B'.repeat(107);
             expect(filterSensitiveData(tprv)).toBe('[REDACTED:xprv]');
         });
+
+        it('should redact vprv variant', () => {
+            const vprv = 'vprv' + 'C'.repeat(107);
+            expect(filterSensitiveData(vprv)).toBe('[REDACTED:xprv]');
+        });
+    });
+
+    describe('xpub keys', () => {
+        const xpub =
+            'xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8';
+
+        it('should mask an xpub down to its prefix and tail', () => {
+            expect(filterSensitiveData(xpub)).toBe('[REDACTED:xpub:xpub…cet8]');
+        });
+
+        it('should mask zpub and vpub variants', () => {
+            const body = xpub.slice(4);
+            expect(filterSensitiveData(`zpub${body}`)).toBe('[REDACTED:xpub:zpub…cet8]');
+            expect(filterSensitiveData(`vpub${body}`)).toBe('[REDACTED:xpub:vpub…cet8]');
+        });
+
+        it('should mask an xpub inside a descriptor url', () => {
+            const url = `https://api.example/v1/utxos/wpkh(${xpub})`;
+            expect(filterSensitiveData(url)).toBe(
+                'https://api.example/v1/utxos/wpkh([REDACTED:xpub:xpub…cet8])'
+            );
+        });
+
+        it('should not mask a truncated xpub', () => {
+            const short = xpub.slice(0, 40);
+            expect(filterSensitiveData(short)).toBe(short);
+        });
+
+        it('should be stable on an already masked xpub', () => {
+            const once = filterSensitiveData(xpub);
+            expect(filterSensitiveData(once)).toBe(once);
+        });
     });
 
     describe('generic credentials', () => {

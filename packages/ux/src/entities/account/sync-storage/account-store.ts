@@ -8,7 +8,8 @@ import type {
     SDevicesMeta,
     SDevicesArchive,
     SDevicesSyncState,
-    SNextDerivingPortfolioInfo
+    SNextDerivingPortfolioInfo,
+    SNotifications
 } from '@safely/sync-storage';
 
 export type AccountStoreData = {
@@ -23,6 +24,7 @@ export type AccountStoreData = {
     nextDerivingPortfolioInfo: SNextDerivingPortfolioInfo;
     analyticsId: string | null;
     amountDisplay: SAmountDisplay;
+    notifications: SNotifications;
 };
 
 export const SYNCED_SLOT_KEYS = [
@@ -35,7 +37,8 @@ export const SYNCED_SLOT_KEYS = [
     'devicesArchive',
     'nextDerivingPortfolioInfo',
     'analyticsId',
-    'amountDisplay'
+    'amountDisplay',
+    'notifications'
 ] as const satisfies readonly (keyof Omit<AccountStoreData, 'accountId'>)[];
 
 export type SyncedSlotKey = (typeof SYNCED_SLOT_KEYS)[number];
@@ -55,19 +58,15 @@ export function createAccountStore(): AccountStore {
 export const accountStore: AccountStore = createAccountStore();
 
 export type AccountStoreActions = {
-    attachSnapshot(snapshot: AccountStoreData): void;
+    attachAll(snapshots: readonly AccountStoreData[]): void;
     setSlot<K extends SyncedSlotKey>(accountId: string, key: K, value: AccountStoreData[K]): void;
-    retainAccounts(accountIds: ReadonlySet<string>): void;
-    removeAccount(accountId: string): void;
     clear(): void;
 };
 
 export const accountStoreActions: AccountStoreActions = {
-    attachSnapshot(snapshot) {
-        accountStore.setState(state => {
-            const next = new Map(state.accountsData);
-            next.set(snapshot.accountId, snapshot);
-            return { accountsData: next };
+    attachAll(snapshots) {
+        accountStore.setState({
+            accountsData: new Map(snapshots.map(snapshot => [snapshot.accountId, snapshot]))
         });
     },
 
@@ -77,30 +76,6 @@ export const accountStoreActions: AccountStoreActions = {
             if (!current) return state;
             const next = new Map(state.accountsData);
             next.set(accountId, { ...current, [key]: value });
-            return { accountsData: next };
-        });
-    },
-
-    retainAccounts(accountIds) {
-        accountStore.setState(state => {
-            let changed = false;
-            const next = new Map(state.accountsData);
-            for (const id of next.keys()) {
-                if (!accountIds.has(id)) {
-                    next.delete(id);
-                    changed = true;
-                }
-            }
-            if (!changed) return state;
-            return { accountsData: next };
-        });
-    },
-
-    removeAccount(accountId) {
-        accountStore.setState(state => {
-            if (!state.accountsData.has(accountId)) return state;
-            const next = new Map(state.accountsData);
-            next.delete(accountId);
             return { accountsData: next };
         });
     },

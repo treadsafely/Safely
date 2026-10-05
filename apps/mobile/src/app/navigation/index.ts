@@ -4,19 +4,21 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AddAccountSheet } from '@mobile/screens/AddAccountSheet';
 import { BiometryScreen } from '@mobile/screens/BiometryScreen';
 import { ChangePasscodeScreen } from '@mobile/screens/ChangePasscodeScreen';
+import { ConfirmXpubImportSheet } from '@mobile/screens/ConfirmXpubImportSheet';
 import { ConnectToSignSheet } from '@mobile/screens/ConnectToSignSheet';
 import { CustomizeAccountModal } from '@mobile/screens/CustomizeAccountModal';
 import { CustomizeWalletModal } from '@mobile/screens/CustomizeWalletModal';
 import { DestructiveConfirmSheet } from '@mobile/screens/DestructiveConfirmSheet';
+import { DeviceLinkedModal } from '@mobile/screens/DeviceLinkedModal';
 import { DeviceSupportWizardModal } from '@mobile/screens/DeviceSupportWizardModal';
 import { DeviceUnarchivedSheet } from '@mobile/screens/DeviceUnarchivedSheet';
 import { ExchangeModal } from '@mobile/screens/ExchangeModal';
 import { LinkDeviceWarningModal } from '@mobile/screens/LinkDeviceWarningModal';
-import { LockScreen } from '@mobile/screens/LockScreen';
 import { MoreOptionsSheet } from '@mobile/screens/MoreOptionsSheet';
 import { NewContactModal } from '@mobile/screens/NewContactModal';
 import { ConfirmDeleteContactSheet } from '@mobile/screens/NewContactModal/screens/ConfirmDeleteContactSheet';
 import { OnboardingImportWalletScreen } from '@mobile/screens/OnboardingImportWalletScreen';
+import { OnboardingNotificationsScreen } from '@mobile/screens/OnboardingNotificationsScreen';
 import { OnboardingPasscodeScreen } from '@mobile/screens/OnboardingPasscodeScreen';
 import { OnboardingWatchAccountScreen } from '@mobile/screens/OnboardingWatchAccountScreen';
 import { OrderScreen } from '@mobile/screens/OrderScreen';
@@ -53,6 +55,7 @@ export const RootStack = createNativeStackNavigator({
                 WelcomeScreen: WelcomeScreen,
                 OnboardingPasscodeScreen: OnboardingPasscodeScreen,
                 BiometryScreen: BiometryScreen,
+                OnboardingNotificationsScreen: OnboardingNotificationsScreen,
                 SignInScreen: SignInScreen,
                 SignInSuccessScreen: SignInSuccessScreen,
                 OnboardingImportWalletScreen: OnboardingImportWalletScreen,
@@ -82,14 +85,6 @@ export const RootStack = createNativeStackNavigator({
                 TransactionScreen: TransactionScreen,
                 OrderScreen: OrderScreen,
                 DeviceDetailsScreen: DeviceDetailsScreen,
-                LockScreen: {
-                    screen: LockScreen,
-                    options: {
-                        presentation: 'fullScreenModal',
-                        gestureEnabled: false,
-                        animation: 'fade' as const
-                    }
-                },
                 PasscodeVerificationScreen: {
                     screen: PasscodeVerificationScreen,
                     options: {
@@ -119,6 +114,7 @@ export const RootStack = createNativeStackNavigator({
                 CustomizeWalletModal: CustomizeWalletModal,
                 QRScanModal: QRScanModal,
                 LinkDeviceWarningModal: LinkDeviceWarningModal,
+                DeviceLinkedModal: DeviceLinkedModal,
                 DeviceSupportWizardModal: DeviceSupportWizardModal,
                 NewContactModal: NewContactModal,
                 AddWalletModal: AddWalletStack,
@@ -144,6 +140,7 @@ export const RootStack = createNativeStackNavigator({
                 MoreOptionsSheet: MoreOptionsSheet,
                 ConfirmDeleteContactSheet: ConfirmDeleteContactSheet,
                 ConnectToSignSheet: ConnectToSignSheet,
+                ConfirmXpubImportSheet: ConfirmXpubImportSheet,
                 ProviderSheet: ProviderSheet
             },
             screenOptions: {

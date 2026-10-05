@@ -1,36 +1,9 @@
-import { z } from 'zod';
-
-import { defineVersionHList, hCons, hNil, projectIdentity } from '@safely/slottree';
-
-import type { ISyncAccount } from '../../src';
 import { SyncAccountFactory } from '../../src';
+import { SyncAccount } from '../../src/account/sync-account';
 import { Logger } from '../../src/logger/logger';
+import type { TestSyncAccount, TestSyncAccountFactory } from '../fixtures/account';
+import { Versions } from '../fixtures/account';
 import { InMemStorage } from '../mocks/server-mock/storage';
-
-export const Schema = z
-    .object({
-        wallets: z.array(
-            z.object({
-                __setId: z.string(),
-                value: z.string()
-            })
-        )
-    })
-    .partial();
-
-export const AccountV1 = {
-    version: 1,
-    schema: Schema,
-    initial: {},
-    projectUp: projectIdentity,
-    projectDown: projectIdentity
-} as const;
-
-export const Versions = defineVersionHList(hCons(AccountV1, hNil));
-
-type AccountLatest = (typeof Versions)['head'];
-export type TestSyncAccount = ISyncAccount<AccountLatest>;
-export type TestSyncAccountFactory = SyncAccountFactory<typeof Versions>;
 
 let accountCounter = 0;
 
@@ -73,4 +46,16 @@ export async function onboardDevice(
         inviterIkPub: onboarded.inviterIkPub,
         secureEncryptedStorage
     };
+}
+
+// Unlike factory.deleteLocalAccount, keeps the local keys, so the device can still reconnect
+export async function deleteThisDevice(
+    account: TestSyncAccount,
+    secureEncryptedStorage: InMemStorage
+): Promise<void> {
+    if (!(account instanceof SyncAccount)) {
+        throw new Error('Expected an online SyncAccount');
+    }
+    await account.deleteThisDevice(secureEncryptedStorage);
+    account.syncProvider.restart();
 }

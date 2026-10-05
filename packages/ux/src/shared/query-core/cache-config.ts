@@ -20,6 +20,7 @@ const sBtcActivityItem = z.object({
                 amount: sCryptoAssetAmount
             })
             .optional(),
+        rate: sCryptoFiatRate,
         raw: z.unknown()
     })
 });

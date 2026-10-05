@@ -113,8 +113,7 @@ type NonDiscriminatedByPath<T, P extends readonly string[], V extends JsonValue>
     DiscriminatedByPath<T, P, V>
 >;
 type WhenMatcher<T, P extends readonly string[], V extends Extract<PathValue<T, P>, JsonValue>> =
-    | V
-    | ((value: DeepReadonly<PathValue<T, P>>) => value is DeepReadonly<V>);
+    V | ((value: DeepReadonly<PathValue<T, P>>) => value is DeepReadonly<V>);
 type RootContainer<T> = readonly [] extends ContainerPatchPath<T> ? unknown : never;
 
 export interface SlotPatch<From, To> {

@@ -36,13 +36,5 @@ export const styles = StyleSheet.create(theme => ({
     },
     column: {
         flex: 1
-    },
-    titleRow: {
-        flexShrink: 1,
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    titleName: {
-        flexShrink: 1
     }
 }));

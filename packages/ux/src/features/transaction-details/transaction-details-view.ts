@@ -1,4 +1,4 @@
-import type { CryptoFiatRate, NumberFormatter } from '@safely/core';
+import type { NumberFormatter } from '@safely/core';
 import { SPACE, ellipsisMiddle } from '@safely/core';
 
 import type { TransactionDetailsView, TransactionStatusView } from './types';
@@ -12,7 +12,6 @@ export type TransactionDetailsContext = {
     t: TranslateFn;
     confirmedAtFormatter: DateFormatter;
     numberFormatter: NumberFormatter;
-    rate: CryptoFiatRate | null | undefined;
     showFullSentAmount: boolean;
     amountOrder: AmountUnit;
     status: TransactionStatusView;
@@ -27,8 +26,8 @@ export function buildTransactionDetailsView(
     context: TransactionDetailsContext
 ): TransactionDetailsView {
     const { transaction } = activity;
-    const { isInitiator, fee } = transaction;
-    const { t, numberFormatter, rate } = context;
+    const { isInitiator, fee, rate } = transaction;
+    const { t, numberFormatter } = context;
 
     const isPending = isBtcTransactionPending(transaction.raw);
 
@@ -81,6 +80,6 @@ export function buildTransactionDetailsView(
         txid: transaction.raw.txid,
         txidLabel: ellipsisMiddle(transaction.raw.txid, TXID_ELLIPSIS_CHARS),
         explorerUrl: context.explorerUrl,
-        hasFiatRateNote: isFiatFirst && context.showFullSentAmount
+        hasFiatRateNote: rate !== null
     };
 }

@@ -2,8 +2,8 @@ Pod::Spec.new do |s|
   s.name           = 'SafelyCapturePrevention'
   s.version        = '1.0.0'
   s.summary        = 'Scoped screenshot/recording protection view for Safely wallet'
-  s.author         = 'Andreevco'
-  s.homepage       = 'https://github.com/andreevco/Safely'
+  s.author         = 'Treadsafely'
+  s.homepage       = 'https://github.com/treadsafely/Safely'
   s.platforms      = { :ios => '15.1' }
   s.source         = { git: '' }
   s.static_framework = true
