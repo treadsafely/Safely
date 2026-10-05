@@ -1,5 +1,4 @@
 import type { FC } from 'react';
-import { useState } from 'react';
 
 import { useAppContext, useTranslate } from '@safely/ux';
 import XmarkCircle56 from '@safely/ux/assets/icons/56/xmark-circle-56.svg?react';
@@ -12,19 +11,11 @@ import {
     rootStyles,
     textStyles
 } from './FatalErrorPage.styles';
-import { EraseDataModal } from '../../features';
 import { Button, Icon, Text } from '../../shared';
 
 export const FatalErrorPage: FC = () => {
     const t = useTranslate();
-    const { reloadApp, clearAllData } = useAppContext();
-
-    const [isEraseOpen, setIsEraseOpen] = useState(false);
-
-    const erase = async (): Promise<void> => {
-        await clearAllData();
-        reloadApp();
-    };
+    const { reloadApp } = useAppContext();
 
     return (
         <div className={rootStyles}>
@@ -48,18 +39,8 @@ export const FatalErrorPage: FC = () => {
                     <Button variant="primary" isFullWidth onClick={reloadApp}>
                         {t('errorBoundary.restartButton')}
                     </Button>
-                    <Button variant="secondary" isFullWidth onClick={() => setIsEraseOpen(true)}>
-                        {t('errorBoundary.eraseButton')}
-                    </Button>
                 </div>
             </div>
-
-            {isEraseOpen && (
-                <EraseDataModal
-                    onConfirm={() => void erase()}
-                    onClose={() => setIsEraseOpen(false)}
-                />
-            )}
         </div>
     );
 };

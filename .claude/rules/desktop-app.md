@@ -59,9 +59,9 @@ out of a `DesktopPlatform` implementation, whose shape this app declares itself
 are ours (`src/renderer/platform/unsupported.ts`), because the extension will lack a different set.
 The extension will repeat this wiring with its own platform.
 
-`AppProviders` also mounts `RootErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
-`FatalErrorPage` as the fallback — restart, or erase all data and restart, the recovery path
-`desktop-secret-store.md` requires when the keychain and `regular.json` disagree. It only works
+`AppProviders` also mounts `ErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
+`FatalErrorPage` as the fallback — restart only, on purpose: an erase button there would be pressed
+without reading, so a store the keychain disagrees with is recovered through support. It only works
 because `useSuspenseQuery` in `@safely/ux` rethrows a failed query instead of re-suspending into a
 refetch: before that, a missing keychain item meant a black screen and a retry loop, not an error.
 

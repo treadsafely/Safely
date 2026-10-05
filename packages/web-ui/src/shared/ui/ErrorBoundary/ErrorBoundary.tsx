@@ -3,24 +3,24 @@ import { Component } from 'react';
 
 import type { Logger } from '@safely/sync';
 
-export type RootErrorBoundaryProps = PropsWithChildren<{
+export type ErrorBoundaryProps = PropsWithChildren<{
     logger: Logger;
     fallback: ReactNode;
 }>;
 
-type RootErrorBoundaryState = {
+type ErrorBoundaryState = {
     hasError: boolean;
 };
 
-export class RootErrorBoundary extends Component<RootErrorBoundaryProps, RootErrorBoundaryState> {
-    public state: RootErrorBoundaryState = { hasError: false };
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    public state: ErrorBoundaryState = { hasError: false };
 
-    public static getDerivedStateFromError(): RootErrorBoundaryState {
+    public static getDerivedStateFromError(): ErrorBoundaryState {
         return { hasError: true };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-        this.props.logger.error('fatal', error, errorInfo.componentStack);
+        this.props.logger.error('render failed', error, errorInfo.componentStack);
     }
 
     public render(): ReactNode {

@@ -17,7 +17,7 @@ import {
     FatalErrorPage,
     loaderService,
     LoaderViewport,
-    RootErrorBoundary,
+    ErrorBoundary,
     ScreenProtectionProvider,
     toastService,
     ToastViewport,
@@ -133,14 +133,14 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>
             <AppContext value={appContext}>
                 <ScreenProtectionProvider protect={platform.protectScreen}>
-                    <RootErrorBoundary logger={logger} fallback={<FatalErrorPage />}>
+                    <ErrorBoundary logger={logger} fallback={<FatalErrorPage />}>
                         <Suspense fallback={loader}>
                             {/* TODO(ledger): a real transport replaces the rejecting port. */}
                             <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>
                                 <SyncStorageProvider>{children}</SyncStorageProvider>
                             </LedgerSessionPortProvider>
                         </Suspense>
-                    </RootErrorBoundary>
+                    </ErrorBoundary>
                 </ScreenProtectionProvider>
                 <ToastViewport />
                 <LoaderViewport />
