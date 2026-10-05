@@ -698,6 +698,13 @@ export function useRecordActivePortfolioSecretReveal() {
 
     return useMutation({
         mutationFn() {
+            if (
+                activePortfolio.type === PortfolioType.BIP39 &&
+                activePortfolio.secretRevealedStatus !== null
+            ) {
+                return Promise.resolve();
+            }
+
             logger.info('recording portfolio secret reveal');
             return update(draft =>
                 draft.update(activePortfolio.jsonArrayId(), activePortfolioDraft => {

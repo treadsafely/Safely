@@ -847,7 +847,7 @@
             "sender": "Sender",
             "fee": "Network fee",
             "hash": "Transaction",
-            "fiatRateNote": "Fiat value calculated at transaction time.",
+            "fiatRateNote": "Fiat value calculated at transaction date.",
             "status": {
                 "title": "Status",
                 "pending": {
