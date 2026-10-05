@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { FlatList, type ListRenderItem, View } from 'react-native';
 
-import { type LogRecord, shareLogs } from '@mobile/shared/logger';
+import type { LogRecord } from '@safely/sync';
+
+import { shareLogs } from '@mobile/shared/logger';
 import { Button, Screen, Text } from '@mobile/shared/ui';
 
 import { LogFilters, LogRow } from './components';

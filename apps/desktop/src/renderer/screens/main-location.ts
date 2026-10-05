@@ -4,10 +4,7 @@ import type { MainSearch, SettingsParams } from '../shared/routes';
 import { ROUTE } from '../shared/routes';
 
 type MainRoutePath =
-    | typeof ROUTE.main
-    | typeof ROUTE.updates
-    | typeof ROUTE.safety
-    | typeof ROUTE.settings;
+    typeof ROUTE.main | typeof ROUTE.updates | typeof ROUTE.safety | typeof ROUTE.settings;
 
 export type MainRouteMatch = {
     path: string;

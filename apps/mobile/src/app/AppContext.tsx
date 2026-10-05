@@ -132,7 +132,7 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
                 await pushNotifications
                     .setWalletNames({})
                     .catch(e => logger.error('push_wallet_names.clear_failed', e));
-                eraseLogs();
+                await eraseLogs();
             },
             reloadApp,
             subscribeAppStateChange(callback) {

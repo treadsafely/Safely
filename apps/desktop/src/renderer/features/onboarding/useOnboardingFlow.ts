@@ -20,13 +20,7 @@ import { isBiometryAvailable } from '../biometry';
 import { usePasscode } from '../passcode';
 
 export type OnboardingStep =
-    | 'moreOptions'
-    | 'import'
-    | 'watch'
-    | 'signIn'
-    | 'signInSuccess'
-    | 'passcode'
-    | 'biometry';
+    'moreOptions' | 'import' | 'watch' | 'signIn' | 'signInSuccess' | 'passcode' | 'biometry';
 
 type OnboardingSource =
     | { kind: 'generated' }

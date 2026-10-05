@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { LogLevel } from '@safely/sync';
+import { FileTransport, LogLevel } from '@safely/sync';
 
 const files = new Map<string, string>();
 const shared: string[] = [];
@@ -73,19 +73,17 @@ vi.mock('expo-file-system', () => {
     return { File, Directory, Paths: { cache: 'file:///cache' } };
 });
 
-const { FileTransport } = await import('@mobile/shared/logger/file-transport');
+const { LogFileStore } = await import('@mobile/shared/logger/log-file-store');
 
 /** Fixed so the day file names below hold whenever the suite runs. */
 const NOW = new Date('2026-03-04T12:00:00.000Z');
 const TODAY = '2026-03-04';
 const TODAY_FILE = `safely-${TODAY}.ndjson`;
 
-const buildTransport = () =>
-    new FileTransport({
-        appVersion: '1.2.3',
-        build: 'internal',
-        deviceInfo: { name: 'iPhone', osVersion: '18.0' }
-    });
+const buildStore = () => new LogFileStore();
+
+const buildTransport = (sink = buildStore()) =>
+    new FileTransport(sink, { appVersion: '1.2.3', build: 'internal', device: 'iPhone, 18.0' });
 
 const entry = (level: LogLevel, message: string, timestamp = NOW) => ({
     timestamp,
@@ -105,7 +103,7 @@ const dayFile = (day: string, message: string) =>
         d: 'iPhone, 18.0'
     }) + '\n';
 
-describe('FileTransport', () => {
+describe('LogFileStore', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.setSystemTime(NOW);
@@ -138,7 +136,7 @@ describe('FileTransport', () => {
         files.set('safely-2026-02-26.ndjson', dayFile('2026-02-26', 'within window'));
         files.set('safely-2026-02-25.ndjson', dayFile('2026-02-25', 'expired'));
 
-        buildTransport();
+        buildStore();
 
         expect([...files.keys()]).toEqual(['safely-2026-02-26.ndjson']);
     });
@@ -148,7 +146,7 @@ describe('FileTransport', () => {
         files.set('safely-share-random-token.ndjson', dayFile(TODAY, 'leftover'));
         files.set('some-other-app-file.json', '{}');
 
-        buildTransport();
+        buildStore();
 
         expect([...files.keys()]).toEqual(['some-other-app-file.json']);
     });
@@ -157,7 +155,7 @@ describe('FileTransport', () => {
         files.set('safely-2026-03-03.ndjson', dayFile('2026-03-03', 'older'));
         files.set(TODAY_FILE, dayFile(TODAY, 'newer'));
 
-        const records = await buildTransport().read();
+        const records = await buildStore().read();
 
         expect(records.map(record => record.message)).toEqual(['older', 'newer']);
     });
@@ -165,7 +163,7 @@ describe('FileTransport', () => {
     it('should share a throwaway copy instead of the log file itself', async () => {
         files.set(TODAY_FILE, dayFile(TODAY, 'boom'));
 
-        await buildTransport().share();
+        await buildStore().share();
 
         expect(shared).toEqual(['file:///cache/safely-share-random-token.ndjson']);
         expect(files.get('safely-share-random-token.ndjson')).toContain('"m":"boom"');
@@ -174,10 +172,10 @@ describe('FileTransport', () => {
 
     it('should remove a previous share copy before sharing again', async () => {
         files.set(TODAY_FILE, dayFile(TODAY, 'boom'));
-        const transport = buildTransport();
+        const logFiles = buildStore();
 
-        await transport.share();
-        await transport.share();
+        await logFiles.share();
+        await logFiles.share();
 
         expect([...files.keys()].filter(name => name.startsWith('safely-share-'))).toEqual([
             'safely-share-random-token.ndjson'
@@ -185,7 +183,7 @@ describe('FileTransport', () => {
     });
 
     it('should not share anything when there are no logs', async () => {
-        await buildTransport().share();
+        await buildStore().share();
 
         expect(shared).toEqual([]);
         expect(files.size).toBe(0);
@@ -204,7 +202,7 @@ describe('FileTransport', () => {
         files.set(TODAY_FILE, dayFile(TODAY, 'boom'));
         files.set('some-other-app-file.json', '{}');
 
-        buildTransport().erase();
+        buildStore().erase();
 
         expect([...files.keys()]).toEqual(['some-other-app-file.json']);
     });

@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import type { LogLevel } from '@safely/sync';
-
-import type { LogRecord } from '@mobile/shared/logger';
+import type { LogRecord } from '@safely/sync';
 
 import { scopeLabel } from '../utils/logFormat';
 

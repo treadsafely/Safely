@@ -1,21 +1,26 @@
+import { FileTransport } from '@safely/sync';
+import type { LogRecord } from '@safely/sync';
+
 import packageJson from '../../../package.json';
 import { build, deviceInfo } from '../app-meta';
 import { buildLogger } from './build-logger';
-import { FileTransport, type LogRecord } from './file-transport';
+import { LogFileStore } from './log-file-store';
 
-export type { LogRecord } from './file-transport';
-
-const transport = new FileTransport({
+const store = new LogFileStore();
+const transport = new FileTransport(store, {
     appVersion: packageJson.version,
     build,
-    deviceInfo
+    device: `${deviceInfo.name}, ${deviceInfo.osVersion}`
 });
 
 export const logger = buildLogger(transport, __DEV__);
-export const eraseLogs = (): void => transport.erase();
-export const shareLogs = (): Promise<void> => transport.share();
-export const readLogs = (): Promise<LogRecord[]> => transport.read();
-
+/* the files and the context buffer go together: a buffer that survives writes the past back */
+export const eraseLogs = async (): Promise<void> => {
+    await store.erase();
+    transport.reset();
+};
+export const shareLogs = (): Promise<void> => store.share();
+export const readLogs = (): Promise<LogRecord[]> => store.read();
 const unhandledLogger = logger.child('unhandled');
 
 const prevHandler = ErrorUtils.getGlobalHandler();

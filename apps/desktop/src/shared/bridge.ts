@@ -30,6 +30,13 @@ export interface DesktopCameraBridge {
     openPrivacySettings(): Promise<void>;
 }
 
+export interface DesktopLogsBridge {
+    append(lines: string[]): void;
+    read(): Promise<string[]>;
+    erase(): Promise<void>;
+    share(): Promise<void>;
+}
+
 export interface DesktopBridge {
     platform: string;
 
@@ -57,6 +64,8 @@ export interface DesktopBridge {
     biometry: DesktopBiometryBridge;
 
     camera: DesktopCameraBridge;
+
+    logs: DesktopLogsBridge;
 
     store: DesktopStoreBridge;
 

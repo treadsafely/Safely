@@ -1,4 +1,5 @@
 import type { Build, IEnumerableStorage, ISyncKeyValueStorage } from '@safely/core';
+import type { ILogFileStore } from '@safely/sync';
 import type { AppStateStatus, LedgerTransport } from '@safely/ux';
 
 import type { AppInfo } from '../../shared/app-info';
@@ -27,6 +28,8 @@ export interface DesktopPlatform {
     readonly biometry: DesktopBiometryBridge;
 
     readonly camera: DesktopCameraBridge;
+
+    readonly logs: ILogFileStore;
 
     openExternalUrl(url: string): Promise<void>;
 

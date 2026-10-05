@@ -2,8 +2,8 @@ import { memo, useState } from 'react';
 import { View } from 'react-native';
 
 import { LogLevel } from '@safely/sync';
+import type { LogRecord } from '@safely/sync';
 
-import type { LogRecord } from '@mobile/shared/logger';
 import { Text, TouchableOpacity } from '@mobile/shared/ui';
 import { useCopy } from '@mobile/shared/utils/copy';
 
