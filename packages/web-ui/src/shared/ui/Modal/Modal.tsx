@@ -1,5 +1,6 @@
 import { Dialog } from '@base-ui/react/dialog';
-import type { ComponentPropsWithoutRef, FC, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, FC, KeyboardEventHandler, ReactNode } from 'react';
+import { useRef } from 'react';
 
 import Xmark16 from '@safely/ux/assets/icons/16/xmark-16.svg?react';
 import { css, cx } from '@safely/web-ui/styled-system/css';
@@ -31,6 +32,7 @@ export type ModalPopupProps = {
     closeLabel: string;
     hasClose?: boolean;
     hasTransparentClose?: boolean;
+    onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
     children?: ReactNode;
     className?: string;
 };
@@ -63,13 +65,27 @@ type ModalPartProps<TElement extends 'div' | 'h2' | 'p'> = Omit<
 };
 
 const ModalPopup: FC<ModalPopupProps> = props => {
-    const { closeLabel, hasClose = true, hasTransparentClose, className, children } = props;
+    const {
+        closeLabel,
+        hasClose = true,
+        hasTransparentClose,
+        onKeyDown,
+        className,
+        children
+    } = props;
+
+    const popupRef = useRef<HTMLDivElement>(null);
 
     return (
         <Dialog.Portal>
             <Dialog.Backdrop className={styles.backdrop} />
 
-            <Dialog.Popup className={cx(styles.popup, className)}>
+            <Dialog.Popup
+                ref={popupRef}
+                initialFocus={popupRef}
+                className={cx(styles.popup, className)}
+                onKeyDown={onKeyDown}
+            >
                 {hasClose && (
                     <Dialog.Close
                         className={cx(

@@ -15,9 +15,12 @@ import { Button, Text } from '../../../shared';
 export type BalanceProps = {
     onSend: () => void;
     onReceive: () => void;
+    onScan: () => void;
 };
 
 export const Balance: FC<BalanceProps> = props => {
+    const { onSend, onReceive, onScan } = props;
+
     const t = useTranslate();
 
     const { data: totalBalance } = useTotalBalance();
@@ -43,16 +46,14 @@ export const Balance: FC<BalanceProps> = props => {
             </div>
 
             <div className={actionsStyles}>
-                <Button
-                    variant="secondary"
-                    size="small"
-                    disabled={isWatchOnly}
-                    onClick={props.onSend}
-                >
+                <Button variant="secondary" size="small" disabled={isWatchOnly} onClick={onSend}>
                     {t('home.actions.send')}
                 </Button>
-                <Button variant="secondary" size="small" onClick={props.onReceive}>
+                <Button variant="secondary" size="small" onClick={onReceive}>
                     {t('home.actions.receive')}
+                </Button>
+                <Button variant="secondary" size="small" disabled={isWatchOnly} onClick={onScan}>
+                    {t('home.actions.scan')}
                 </Button>
             </div>
         </div>

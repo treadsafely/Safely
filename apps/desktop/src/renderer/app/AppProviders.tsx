@@ -14,8 +14,10 @@ import {
     UnlockableSecuredEncryptedStorage
 } from '@safely/ux';
 import {
+    FatalErrorPage,
     loaderService,
     LoaderViewport,
+    ErrorBoundary,
     ScreenProtectionProvider,
     toastService,
     ToastViewport,
@@ -131,12 +133,14 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>
             <AppContext value={appContext}>
                 <ScreenProtectionProvider protect={platform.protectScreen}>
-                    <Suspense fallback={loader}>
-                        {/* TODO(ledger): a real transport replaces the rejecting port. */}
-                        <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>
-                            <SyncStorageProvider>{children}</SyncStorageProvider>
-                        </LedgerSessionPortProvider>
-                    </Suspense>
+                    <ErrorBoundary logger={logger} fallback={<FatalErrorPage />}>
+                        <Suspense fallback={loader}>
+                            {/* TODO(ledger): a real transport replaces the rejecting port. */}
+                            <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>
+                                <SyncStorageProvider>{children}</SyncStorageProvider>
+                            </LedgerSessionPortProvider>
+                        </Suspense>
+                    </ErrorBoundary>
                 </ScreenProtectionProvider>
                 <ToastViewport />
                 <LoaderViewport />

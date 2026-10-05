@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useRef, useState } from 'react';
 
 import { ellipsisMiddle } from '@safely/core';
-import type { SendFormResult, SendFormView } from '@safely/ux';
+import type { SendFormInitialValues, SendFormResult, SendFormView } from '@safely/ux';
 import { useActivePortfolio, useSendForm, useTranslate } from '@safely/ux';
 
 import { AmountStep } from './AmountStep';
@@ -14,6 +14,7 @@ import { PortfolioTypeBadge } from '../../entities';
 import { Modal, Text } from '../../shared';
 
 export type SendModalProps = {
+    initialValues?: SendFormInitialValues;
     onClose: () => void;
 };
 
@@ -21,9 +22,7 @@ function resolveNext(view: SendFormView): (() => void) | undefined {
     return 'next' in view ? view.next : undefined;
 }
 
-export const SendModal: FC<SendModalProps> = props => {
-    const { onClose } = props;
-
+export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
     const t = useTranslate();
     const portfolio = useActivePortfolio();
 
@@ -32,6 +31,7 @@ export const SendModal: FC<SendModalProps> = props => {
     const onSubmitted = useRef<(() => void) | null>(null);
 
     const view = useSendForm({
+        initialValues,
         shouldResetForm: false,
         onSubmit: (formResult, onSuccess) => {
             onSubmitted.current = onSuccess;

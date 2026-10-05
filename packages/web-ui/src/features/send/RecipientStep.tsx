@@ -17,8 +17,8 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
     const t = useTranslate();
 
     const suggestions = resolveVisibleSuggestions(view);
-    const hasMatches = hasSuggestionMatches(view.suggestions);
-    const error = hasMatches ? undefined : view.errors.recipient;
+    const hasSuggestions = hasSuggestionMatches(suggestions);
+    const error = hasSuggestionMatches(view.suggestions) ? undefined : view.errors.recipient;
 
     const selectedPortfolio = suggestions.portfolios.find(
         item => item.id === view.selectedSuggestionId
@@ -38,7 +38,7 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
                 onChange={view.setRecipient}
             />
 
-            {hasMatches && (
+            {hasSuggestions && (
                 <List className={listStyles}>
                     <List.Group variant="divided">
                         {suggestions.portfolios.map(suggestion => (

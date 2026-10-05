@@ -102,6 +102,7 @@ export const MainPage: FC<MainPageProps> = props => {
             selectedActivityKey={selectedActivity?.key}
             onSend={send.onOpen}
             onReceive={receive.onOpen}
+            onScan={send.scan}
             onSelectActivity={selectActivity}
             onPortfolioChange={clearSelectedActivity}
         />
