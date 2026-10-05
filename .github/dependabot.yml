@@ -29,6 +29,10 @@ updates:
           - dependency-name: 'expo-*'
           - dependency-name: '@expo/*'
           - dependency-name: babel-preset-expo
+          # Metro and babel-preset-expo run on @babel/core 7; Babel 8 plugins break
+          # the JS bundle step. The Babel major moves with the Expo SDK.
+          - dependency-name: '@babel/*'
+            update-types: ['version-update:semver-major']
           # React Native and the native modules. Every one of these needs an
           # `expo prebuild` and on-device testing, and most are pinned to the RN
           # version, so an automated bump is a broken EAS build at best.
@@ -43,6 +47,25 @@ updates:
           - dependency-name: react-dom
           - dependency-name: '@types/react'
           - dependency-name: '@types/react-dom'
+          # Majors blocked by the ecosystem, not by us. Patches and minors still come in.
+          # TypeScript 7 (the Go port): typescript-eslint peers on `typescript <6.1.0` and
+          # aborts lint, and the static-config inference of @react-navigation navigators
+          # collapses to `never`.
+          - dependency-name: typescript
+            update-types: ['version-update:semver-major']
+          # ESLint 10: eslint-plugin-import crashes in `import/order` and has no release
+          # supporting it; moving to eslint-plugin-import-x is a separate change.
+          - dependency-name: eslint
+            update-types: ['version-update:semver-major']
+          - dependency-name: '@eslint/js'
+            update-types: ['version-update:semver-major']
+          # Not broken, but each is a migration of its own rather than a grouped bump:
+          # boundaries 7 deprecates `mode` in element descriptors, vitest 5 is a new
+          # test-runner major.
+          - dependency-name: eslint-plugin-boundaries
+            update-types: ['version-update:semver-major']
+          - dependency-name: vitest
+            update-types: ['version-update:semver-major']
 
       # Grouping is only about PR volume: one review per stack instead of per
       # package. Ungrouped dependencies still get their own PR.

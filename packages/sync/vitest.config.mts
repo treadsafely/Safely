@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     resolve: {
         alias: {
-            '@safely/slottree': resolve(__dirname, '../slottree/src')
+            '@safely/slottree': resolve(import.meta.dirname, '../slottree/src')
         }
     },
     test: {

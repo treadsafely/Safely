@@ -1,0 +1,9 @@
+{
+    "platforms": ["ios", "android"],
+    "ios": {
+        "modules": ["SafelyPushContentModule"]
+    },
+    "android": {
+        "modules": ["expo.modules.safelypushcontent.SafelyPushContentModule"]
+    }
+}

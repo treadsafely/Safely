@@ -1,0 +1,1 @@
+export { NotificationsWalletsScreen } from './NotificationsWalletsScreen';

@@ -49,6 +49,10 @@ for imports within a single module only.
   write literal key arrays. These calls run at module import time — that's why import cycles are
   hard-banned.
 - Local client state is a zustand store inside its own module.
+- The account store (`entities/account/sync-storage`) is filled inside the accounts query's
+  `queryFn`, never in an effect: an account the list query has published must already have its
+  store entry, or a gated child reads an empty portfolio list and throws (SAF-770). The provider
+  effect only subscribes to changes and re-reads the snapshot after subscribing.
 - Multi-step flows and forms (send, exchange, onboarding) are xstate machines; the machine lives next
   to its scenario (`packages/ux/src/features/forms/**`).
 - Query-cache persistence goes through `query-core/persistence.ts` and the managers in

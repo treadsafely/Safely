@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 

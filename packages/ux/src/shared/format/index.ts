@@ -1,1 +1,1 @@
-export { useDateFormatter, type DateFormatter, useRelativeTime } from './date';
+export { useDateFormatter, type DateFormatter } from './date';

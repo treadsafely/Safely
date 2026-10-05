@@ -37,8 +37,7 @@ export const getDateGroupTitle = (
 };
 
 export type GroupedRow<T> =
-    | { key: string; type: 'header'; title: string }
-    | { key: string; type: 'item'; item: T };
+    { key: string; type: 'header'; title: string } | { key: string; type: 'item'; item: T };
 
 export const getGroupedRowType = <T>(row: GroupedRow<T>) => row.type;
 

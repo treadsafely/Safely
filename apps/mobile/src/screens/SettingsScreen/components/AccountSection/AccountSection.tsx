@@ -59,6 +59,20 @@ export const AccountSection = () => {
                 </Cell>
                 <Cell
                     onPress={() =>
+                        navigation.navigate('SettingsModal', { screen: 'NotificationsModal' })
+                    }
+                >
+                    <Cell.Content>
+                        <Cell.Row>
+                            <Cell.Title>
+                                {t('settings.groups.account.options.notifications')}
+                            </Cell.Title>
+                        </Cell.Row>
+                    </Cell.Content>
+                    <Cell.Chevron />
+                </Cell>
+                <Cell
+                    onPress={() =>
                         navigation.navigate('SettingsModal', { screen: 'AddressBookModal' })
                     }
                 >

@@ -41,9 +41,7 @@ type LedgerSigningContext = LedgerSigningInput & {
 };
 
 type LedgerSigningEvent =
-    | { type: 'DEVICES_FOUND'; devices: DiscoveredDevice[] }
-    | { type: 'RETRY' }
-    | { type: 'CANCEL' };
+    { type: 'DEVICES_FOUND'; devices: DiscoveredDevice[] } | { type: 'RETRY' } | { type: 'CANCEL' };
 
 export const ledgerSigningMachine = setup({
     types: {

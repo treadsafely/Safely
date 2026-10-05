@@ -121,9 +121,8 @@ const buildTransactionRow = (
     const formattedValue = amount.format(context.numberFormatter, {
         fullPrecision: isFullPrecision
     });
-    const formattedFiat = context.rateData
-        ? amount.convert(context.rateData).format(context.numberFormatter)
-        : null;
+    const rate = activity.transaction.rate;
+    const formattedFiat = rate ? amount.convert(rate).format(context.numberFormatter) : null;
     const valueColor: ActivityRow['valueColor'] = isInitiator ? 'primary' : 'accentGreen';
 
     const timestampLabel = isPending

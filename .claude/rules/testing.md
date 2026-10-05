@@ -35,7 +35,7 @@ packages and their dependents, and for everything when root-level files change.
   a single example case.
 - React code in `packages/ux` uses `@testing-library/react` on `happy-dom`.
 - xstate machines are tested through machine transitions (`packages/ux/test/forms/**`), not through UI.
-- Mobile JS tests only have the `@mobile/shared` alias (`apps/mobile/vitest.config.ts`) — test shared
+- Mobile JS tests only have the `@mobile/shared` alias (`apps/mobile/vitest.config.mts`) — test shared
   logic there, not screens.
 
 `no-console` is off in tests, but logs are not a substitute for assertions. Tests need no network:

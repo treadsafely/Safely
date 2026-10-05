@@ -10,6 +10,7 @@ import {
     useAppContext,
     useDeleteAccount,
     useEraseAllData,
+    usePushSubscriptionSyncer,
     useToast
 } from '@safely/ux';
 
@@ -23,6 +24,7 @@ export function useSignOutAccountConfirmation() {
     const { mutateAsync: deleteAccount } = useDeleteAccount();
     const { mutateAsync: eraseAllData } = useEraseAllData();
     const { storage } = useAppContext();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
 
     return useCallback(() => {
         const isLastAccount = accounts?.length === 1;
@@ -37,12 +39,15 @@ export function useSignOutAccountConfirmation() {
                 await secureEncryptedStorage.unlock();
 
                 if (isLastAccount) {
-                    if (isSyncAccount) {
-                        await deleteAccount(secureEncryptedStorage);
-                    }
-
                     await eraseAllData();
                 } else {
+                    if (isSyncAccount) {
+                        await pushSubscriptionSyncer?.announceSyncEvent(
+                            activeAccount.accountId,
+                            'device-disconnected'
+                        );
+                    }
+
                     await deleteAccount(secureEncryptedStorage);
                     toast(t('settings.signOutAccount.toastAccountRemoved'));
                 }
@@ -57,6 +62,7 @@ export function useSignOutAccountConfirmation() {
         eraseAllData,
         toast,
         t,
-        storage.sync.getSecureEncrypted
+        storage.sync.getSecureEncrypted,
+        pushSubscriptionSyncer
     ]);
 }
