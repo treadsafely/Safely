@@ -1,9 +1,17 @@
 import { useMemo, useState } from 'react';
 
-import type { LogLevel } from '@safely/sync';
-import type { LogRecord } from '@safely/sync';
+import type { LogLevel, LogRecord } from '@safely/sync';
 
-import { scopeLabel } from '../utils/logFormat';
+import { scopeLabel } from './log-format';
+
+export type LogFiltersProps = {
+    levels: LogLevel[];
+    scopes: string[];
+    isLevelActive: (level: LogLevel) => boolean;
+    isScopeActive: (scope: string) => boolean;
+    onToggleLevel: (level: LogLevel) => void;
+    onToggleScope: (scope: string) => void;
+};
 
 export const useLogFilters = (records: LogRecord[]) => {
     const [levelSel, setLevelSel] = useState<Set<LogLevel> | null>(null);
@@ -58,15 +66,14 @@ export const useLogFilters = (records: LogRecord[]) => {
     const isLevelActive = (level: LogLevel) => levelSel === null || levelSel.has(level);
     const isScopeActive = (scope: string) => scopeSel === null || scopeSel.has(scope);
 
-    return {
-        filtered,
-        filterProps: {
-            levels,
-            scopes,
-            isLevelActive,
-            isScopeActive,
-            onToggleLevel: toggleLevel,
-            onToggleScope: toggleScope
-        }
+    const filterProps: LogFiltersProps = {
+        levels,
+        scopes,
+        isLevelActive,
+        isScopeActive,
+        onToggleLevel: toggleLevel,
+        onToggleScope: toggleScope
     };
+
+    return { filtered, filterProps };
 };

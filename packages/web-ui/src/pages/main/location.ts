@@ -1,4 +1,4 @@
-import type { SettingsSection } from './settings';
+import type { DevTool, SettingsSection } from './settings';
 
 export const MAIN_MODALS = ['send', 'receive', 'addWallet', 'addAccount'] as const;
 
@@ -8,7 +8,7 @@ export type MainView =
     | { kind: 'home' }
     | { kind: 'updates' }
     | { kind: 'safety' }
-    | { kind: 'settings'; section: SettingsSection | null };
+    | { kind: 'settings'; section: SettingsSection | null; tool: DevTool | null };
 
 export type MainLocation = {
     view: MainView;

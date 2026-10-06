@@ -1,19 +1,20 @@
 import z from 'zod';
 
-import { MAIN_MODALS, SETTINGS_SECTIONS } from '@safely/web-ui';
+import { DEV_TOOLS, MAIN_MODALS, SETTINGS_SECTIONS } from '@safely/web-ui';
 
 export const ROUTE = {
     main: '/',
     updates: '/updates',
     safety: '/safety',
-    settings: '/settings/{-$section}',
+    settings: '/settings/{-$section}/{-$tool}',
     onboarding: {
         welcome: '/onboarding'
     }
 } as const;
 
 export const sSettingsParams = z.object({
-    section: z.enum(SETTINGS_SECTIONS).optional().catch(undefined)
+    section: z.enum(SETTINGS_SECTIONS).optional().catch(undefined),
+    tool: z.enum(DEV_TOOLS).optional().catch(undefined)
 });
 
 export const sMainSearch = z.object({

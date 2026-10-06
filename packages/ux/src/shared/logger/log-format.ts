@@ -1,11 +1,11 @@
 import { LogLevel } from '@safely/sync';
 
-import type { TextProps } from '@mobile/shared/ui';
+export type LogLevelTone = 'accentRed' | 'accentOrange' | 'primary' | 'tertiary';
 
 export const scopeLabel = (path: string[]): string =>
     path.length > 0 ? path.join(' › ') : '(root)';
 
-export const formatMessage = (message: string): string => {
+export const formatLogMessage = (message: string): string => {
     const trimmed = message.trim();
     const start = trimmed.search(/[{[]/);
 
@@ -23,7 +23,7 @@ export const formatMessage = (message: string): string => {
     return message;
 };
 
-export const levelColor = (level: LogLevel): TextProps['color'] => {
+export const logLevelTone = (level: LogLevel): LogLevelTone => {
     if (level >= LogLevel.ERROR) return 'accentRed';
     if (level >= LogLevel.WARN) return 'accentOrange';
     if (level >= LogLevel.INFO) return 'primary';

@@ -10,10 +10,11 @@ import type { FC } from 'react';
 
 import { useHasPortfolio } from '@safely/ux';
 import type { MainLocation } from '@safely/web-ui';
-import { MainPage } from '@safely/web-ui';
+import { LogsSection, MainPage } from '@safely/web-ui';
 
 import { toMainLocation, toMainRouteTarget } from './main-location';
 import { SecuritySection } from '../features';
+import { platform } from '../platform';
 import { ROUTE, sSettingsParams } from '../shared';
 
 export const MainScreen: FC = () => {
@@ -51,6 +52,7 @@ export const MainScreen: FC = () => {
             hasWindowControls={hasWindowControls}
             isFullScreen={isFullScreen}
             security={<SecuritySection />}
+            logs={<LogsSection store={platform.logs} />}
         />
     );
 };

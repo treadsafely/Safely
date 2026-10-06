@@ -3,12 +3,12 @@ import { View } from 'react-native';
 
 import { LogLevel } from '@safely/sync';
 import type { LogRecord } from '@safely/sync';
+import { formatLogMessage, logLevelTone, scopeLabel } from '@safely/ux';
 
 import { Text, TouchableOpacity } from '@mobile/shared/ui';
 import { useCopy } from '@mobile/shared/utils/copy';
 
 import { styles } from './LogRow.styles';
-import { formatMessage, levelColor, scopeLabel } from '../../utils/logFormat';
 
 const COLLAPSED_LINES = 8;
 const COLLAPSED_CHARS = 400;
@@ -18,7 +18,7 @@ type LogRowProps = {
 };
 
 export const LogRow = memo(({ record }: LogRowProps) => {
-    const message = formatMessage(record.message);
+    const message = formatLogMessage(record.message);
     const copy = useCopy();
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,7 +33,7 @@ export const LogRow = memo(({ record }: LogRowProps) => {
     return (
         <TouchableOpacity style={styles.row} onPress={handleCopy}>
             <View style={styles.rowMeta}>
-                <Text variant="labelS" color={levelColor(record.level)}>
+                <Text variant="labelS" color={logLevelTone(record.level)}>
                     {LogLevel[record.level]}
                 </Text>
                 <Text variant="bodyS" color="tertiary">

@@ -181,9 +181,10 @@ would be served as a file — see below); the paths and the zod shapes of params
 
 - `/onboarding` — `WelcomeScreen`; its steps are `useOnboardingFlow` state, not routes
 - a pathless layout route `main` (`MainScreen`) with `?modal=send|receive|addWallet|addAccount` as
-  its search, and the children `/`, `/updates`, `/safety`, `/settings/{-$section}`. The children
-  have no component: they exist for the URL, the params and the history, and `MainScreen` turns the
-  matched child plus the search into the `MainLocation` that `MainPage` takes
+  its search, and the children `/`, `/updates`, `/safety`, `/settings/{-$section}/{-$tool}` — the
+  second optional segment is a dev-tools detail (`keychain`, `logs`) and is dropped under any other
+  section. The children have no component: they exist for the URL, the params and the history, and
+  `MainScreen` turns the matched child plus the search into the `MainLocation` that `MainPage` takes
   (`screens/main-location.ts`, round-trip tested in `test/renderer/`). A layout route rather than a
   component per path is what keeps `MainPage` mounted across a navigation — the flows it hoists and
   the sidebar scroll survive.
