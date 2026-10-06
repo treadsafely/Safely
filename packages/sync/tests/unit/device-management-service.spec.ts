@@ -89,6 +89,46 @@ describe('device management service', () => {
         await verifyStoredDeviceState(ctx, deviceIkPub(1), 'added');
     });
 
+    it.each(['added', 'active'] as const)(
+        'preserves an existing %s device when added again',
+        async type => {
+            const ctx = await createMachineContext(server);
+            const ikPub = ctx.container.ikService.getPub();
+
+            await addPub(ctx, ikPub);
+            if (type === 'active') {
+                await ctx.container.deviceManager.activate();
+            }
+
+            const snapshot = ctx.container.deviceYManager.encodeAsSnapshot();
+            const signer = ctx.container.keyServiceFactory.createDmkSignerService(
+                ctx.secureEncryptedStorage
+            );
+            const signSpy = vi.spyOn(signer, 'signAddDeviceForStorage');
+
+            await ctx.container.deviceManager.addDevice(Buffer.from(ikPub), signer);
+
+            expect(ctx.container.deviceYManager.encodeAsSnapshot()).toEqual(snapshot);
+            expect(signSpy).not.toHaveBeenCalled();
+            await verifyStoredDeviceState(ctx, ikPub, type);
+        }
+    );
+
+    it('adds a revoked device again', async () => {
+        const ctx = await createMachineContext(server);
+        const ikPub = ctx.container.ikService.getPub();
+
+        await addPub(ctx, ikPub);
+        await ctx.container.deviceManager.activate();
+        await revokePub(ctx, ikPub);
+        await verifyStoredDeviceState(ctx, ikPub, 'revoked');
+
+        await addPub(ctx, ikPub);
+
+        await verifyStoredDeviceState(ctx, ikPub, 'added');
+        expect(await ctx.container.deviceManager.getDevices()).toEqual([]);
+    });
+
     it('activates this device', async () => {
         const ctx = await createMachineContext(server);
         const ikPub = ctx.container.ikService.getPub();
