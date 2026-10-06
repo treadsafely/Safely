@@ -13,7 +13,11 @@ import {
 } from './FatalErrorPage.styles';
 import { Button, Icon, Text } from '../../shared';
 
-export const FatalErrorPage: FC = () => {
+export type FatalErrorPageProps = {
+    onShareLogs: () => void;
+};
+
+export const FatalErrorPage: FC<FatalErrorPageProps> = ({ onShareLogs }) => {
     const t = useTranslate();
     const { reloadApp } = useAppContext();
 
@@ -38,6 +42,9 @@ export const FatalErrorPage: FC = () => {
                 <div className={actionsStyles}>
                     <Button variant="primary" isFullWidth onClick={reloadApp}>
                         {t('errorBoundary.restartButton')}
+                    </Button>
+                    <Button variant="secondary" isFullWidth onClick={onShareLogs}>
+                        {t('errorBoundary.shareLogsButton')}
                     </Button>
                 </div>
             </div>

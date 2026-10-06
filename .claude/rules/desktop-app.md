@@ -59,10 +59,11 @@ are ours (`src/renderer/platform/unsupported.ts`), because the extension will la
 The extension will repeat this wiring with its own platform.
 
 `AppProviders` also mounts `ErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
-`FatalErrorPage` as the fallback — restart only, on purpose: an erase button there would be pressed
-without reading, so a store the keychain disagrees with is recovered through support. It only works
-because `useSuspenseQuery` in `@safely/ux` rethrows a failed query instead of re-suspending into a
-refetch: before that, a missing keychain item meant a black screen and a retry loop, not an error.
+`FatalErrorPage` as the fallback — restart and "send logs" (`platform.logs.share()`, the log folder
+in Finder), no erase on purpose: an erase button there would be pressed without reading, so a store
+the keychain disagrees with is recovered through support. It only works because `useSuspenseQuery`
+in `@safely/ux` rethrows a failed query instead of re-suspending into a refetch: before that, a
+missing keychain item meant a black screen and a retry loop, not an error.
 
 **The renderer's platform is a module-level value, not something a component creates.**
 `src/renderer/platform/index.ts` builds it once while the module graph loads, and the logger
