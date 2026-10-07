@@ -36,6 +36,7 @@ export const MainContent: FC<MainContentProps> = props => {
             <History
                 selectedActivityKey={selectedActivityKey}
                 onSelectActivity={onSelectActivity}
+                onReceive={onReceive}
             />
         </>
     );
