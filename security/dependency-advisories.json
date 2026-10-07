@@ -64,6 +64,45 @@
             "owner": "liulekin@andreevco.com",
             "expires": "2026-12-31",
             "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+        },
+        {
+            "id": "GHSA-7pqw-9j4j-h8q3",
+            "package": "extract-zip",
+            "severity": "high",
+            "context": "build",
+            "paths": [
+                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > extract-zip"
+            ],
+            "rationale": "extract-zip is the unpacker @electron/packager runs once per `electron-forge package`/`make` to unzip the Electron binary it downloaded from GitHub releases into the bundle; it executes on a developer machine or the CI packaging job only and ships in no app. The archive it opens is the official Electron release zip for the pinned version, not user input. The advisory names `>=2.0.2` as patched and npm has no such version — `latest` is 2.0.1 — so no `overrides` entry can close this.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2027-01-04",
+            "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3"
+        },
+        {
+            "id": "GHSA-jmr9-qjv8-65gv",
+            "package": "extract-zip",
+            "severity": "high",
+            "context": "build",
+            "paths": [
+                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > extract-zip"
+            ],
+            "rationale": "Same package and same reachability as GHSA-7pqw-9j4j-h8q3: @electron/packager's one-shot unpacker for the official Electron release zip at packaging time, never in a shipped app. No patched version exists on npm (`latest` is 2.0.1), so an override cannot close it.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2027-01-04",
+            "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
+        },
+        {
+            "id": "GHSA-ch52-4w7c-c8xp",
+            "package": "http-cache-semantics",
+            "severity": "high",
+            "context": "build",
+            "paths": [
+                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > @electron/get > got > cacheable-request > http-cache-semantics"
+            ],
+            "rationale": "Reached only through @electron/get, the downloader @electron/packager uses for the Electron binary at packaging time; it runs on a developer machine or the CI packaging job and ships in no app. The fix is 4.3.0, published 2026-10-04, which `minimumReleaseAge` (4 days) refuses until 2026-10-08 — then `'http-cache-semantics@4': '^4.3.0'` goes into `overrides` and this entry is dropped.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2026-10-31",
+            "url": "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"
         }
     ]
 }

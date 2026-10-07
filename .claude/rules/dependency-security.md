@@ -265,7 +265,12 @@ than severity, with the measurement written out in `native-advisories.json`:
   testing of the download, cache and import flows.
 
 The JavaScript registry holds the two `image-size` advisories — Metro's bundle-time and dev-server
-image-header parser, expiring 2026-11-30. Both name `>=2.0.3` as patched and npm has no such
+image-header parser, expiring 2026-11-30 — and three `build` entries from the desktop packaging
+chain (`@electron/packager`): two for `extract-zip`, whose patched version does not exist on npm,
+and one for `http-cache-semantics`, whose fix `minimumReleaseAge` refuses until 2026-10-08 — that one
+expires 2026-10-31 and is replaced by an `overrides` entry, not renewed. The rest of that chain is
+closed by overrides, including `tar@6` forced across a major: `cacache@16` declares `^6`, every fix
+is on the 7 line, and the rebuild step that would run it is switched off in `forge.config.ts`. Both name `>=2.0.3` as patched and npm has no such
 version: `latest` is 2.0.2, itself vulnerable, and Metro's `^1.0.2` resolves 1.2.1, the newest of
 the 1.x line, published under the `legacy` tag. So an override cannot close them — closing them
 means forcing Metro across a major, not a version bump.
