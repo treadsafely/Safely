@@ -1,4 +1,4 @@
-import type { FC, MouseEvent } from 'react';
+import type { FC, KeyboardEvent, MouseEvent } from 'react';
 
 import type { AmountView } from '@safely/ux';
 import {
@@ -70,6 +70,12 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
 
     const pendingFunds = useDisclosure();
 
+    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+        if (event.key === 'Enter' && 'next' in view) {
+            view.next();
+        }
+    };
+
     const enterMax = 'enterMax' in view ? view.enterMax : undefined;
     const asset = view.parsed.asset?.amount.asset;
     const symbol = inputType === 'fiat' ? fiat.id.symbol : (asset?.symbol ?? '');
@@ -100,6 +106,7 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
                             onChange={input.onChange}
                             onPaste={input.onPaste}
                             onFocus={() => 'exitMax' in view && view.exitMax()}
+                            onKeyDown={handleKeyDown}
                         />
 
                         <span className={suffixStyles}>{symbol}</span>

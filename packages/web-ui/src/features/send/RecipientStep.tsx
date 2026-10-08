@@ -36,6 +36,7 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
                 contactMeta={selectedContact?.meta}
                 source={view.selectedSuggestionSource}
                 onChange={view.setRecipient}
+                onSubmit={'next' in view ? view.next : undefined}
             />
 
             {hasSuggestions && (
