@@ -36,7 +36,8 @@ export function toMainRouteTarget(location: MainLocation): MainRouteTarget {
         case 'settings':
             return {
                 to: ROUTE.settings,
-                params: view.section === null ? {} : { section: view.section },
+                /* default tanstack way to reset params */
+                params: { section: view.section ?? undefined, tool: view.tool ?? undefined },
                 search
             };
     }
@@ -50,8 +51,15 @@ function toMainView(match: MainRouteMatch): MainView {
             return { kind: 'updates' };
         case ROUTE.safety:
             return { kind: 'safety' };
-        case ROUTE.settings:
-            return { kind: 'settings', section: match.params.section ?? null };
+        case ROUTE.settings: {
+            const section = match.params.section ?? null;
+
+            return {
+                kind: 'settings',
+                section,
+                tool: section === 'devTools' ? (match.params.tool ?? null) : null
+            };
+        }
         default:
             return { kind: 'home' };
     }

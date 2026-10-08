@@ -3,10 +3,8 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 
 import { compareStrings } from '@safely/core';
-import type { ILoggerTransport, LogEntry } from '@safely/sync';
-import { LogLevel } from '@safely/sync';
-
-import { type StoredLog, sStoredLog } from './schemas/stored-log.schema';
+import type { ILogFileStore, LogRecord } from '@safely/sync';
+import { FileTransport } from '@safely/sync';
 
 const FILE_EXTENSION = '.ndjson';
 const FILE_PREFIX = 'safely-';
@@ -20,64 +18,17 @@ const SHARE_FILE_PREFIX = `${FILE_PREFIX}share-`;
 const RETENTION_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_TOTAL_SIZE_BYTES = 2 * 1024 * 1024;
-const CONTEXT_BUFFER_SIZE = 1000;
 
-type FileTransportConfig = {
-    appVersion: string;
-    build: string;
-    deviceInfo: { name: string; osVersion: string };
-};
-
-export type LogRecord = {
-    timestamp: string;
-    level: LogLevel;
-    path: string[];
-    message: string;
-    appVersion: string;
-    build: string;
-    device: string;
-};
-
-export class FileTransport implements ILoggerTransport {
-    private readonly appVersion: string;
-    private readonly build: string;
-    private readonly device: string;
-    private context: string[] = [];
-
-    constructor(opts: FileTransportConfig) {
-        this.appVersion = opts.appVersion;
-        this.build = opts.build;
-        this.device = `${opts.deviceInfo.name}, ${opts.deviceInfo.osVersion}`;
-
+export class LogFileStore implements ILogFileStore {
+    constructor() {
         this.cleanup();
     }
 
-    public log(entry: LogEntry): void {
-        const serialized = this.serialize(entry);
-
-        if (entry.level < LogLevel.WARN) {
-            this.context.push(serialized);
-
-            if (this.context.length > CONTEXT_BUFFER_SIZE) {
-                this.context.shift();
-            }
-
-            return;
-        }
-
-        if (entry.level >= LogLevel.ERROR) {
-            this.writeToFile([...this.context, serialized]);
-            this.context = [];
-
-            return;
-        }
-
-        this.writeToFile([serialized]);
+    public append(lines: string[]): void {
+        this.writeToFile(lines);
     }
 
-    public erase(): void {
-        this.context = [];
-
+    public async erase(): Promise<void> {
         for (const file of this.listOwnFiles()) {
             this.deleteQuietly(file);
         }
@@ -109,7 +60,7 @@ export class FileTransport implements ILoggerTransport {
             snapshot.create();
             snapshot.write(content);
         } catch (e) {
-            console.error('[FileTransport] failed to prepare logs for sharing', e);
+            console.error('[LogFileStore] failed to prepare logs for sharing', e);
 
             return;
         }
@@ -128,11 +79,11 @@ export class FileTransport implements ILoggerTransport {
                 const content = await file.text();
 
                 for (const line of content.split('\n')) {
-                    const record = this.parseLogLine(line);
+                    const record = FileTransport.parse(line);
                     if (record) records.push(record);
                 }
             } catch (e) {
-                console.error('[FileTransport] failed to read log file', e);
+                console.error('[LogFileStore] failed to read log file', e);
             }
         }
 
@@ -175,7 +126,7 @@ export class FileTransport implements ILoggerTransport {
                 logFile.write(content);
             }
         } catch (e) {
-            console.error('[FileTransport] failed to write logs', e);
+            console.error('[LogFileStore] failed to write logs', e);
         }
     }
 
@@ -226,7 +177,7 @@ export class FileTransport implements ILoggerTransport {
                 .list()
                 .filter((entry): entry is File => entry instanceof File);
         } catch (e) {
-            console.error('[FileTransport] failed to list the cache directory', e);
+            console.error('[LogFileStore] failed to list the cache directory', e);
 
             return [];
         }
@@ -236,58 +187,7 @@ export class FileTransport implements ILoggerTransport {
         try {
             if (file.exists) file.delete();
         } catch (e) {
-            console.error('[FileTransport] failed to delete log file', e);
-        }
-    }
-
-    private serialize(entry: LogEntry): string {
-        const stored: StoredLog = {
-            t: entry.timestamp.toISOString(),
-            l: entry.level,
-            p: entry.path,
-            m: entry.message.map(message => this.serializeMessage(message)).join(' '),
-            v: this.appVersion,
-            b: this.build,
-            d: this.device
-        };
-
-        return JSON.stringify(stored);
-    }
-
-    private parseLogLine(line: string): LogRecord | null {
-        if (!line) return null;
-
-        let parsed: unknown;
-        try {
-            parsed = JSON.parse(line);
-        } catch {
-            return null;
-        }
-
-        const result = sStoredLog.safeParse(parsed);
-        if (!result.success) return null;
-
-        const stored = result.data;
-
-        return {
-            timestamp: stored.t,
-            level: stored.l,
-            path: stored.p,
-            message: stored.m,
-            appVersion: stored.v,
-            build: stored.b,
-            device: stored.d
-        };
-    }
-
-    private serializeMessage(message: unknown): string {
-        if (typeof message === 'string') return message;
-        if (message instanceof Error) return message.stack ?? message.message;
-
-        try {
-            return JSON.stringify(message);
-        } catch {
-            return String(message);
+            console.error('[LogFileStore] failed to delete log file', e);
         }
     }
 }

@@ -1,13 +1,15 @@
 import type { Build } from '@safely/core';
+import { FileTransport } from '@safely/sync';
 
 import { createEnumerableStorage, synchronousStorage } from './storage';
 import type { DesktopPlatform } from './types';
+import { DESKTOP_BUILD } from '../../shared/app-info';
 import type { DesktopBridge } from '../../shared/bridge';
 import type { AppState } from '../../shared/ipc';
 
 export type { DesktopPlatform, DesktopPlatformStorage } from './types';
 
-const REPORTED_BUILD: Build = 'macos';
+const REPORTED_BUILD: Build = DESKTOP_BUILD;
 
 function getBridge(): DesktopBridge {
     const bridge = window.safelyDesktop;
@@ -56,6 +58,15 @@ export const platform: DesktopPlatform = {
     },
     biometry: bridge.biometry,
     camera: bridge.camera,
+    logs: {
+        append: lines => bridge.logs.append(lines),
+        read: async () =>
+            (await bridge.logs.read())
+                .map(line => FileTransport.parse(line))
+                .filter(record => record !== null),
+        erase: () => bridge.logs.erase(),
+        share: () => bridge.logs.share()
+    },
     openExternalUrl: url => bridge.openExternalUrl(url),
     protectScreen: isProtected => void bridge.setContentProtection(isProtected),
     reloadApp: () => bridge.relaunch(),
