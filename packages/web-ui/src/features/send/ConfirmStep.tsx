@@ -16,6 +16,7 @@ import {
     useSendAssetTransfer,
     useTranslate
 } from '@safely/ux';
+import Copy16 from '@safely/ux/assets/icons/16/copy-16.svg?react';
 import Globe16 from '@safely/ux/assets/icons/16/globe-16.svg?react';
 import Checkmark96 from '@safely/ux/assets/icons/96/checkmark-96.svg?react';
 
@@ -24,11 +25,9 @@ import {
     bodyStyles,
     heroStyles,
     iconSlotStyles,
-    linkStyles,
     listStyles,
     successIconStyles,
-    successStyles,
-    transactionStyles
+    successStyles
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
 import { AssetIcon, WalletIcon } from '../../entities';
@@ -228,28 +227,40 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                             </TableCell>
 
                             <TableCell copyable={sendResult.txId} copiedLabel={t('actions.copied')}>
-                                <TableCell.Column width="label">
-                                    <TableCell.Label>
-                                        {t('confirmation.sendResult.transaction')}
-                                    </TableCell.Label>
-                                </TableCell.Column>
-                                <TableCell.Column>
-                                    <div className={transactionStyles}>
-                                        <TableCell.Value>
-                                            {ellipsisMiddle(sendResult.toString(), 6)}
-                                        </TableCell.Value>
-                                        <span
-                                            role="button"
-                                            tabIndex={0}
-                                            className={linkStyles}
-                                            onClick={() =>
-                                                openURL(sendResult.toExplorerUrl(explorerFactory))
-                                            }
-                                        >
-                                            <Icon asset={Globe16} tone="secondary" />
-                                        </span>
-                                    </div>
-                                </TableCell.Column>
+                                {({ copy }) => (
+                                    <>
+                                        <TableCell.Column width="label">
+                                            <TableCell.Label>
+                                                {t('confirmation.sendResult.transaction')}
+                                            </TableCell.Label>
+                                        </TableCell.Column>
+                                        <TableCell.Column>
+                                            <TableCell.Value>
+                                                {ellipsisMiddle(sendResult.toString(), 6)}
+                                            </TableCell.Value>
+                                        </TableCell.Column>
+                                        <TableCell.Actions>
+                                            <TableCell.Action
+                                                aria-label={t(
+                                                    'history.transactionInfo.openInExplorer'
+                                                )}
+                                                onClick={() =>
+                                                    openURL(
+                                                        sendResult.toExplorerUrl(explorerFactory)
+                                                    )
+                                                }
+                                            >
+                                                <Icon asset={Globe16} tone="inherit" />
+                                            </TableCell.Action>
+                                            <TableCell.Action
+                                                aria-label={t('actions.copy')}
+                                                onClick={copy}
+                                            >
+                                                <Icon asset={Copy16} tone="inherit" />
+                                            </TableCell.Action>
+                                        </TableCell.Actions>
+                                    </>
+                                )}
                             </TableCell>
                         </List.Group>
                     )}
