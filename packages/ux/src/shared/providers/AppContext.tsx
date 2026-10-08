@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 import type {
     Build,
+    IPushNotifications,
     ITreeStorage,
     NumberFormatLocale,
     QrScanner,
@@ -48,6 +49,8 @@ export interface IAppContext {
     };
 
     qrScanner: QrScanner;
+
+    pushNotifications: IPushNotifications;
 
     numberFormatLocale: NumberFormatLocale;
 

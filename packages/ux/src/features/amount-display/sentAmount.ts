@@ -15,9 +15,9 @@ export type DisplayedCryptoAmount = {
 export function resolveSentAmount(params: SentAmountParams): DisplayedCryptoAmount {
     const { isInitiator, value, fee, showFullSentAmount } = params;
 
-    if (!isInitiator || !showFullSentAmount) {
+    if (!showFullSentAmount) {
         return { amount: value, isFullPrecision: false };
     }
 
-    return { amount: fee ? value.add(fee) : value, isFullPrecision: true };
+    return { amount: isInitiator && fee ? value.add(fee) : value, isFullPrecision: true };
 }

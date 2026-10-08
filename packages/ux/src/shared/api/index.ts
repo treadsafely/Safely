@@ -7,6 +7,7 @@ export { useBtcApi, useGetBtcApi } from './useBtcApi';
 export { useFlameApi } from './useFlameApi';
 export { usePriceApi } from './usePriceApi';
 export { useExchangeApi } from './useExchangeApi';
+export { useNotificationsApi } from './useNotificationsApi';
 export { useAvailableFiats } from './useAvailableFiats';
 export { useIsDevVersion } from './useIsDevVersion';
 export { useFlag } from './useFlag';

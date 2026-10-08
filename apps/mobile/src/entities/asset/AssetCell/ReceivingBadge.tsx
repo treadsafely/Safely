@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { BtcApiUtxoWithOptionalTx } from '@safely/core';
-import { BtcAssetAmount } from '@safely/core';
-import { useNumberFormatter, btcTxToActivityItem } from '@safely/ux';
+import { BTC_ASSET, BtcAssetAmount } from '@safely/core';
+import { useActivePortfolioRate, useNumberFormatter, btcTxToActivityItem } from '@safely/ux';
 
 import { Text, TouchableOpacity } from '@mobile/shared/ui';
 
@@ -21,6 +21,7 @@ export const ReceivingBadges = ({
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
     const navigation = useNavigation();
+    const { data: currentRate } = useActivePortfolioRate(BTC_ASSET);
 
     const handleReceivingPress = useCallback(
         (u: BtcApiUtxoWithOptionalTx) => {
@@ -28,12 +29,12 @@ export const ReceivingBadges = ({
                 return;
             }
 
-            const activity = btcTxToActivityItem(u.tx);
+            const activity = btcTxToActivityItem(u.tx, currentRate ?? null);
             if (activity) {
                 navigation.navigate('TransactionScreen', { activity });
             }
         },
-        [navigation]
+        [navigation, currentRate]
     );
 
     if (utxos.length === 0) {

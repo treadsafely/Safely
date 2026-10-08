@@ -8,7 +8,8 @@ import type {
     SDevicesMeta,
     SDevicesArchive,
     SDevicesSyncState,
-    SNextDerivingPortfolioInfo
+    SNextDerivingPortfolioInfo,
+    SNotifications
 } from '@safely/sync-storage';
 
 export type AccountStoreData = {
@@ -23,6 +24,7 @@ export type AccountStoreData = {
     nextDerivingPortfolioInfo: SNextDerivingPortfolioInfo;
     analyticsId: string | null;
     amountDisplay: SAmountDisplay;
+    notifications: SNotifications;
 };
 
 export const SYNCED_SLOT_KEYS = [
@@ -35,7 +37,8 @@ export const SYNCED_SLOT_KEYS = [
     'devicesArchive',
     'nextDerivingPortfolioInfo',
     'analyticsId',
-    'amountDisplay'
+    'amountDisplay',
+    'notifications'
 ] as const satisfies readonly (keyof Omit<AccountStoreData, 'accountId'>)[];
 
 export type SyncedSlotKey = (typeof SYNCED_SLOT_KEYS)[number];

@@ -100,6 +100,16 @@ export const bootConfigSchema = z.looseObject({
         api_url: z.string()
     }),
 
+    notifications: z
+        .looseObject({
+            bitcoin: z.looseObject({
+                mainnet: z.looseObject({
+                    api_url: z.string()
+                })
+            })
+        })
+        .optional(),
+
     telemetry: z.looseObject({
         analytics: z.looseObject({
             url: z.string(),

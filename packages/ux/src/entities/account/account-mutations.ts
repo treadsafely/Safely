@@ -44,10 +44,12 @@ import {
     useClearActiveAccountLocalStorage
 } from './local-storage';
 import { accountStore } from './sync-storage/account-store';
+import type { IPushSubscriptionSyncer } from '../../shared';
 import {
     SecretEncryptor,
     useAppContext,
     useLogger,
+    usePushSubscriptionSyncer,
     useSharedUxStorage,
     useTranslate
 } from '../../shared';
@@ -190,6 +192,21 @@ async function buildFirstPortfolio(params: {
     };
 
     return { portfolio, nextDerivingInfo };
+}
+
+async function announceOwnDisconnect(
+    accounts: SyncAccount[],
+    syncer: IPushSubscriptionSyncer | null
+): Promise<void> {
+    if (!syncer) return;
+
+    const announcing = accounts
+        .filter(
+            account => account.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE
+        )
+        .map(account => syncer.announceSyncEvent(account.accountId, 'device-disconnected'));
+
+    await Promise.allSettled(announcing);
 }
 
 async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promise<void> {
@@ -432,6 +449,7 @@ export function useConnectAccountToNewDevice() {
     });
     const { withLoader } = useLoader();
     const { qrScanner } = useAppContext();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation<string, Error, { secureEncryptedStorage: ITreeStorage }, unknown>({
@@ -450,6 +468,10 @@ export function useConnectAccountToNewDevice() {
                 );
                 const ikPubHex = newDeviceIkPub.toString('hex');
                 await waitForDeviceMeta(activeAccount.accountId, ikPubHex, scopedLogger);
+                void pushSubscriptionSyncer?.announceSyncEvent(
+                    activeAccount.accountId,
+                    'device-connected'
+                );
 
                 return ikPubHex;
             });
@@ -561,12 +583,15 @@ export function useEraseAllData() {
     } = useAppContext();
     const toast = useToast();
     const accounts = useAccounts();
+    const pushSubscriptionSyncer = usePushSubscriptionSyncer();
     const scopedLogger = useLogger('account');
 
     return useMutation({
         async mutationFn() {
             scopedLogger.info('erasing all data');
 
+            await announceOwnDisconnect(accounts, pushSubscriptionSyncer);
+            await pushSubscriptionSyncer?.reset();
             await archiveOwnDevices(accounts, scopedLogger);
 
             try {

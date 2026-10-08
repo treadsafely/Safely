@@ -1,6 +1,6 @@
 {
   "name": "@safely/mobile",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "license": "Apache-2.0",
   "main": "index.tsx",
   "scripts": {
@@ -15,8 +15,8 @@
     "test": "pnpm run test:js",
     "test:all": "pnpm run test:js && pnpm run test:ios && pnpm run test:android",
     "test:js": "vitest run",
-    "test:ios": "cd modules/safely-crypto/ios && swift test",
-    "test:android": "cd modules/safely-crypto/android/host-test && ./gradlew test"
+    "test:ios": "cd modules/safely-crypto/ios && swift test && cd ../../safely-push-content/ios && swift test",
+    "test:android": "cd modules/safely-crypto/android/host-test && ./gradlew test && cd ../../../safely-push-content/android/host-test && ./gradlew test"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^1.2.0",
@@ -114,6 +114,11 @@
   },
   "private": true,
   "expo": {
+    "autolinking": {
+      "android": {
+        "buildFromSource": ["expo-notifications"]
+      }
+    },
     "doctor": {
       "reactNativeDirectoryCheck": {
         "exclude": [

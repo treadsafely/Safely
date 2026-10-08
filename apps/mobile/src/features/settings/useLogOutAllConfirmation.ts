@@ -16,7 +16,9 @@ export function useLogOutAllConfirmation() {
             sliderLabel: t('logOutAllAccounts.slider.label'),
             sliderDescription: t('logOutAllAccounts.slider.description'),
             cancelLabel: t('logOutAllAccounts.cancel'),
-            onConfirm: eraseAllData
+            onConfirm: async () => {
+                await eraseAllData();
+            }
         });
     }, [eraseAllData, navigation, t]);
 }
