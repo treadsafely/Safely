@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 
-import { CONTACT_NAME_MAX_LENGTH } from '@safely/core';
+import { CONTACT_NAME_MAX_LENGTH, PortfolioType } from '@safely/core';
 import type { RecipientView } from '@safely/ux';
 import { hasSuggestionMatches, resolveVisibleSuggestions, useTranslate } from '@safely/ux';
 
 import { AddressInput } from './AddressInput';
-import { addressBookStyles, listStyles } from './RecipientStep.styles';
-import { ContactCell, WalletIcon } from '../../entities';
+import { addressBookStyles, listStyles, walletRowStyles } from './RecipientStep.styles';
+import { ContactCell, PortfolioTypeBadge, WalletIcon } from '../../entities';
 import { Cell, Input, List } from '../../shared';
 
 export type RecipientStepProps = {
@@ -53,7 +53,15 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
                                         <WalletIcon icon={suggestion.meta.icon} />
                                     </Cell.Leading>
                                     <Cell.Content>
-                                        <Cell.Title>{suggestion.meta.name}</Cell.Title>
+                                        <Cell.Row className={walletRowStyles}>
+                                            <Cell.Title>{suggestion.meta.name}</Cell.Title>
+                                            {suggestion.isWatchOnly && (
+                                                <PortfolioTypeBadge
+                                                    type={PortfolioType.WATCH_ONLY}
+                                                    tone="warning"
+                                                />
+                                            )}
+                                        </Cell.Row>
                                     </Cell.Content>
                                     {suggestion.id === view.selectedSuggestionId && (
                                         <Cell.Checkmark />
