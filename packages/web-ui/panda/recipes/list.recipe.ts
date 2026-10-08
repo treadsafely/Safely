@@ -13,6 +13,7 @@ export const listRecipe = defineSlotRecipe({
         group: {
             display: 'flex',
             flexDirection: 'column',
+            flexShrink: 0,
             borderRadius: 'sm',
             overflow: 'hidden'
         },
