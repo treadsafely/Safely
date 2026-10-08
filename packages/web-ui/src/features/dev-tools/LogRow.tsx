@@ -36,7 +36,7 @@ export const LogRow: FC<LogRowProps> = memo(({ record }) => {
         );
 
     return (
-        <button type="button" className={rowStyles} onClick={copyRecord}>
+        <div className={rowStyles} onClick={copyRecord}>
             <div className={rowMetaStyles}>
                 <Text variant="labelS" tone={logLevelTone(record.level)}>
                     {LogLevel[record.level]}
@@ -69,6 +69,6 @@ export const LogRow: FC<LogRowProps> = memo(({ record }) => {
             >
                 {message}
             </Text>
-        </button>
+        </div>
     );
 });

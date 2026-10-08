@@ -45,12 +45,7 @@ export const rowStyles = css({
     borderBottomWidth: 'hairline',
     borderBottomStyle: 'solid',
     borderColor: 'background.tertiary',
-    cursor: 'pointer',
-    textAlign: 'left',
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderTopWidth: '0',
-    borderInlineWidth: '0'
+    cursor: 'pointer'
 });
 
 export const rowMetaStyles = css({
