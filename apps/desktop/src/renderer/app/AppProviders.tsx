@@ -30,9 +30,13 @@ import {
     passcodePrompt,
     qrScanPrompt
 } from '../features';
-import { logger } from '../logger';
+import { fileTransport, logger } from '../logger';
 import { platform } from '../platform';
-import { unsupportedLedgerSessionPort, unsupportedLedgerTransport } from '../platform/unsupported';
+import {
+    unsupportedLedgerSessionPort,
+    unsupportedLedgerTransport,
+    unsupportedPushNotifications
+} from '../platform/unsupported';
 import { desktopLayerEncryptedStorage } from '../shared';
 
 export interface AppProvidersProps {
@@ -122,8 +126,12 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
             i18n: { language, t },
             logger,
             ledgerTransport: platform.ledgerTransport ?? unsupportedLedgerTransport,
+            pushNotifications: unsupportedPushNotifications,
             security: securityGate,
-            clearAllData: () => platform.clearAllData(),
+            clearAllData: async () => {
+                await platform.clearAllData();
+                fileTransport.reset();
+            },
             reloadApp: () => platform.reloadApp(),
             subscribeAppStateChange: callback => platform.subscribeAppStateChange(callback)
         };
@@ -133,7 +141,10 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>
             <AppContext value={appContext}>
                 <ScreenProtectionProvider protect={platform.protectScreen}>
-                    <ErrorBoundary logger={logger} fallback={<FatalErrorPage />}>
+                    <ErrorBoundary
+                        logger={logger}
+                        fallback={<FatalErrorPage onShareLogs={() => void platform.logs.share()} />}
+                    >
                         <Suspense fallback={loader}>
                             {/* TODO(ledger): a real transport replaces the rejecting port. */}
                             <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>

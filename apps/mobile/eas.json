@@ -7,11 +7,15 @@
     "staging-base": {
       "autoIncrement": true,
       "ios": {
-        "distribution": "store"
+        "distribution": "store",
+        "buildArtifactPaths": ["ios/Podfile.lock"]
       },
       "android": {
         "buildType": "apk",
-        "resourceClass": "large"
+        "resourceClass": "large",
+        "buildArtifactPaths": [
+          "android/app/build/outputs/sdk-dependencies/release/sdkDependencies.txt"
+        ]
       }
     },
     "staging-cached": {
@@ -25,7 +29,10 @@
       "extends": "staging-base",
       "android": {
         "buildType": "app-bundle",
-        "resourceClass": "large"
+        "resourceClass": "large",
+        "buildArtifactPaths": [
+          "android/app/build/intermediates/metadata_library_dependencies_report/release/**/dependencies.pb"
+        ]
       }
     }
   },

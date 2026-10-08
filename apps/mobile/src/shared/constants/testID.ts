@@ -36,7 +36,10 @@ export const TEST_ID = {
     },
     watchOnly: {
         addressInput: 'watchOnly.addressInput',
-        continueButton: 'watchOnly.continueButton'
+        continueButton: 'watchOnly.continueButton',
+        confirmXpubAddress: 'watchOnly.confirmXpubAddress',
+        confirmXpubButton: 'watchOnly.confirmXpubButton',
+        cancelXpubButton: 'watchOnly.cancelXpubButton'
     },
     importWallet: {
         continueButton: 'importWallet.continueButton'

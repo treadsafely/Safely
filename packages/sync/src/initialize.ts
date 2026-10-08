@@ -4,7 +4,7 @@ import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import type { ZodType } from 'zod';
 
-import type { AssertVersionHList, HCons, StorageVersion } from '@safely/slottree';
+import type { AssertVersionHList, Clock, HCons, StorageVersion } from '@safely/slottree';
 
 import { CrdtRepository } from './crdt/crdt-repository';
 import { EncryptedKeyRepository } from './crypto/encrypted-key-repository';
@@ -71,6 +71,7 @@ export async function initializeSyncAccount<Latest extends StorageVersion, Rest>
     masterKey: Buffer;
     logger: Logger;
     ik?: { secretKey: Buffer; publicKey: Buffer };
+    crdtClock?: Clock;
 }): Promise<void> {
     const encryptedKeyRepository = new EncryptedKeyRepository(opts.encryptedStorage);
     const secureEncryptedKeyRepository = new SecureEncryptedKeyRepository(
@@ -84,12 +85,19 @@ export async function initializeSyncAccount<Latest extends StorageVersion, Rest>
         opts.ik
     );
     const ikPub = encryptedKeyRepository.getIKPub();
-    const ycrdtRepository = new CrdtRepository(opts.storage, ikPub, opts.versions);
+    const ycrdtRepository = new CrdtRepository(
+        opts.storage,
+        ikPub,
+        opts.versions,
+        'crdt',
+        opts.crdtClock
+    );
     const deviceCrdtRepository = new CrdtRepository<tDevicesLatest, tDevicesRest>(
         opts.storage,
         ikPub,
         DevicesVersions,
-        'devices_crdt'
+        'devices_crdt',
+        opts.crdtClock
     );
     await initializeSyncState(syncStateRepository);
     await ycrdtRepository.initialize();

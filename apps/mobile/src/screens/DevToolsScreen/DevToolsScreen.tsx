@@ -1,5 +1,7 @@
 import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Alert } from 'react-native';
 
 import { useClearDismissedBannerIds, useIsDevVersion } from '@safely/ux';
 
@@ -9,11 +11,26 @@ import { Cell, List, Screen, Switch, Text } from '@mobile/shared/ui';
 import { styles } from './DevToolsScreen.styles';
 
 export const DevToolsScreen = () => {
+    const { t } = useTranslation();
     const isDevVersion = useIsDevVersion();
     const navigation = useNavigation();
     const { mutate: clearDismissedBannerIds } = useClearDismissedBannerIds();
     const { value: devIsTestnetAllowed, set: setDevIsTestnetAllowed } =
         useMobileLayerSynchronousGlobalStorage('devIsTestnetAllowed');
+
+    const handleOpenLogs = useCallback(() => {
+        Alert.alert(t('logs.warning.title'), t('logs.warning.message'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('logs.warning.confirm'),
+                style: 'destructive',
+                onPress: () =>
+                    navigation.navigate('SettingsModal', {
+                        screen: 'DevToolsLogsModal'
+                    })
+            }
+        ]);
+    }, [navigation, t]);
 
     const handleClearDismissedBannerIds = useCallback(() => {
         void clearDismissedBannerIds();
@@ -49,13 +66,7 @@ export const DevToolsScreen = () => {
                             </Cell.Content>
                             <Cell.Chevron />
                         </Cell>
-                        <Cell
-                            onPress={() =>
-                                navigation.navigate('SettingsModal', {
-                                    screen: 'DevToolsLogsModal'
-                                })
-                            }
-                        >
+                        <Cell onPress={handleOpenLogs}>
                             <Cell.Content>
                                 <Cell.Row>
                                     <Cell.Title>Logs</Cell.Title>

@@ -591,6 +591,27 @@ describe('PortfolioWatchOnlyBtc', () => {
         expect(restored.wallet.address).toBe(portfolio.wallet.address);
     });
 
+    it('deriveAddress previews exactly the address the import creates', async () => {
+        const mnemonic = generateMnemonic(wordlist, 128).split(' ');
+        const bip39Portfolio = await createBip39Portfolio(
+            encryptor,
+            new ClosableMnemonicAccessorVault(mnemonic),
+            { network: PortfolioNetworkType.MAINNET, meta: { name: 'BIP39' } }
+        );
+        const xpub = bip39Portfolio.derivations[0].chains.btc.xpub;
+
+        for (const networkType of [PortfolioNetworkType.MAINNET, PortfolioNetworkType.TESTNET]) {
+            const portfolio = PortfolioWatchOnlyBtc.create(
+                PortfolioWatchOnlyBtc.resolveUserInput(xpub, networkType),
+                META
+            );
+
+            expect(PortfolioWatchOnlyBtc.deriveAddress(xpub, networkType)).toBe(
+                portfolio.wallet.address
+            );
+        }
+    });
+
     it('creates a TESTNET watch-only from a testnet address', () => {
         const portfolio = PortfolioWatchOnlyBtc.create(
             PortfolioWatchOnlyBtc.resolveUserInput(TESTNET_ADDRESS, PortfolioNetworkType.TESTNET),

@@ -6,17 +6,22 @@ import { CurrencySettings } from './CurrencySettings';
 import { DevToolsSettings } from './DevToolsSettings';
 import { LanguageSettings } from './LanguageSettings';
 import { LegalSettings } from './LegalSettings';
-import type { SettingsSection } from './types';
+import type { DevTool, SettingsSection } from './types';
 import { WalletSettings } from './WalletSettings';
 import type { useAccountFlow } from '../../../features';
 
 export type SettingsContentProps = {
     section: SettingsSection;
+    tool: DevTool | null;
     account: ReturnType<typeof useAccountFlow>;
     security: ReactNode;
+    logs: ReactNode;
+    onSelectTool: (tool: DevTool | null) => void;
 };
 
-export const SettingsContent: FC<SettingsContentProps> = ({ section, account, security }) => {
+export const SettingsContent: FC<SettingsContentProps> = props => {
+    const { section, tool, account, security, logs, onSelectTool } = props;
+
     switch (section) {
         case 'wallet':
             return <WalletSettings />;
@@ -33,6 +38,6 @@ export const SettingsContent: FC<SettingsContentProps> = ({ section, account, se
         case 'legal':
             return <LegalSettings />;
         case 'devTools':
-            return <DevToolsSettings />;
+            return <DevToolsSettings tool={tool} logs={logs} onSelectTool={onSelectTool} />;
     }
 };

@@ -24,3 +24,12 @@ pnpm --filter mobile ios       # build dev client & run in iOS simulator
 pnpm --filter mobile android   # build dev client & run in Android emulator
 pnpm --filter mobile start     # start dev server (dev client already installed)
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report security
+issues privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[Apache License 2.0](LICENSE)

@@ -9,7 +9,10 @@ const SENSITIVE_PATTERNS: [RegExp, (match: string) => string][] = [
     [/\b(?:[0-9a-fA-F]{2}){16,}\b/g, match => `[REDACTED:key:${ellipsisMiddle(match)}]`],
     [/Bearer\s+[A-Za-z0-9\-._~+/]+=*/g, () => 'Bearer [REDACTED]'],
     [/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, () => '[REDACTED:jwt]'],
-    [/\b[xtyz]prv[A-Za-z0-9]{107}\b/g, () => '[REDACTED:xprv]'],
+    [/\b[xyztuv]prv[A-Za-z0-9]{107}\b/g, () => '[REDACTED:xprv]'],
+    // Public, but it exposes the whole wallet history at once, so it is masked down to
+    // its version prefix and a short tail that still lets support match log entries.
+    [/\b[xyztuv]pub[A-Za-z0-9]{107}\b/g, match => `[REDACTED:xpub:${ellipsisMiddle(match)}]`],
     [/\[\s*(?:"[a-z]{3,8}"\s*,\s*){11,}"[a-z]{3,8}"\s*]/g, () => '"[REDACTED:mnemonic]"'],
     [
         /(?:api[_-]?key|apikey|token|secret|password|authorization)['":=\s]+['"]?[\w\-./+=]{16,}['"]?/gi,

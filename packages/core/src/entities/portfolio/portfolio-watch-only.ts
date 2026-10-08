@@ -25,6 +25,14 @@ export class PortfolioWatchOnlyBtc extends PortfolioWatchOnlyBase {
         }
     }
 
+    public static deriveAddress(xpub: string, networkType: PortfolioNetworkType): string {
+        return BtcXpub.deriveAddress(
+            xpub,
+            btcNetworkByPortfolioNetworkType(networkType),
+            BtcWalletType.NATIVE_SEGWIT
+        );
+    }
+
     public static create(id: SPortfolioWatchOnlyId, meta: SPortfolioMeta): PortfolioWatchOnlyBtc {
         const portfolioId = toPortfolioIdWatchOnly(id);
         const network = btcNetworkByPortfolioNetworkType(portfolioId.network);
@@ -33,7 +41,7 @@ export class PortfolioWatchOnlyBtc extends PortfolioWatchOnlyBase {
         let address: string;
         if (portfolioId.source === WatchOnlySource.XPUB) {
             xpub = portfolioId.xpub;
-            address = BtcXpub.deriveAddress(portfolioId.xpub, network, BtcWalletType.NATIVE_SEGWIT);
+            address = this.deriveAddress(portfolioId.xpub, portfolioId.network);
         } else {
             address = portfolioId.address;
             xpub = null;

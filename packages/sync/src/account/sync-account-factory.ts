@@ -1,4 +1,4 @@
-import type { AssertVersionHList, HCons, StorageVersion } from '@safely/slottree';
+import type { AssertVersionHList, Clock, HCons, StorageVersion } from '@safely/slottree';
 
 import { AccountManager } from './account-manager';
 import type { ISyncAccount } from './I-sync-account';
@@ -14,7 +14,7 @@ import type { Logger } from '../logger';
 import type { OnboardingConnector } from '../onboarding/connector';
 import { accountsApiForOnboarding, NewDeviceOnboarding } from '../onboarding/new-device-onboarding';
 import { SingleActiveOnboardingCoordinator } from '../onboarding/single-active-onboarding-coordinator';
-import type { SyncApiImplementationsFactory } from '../sync-container';
+import type { SyncApiImplementationsFactory, SyncContainerConfig } from '../sync-container';
 
 type VersionHList = HCons<StorageVersion, unknown>;
 type LatestOf<Versions extends VersionHList> = Versions['head'];
@@ -28,6 +28,7 @@ export type SyncAccountFactoryOptions<Versions extends VersionHList> = {
     apiImplementationsFactory?: SyncApiImplementationsFactory;
     pollingTimeout?: number;
     logger: Logger;
+    crdtClock?: Clock;
 };
 
 export class SyncAccountFactory<Versions extends VersionHList> implements ISyncAccountFactory<
@@ -51,26 +52,28 @@ export class SyncAccountFactory<Versions extends VersionHList> implements ISyncA
         this.logger = opts.logger;
         this.pollingTimeout = opts.pollingTimeout ?? 2000;
 
+        const syncContainerConfig: SyncContainerConfig = {
+            logger: this.logger,
+            apiConfiguration: this.apiConfiguration,
+            pollingTimeout: this.pollingTimeout,
+            apiImplementationsFactory: this.apiImplementationsFactory,
+            crdtClock: opts.crdtClock
+        };
+
         const createAccountService = new CreateAccountService(
             opts.storage,
             opts.encryptedStorage,
             this.syncAccountIdRepository,
             opts.versions,
-            this.apiConfiguration,
-            this.pollingTimeout,
-            this.apiImplementationsFactory,
-            this.logger
+            syncContainerConfig
         );
         this.accountManager = new AccountManager(
             opts.storage,
             opts.encryptedStorage,
             this.syncAccountIdRepository,
             opts.versions,
-            this.apiConfiguration,
-            this.apiImplementationsFactory,
             createAccountService,
-            this.pollingTimeout,
-            this.logger
+            syncContainerConfig
         );
         this.storageVersion = opts.versions.head.version;
     }

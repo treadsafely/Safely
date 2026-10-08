@@ -1,6 +1,7 @@
 {
   "name": "@safely/ux",
   "version": "0.0.1",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc",
     "compile": "tsc --noEmit",
@@ -32,7 +33,8 @@
     "happy-dom": "^20.9.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "vitest": "^4.0.16",
+    "vite": "catalog:",
+    "vitest": "catalog:",
     "@safely/slottree": "workspace:*"
   },
   "peerDependencies": {

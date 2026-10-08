@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { makeFactory, onboardDevice } from './helpers';
+import { deleteThisDevice, makeFactory, onboardDevice } from './helpers';
 import { SyncStatus } from '../../src/sync-provider/sync-status';
 import { InMemStorage } from '../mocks/server-mock/storage';
 
@@ -93,11 +93,14 @@ describe('Account', { timeout: 10_000 }, () => {
         expect(accounts).toHaveLength(0);
     });
 
-    it('should reconnect device after being revoked', async () => {
+    it('should reconnect device after deleting itself', async () => {
         const account = await factory.createSyncAccount(secureEncryptedStorage);
-        const { newAccount } = await onboardDevice(account, secureEncryptedStorage);
+        const { newAccount, secureEncryptedStorage: newAccountSES } = await onboardDevice(
+            account,
+            secureEncryptedStorage
+        );
 
-        await account.revokeRemoteDevice(newAccount.getMyDeviceIkPub(), secureEncryptedStorage);
+        await deleteThisDevice(newAccount, newAccountSES);
 
         await newAccount.syncProvider.syncStatusManager.waitForStatus(SyncStatus.DEVICE_DELETED);
         expect(await account.getDevices()).toEqual([
@@ -141,9 +144,12 @@ describe('Account', { timeout: 10_000 }, () => {
 
     it('should keep deleted status while waiting for reconnect onboarding', async () => {
         const account = await factory.createSyncAccount(secureEncryptedStorage);
-        const { newAccount } = await onboardDevice(account, secureEncryptedStorage);
+        const { newAccount, secureEncryptedStorage: newAccountSES } = await onboardDevice(
+            account,
+            secureEncryptedStorage
+        );
 
-        await account.revokeRemoteDevice(newAccount.getMyDeviceIkPub(), secureEncryptedStorage);
+        await deleteThisDevice(newAccount, newAccountSES);
         await newAccount.syncProvider.syncStatusManager.waitForStatus(SyncStatus.DEVICE_DELETED);
 
         const statuses: SyncStatus[] = [];
@@ -175,12 +181,15 @@ describe('Account', { timeout: 10_000 }, () => {
     });
 
     describe('errors', () => {
-        it('should handle when remote account is revoked after SSE is broken', async () => {
+        it('should handle when device deletes itself after SSE is broken', async () => {
             const account = await factory.createSyncAccount(secureEncryptedStorage);
-            const { newAccount } = await onboardDevice(account, secureEncryptedStorage);
+            const { newAccount, secureEncryptedStorage: newAccountSES } = await onboardDevice(
+                account,
+                secureEncryptedStorage
+            );
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            await account.revokeRemoteDevice(newAccount.getMyDeviceIkPub(), secureEncryptedStorage);
+            await deleteThisDevice(newAccount, newAccountSES);
 
             await newAccount.syncProvider.syncStatusManager.waitForStatus(
                 SyncStatus.DEVICE_DELETED

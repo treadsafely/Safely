@@ -223,12 +223,12 @@ async function onboardDevice<
         onboardingConnector.data,
         existingDevice.secureEncryptedStorage
     );
-    const [newAccount] = await Promise.all([
-        onboardingConnector.waitForCompletion().then(onboarded => onboarded.account),
+    const [onboarded] = await Promise.all([
+        onboardingConnector.waitForCompletion(),
         primaryOnboarding
     ]);
 
-    return newAccount as ISyncAccount<NewLatest>;
+    return onboarded.account as ISyncAccount<NewLatest>;
 }
 
 function walletItems(...values: string[]) {

@@ -10,11 +10,7 @@ import { connectLedger, openBitcoinApp as openBitcoinAppOperation } from '../led
 const MIN_BITCOIN_APP_MAJOR = 2;
 const MIN_BITCOIN_APP_MINOR = 1;
 
-const isBitcoinAppSupported = (version: string | undefined): boolean => {
-    if (!version) {
-        return true;
-    }
-
+const isBitcoinAppSupported = (version: string): boolean => {
     const [major, minor] = version.split('.').map(Number);
 
     return (

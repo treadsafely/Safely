@@ -48,6 +48,12 @@ export const TxSchema = z.object({
     hex: z.string().optional()
 });
 
+/** Transaction extended with the fiat rate requested via the `currency` parameter. */
+export const TxWithBtcRateSchema = TxSchema.extend({
+    /** Amount of the requested currency per 1 BTC around blockTime. Absent when unknown. */
+    btcRate: z.number().optional()
+});
+
 /** Address / xpub aggregated data. */
 export const AddressSchema = z.object({
     /** Current page index. */
@@ -63,7 +69,7 @@ export const AddressSchema = z.object({
     /** List of transaction IDs (when details=txids). */
     txids: z.array(z.string()).optional(),
     /** List of transaction details (when details=txs or txslight). */
-    transactions: z.array(TxSchema).optional()
+    transactions: z.array(TxWithBtcRateSchema).optional()
 });
 
 /** UTXO. */
@@ -122,4 +128,5 @@ export type BtcApiUtxo = z.infer<typeof UtxoSchema>;
 export type BtcApiUtxoWithOptionalTx = z.infer<typeof UtxoWithOptionalTxSchema>;
 export type BtcApiEstimatedFee = z.infer<typeof EstimatedFeeSchema>;
 export type BtcApiTx = z.infer<typeof TxSchema>;
+export type BtcApiTxWithBtcRate = z.infer<typeof TxWithBtcRateSchema>;
 export type BtcApiRawTx = z.infer<typeof RawTxSchema>;

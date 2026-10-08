@@ -1,1 +1,1 @@
-export { AboutFeed } from './AboutFeed';
+export { AboutFeed, type AboutFeedRef } from './AboutFeed';

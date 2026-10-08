@@ -28,26 +28,24 @@ and the platforms it actually ships are in its `expo-module.config.json`:
 | `safely-in-app-browser`     | `SFSafariViewController` / Android Custom Tabs                                     |
 | `safely-masked-input`       | `MaskedInput` — native amount input with decimal masking                           |
 | `safely-capture-prevention` | `CapturePreventionView` — hides its subtree from screenshots                       |
+| `safely-push-content`       | `setWalletNames` — `target_ref → wallet name` dictionary shared with the push pipeline |
 
 `safely-capture-prevention` is the exception: `platforms: ["ios"]`, no `android/` at all — the facade
 swaps in an `expo-screen-capture` based component on Android. Everything else is iOS + Android.
 
-`safely-crypto` and `safely-store-country` are arranged so the core is testable without Xcode or the
-Android SDK: pure logic sits in a `*Core` type (`ios/Pbkdf2Core/Pbkdf2Core.swift`,
-`ios/CountryCodeCore/CountryCodeCore.swift`, the `*Core.kt` files) reachable through a host-only
-SwiftPM package (`ios/Package.swift`) or Gradle harness, while the Expo module wrappers only call
-into it. Write new native logic the same way: computation in a `*Core` type, platform calls in the
-module. Host tests:
+`safely-crypto`, `safely-store-country` and `safely-push-content` are arranged so the core is testable
+without Xcode or the Android SDK: pure logic sits in a `*Core` type (`ios/Pbkdf2Core/Pbkdf2Core.swift`,
+`ios/PushContentCore/PushContentCore.swift`, the `*Core.kt` files) reachable through a host-only
+SwiftPM package (`ios/Package.swift`) or Gradle harness (`android/host-test`), while the Expo module
+wrappers only call into it. Write new native logic the same way: computation in a `*Core` type,
+platform calls in the module. Host tests: `pnpm --filter mobile run test:ios` / `test:android` (or
+`test:all`) chain the modules' `swift test` / `./gradlew test` in `apps/mobile/package.json` — append
+a new module there. `safely-store-country`'s Swift tests are not in the chain; run `swift test` in its
+`ios/` by hand when you touch it.
 
-```
-cd apps/mobile/modules/safely-crypto/ios && swift test
-cd apps/mobile/modules/safely-crypto/android/host-test && ./gradlew test
-cd apps/mobile/modules/safely-store-country/ios && swift test
-```
-
-CI (`swift-core-tests`, `kotlin-core-tests`) runs only the two `safely-crypto` ones whenever a PR
-touches `apps/mobile/**` — `safely-store-country`'s Swift tests are local-only, so run them by hand
-when you touch that module.
+CI (`swift-core-tests`, `kotlin-core-tests` in `.github/workflows/ci.yml`) runs the `safely-crypto`,
+`safely-masked-input` and `safely-push-content` harnesses whenever a PR touches `apps/mobile/**`; add a
+step there for a new module.
 
 ## UI
 
@@ -57,6 +55,17 @@ when you touch that module.
   hardcoding them, and edit the values in `packages/ux/src/shared/theme`, not here.
 - A screen is a directory under `src/screens`; navigation and providers live in `src/app`
   (`AppNavigation.tsx`, `AppContext.tsx`, `root-error-boundary`, `root-suspense`).
+- **`src/shared/ui` does not depend on navigation.** Components there never call `useNavigation` /
+  `useRoute` in a way that requires a navigator: `BottomSheet` only reports `onClose`, `Screen` and
+  the header buttons read the navigation context optionally. Route behaviour ("closing this sheet
+  means leaving the route") lives in `src/shared/navigation/BottomSheetScreen`, which sheet screens
+  use instead of `BottomSheet`. This is what lets the same UI render outside the navigator.
+- **The app lock is not a route.** `LockScreenProvider` (`entities/security`) owns `isLocked`;
+  `features/app-lock` renders the lock UI in a `FullWindowOverlay` (iOS window level, like
+  `BlurOverlay`), and `AppNavigation` wraps the navigator in `<Activity mode="hidden">` while
+  locked, so protected screens run no effects and deep links apply only after unlock. Never
+  reintroduce a `LockScreen` route or navigate to present the lock — that is the bug the security
+  audit found (a `safely:///tab` link replaced the lock screen).
 - Layers and the `@mobile/*` aliases: see `fsd-layers.md`.
 
 ## i18n
@@ -85,3 +94,30 @@ also listed in `app.config.js` (`CFBundleLocalizations`) — update it when addi
     in a changelog cause exit 141 / empty logs, which is why the workflow strips them up front.
 - Icons: `pnpm --filter mobile run icons` (`scripts/generate-icons-file.js`); the generated file is
   not hand-edited.
+- Wallet names in pushes: the backend sends fallback `title`/`body` plus `data.target_ref`,
+  `data.title_template`, `data.body_template` (`{{wallet_name}}` placeholder) and
+  `mutableContent: true`. `safely-push-content` owns the `target_ref → name` file (App Group
+  `group.com.safely.wallet` on iOS, `noBackupFilesDir` on Android); the same `PushContentCore`
+  substitutes the placeholder in the iOS Notification Service Extension (target
+  `SafelyNotificationService`, generated by `plugins/withPushContentExtension.js` — it copies
+  `NotificationService.swift` + `PushContentCore.swift` from the module, so edit them there) and in
+  `SafelyNotificationsService` on Android (a `NotificationsService` subclass registered with a higher
+  priority in the module manifest). Unknown placeholder or unknown ref → original text. Changing the
+  extension means a dev-client rebuild; EAS signs it via `extra.eas.build.experimental.ios.appExtensions`.
+  Expo 56 consumes its own modules as prebuilt Maven artifacts in release builds, so a Gradle
+  `project(':expo-notifications')` dependency only resolves because `expo.autolinking.android.buildFromSource`
+  in `package.json` lists `expo-notifications` — keep that entry while `safely-push-content` subclasses
+  its service.
+- Sync-device events (device linked / device signed out) are pushes from the backend, not local
+  notifications. The syncer keeps a `PUT /devices/{id}/syncs/{sync_id}` per enabled account
+  (`sync_id = sha256(accountId)`, `deriveNotificationSyncId`; `syncIds` stored like `groupIds`),
+  independent of wallet groups. The acting device announces through `usePushSubscriptionSyncer()?.announceSyncEvent` —
+  the inviting device in `useConnectAccountToNewDevice`, the archiving device in `DeviceSupportWizardModal`, the
+  leaving device in `useSignOutAccountConfirmation` and `useEraseAllData` (every account); observers never announce, so nothing to
+  dedupe. The announce carries only ids (no device name: the backend text is fixed) and is
+  best-effort (one attempt, logged); with pushes off `sender_device_id` is omitted, since an
+  unenrolled sender has nothing to be excluded from.
+- Android push tokens need Firebase: `android.googleServicesFile` points at the committed
+  `apps/mobile/google-services.json` (client config of the Firebase project `safely-wallet`, no
+  secrets — the FCM service account for sending lives in EAS credentials). Without it
+  `getExpoPushTokenAsync` throws on Android and push registration never happens.

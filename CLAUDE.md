@@ -23,9 +23,9 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
 Platform capabilities reach the domain through DI interfaces from `@safely/core` (`src/di/`:
-`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`). Implementations live in the app,
-never in a package: a package that needs a native API declares an interface instead of importing the
-platform.
+`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`, `IPushNotifications`).
+Implementations live in the app, never in a package: a package that needs a native API declares an
+interface instead of importing the platform.
 
 ## Commands
 
@@ -36,6 +36,9 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   e.g. `@safely/core`, `mobile`)
 - `pnpm -r run lint`, `pnpm -r run test` — everything; CI runs them only for changed packages
   (`--filter "...[<merge-base>]"`), and for all packages when root-level files change
+- `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
+  `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
+  separate call — mobile's `lint` covers `./src ./scripts`
 - mobile: `pnpm --filter @safely/mobile ios|android|start` — dev-client, not Expo Go
 - desktop: `pnpm --filter @safely/desktop start|package|make`; `build:native` compiles the keychain
   addon (`package`/`make` run it first, `pnpm install` never does). A build QA can install
@@ -53,9 +56,11 @@ catalog with single-consumer entries. `minimumReleaseAge: 5760` means pnpm refus
 published less than four days ago.
 
 Root-level tooling stays at the root: `eslint`, its plugins and `prettier` are installed once in the
-root package.json, and a package only adds the `"lint": "eslint ./src"` script. Model a new package's
-devDependencies on `@safely/ux` or `@safely/core` — `typescript`, `@types/*` and bundler plugins yes,
-root tooling no.
+root package.json, and a package only adds the `"lint": "eslint ./src"` script. The node scripts
+under `scripts/` are linted too — plain ESM, recommended rules plus prettier, none of the TS/React
+layers; new tooling goes in one of those two directories so it is covered by default. Model a new
+package's devDependencies on `@safely/ux` or `@safely/core` — `typescript`, `@types/*` and bundler
+plugins yes, root tooling no.
 
 ## Pitfalls the tooling won't catch
 

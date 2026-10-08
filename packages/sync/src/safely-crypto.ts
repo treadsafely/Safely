@@ -8,6 +8,5 @@ export interface SafelyCrypto {
 }
 
 declare global {
-    // eslint-disable-next-line no-var
     var safelyCrypto: SafelyCrypto;
 }

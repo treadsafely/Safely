@@ -19,15 +19,19 @@ concurrency:
 jobs:
   review:
     # Runs only if:
-    # 1. PR opened / converted from draft / reopened
-    # 2. There's a comment "@claude review" from a human in the PR
+    # 1. A non-fork PR is opened / converted from draft / reopened
+    # 2. A repository member comments "@claude review" in the PR
+    # The job checks out the PR head and loads its .claude/ settings with secrets in scope, so
+    # fork code must never reach it: a fork's hooks would run next to ANTHROPIC_API_KEY.
     if: |
       (github.event_name == 'pull_request' &&
-       github.event.pull_request.draft == false) ||
+       github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
        contains(github.event.comment.body, '@claude review') &&
-       github.event.comment.user.type != 'Bot')
+       github.event.comment.user.type != 'Bot' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
 
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -38,7 +42,21 @@ jobs:
       DISABLE_TELEMETRY: '1'
 
     steps:
-      - uses: actions/checkout@v4
+      # issue_comment carries no head repo, so a fork PR is only detectable through the API.
+      - name: Refuse fork PRs
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          cross=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json isCrossRepository --jq .isCrossRepository)
+          if [ "$cross" != "false" ]; then
+            echo "::error::Claude review does not run on fork PRs"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
@@ -62,7 +80,7 @@ jobs:
           echo "Diff size: $TOTAL lines (additions=$ADDITIONS, deletions=$DELETIONS)"
 
       - id: claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@ed670b4cf9de2a5a570d130d2f6197b9e543cd64 # v1.0.240
         timeout-minutes: 18
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

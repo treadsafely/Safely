@@ -1,6 +1,7 @@
 {
   "name": "@safely/core",
   "version": "0.0.1",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "compile": "tsc --noEmit",
@@ -26,7 +27,8 @@
   },
   "devDependencies": {
     "@types/big.js": "catalog:",
-    "vitest": "^4.0.17"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts",

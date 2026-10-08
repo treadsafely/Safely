@@ -13,6 +13,8 @@ ios/
 android/
 !modules/**/ios/
 !modules/**/android/
+!scripts/**/ios/
+!scripts/**/android/
 
 # host-only SwiftPM test harnesses (modules/**/ios/Package.swift)
 modules/**/ios/.build/
@@ -43,5 +45,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# native dependency gate: what a build captured, and the graphs parsed out of it
+capture/
+native-graphs/
 
 app-example

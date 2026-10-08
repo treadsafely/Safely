@@ -11,7 +11,7 @@ export const contentStyles = css({
     overflowY: 'auto'
 });
 
-export const buildStyles = css({ paddingTop: '16' });
+export const buildStyles = css({ paddingInline: '16', paddingBottom: '8' });
 
 export const sectionStyles = css({ display: 'flex', flexDirection: 'column', gap: '8' });
 

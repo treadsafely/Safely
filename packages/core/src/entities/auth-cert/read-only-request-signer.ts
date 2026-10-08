@@ -21,32 +21,41 @@ export class ReadOnlyRequestSigner implements RequestSigner {
 
     public static createCredential(accountNode: HDKey): ReadOnlyCredential {
         const authCertNode = accountNode.deriveChild(AUTH_CERT_CHILD_INDEX);
-        if (!authCertNode.privateKey) {
-            throw new Error('Auth cert node has no private key.');
+
+        try {
+            if (!authCertNode.privateKey) {
+                throw new Error('Auth cert node has no private key.');
+            }
+
+            const { secretKey: reqSecretKey, publicKey: reqPublicKey } =
+                ReadOnlyRequestSigner.deriveRequestKeypair(authCertNode.privateKey);
+
+            const certBody = {
+                v: 1,
+                typ: 'wallet-http-ro',
+                alg: 'ed25519',
+                xpub: accountNode.publicExtendedKey,
+                req_pub: toHex(reqPublicKey)
+            };
+
+            const certBodyBytes = utf8(JSON.stringify(certBody));
+            const certToSign = Buffer.concat([
+                utf8(CERT_DOMAIN),
+                Uint8Array.of(0x00),
+                certBodyBytes
+            ]);
+            const certSig = secp256k1.sign(sha256(certToSign), authCertNode.privateKey, {
+                prehash: false,
+                format: 'compact'
+            });
+
+            return {
+                reqSecretKey,
+                certHex: toHex(Buffer.concat([certSig, certBodyBytes]))
+            };
+        } finally {
+            authCertNode.wipePrivateData();
         }
-
-        const { secretKey: reqSecretKey, publicKey: reqPublicKey } =
-            ReadOnlyRequestSigner.deriveRequestKeypair(authCertNode.privateKey);
-
-        const certBody = {
-            v: 1,
-            typ: 'wallet-http-ro',
-            alg: 'ed25519',
-            xpub: accountNode.publicExtendedKey,
-            req_pub: toHex(reqPublicKey)
-        };
-
-        const certBodyBytes = utf8(JSON.stringify(certBody));
-        const certToSign = Buffer.concat([utf8(CERT_DOMAIN), Uint8Array.of(0x00), certBodyBytes]);
-        const certSig = secp256k1.sign(sha256(certToSign), authCertNode.privateKey, {
-            prehash: false,
-            format: 'compact'
-        });
-
-        return {
-            reqSecretKey,
-            certHex: toHex(Buffer.concat([certSig, certBodyBytes]))
-        };
     }
 
     public async sign(method: string, pathWithQuery: string, body: string): Promise<string> {

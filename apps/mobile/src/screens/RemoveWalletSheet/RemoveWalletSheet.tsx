@@ -12,7 +12,8 @@ import {
     useToast
 } from '@safely/ux';
 
-import { BottomSheet, Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { HideDerivationContent } from './HideDerivationContent';
 import { styles } from './RemoveWalletSheet.styles';
@@ -108,8 +109,8 @@ type RemoveWalletSheetProps = StaticScreenProps<{ derivationIndex?: number } | u
 
 export const RemoveWalletSheet = (props: RemoveWalletSheetProps) => {
     return (
-        <BottomSheet>
+        <BottomSheetScreen>
             <RemoveWalletDispatch derivationIndex={props.route.params?.derivationIndex} />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

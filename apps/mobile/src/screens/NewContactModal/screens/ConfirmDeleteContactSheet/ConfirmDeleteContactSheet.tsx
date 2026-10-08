@@ -8,7 +8,8 @@ import { View } from 'react-native';
 import type { Contact } from '@safely/core';
 import { useDeleteContact } from '@safely/ux';
 
-import { BottomSheet, Button, Text } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Text } from '@mobile/shared/ui';
 import type { BottomSheetContextType } from '@mobile/shared/ui/BottomSheet/context';
 
 import { styles } from './ConfirmDeleteContactSheet.styles';
@@ -32,7 +33,7 @@ export const ConfirmDeleteContactSheet = ({ route }: ConfirmDeleteContactSheetPr
     };
 
     return (
-        <BottomSheet ref={bottomSheetRef}>
+        <BottomSheetScreen ref={bottomSheetRef}>
             <View style={styles.content}>
                 <Text textAlign="center" variant="titleM">
                     {t('newContact.confirmDelete.title', { name: contact.meta.name })}
@@ -53,6 +54,6 @@ export const ConfirmDeleteContactSheet = ({ route }: ConfirmDeleteContactSheetPr
                     {t('common.cancel')}
                 </Button>
             </View>
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

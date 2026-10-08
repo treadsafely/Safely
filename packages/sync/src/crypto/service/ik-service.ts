@@ -21,9 +21,12 @@ export class IkService implements IIkService {
         if (ik === null) {
             throw new Error('Identity key not found.');
         }
-        const sig = ed25519_sign(data, ik);
-        ik.fill(0);
-        return Buffer.from(sig);
+        try {
+            const sig = ed25519_sign(data, ik);
+            return Buffer.from(sig);
+        } finally {
+            ik.fill(0);
+        }
     }
 
     public verify(data: Buffer, sig: Buffer): boolean {

@@ -1,6 +1,7 @@
 {
     "name": "@safely/xhr-event-source",
     "version": "0.0.1",
+    "license": "Apache-2.0",
     "main": "./src/index.ts",
     "types": "./src/index.ts",
     "scripts": {

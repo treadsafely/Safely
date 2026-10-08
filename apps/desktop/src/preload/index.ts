@@ -10,7 +10,8 @@ import {
     sBiometryResult,
     sCameraAccessGranted,
     sCameraAccessStatus,
-    sIsFullScreen
+    sIsFullScreen,
+    sLogLines
 } from '../shared/ipc';
 
 function createStoreBridge(channels: StoreChannels): DesktopStoreBridge {
@@ -119,6 +120,21 @@ const bridge: DesktopBridge = {
         },
         async openPrivacySettings(): Promise<void> {
             await ipcRenderer.invoke(IPC_CHANNEL.camera.openPrivacySettings);
+        }
+    },
+
+    logs: {
+        append(lines: string[]): void {
+            ipcRenderer.send(IPC_CHANNEL.logs.append, { lines });
+        },
+        async read(): Promise<string[]> {
+            return sLogLines.parse(await ipcRenderer.invoke(IPC_CHANNEL.logs.read));
+        },
+        async erase(): Promise<void> {
+            await ipcRenderer.invoke(IPC_CHANNEL.logs.erase);
+        },
+        async share(): Promise<void> {
+            await ipcRenderer.invoke(IPC_CHANNEL.logs.share);
         }
     },
 

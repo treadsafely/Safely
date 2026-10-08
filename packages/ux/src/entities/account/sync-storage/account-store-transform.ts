@@ -32,7 +32,8 @@ export class AccountStoreTransform {
                 ) as AccountStoreData[K];
             case 'preferredFiat':
                 return this.preferredFiat(
-                    json as SyncedStorageSchema['preferredFiat']
+                    json as SyncedStorageSchema['preferredFiat'],
+                    prev?.preferredFiat
                 ) as AccountStoreData[K];
             case 'devicesMeta':
                 return this.devicesMeta(
@@ -60,18 +61,26 @@ export class AccountStoreTransform {
                 return this.amountDisplay(
                     json as SyncedStorageSchema['amountDisplay']
                 ) as AccountStoreData[K];
+            case 'notifications':
+                return this.notifications(
+                    json as SyncedStorageSchema['notifications']
+                ) as AccountStoreData[K];
             default:
                 assertUnreachable(key);
         }
     }
 
-    public restoreAll(accountId: string, raw: SyncedStorageSchema): AccountStoreData {
+    public restoreAll(
+        accountId: string,
+        raw: SyncedStorageSchema,
+        prev: AccountStoreData | null
+    ): AccountStoreData {
         return {
             accountId,
             meta: this.meta(raw.meta),
-            portfolios: this.portfolios(raw.portfolios),
-            contacts: this.contacts(raw.contacts),
-            preferredFiat: this.preferredFiat(raw.preferredFiat),
+            portfolios: this.portfolios(raw.portfolios, prev?.portfolios),
+            contacts: this.contacts(raw.contacts, prev?.contacts),
+            preferredFiat: this.preferredFiat(raw.preferredFiat, prev?.preferredFiat),
             devicesMeta: this.devicesMeta(raw.devicesMeta),
             devicesSyncState: this.devicesSyncState(raw.devicesSyncState),
             devicesArchive: this.devicesArchive(raw.devicesArchive),
@@ -79,7 +88,8 @@ export class AccountStoreTransform {
                 raw.nextDerivingPortfolioInfo
             ),
             analyticsId: this.analyticsId(raw.analyticsId),
-            amountDisplay: this.amountDisplay(raw.amountDisplay)
+            amountDisplay: this.amountDisplay(raw.amountDisplay),
+            notifications: this.notifications(raw.notifications)
         };
     }
 
@@ -105,9 +115,11 @@ export class AccountStoreTransform {
     }
 
     private preferredFiat(
-        json: SyncedStorageSchema['preferredFiat']
+        json: SyncedStorageSchema['preferredFiat'],
+        prev?: AccountStoreData['preferredFiat']
     ): AccountStoreData['preferredFiat'] {
         if (!json) return null;
+        if (prev && JSON.stringify(prev.toJSON()) === JSON.stringify(json)) return prev;
         return FiatAsset.restore(json);
     }
 
@@ -147,6 +159,12 @@ export class AccountStoreTransform {
         return json;
     }
 
+    private notifications(
+        json: SyncedStorageSchema['notifications']
+    ): AccountStoreData['notifications'] {
+        return json;
+    }
+
     private reconcileById<T extends WithId & WithToJson<unknown>, J>(
         prev: T[] | undefined,
         nextJson: J[],
@@ -160,11 +178,15 @@ export class AccountStoreTransform {
         const prevById = new Map<string, T>();
         for (const p of prev) prevById.set(keyOf(p), p);
 
-        return nextJson.map(j => {
+        const next = nextJson.map(j => {
             const fresh = restore(j);
             const old = prevById.get(keyOf(fresh));
             if (old && JSON.stringify(old.toJSON()) === JSON.stringify(j)) return old;
             return fresh;
         });
+
+        return next.length === prev.length && next.every((item, i) => item === prev[i])
+            ? prev
+            : next;
     }
 }

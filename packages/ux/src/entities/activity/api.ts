@@ -1,13 +1,23 @@
 import type {
     BtcApi,
     BtcApiTx,
+    BtcApiTxWithBtcRate,
     BtcAsset,
     BtcWalletReadOnly,
+    CryptoFiatRate,
     ExchangeApi,
+    FiatAsset,
     RampOrder,
     TransactionFeeCrypto
 } from '@safely/core';
-import { BTC_ASSET, BtcAssetAmount, CryptoAssetAmount, toBig, toBigOrZero } from '@safely/core';
+import {
+    BTC_ASSET,
+    BtcAssetAmount,
+    CryptoAssetAmount,
+    Rate,
+    toBig,
+    toBigOrZero
+} from '@safely/core';
 
 import type {
     BtcActivityItem,
@@ -23,7 +33,11 @@ export function getBiggestBtcIOAddress(io: BtcApiTx['vin' | 'vout']) {
     return io.slice().sort((a, b) => toBigOrZero(b.value).cmp(toBigOrZero(a.value)))[0]
         ?.addresses?.[0];
 }
-export function btcTxToActivityItem(tx: BtcApiTx): BtcActivityItem | null {
+
+export function btcTxToActivityItem(
+    tx: BtcApiTx,
+    rate: CryptoFiatRate | null
+): BtcActivityItem | null {
     const isInitiator = !!tx.vin?.some(input => input.isOwn);
 
     const fromAddress = getBiggestBtcIOAddress(
@@ -64,6 +78,7 @@ export function btcTxToActivityItem(tx: BtcApiTx): BtcActivityItem | null {
             toAddress,
             value: BtcAssetAmount.fromWeiAmount(weiAmount),
             fee,
+            rate,
             raw: tx
         }
     };
@@ -95,9 +110,14 @@ export function isRampOrderActive(order: Pick<RampOrder, 'status'>): boolean {
     return ACTIVE_ORDER_STATUSES.has(order.status);
 }
 
+function historicalRate(tx: BtcApiTxWithBtcRate, fiat: FiatAsset): CryptoFiatRate | null {
+    return tx.btcRate === undefined ? null : new Rate(BTC_ASSET, fiat, toBig(tx.btcRate));
+}
+
 export async function fetchBtcActivity(
     btcApi: BtcApi,
     wallet: Pick<BtcWalletReadOnly, 'type' | 'xpub' | 'address'>,
+    fiat: FiatAsset,
     page: number,
     filters: IActivityFilters
 ): Promise<BtcActivityPage> {
@@ -106,7 +126,8 @@ export async function fetchBtcActivity(
     const addressData = await btcApi.getAddressInfo(wallet, {
         details: 'txs',
         page: pageNum,
-        pageSize: ON_PAGE_ELEMENTS_LIMIT
+        pageSize: ON_PAGE_ELEMENTS_LIMIT,
+        currency: fiat.id.symbol
     });
 
     if (!addressData?.transactions || addressData.transactions.length === 0) {
@@ -114,7 +135,7 @@ export async function fetchBtcActivity(
     }
 
     const items: BtcActivityItem[] = addressData.transactions
-        .map(btcTxToActivityItem)
+        .map(tx => btcTxToActivityItem(tx, historicalRate(tx, fiat)))
         .filter((item): item is BtcActivityItem => item !== null)
         .filter(tx => {
             if (filters.isInitiator !== undefined) {

@@ -5,15 +5,17 @@ import { useTranslation } from 'react-i18next';
 import type { AccountPortfolioSource } from '@safely/ux';
 
 import { useOnboardingFlow } from '@mobile/features/onboarding';
+import type { PasscodeSetupHeaderType } from '@mobile/shared/ui';
 import { PasscodeSetup } from '@mobile/shared/ui';
 
 type OnboardingPasscodeScreenProps = StaticScreenProps<{
     source: AccountPortfolioSource | null;
+    headerType: PasscodeSetupHeaderType;
 }>;
 
 export const OnboardingPasscodeScreen = (props: OnboardingPasscodeScreenProps) => {
     const { t } = useTranslation();
-    const { source } = props.route.params;
+    const { source, headerType } = props.route.params;
     const { onPasscodeReady } = useOnboardingFlow();
 
     const handleComplete = useCallback(
@@ -23,7 +25,7 @@ export const OnboardingPasscodeScreen = (props: OnboardingPasscodeScreenProps) =
 
     return (
         <PasscodeSetup
-            headerType="back"
+            headerType={headerType}
             title={t('onboarding.passcode.title')}
             reenterTitle={t('onboarding.passcode.reenter.title')}
             description={t('onboarding.passcode.description')}

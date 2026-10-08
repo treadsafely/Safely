@@ -1,3 +1,5 @@
+import type { Clock } from '../clock';
+import { systemClock } from '../clock';
 import type { JsonValue } from '../json';
 import type { MergeProtocol } from '../merge-protocol';
 import type { ContainerSlot, Slot } from '../slots';
@@ -29,7 +31,8 @@ export class VersionController {
     constructor(
         private readonly root: ContainerSlot,
         private readonly versions: readonly StorageVersion[],
-        private readonly protocol: VersionControllerProtocol
+        private readonly protocol: VersionControllerProtocol,
+        private readonly clock: Clock = systemClock
     ) {}
 
     public get(version: VersionSelector): Slot | undefined {
@@ -204,7 +207,7 @@ export class VersionController {
     }
 
     private wallTime(): number {
-        return Math.floor(Date.now() / 1000);
+        return this.clock.nowSeconds();
     }
 
     private devicesContainer(): ContainerSlot {

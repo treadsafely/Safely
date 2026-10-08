@@ -9,7 +9,8 @@
 // The Slack webhook is a Slack Workflow Builder trigger
 // (https://hooks.slack.com/triggers/...), which consumes a FLAT JSON whose keys
 // must match the variables defined in that Slack workflow. This script sends:
-//   text              — message body (overall status + iOS/Android version+build)
+//   text              — message body (overall status + iOS/Android version+build,
+//                       plus the native dependency gate whenever it is not clean)
 //   eas_workflow_url  — link to this EAS workflow run
 //   github_pr_url     — link to the commit this build was made from (empty if unknown)
 //   e2e_log           — Maestro result; on failure a link to the full log artifact
@@ -32,14 +33,22 @@ let {
     STATUS_IOS,
     STATUS_IOS_CRUTCH,
     STATUS_ANDROID,
-    STATUS_E2E
+    STATUS_E2E,
+    STATUS_SECURITY,
+    SECURITY_SUMMARY
 } = process.env;
-
 
 // EAS job statuses: success | failure | error | skipped | canceled | (empty when not run)
 const iosOk = STATUS_IOS === 'success' || STATUS_IOS_CRUTCH === 'success';
 const androidOk = STATUS_ANDROID === 'success';
 const e2eOk = STATUS_E2E === 'success';
+
+// The native dependency gate blocks on master and only warns elsewhere, so its
+// own status does not say whether there were findings — the summary does. A clean
+// run says nothing in the report; anything else has to be visible.
+const securityOk = STATUS_SECURITY === 'success';
+const securitySummary = (SECURITY_SUMMARY || '').trim();
+const securityClean = securityOk && securitySummary.startsWith('✅');
 
 const ver = (v, b) => `v${v || '?'} (${b || '?'})`;
 
@@ -51,26 +60,41 @@ const headline = buildsOk
         ? '✅ successful build and tests'
         : '❌ successful build; tests failed'
     : testsOk
-        ? '❌ failed build; successful tests'
-        : '❌ failed build and tests';
+      ? '❌ failed build; successful tests'
+      : '❌ failed build and tests';
 
 const notes = (RELEASE_NOTES || '').trim();
 const targetBranch = (TARGET_BRANCH || '').trim();
 const notesWithBranch = targetBranch ? `${targetBranch} <- ${notes}` : notes;
 
-const commitUrl = COMMIT_SHA && REPOSITORY ? `https://github.com/${REPOSITORY}/commit/${COMMIT_SHA}` : '';
+const commitUrl =
+    COMMIT_SHA && REPOSITORY ? `https://github.com/${REPOSITORY}/commit/${COMMIT_SHA}` : '';
 const workflowUrl = WORKFLOW_URL || '';
 
-const buildType = (BUILD_TYPE || '').trim() === 'production'
-    ? { name: 'Production', emoji: '🚀' }
-    : { name: 'Staging', emoji: '🏗️' };
+const buildType =
+    (BUILD_TYPE || '').trim() === 'production'
+        ? { name: 'Production', emoji: '🚀' }
+        : { name: 'Staging', emoji: '🏗️' };
 
 function buildText() {
     const lines = [
         headline,
         iosOk ? `📱 iOS · ${ver(IOS_VERSION, IOS_BUILD)}` : '📱 iOS build failed ❌',
-        androidOk ? `🤖 Android · ${ver(ANDROID_VERSION, ANDROID_BUILD)}` : '🤖 Android build failed ❌',
+        androidOk
+            ? `🤖 Android · ${ver(ANDROID_VERSION, ANDROID_BUILD)}`
+            : '🤖 Android build failed ❌'
     ];
+
+    // The Slack trigger takes a fixed set of variables, so this rides in `text`
+    // rather than a field of its own.
+    if (!securityClean) {
+        const detail = securitySummary ? ` · ${securitySummary}` : '';
+        lines.push(
+            securityOk
+                ? `🔒 Native dependencies${detail || ' · no summary'}`
+                : `🚨 Native dependency gate ${STATUS_SECURITY || 'did not run'}${detail || ' ❌'}`
+        );
+    }
 
     if (!e2eOk) {
         lines.push('🧪 E2E failed ❌');

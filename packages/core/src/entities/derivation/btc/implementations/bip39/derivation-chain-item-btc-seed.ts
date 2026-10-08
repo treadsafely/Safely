@@ -33,7 +33,11 @@ export class DerivationChainItemBtcSeed implements IDerivationChainItemBtc {
             derivationIndex
         ).getPortfolioDerivation();
 
-        return hdKey.publicExtendedKey;
+        try {
+            return hdKey.publicExtendedKey;
+        } finally {
+            hdKey.wipePrivateData();
+        }
     }
 
     public static async createReadOnlyCredential({
@@ -54,7 +58,11 @@ export class DerivationChainItemBtcSeed implements IDerivationChainItemBtc {
             derivationIndex
         ).getPortfolioDerivation();
 
-        return ReadOnlyRequestSigner.createCredential(accountNode);
+        try {
+            return ReadOnlyRequestSigner.createCredential(accountNode);
+        } finally {
+            accountNode.wipePrivateData();
+        }
     }
 
     public static generate({

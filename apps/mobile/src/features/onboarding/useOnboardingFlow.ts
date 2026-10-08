@@ -41,11 +41,14 @@ export function useOnboardingFlow() {
     } = useAppContext();
 
     const onSuccessCreate = useCallback(() => {
-        navigation.navigate('OnboardingPasscodeScreen', { source: { kind: 'generated' } });
+        navigation.navigate('OnboardingPasscodeScreen', {
+            source: { kind: 'generated' },
+            headerType: 'back'
+        });
     }, [navigation]);
 
     const onSuccessSignIn = useCallback(() => {
-        navigation.navigate('OnboardingPasscodeScreen', { source: null });
+        navigation.navigate('OnboardingPasscodeScreen', { source: null, headerType: 'back' });
     }, [navigation]);
 
     const onMnemonicReady = useCallback(
@@ -53,7 +56,8 @@ export function useOnboardingFlow() {
             const accessor = new MnemonicResource(mnemonic);
 
             navigation.navigate('OnboardingPasscodeScreen', {
-                source: { kind: 'imported', mnemonicAccessor: accessor, networkType }
+                source: { kind: 'imported', mnemonicAccessor: accessor, networkType },
+                headerType: 'back'
             });
         },
         [navigation]
@@ -62,7 +66,8 @@ export function useOnboardingFlow() {
     const onWatchOnlyReady = useCallback(
         (input: string, networkType: PortfolioNetworkType) => {
             navigation.navigate('OnboardingPasscodeScreen', {
-                source: { kind: 'watchOnly', input, networkType }
+                source: { kind: 'watchOnly', input, networkType },
+                headerType: 'back'
             });
         },
         [navigation]
@@ -76,7 +81,8 @@ export function useOnboardingFlow() {
             accounts: { index: number; xpub: string; name: string }[]
         ) => {
             navigation.navigate('OnboardingPasscodeScreen', {
-                source: { kind: 'ledger', masterFingerprint, deviceModel, walletName, accounts }
+                source: { kind: 'ledger', masterFingerprint, deviceModel, walletName, accounts },
+                headerType: 'back'
             });
         },
         [navigation]
@@ -118,6 +124,10 @@ export function useOnboardingFlow() {
     }, [navigation]);
 
     const onBiometryFinished = useCallback(() => {
+        navigation.dispatch(CommonActions.navigate('OnboardingNotificationsScreen'));
+    }, [navigation]);
+
+    const onNotificationsFinished = useCallback(() => {
         resetToTabs();
     }, [resetToTabs]);
 
@@ -149,6 +159,7 @@ export function useOnboardingFlow() {
         onLedgerReady,
         onPasscodeReady,
         onBiometryFinished,
+        onNotificationsFinished,
         onAccountCreatedFinished
     };
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "786163663823",
+    "project_id": "safely-wallet",
+    "storage_bucket": "safely-wallet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786163663823:android:c24949fdd04ebad92c48ba",
+        "android_client_info": {
+          "package_name": "com.safely.wallet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPezrbzsgp-L3tMKBmSq1gYrhPRbiYekc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

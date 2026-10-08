@@ -15,5 +15,7 @@ export const OnboardingWatchAccountScreen = () => {
         [onWatchOnlyReady]
     );
 
-    return <WatchOnlyAddressForm onSubmit={handleSubmit} />;
+    return (
+        <WatchOnlyAddressForm networkType={PortfolioNetworkType.MAINNET} onSubmit={handleSubmit} />
+    );
 };

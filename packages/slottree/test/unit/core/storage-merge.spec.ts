@@ -45,6 +45,27 @@ describe('storage merge', () => {
         expect(storage2.get().key2).toEqual('value2');
     });
 
+    it.each([Number.MAX_VALUE, -1, 1.5])(
+        'rejects a snapshot containing invalid timestamp %s',
+        timestamp => {
+            const incoming = createOriginContainer({
+                '1': createOriginContainer({
+                    key1: {
+                        s: SlotKind.Atomic,
+                        v: 42,
+                        t: timestamp,
+                        a: 'remote'
+                    }
+                })
+            });
+
+            expect(() => storage1.mergeSlot(incoming)).toThrow(
+                'Slot timestamp must be a non-negative safe integer'
+            );
+            expect(storage1.get()).toEqual({ key1: 0, key2: 'initial' });
+        }
+    );
+
     it('notifies observers after successful merges that change storage', () => {
         let calls = 0;
         storage1.onChange(() => {

@@ -16,6 +16,9 @@ export type {
     ObjectDraft
 } from './core/write';
 
+export type { Clock } from './core/clock';
+export { systemClock } from './core/clock';
+
 export { SlotRevision } from './core/slot-revision';
 export { createStorage, createStorageFromSnapshot, StorageObservers } from './core/slot-tree';
 export type { SlotTree, StorageImpl } from './core/slot-tree';

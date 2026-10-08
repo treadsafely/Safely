@@ -7,8 +7,7 @@ export type ErrorsConfig = {
 
 export type TranslatableErrorsConfig = {
     [key in keyof typeof customErrors]?:
-        | ((err: InstanceType<(typeof customErrors)[key]>) => string)
-        | string;
+        ((err: InstanceType<(typeof customErrors)[key]>) => string) | string;
 } & { UnknownError?: ((err: unknown) => string) | string };
 
 export type GetErrorTextOptions = {

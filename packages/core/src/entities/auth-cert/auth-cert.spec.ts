@@ -3,7 +3,7 @@ import { ed25519 } from '@noble/curves/ed25519.js';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { HDKey } from '@scure/bip32';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { hex, toUtf8, utf8 } from '@safely/sync/buffer';
 
@@ -29,6 +29,35 @@ describe('AuthCert', () => {
             pathWithQuery,
             bodyBytes: utf8(body)
         });
+    });
+});
+
+describe('AuthCert key hygiene', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('wipes the derived auth cert node and leaves the account node intact', () => {
+        const accountNode = HDKey.fromMasterSeed(Buffer.alloc(32, 0x01));
+        // An independent node with the same key material, so the intercepted
+        // derivation can be delegated without recursing into the spy.
+        const twin = HDKey.fromExtendedKey(accountNode.privateExtendedKey);
+
+        const derived: HDKey[] = [];
+        vi.spyOn(accountNode, 'deriveChild').mockImplementation(index => {
+            const child = twin.deriveChild(index);
+            derived.push(child);
+            return child;
+        });
+
+        const credential = ReadOnlyRequestSigner.createCredential(accountNode);
+
+        expect(derived).toHaveLength(1);
+        expect(derived[0].privateKey).toBeNull();
+        // The account node belongs to the caller, and the request key is the
+        // long-lived secret the credential is built around.
+        expect(accountNode.privateKey).not.toBeNull();
+        expect(credential.reqSecretKey.some(byte => byte !== 0)).toBe(true);
     });
 });
 

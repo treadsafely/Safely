@@ -28,7 +28,7 @@ change the spec and the code together, never the code alone.
   platform's secure storage — not JS-side constants.
 - slottree's cbor encoding is deterministic: changing the encoding or field order changes merge
   results and hashes. That is a new format version, not an in-place edit.
-- User-state schemas are versioned: `packages/sync-storage/src/v1` … `v5`, and `actual-version.ts`
+- User-state schemas are versioned: `packages/sync-storage/src/v1` … `v6`, and `actual-version.ts`
   re-exports the newest one. A new field or a different shape means a new version plus a migration
   plus migration tests; older versions must stay readable.
 - A version that has shipped is frozen: a further change is a new version, never an edit to that

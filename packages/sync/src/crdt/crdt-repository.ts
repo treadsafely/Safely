@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import type { AssertVersionHList, HCons, NewOf, StorageVersion } from '@safely/slottree';
+import type { AssertVersionHList, Clock, HCons, NewOf, StorageVersion } from '@safely/slottree';
 import { createStorage, createStorageFromSnapshot } from '@safely/slottree';
 
 import { CRDT } from './crdt';
@@ -11,7 +11,8 @@ export class CrdtRepository<Latest extends StorageVersion, Rest> {
         private readonly storage: IStorage,
         private readonly ikPub: Buffer,
         private readonly versions: HCons<Latest, Rest> & AssertVersionHList<HCons<Latest, Rest>>,
-        private readonly storageKey = 'crdt'
+        private readonly storageKey = 'crdt',
+        private readonly clock?: Clock
     ) {}
 
     public async loadCRDT(): Promise<CRDT<z.output<NewOf<Latest>>>> {
@@ -35,7 +36,8 @@ export class CrdtRepository<Latest extends StorageVersion, Rest> {
         const crdt = createStorageFromSnapshot({
             authorId: this.ikPub,
             versions: this.versions,
-            snapshot
+            snapshot,
+            clock: this.clock
         });
         return new CRDT(crdt);
     }
@@ -51,7 +53,8 @@ export class CrdtRepository<Latest extends StorageVersion, Rest> {
     public async initialize(): Promise<void> {
         const crdt = createStorage({
             authorId: this.ikPub,
-            versions: this.versions
+            versions: this.versions,
+            clock: this.clock
         });
 
         await this.storage.setItem(this.storageKey, crdt.export().toString('base64url'));

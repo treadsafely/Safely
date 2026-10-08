@@ -245,6 +245,21 @@ describe('MergeProtocol', () => {
         expect(stats).toEqual({ added: 0, updated: 0, kept: 1, replaced: 0 });
     });
 
+    it.each([Number.MAX_VALUE, -1, 1.5])('rejects invalid observed timestamp %s', timestamp => {
+        const protocol = new MergeProtocol('local');
+
+        expect(() => protocol.observe(timestamp)).toThrow(
+            'Slot timestamp must be a non-negative safe integer'
+        );
+    });
+
+    it('fails instead of reusing a timestamp when the logical clock is exhausted', () => {
+        const protocol = new MergeProtocol('local');
+        protocol.observe(Number.MAX_SAFE_INTEGER);
+
+        expect(() => protocol.tick()).toThrow('Logical clock exhausted');
+    });
+
     it('observes every incoming timestamp before merge decisions hide losing subtrees', () => {
         const protocol = new MergeProtocol('local');
         const hiddenIncomingTimestamp = Math.floor(Date.now() / 1000) + 100_000;

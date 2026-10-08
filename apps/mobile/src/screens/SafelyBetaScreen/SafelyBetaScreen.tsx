@@ -1,11 +1,11 @@
 import { useNavigation } from '@react-navigation/core';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppContext, useBetaFeedWatched } from '@safely/ux';
 
-import { AboutFeed } from '@mobile/features/about';
+import { AboutFeed, type AboutFeedRef } from '@mobile/features/about';
 import { Screen, Text } from '@mobile/shared/ui';
 import { useCopy } from '@mobile/shared/utils/copy';
 
@@ -17,6 +17,7 @@ export const SafelyBetaScreen = () => {
     const navigation = useNavigation();
     const { shouldShowBadge, markWatched } = useBetaFeedWatched();
     const handleCopy = useCopy();
+    const feedRef = useRef<AboutFeedRef>(null);
 
     useEffect(() => {
         navigation.setOptions({
@@ -27,7 +28,9 @@ export const SafelyBetaScreen = () => {
 
     useFocusEffect(
         useCallback(() => {
-            void markWatched();
+            void markWatched().then(result => {
+                if (result.hadUnread) feedRef.current?.scrollToTop(result.latestTimestamp);
+            });
         }, [markWatched])
     );
 
@@ -41,11 +44,11 @@ export const SafelyBetaScreen = () => {
                         variant="bodyM"
                         color="secondary"
                     >
-                        {t('safelyBeta.subtitle', { version })}
+                        {version}
                     </Text>
                 </Screen.Header.Title>
             </Screen.Header>
-            <AboutFeed />
+            <AboutFeed ref={feedRef} />
         </Screen>
     );
 };

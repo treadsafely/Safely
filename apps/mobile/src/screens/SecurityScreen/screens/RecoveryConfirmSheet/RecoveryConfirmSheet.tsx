@@ -5,7 +5,8 @@ import { View } from 'react-native';
 import { PortfolioType } from '@safely/core';
 import { useActivePortfolio, useRecordActivePortfolioSecretReveal } from '@safely/ux';
 
-import { BottomSheet, Button, Text, useBottomSheet, useCloseOnReturn } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Text, useBottomSheet, useCloseOnReturn } from '@mobile/shared/ui';
 import { Icon, ListKey96 } from '@mobile/shared/ui/Icon';
 
 import { styles } from './RecoveryConfirmSheet.styles';
@@ -25,13 +26,11 @@ const RecoveryConfirmContent = () => {
     const { mutate: recordSeedReveal } = useRecordActivePortfolioSecretReveal();
 
     const handleReveal = async () => {
-        const name = portfolio.meta.name;
-
         try {
             const mnemonic = await portfolio.getMnemonic();
             recordSeedReveal();
             markNavigated();
-            navigation.navigate('RecoveryPhraseModal', { mnemonic, name });
+            navigation.navigate('RecoveryPhraseModal', { mnemonic });
         } catch {
             // Security check failed
         }
@@ -84,8 +83,8 @@ const RecoveryConfirmContent = () => {
 
 export const RecoveryConfirmSheet = () => {
     return (
-        <BottomSheet shortHeader>
+        <BottomSheetScreen shortHeader>
             <RecoveryConfirmContent />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

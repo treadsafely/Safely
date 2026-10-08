@@ -3,7 +3,9 @@ import { expect, vi } from 'vitest';
 
 import type { Device } from '../../src/device-manager/device-repository';
 import { SyncStatus } from '../../src/sync-provider/sync-status';
-import type { TestSyncAccount } from '../e2e/helpers';
+import type { TestSyncAccount } from '../fixtures/account';
+import { onboardMockAccount } from '../helpers/onboarding';
+import { waitForNextSynchronizationCycle, waitWithTimeout } from '../helpers/synchronization';
 import { InMemStorage } from '../mocks/server-mock/storage';
 import { makeFactory } from '../mocks/server-mock/sync-server-factory';
 import { initializeSyncServer } from '../mocks/server-mock/sync-server-registry';
@@ -279,53 +281,6 @@ async function waitForStatusWithTimeout(
     );
 }
 
-async function waitForNextSynchronizationCycle<T>(
-    device: SyncTestDevice,
-    label: string,
-    action: () => Promise<T>
-): Promise<T> {
-    let sawSynchronizing =
-        device.account.syncProvider.syncStatusManager.getStatus() === SyncStatus.SYNCHRONIZING;
-    let unsubscribe: (() => void) | undefined;
-
-    const synchronized = new Promise<void>(resolve => {
-        unsubscribe = device.account.syncProvider.syncStatusManager.subscribe(status => {
-            if (status === SyncStatus.SYNCHRONIZING) {
-                sawSynchronizing = true;
-            }
-
-            if (sawSynchronizing && status === SyncStatus.SYNCHRONIZED) {
-                resolve();
-            }
-        });
-    });
-
-    try {
-        const result = await action();
-        await waitWithTimeout(synchronized, label);
-        return result;
-    } finally {
-        unsubscribe?.();
-    }
-}
-
-async function waitWithTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-            reject(new Error(`Timed out after ${WAIT_TIMEOUT_MS}ms waiting for ${label}`));
-        }, WAIT_TIMEOUT_MS);
-    });
-
-    try {
-        return await Promise.race([promise, timeout]);
-    } finally {
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-        }
-    }
-}
-
 async function addOnlineDeviceFromOnlineDevice(
     devices: SyncTestDevice[],
     op: Extract<Op, { type: 'device.addOnlineFromOnline' }>
@@ -357,8 +312,10 @@ async function removeDeviceFromOnlineDevice(
     }
 
     const targetIkPub = target.account.getMyDeviceIkPub();
-    await waitForNextSynchronizationCycle(actor, 'device revocation synchronized', async () =>
-        actor.account.revokeRemoteDevice(targetIkPub, actor.secureEncryptedStorage)
+    await waitForNextSynchronizationCycle(
+        actor.account,
+        'device revocation synchronized',
+        async () => actor.account.revokeRemoteDevice(targetIkPub, actor.secureEncryptedStorage)
     );
 
     target.account.syncProvider.dispose();
@@ -376,7 +333,7 @@ async function changeDataOnActiveDevice(
         return;
     }
 
-    await waitForNextSynchronizationCycle(actor, 'wallet change synchronized', async () => {
+    await waitForNextSynchronizationCycle(actor.account, 'wallet change synchronized', async () => {
         await actor.account.syncProvider.transaction(draft => {
             const wallets = draft.at('wallets');
             const id = nextWalletId();
@@ -429,16 +386,20 @@ async function reconnectDeletedDevice(
 
     const connector = await target.account.reconnectToAccount();
 
-    await waitForNextSynchronizationCycle(actor, 'device reconnection synchronized', async () => {
-        const connectActor = actor.account.connectToNewDevice(
-            connector.data,
-            actor.secureEncryptedStorage
-        );
-        await waitWithTimeout(
-            Promise.all([connectActor, connector.waitForCompletion()]),
-            'mock device reconnection'
-        );
-    });
+    await waitForNextSynchronizationCycle(
+        actor.account,
+        'device reconnection synchronized',
+        async () => {
+            const connectActor = actor.account.connectToNewDevice(
+                connector.data,
+                actor.secureEncryptedStorage
+            );
+            await waitWithTimeout(
+                Promise.all([connectActor, connector.waitForCompletion()]),
+                'mock device reconnection'
+            );
+        }
+    );
     await waitForStatusWithTimeout(target, SyncStatus.SYNCHRONIZED, 'reconnected device synced');
     target.deleted = false;
     target.online = true;
@@ -540,25 +501,11 @@ async function addWallet(device: SyncTestDevice): Promise<void> {
 async function onboardMockDevice(actor: SyncTestDevice): Promise<SyncTestDevice> {
     const newDeviceFactory = makeFactory();
     const newDeviceSecureEncryptedStorage = new InMemStorage();
-    const connector = await newDeviceFactory.factory.connectToExistingSyncAccount(
+    const newAccount = await onboardMockAccount(
+        actor.account,
+        actor.secureEncryptedStorage,
+        newDeviceFactory,
         newDeviceSecureEncryptedStorage
-    );
-
-    const connectActor = waitForNextSynchronizationCycle(
-        actor,
-        'new device addition synchronized',
-        async () => actor.account.connectToNewDevice(connector.data, actor.secureEncryptedStorage)
-    );
-    const [, onboarded] = await waitWithTimeout(
-        Promise.all([connectActor, connector.waitForCompletion()]),
-        'mock device onboarding'
-    );
-    const newAccount = onboarded.account;
-
-    await waitForStatusWithTimeout(actor, SyncStatus.SYNCHRONIZED, 'actor device synchronized');
-    await waitWithTimeout(
-        newAccount.syncProvider.syncStatusManager.waitForStatus(SyncStatus.SYNCHRONIZED),
-        'new device synchronized'
     );
 
     return {

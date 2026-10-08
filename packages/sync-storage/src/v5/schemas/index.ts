@@ -1,3 +1,9 @@
 export * from '../../v4/schemas';
 
-export { sDevicesMeta, type SDevicesMeta, type SDeviceMeta } from './devices-meta.schema';
+export {
+    sNotificationEvents,
+    sNotifications,
+    type SNotificationEvents,
+    type SNotificationEventKey,
+    type SNotifications
+} from './notifications.schema';

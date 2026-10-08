@@ -1,8 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useNavigation } from '@react-navigation/core';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 
-import { BtcAddress, BtcXpub } from '@safely/core';
+import type { PortfolioNetworkType } from '@safely/core';
+import { BtcAddress, BtcXpub, PortfolioWatchOnlyBtc } from '@safely/core';
 
 import { TEST_ID } from '@mobile/shared/constants';
 import { Button, Input, Screen, Text } from '@mobile/shared/ui';
@@ -11,11 +13,13 @@ import { useAutoFocus } from '@mobile/shared/utils';
 import { styles } from './WatchOnlyAddressForm.styles';
 
 type WatchOnlyAddressFormProps = {
+    networkType: PortfolioNetworkType;
     onSubmit: (input: string) => void;
 };
 
-export const WatchOnlyAddressForm = ({ onSubmit }: WatchOnlyAddressFormProps) => {
+export const WatchOnlyAddressForm = ({ networkType, onSubmit }: WatchOnlyAddressFormProps) => {
     const { t } = useTranslation();
+    const navigation = useNavigation();
 
     const inputRef = useAutoFocus();
     const [address, setAddress] = useState('');
@@ -25,12 +29,36 @@ export const WatchOnlyAddressForm = ({ onSubmit }: WatchOnlyAddressFormProps) =>
     const isValidPubkey = BtcXpub.validate(trimmedInput);
     const isValidSupportedPubkey = isValidPubkey && /^[XxZz]pub/.test(trimmedInput);
 
-    const isValidInput = isValidAddress || isValidSupportedPubkey;
+    const isPolicylessXpub = isValidSupportedPubkey && /^[Xx]pub/.test(trimmedInput);
+
+    const pubkeyAddress = useMemo(() => {
+        if (!isValidSupportedPubkey) {
+            return null;
+        }
+
+        try {
+            return PortfolioWatchOnlyBtc.deriveAddress(trimmedInput, networkType);
+        } catch {
+            return null;
+        }
+    }, [isValidSupportedPubkey, trimmedInput, networkType]);
+
+    const isValidInput = isValidAddress || pubkeyAddress !== null;
     const displayError = !isValidInput && trimmedInput.length >= 20;
 
     const handleNext = useCallback(() => {
+        if (pubkeyAddress && isPolicylessXpub) {
+            Keyboard.dismiss();
+            navigation.navigate('ConfirmXpubImportSheet', {
+                address: pubkeyAddress,
+                onConfirm: () => onSubmit(trimmedInput)
+            });
+
+            return;
+        }
+
         onSubmit(trimmedInput);
-    }, [onSubmit, trimmedInput]);
+    }, [navigation, onSubmit, pubkeyAddress, isPolicylessXpub, trimmedInput]);
 
     return (
         <Screen>
@@ -77,7 +105,7 @@ export const WatchOnlyAddressForm = ({ onSubmit }: WatchOnlyAddressFormProps) =>
                     {displayError && (
                         <Input.Description color="accentRed">
                             {t(
-                                isValidPubkey && !isValidSupportedPubkey
+                                isValidPubkey
                                     ? 'addWallet.watchAccount.unsupportedExtendedKey'
                                     : 'addWallet.watchAccount.invalidAddress'
                             )}

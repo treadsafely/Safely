@@ -7,15 +7,8 @@ import type { Provider } from '@safely/core';
 import { useDismissProvider, useLinking, useOpenOnramp } from '@safely/ux';
 import { useErrorToast } from '@safely/ux';
 
-import {
-    BottomSheet,
-    Text,
-    Image,
-    Banner,
-    Button,
-    TouchableOpacity,
-    Checkbox
-} from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Text, Image, Banner, Button, TouchableOpacity, Checkbox } from '@mobile/shared/ui';
 
 import { styles } from './ProviderSheet.styles';
 
@@ -54,7 +47,7 @@ export const ProviderSheet = ({
     };
 
     return (
-        <BottomSheet shortHeader>
+        <BottomSheetScreen shortHeader>
             <View style={styles.content}>
                 <Image source={{ uri: logo }} style={styles.logo} />
                 <View style={styles.nameContainer}>
@@ -106,6 +99,6 @@ export const ProviderSheet = ({
                     </Text>
                 </TouchableOpacity>
             </View>
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

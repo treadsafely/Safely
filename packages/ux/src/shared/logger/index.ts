@@ -1,2 +1,3 @@
 export * from './useLogger';
-export { SanitizedTransport } from './sanitized-transport';
+export * from './log-format';
+export * from './useLogFilters';

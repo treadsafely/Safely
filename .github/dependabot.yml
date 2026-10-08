@@ -1,0 +1,117 @@
+version: 2
+
+updates:
+    - package-ecosystem: npm
+      directory: '/'
+      schedule:
+          interval: weekly
+          day: monday
+          time: '06:00'
+          timezone: Etc/UTC
+      # Mirrors `minimumReleaseAge: 5760` (4 days) in pnpm-workspace.yaml. Without
+      # it Dependabot proposes versions pnpm will refuse to resolve.
+      cooldown:
+          default-days: 4
+      open-pull-requests-limit: 5
+      labels:
+          - dependencies
+      commit-message:
+          prefix: chore(deps)
+          prefix-development: chore(deps-dev)
+
+      ignore:
+          # The Expo SDK is one unit: `expo`, every `expo-*` and `@expo/*` package
+          # and the Babel preset are upgraded together by `expo install --fix`
+          # during an SDK bump, never individually. This also covers expo-blur,
+          # which is exact-pinned because patchedDependencies keys on its version —
+          # a bump there breaks `pnpm install` outright.
+          - dependency-name: expo
+          - dependency-name: 'expo-*'
+          - dependency-name: '@expo/*'
+          - dependency-name: babel-preset-expo
+          # Metro and babel-preset-expo run on @babel/core 7; Babel 8 plugins break
+          # the JS bundle step. The Babel major moves with the Expo SDK.
+          - dependency-name: '@babel/*'
+            update-types: ['version-update:semver-major']
+          # React Native and the native modules. Every one of these needs an
+          # `expo prebuild` and on-device testing, and most are pinned to the RN
+          # version, so an automated bump is a broken EAS build at best.
+          - dependency-name: react-native
+          - dependency-name: 'react-native-*'
+          - dependency-name: '@react-native/*'
+          - dependency-name: '@shopify/*'
+          - dependency-name: '@bottom-tabs/*'
+          - dependency-name: '@ledgerhq/device-transport-kit-react-native-ble'
+          # Pinned exactly in the catalog and tied to the React Native version.
+          - dependency-name: react
+          - dependency-name: react-dom
+          - dependency-name: '@types/react'
+          - dependency-name: '@types/react-dom'
+          # Majors blocked by the ecosystem, not by us. Patches and minors still come in.
+          # TypeScript 7 (the Go port): typescript-eslint peers on `typescript <6.1.0` and
+          # aborts lint, and the static-config inference of @react-navigation navigators
+          # collapses to `never`.
+          - dependency-name: typescript
+            update-types: ['version-update:semver-major']
+          # ESLint 10: eslint-plugin-import crashes in `import/order` and has no release
+          # supporting it; moving to eslint-plugin-import-x is a separate change.
+          - dependency-name: eslint
+            update-types: ['version-update:semver-major']
+          - dependency-name: '@eslint/js'
+            update-types: ['version-update:semver-major']
+          # Not broken, but each is a migration of its own rather than a grouped bump:
+          # boundaries 7 deprecates `mode` in element descriptors, vitest 5 is a new
+          # test-runner major.
+          - dependency-name: eslint-plugin-boundaries
+            update-types: ['version-update:semver-major']
+          - dependency-name: vitest
+            update-types: ['version-update:semver-major']
+
+      # Grouping is only about PR volume: one review per stack instead of per
+      # package. Ungrouped dependencies still get their own PR.
+      groups:
+          dev-tooling:
+              patterns:
+                  - eslint
+                  - 'eslint-*'
+                  - '@eslint/*'
+                  - typescript
+                  - typescript-eslint
+                  - prettier
+                  - vite
+                  - vitest
+                  - '@vitest/*'
+          babel:
+              patterns:
+                  - '@babel/*'
+          react-navigation:
+              patterns:
+                  - '@react-navigation/*'
+          formatjs:
+              patterns:
+                  - '@formatjs/*'
+          tanstack:
+              patterns:
+                  - '@tanstack/*'
+          # Hardware wallet stack — grouped rather than ignored, but every one of
+          # these PRs needs a Ledger device in hand before it lands.
+          ledger:
+              patterns:
+                  - '@ledgerhq/*'
+
+    - package-ecosystem: github-actions
+      directory: '/'
+      schedule:
+          interval: weekly
+          day: monday
+          time: '06:00'
+          timezone: Etc/UTC
+      open-pull-requests-limit: 5
+      labels:
+          - dependencies
+      commit-message:
+          prefix: chore(ci)
+      groups:
+          actions:
+              patterns:
+                  - '*'

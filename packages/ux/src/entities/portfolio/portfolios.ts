@@ -44,7 +44,7 @@ import {
 } from '../../shared';
 import { useSuspenseQuery } from '../../shared';
 import type { SActivePortfolioSchema, UseAccountSyncStorageUpdateOptions } from '../account';
-import { useAccountSyncStorageUpdate } from '../account';
+import { resolveActivePortfolio, useAccountSyncStorageUpdate } from '../account';
 import { useActiveAccountSyncStorageSlotUpdate } from '../account';
 import { useActiveAccountStoreSlot } from '../account';
 import {
@@ -372,9 +372,7 @@ type ActivePortfolioEntitiesWatchOnly = {
 };
 
 type ActivePortfolioEntities =
-    | ActivePortfolioEntitiesBip39
-    | ActivePortfolioEntitiesLedger
-    | ActivePortfolioEntitiesWatchOnly;
+    ActivePortfolioEntitiesBip39 | ActivePortfolioEntitiesLedger | ActivePortfolioEntitiesWatchOnly;
 
 export function isDerivableEntities(
     entities: ActivePortfolioEntities
@@ -395,26 +393,15 @@ export function useActivePortfolioEntitiesIdsQuery<TData = SActivePortfolioSchem
             if (!activeAccount) return null;
 
             const stored = await get();
+            const next = resolveActivePortfolio(
+                stored,
+                activeAccount.syncProvider.get('portfolios')
+            );
 
-            const portfolios = activeAccount.syncProvider.get('portfolios');
-
-            if (portfolios.length === 0) {
-                if (stored !== null) {
-                    await set(null);
-                }
-                return null;
+            if (next !== stored) {
+                await set(next);
             }
 
-            const storedIsValid =
-                stored !== null &&
-                portfolios.some(p => toPortfolioId(p).isEq(Id.fromString(stored.portfolioId)));
-
-            if (storedIsValid) return stored;
-
-            const next: SActivePortfolioSchema = {
-                portfolioId: toPortfolioId(portfolios[0]).toString()
-            };
-            await set(next);
             return next;
         },
         staleTime: Infinity,
@@ -664,10 +651,12 @@ export function useSetActivePortfolio() {
                 accountQueryKey.activePortfolio.toKey()
             );
 
-            client.setQueryData<SActivePortfolioSchema>(accountQueryKey.activePortfolio.toKey(), {
-                portfolioId: id.toString(),
-                derivationIndex
-            });
+            const next: SActivePortfolioSchema = { portfolioId: id.toString(), derivationIndex };
+
+            client.setQueryData<SActivePortfolioSchema>(
+                accountQueryKey.activePortfolio.toKey(),
+                () => next
+            );
 
             void client.cancelQueries(
                 { queryKey: accountQueryKey.activePortfolio.toKey() },
@@ -736,6 +725,13 @@ export function useRecordActivePortfolioSecretReveal() {
 
     return useMutation({
         mutationFn() {
+            if (
+                activePortfolio.type === PortfolioType.BIP39 &&
+                activePortfolio.secretRevealedStatus !== null
+            ) {
+                return Promise.resolve();
+            }
+
             logger.info('recording portfolio secret reveal');
             return update(draft =>
                 draft.update(activePortfolio.jsonArrayId(), activePortfolioDraft => {

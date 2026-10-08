@@ -34,7 +34,7 @@ const encodedKeySchema: z.ZodType<EncodedKey> = z.union([
 ]);
 
 const authorIndexSchema = z.number().int().nonnegative();
-const timestampSchema = z.number().finite();
+const timestampSchema = z.int().nonnegative();
 
 export const slotTupleSchema: z.ZodType<SlotTuple> = z.lazy(() =>
     z.union([

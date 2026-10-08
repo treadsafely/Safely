@@ -15,7 +15,7 @@ module.exports = {
                 NSFaceIDUsageDescription:
                     'We use Face ID to unlock your wallet securely.',
                 NSCameraUsageDescription:
-                    '$(PRODUCT_NAME) needs access to your Camera.',
+                    '$(PRODUCT_NAME) uses the camera to scan QR codes with recipient addresses and codes for linking your devices',
                 CFBundleLocalizations: ['en', 'ru'],
                 ITSAppUsesNonExemptEncryption: false
             },
@@ -33,7 +33,7 @@ module.exports = {
         },
         android: {
             permissions: ["android.permission.CAMERA"],
-            /** 
+            /**
              * READ_MEDIA_IMAGES is needed as fallback in expo-screen-capture for older android versions
              * on method (addScreenshotListener) that we don't use
              */
@@ -43,6 +43,7 @@ module.exports = {
                 backgroundImage: './assets/android-icon-bg.png'
             },
             package: 'com.safely.wallet',
+            googleServicesFile: './google-services.json',
             allowBackup: false
         },
         plugins: [
@@ -69,7 +70,8 @@ module.exports = {
             [
                 'expo-notifications',
                 {
-                    icon: './assets/icon.png'
+                    icon: './assets/notification-icon.png',
+                    color: '#0178FF'
                 }
             ],
             [
@@ -79,11 +81,29 @@ module.exports = {
                         '$(PRODUCT_NAME) needs access to Bluetooth to connect to your Ledger hardware wallet.'
                 }
             ],
-            './plugins/withMMKVNoBackup'
+            './plugins/withMMKVNoBackup',
+            './plugins/withPushContentExtension'
         ],
         extra: {
             eas: {
-                projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658'
+                projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658',
+                build: {
+                    experimental: {
+                        ios: {
+                            appExtensions: [
+                                {
+                                    targetName: 'SafelyNotificationService',
+                                    bundleIdentifier: 'com.safely.wallet.NotificationService',
+                                    entitlements: {
+                                        'com.apple.security.application-groups': [
+                                            'group.com.safely.wallet'
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         },
         owner: 'treadsafely'

@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { darkTheme } from '@safely/ux/theme';
 
-import { readAppInfo } from './app-info';
 import { appUrl } from './app-protocol';
 import { mainLogger } from './logger';
+import type { AppInfo } from '../shared/app-info';
 import { encodeAppInfoArgument } from '../shared/app-info';
 
 const RENDERER_LOG_LEVEL = {
@@ -20,7 +20,10 @@ const WINDOW = {
     minHeight: 640
 };
 
-export function createMainWindow(devServerUrl: string | undefined): BrowserWindow {
+export function createMainWindow(
+    devServerUrl: string | undefined,
+    appInfo: AppInfo
+): BrowserWindow {
     const window = new BrowserWindow({
         ...WINDOW,
         show: false,
@@ -32,7 +35,7 @@ export function createMainWindow(devServerUrl: string | undefined): BrowserWindo
             preload: path.join(__dirname, 'preload.js'),
             /* The renderer needs `appInfo` before its first line runs, so it arrives in the
                preload's argv instead of over a channel. */
-            additionalArguments: [encodeAppInfoArgument(readAppInfo())],
+            additionalArguments: [encodeAppInfoArgument(appInfo)],
             sandbox: true,
             contextIsolation: true,
             nodeIntegration: false,

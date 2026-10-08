@@ -1,6 +1,7 @@
 export * from './account';
 export * from './add-wallet';
 export * from './contact';
+export * from './dev-tools';
 export * from './history';
 export * from './qr-scan';
 export * from './receive';

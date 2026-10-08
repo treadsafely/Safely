@@ -1,5 +1,6 @@
 import type { JsonValue } from '../json';
 import {
+    assertValidTimestamp,
     isOrderedArrayOrderIndex,
     ORDERED_ARRAY_ITEM_ID_KEY,
     SlotKind,
@@ -51,9 +52,7 @@ function validateSlotRecord(slot: unknown): Record<string, unknown> {
 }
 
 function validateSlotMetadata(record: Record<string, unknown>): void {
-    if (typeof record.t !== 'number' || !Number.isFinite(record.t)) {
-        throw new Error('Slot timestamp must be a finite number');
-    }
+    assertValidTimestamp(record.t);
 
     if (typeof record.a !== 'string') {
         throw new Error('Slot author must be a string');

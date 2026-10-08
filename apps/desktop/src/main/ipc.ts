@@ -1,9 +1,10 @@
-import type { BrowserWindow, IpcMainInvokeEvent } from 'electron';
+import type { BrowserWindow, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import { ipcMain, shell } from 'electron';
 import type { ZodType } from 'zod';
 
 import { isBiometryAvailable, promptBiometry } from './biometry';
 import { getCameraAccessStatus, openCameraPrivacySettings, requestCameraAccess } from './camera';
+import { fileTransport, logStore, mainLogger } from './logger';
 import type { StoreScope } from './store';
 import { clearStores, getStore } from './store';
 import type { CameraAccessStatus, StoreChannels } from '../shared/ipc';
@@ -11,6 +12,7 @@ import {
     IPC_CHANNEL,
     sBiometryAuthenticateRequest,
     sContentProtectionRequest,
+    sLogAppendRequest,
     sOpenExternalRequest,
     sStoreKeyRequest,
     sStorePrefixRequest,
@@ -36,10 +38,14 @@ function handle<T>(
     });
 }
 
-function assertTrustedSender(event: IpcMainInvokeEvent): void {
-    if (event.senderFrame?.parent) {
+function assertTrustedSender(event: IpcMainInvokeEvent | IpcMainEvent): void {
+    if (!isTrustedSender(event)) {
         throw new Error('IPC is only available to the top-level frame');
     }
+}
+
+function isTrustedSender(event: IpcMainInvokeEvent | IpcMainEvent): boolean {
+    return event.senderFrame !== null && event.senderFrame.parent === null;
 }
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void {
@@ -57,6 +63,44 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     ipcMain.handle(IPC_CHANNEL.appClearData, async event => {
         assertTrustedSender(event);
         await clearStores();
+        await logStore.erase();
+        fileTransport.reset();
+    });
+
+    ipcMain.on(IPC_CHANNEL.logs.append, (event, rawPayload) => {
+        if (!isTrustedSender(event)) {
+            return;
+        }
+
+        const parsed = sLogAppendRequest.safeParse(rawPayload);
+
+        if (!parsed.success) {
+            mainLogger.warn(
+                'rejected a log batch from the renderer',
+                parsed.error.issues[0]?.message
+            );
+            return;
+        }
+
+        logStore.append(parsed.data.lines);
+    });
+
+    ipcMain.handle(IPC_CHANNEL.logs.read, event => {
+        assertTrustedSender(event);
+
+        return logStore.read();
+    });
+
+    ipcMain.handle(IPC_CHANNEL.logs.erase, event => {
+        assertTrustedSender(event);
+
+        return logStore.erase();
+    });
+
+    ipcMain.handle(IPC_CHANNEL.logs.share, event => {
+        assertTrustedSender(event);
+
+        return logStore.share();
     });
 
     handle(IPC_CHANNEL.windowContentProtection, sContentProtectionRequest, payload => {

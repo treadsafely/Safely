@@ -1,0 +1,1 @@
+export { DeviceLinkedModal } from './DeviceLinkedModal';

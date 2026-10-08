@@ -15,11 +15,7 @@ import type {
 } from './types';
 
 export type SendFormView =
-    | RestoringView
-    | RecipientView
-    | CreateContactView
-    | AmountView
-    | SubmittedView;
+    RestoringView | RecipientView | CreateContactView | AmountView | SubmittedView;
 
 type RestoringView = {
     state: 'restoring';

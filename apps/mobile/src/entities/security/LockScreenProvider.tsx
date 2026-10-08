@@ -1,18 +1,13 @@
-import { CommonActions } from '@react-navigation/native';
 import type { FC, PropsWithChildren } from 'react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { useEnteredBackground } from '@safely/ux';
-
-// TODO: IMPORT find a way to navigate without this ref
-// eslint-disable-next-line boundaries/element-types
-import { navigationRef } from '@mobile/app/navigation/navigationRef';
-import { useIsAppRestricted } from '@mobile/entities/restrictions';
 
 import { useLockScreenQuery } from './useLockScreen';
 import { usePasscode } from './usePasscode';
 
 interface LockScreenContextValue {
+    isLocked: boolean;
     unlock: () => void;
 }
 
@@ -29,51 +24,26 @@ export function useLockScreenControl() {
 }
 
 export const LockScreenProvider: FC<PropsWithChildren> = ({ children }) => {
-    const isRestricted = useIsAppRestricted();
     const { isSet: hasPasscode } = usePasscode();
     const { data: isLockScreenEnabled } = useLockScreenQuery();
 
     const isEnabled = isLockScreenEnabled && hasPasscode;
-    const [isLocked, setIsLocked] = useState(isEnabled);
-    const isInitialRender = useRef(true);
+    const [isLockRequested, setIsLockRequested] = useState(isEnabled);
 
     useEnteredBackground(() => {
         if (isEnabled) {
-            setIsLocked(true);
+            setIsLockRequested(true);
         }
     });
 
-    useEffect(() => {
-        if (isInitialRender.current) {
-            isInitialRender.current = false;
-
-            return;
-        }
-
-        if (
-            isLocked &&
-            isEnabled &&
-            navigationRef.isReady() &&
-            navigationRef.getCurrentRoute()?.name !== 'LockScreen'
-        ) {
-            navigationRef.dispatch(CommonActions.navigate('LockScreen'));
-        }
-    }, [isLocked, isEnabled]);
-
     const unlock = useCallback(() => {
-        setIsLocked(false);
+        setIsLockRequested(false);
+    }, []);
 
-        if (navigationRef.canGoBack()) {
-            navigationRef.goBack();
-        } else {
-            navigationRef.dispatch(
-                CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: isRestricted ? 'RestrictedFlow' : 'TabsNavigator' }]
-                })
-            );
-        }
-    }, [isRestricted]);
+    const value = useMemo(
+        () => ({ isLocked: isLockRequested && isEnabled, unlock }),
+        [isEnabled, isLockRequested, unlock]
+    );
 
-    return <LockScreenContext value={{ unlock }}>{children}</LockScreenContext>;
+    return <LockScreenContext value={value}>{children}</LockScreenContext>;
 };

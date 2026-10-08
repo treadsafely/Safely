@@ -92,9 +92,8 @@ const buildTransactionRow = (
     const formattedValue = amount.format(context.numberFormatter, {
         fullPrecision: isFullPrecision
     });
-    const formattedFiat = context.rate
-        ? amount.convert(context.rate).format(context.numberFormatter)
-        : null;
+    const rate = activity.transaction.rate;
+    const formattedFiat = rate ? amount.convert(rate).format(context.numberFormatter) : null;
 
     const counterpartyAddress = isInitiator
         ? activity.transaction.toAddress

@@ -1,0 +1,42 @@
+{
+    "readme": "Reviewed exceptions to the native dependency advisory gate. See .claude/rules/dependency-security.md before editing. Checked by apps/mobile/scripts/native-audit/index.mjs.",
+    "policy": {
+        "blockingSeverities": {
+            "runtime": ["critical", "high", "moderate"],
+            "rn-dev": ["critical", "high"],
+            "build": ["critical", "high"],
+            "dev": ["critical"],
+            "test": ["critical"]
+        }
+    },
+    "exceptions": [
+        {
+            "id": "GHSA-4jrv-ppp4-jm57",
+            "package": "com.google.code.gson:gson",
+            "version": "2.8.6",
+            "ecosystem": "Maven",
+            "severity": "high",
+            "context": "rn-dev",
+            "declaredBy": ["npm:@expo/log-box"],
+            "patchable": "resolutionStrategy",
+            "rationale": "CVE-2022-25647 needs Gson.fromJson over untrusted input. The only fromJson in @expo/log-box is ExpoLogBoxWebViewWrapper.kt:75, and that object is constructed solely by ExpoLogBoxSurfaceDelegate, which is installed only when ExpoLogBoxPackage returns a lifecycle listener. It returns emptyList() unless BuildConfig.DEBUG && BuildConfig.EXPO_UNSTABLE_LOG_BOX; release builds have DEBUG false, and EXPO_UNSTABLE_LOG_BOX is compiled from an env var set nowhere in this repository or eas.json. The classes ship in the APK, but no code path can reach them in a release build.",
+            "owner": "sergey@andreevco.com",
+            "expires": "2026-12-02",
+            "url": "https://github.com/advisories/GHSA-4jrv-ppp4-jm57"
+        },
+        {
+            "id": "GHSA-gwrp-pvrq-jmwv",
+            "package": "commons-io:commons-io",
+            "version": "1.4",
+            "ecosystem": "Maven",
+            "severity": "moderate",
+            "context": "runtime",
+            "declaredBy": ["npm:expo-file-system"],
+            "patchable": "resolutionStrategy",
+            "rationale": "CVE-2021-29425 needs FilenameUtils.normalize over attacker-controlled input. Measured across expo-file-system 56.0.8, 56.0.11 and 57.0.6: the module imports only FileUtils and IOUtils and calls toString, copy, forceDelete, copyFile and copyDirectory; normalize is called nowhere, and nothing under apps/mobile/modules uses commons-io at all. This one does execute in release, unlike the gson entry, so it is accepted rather than dismissed: the fix is a resolutionStrategy.force to 2.16.1, whose five call-site signatures are binary-compatible (checked with javap against the jar), and it ships only after release testing of the download, cache and import flows. Upgrading npm cannot fix it — every published version through the SDK 58 canary declares 1.4.",
+            "owner": "sergey@andreevco.com",
+            "expires": "2026-12-02",
+            "url": "https://github.com/advisories/GHSA-gwrp-pvrq-jmwv"
+        }
+    ]
+}

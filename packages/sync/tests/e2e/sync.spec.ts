@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { TestSyncAccount, TestSyncAccountFactory } from './helpers';
 import { makeFactory, onboardDevice } from './helpers';
 import { SyncStatus } from '../../src';
+import type { TestSyncAccount, TestSyncAccountFactory } from '../fixtures/account';
 import { InMemStorage } from '../mocks/server-mock/storage';
 
 type WalletItem = {

@@ -2,7 +2,8 @@ import { useNavigation } from '@react-navigation/core';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { BottomSheet, Button, Text, useCallOnClose } from '@mobile/shared/ui';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
+import { Button, Text, useCallOnClose } from '@mobile/shared/ui';
 
 import { styles } from './MoreOptionsSheet.styles';
 
@@ -43,8 +44,8 @@ const MoreOptionsContent = () => {
 
 export const MoreOptionsSheet = () => {
     return (
-        <BottomSheet shortHeader>
+        <BottomSheetScreen shortHeader>
             <MoreOptionsContent />
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };

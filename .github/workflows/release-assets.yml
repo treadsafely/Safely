@@ -1,0 +1,128 @@
+name: Release assets
+
+# Copies an EAS release build into its GitHub release and publishes it, tagging it.
+on:
+    workflow_call:
+        inputs:
+            tag:
+                type: string
+                required: false
+                default: ''
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: Only this release, e.g. v1.2.4. Empty means the oldest draft.
+                type: string
+                required: false
+                default: ''
+    # A release build takes ~30 minutes, so the call on merge finds nothing yet.
+    schedule:
+        - cron: '13,43 * * * *'
+
+permissions:
+    contents: read
+
+jobs:
+    attach:
+        name: Attach EAS artifacts to a draft release
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24.10.0'
+
+            - name: Pick the draft release to complete
+              id: draft
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  ONLY: ${{ inputs.tag }}
+              run: |
+                  if [ -n "$ONLY" ]; then
+                      TAG="$ONLY"
+                  else
+                      # Oldest first: closest to losing its artifacts.
+                      TAG=$(gh release list --limit 30 --json tagName,isDraft,createdAt \
+                          --jq 'map(select(.isDraft and (.tagName | test("^v[0-9]+[.][0-9]+[.][0-9]+$"))))
+                                | sort_by(.createdAt) | .[0].tagName // ""')
+                  fi
+                  if [ -z "$TAG" ]; then
+                      echo 'no draft release is waiting for artifacts'
+                      exit 0
+                  fi
+
+                  IS_DRAFT=$(gh release view "$TAG" --json isDraft --jq .isDraft)
+                  if [ "$IS_DRAFT" != "true" ]; then
+                      echo "::notice::$TAG is already published"
+                      exit 0
+                  fi
+
+                  # A branch name here would let the tag land wherever it points.
+                  SHA=$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)
+                  if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+                      echo "::notice::$TAG targets $SHA, not a commit — left alone"
+                      exit 0
+                  fi
+
+                  {
+                      echo "tag=$TAG"
+                      echo "version=${TAG#v}"
+                      echo "sha=$SHA"
+                      echo "attached=$(gh release view "$TAG" --json assets \
+                          --jq '[.assets[].name] | join(",")')"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Download what the release build produced
+              id: stage
+              if: ${{ steps.draft.outputs.tag != '' }}
+              env:
+                  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+              run: |
+                  set +e
+                  env -u GH_TOKEN -u GITHUB_TOKEN \
+                      node apps/mobile/scripts/release/index.mjs stage \
+                      --commit "${{ steps.draft.outputs.sha }}" \
+                      --version "${{ steps.draft.outputs.version }}" \
+                      --attached "${{ steps.draft.outputs.attached }}" \
+                      --out "$RUNNER_TEMP/release"
+                  CODE=$?
+                  set -e
+                  # 75 is EX_TEMPFAIL; 1 is how node reports a crash.
+                  if [ "$CODE" = "75" ]; then
+                      echo 'staged=false' >> "$GITHUB_OUTPUT"
+                      exit 0
+                  fi
+                  if [ "$CODE" != "0" ]; then
+                      exit "$CODE"
+                  fi
+                  echo 'staged=true' >> "$GITHUB_OUTPUT"
+
+            - name: Attach the artifacts and publish
+              if: ${{ steps.stage.outputs.staged == 'true' }}
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: ${{ steps.draft.outputs.tag }}
+                  STAGE: ${{ runner.temp }}/release
+              run: |
+                  # One asset on disk at a time: the APK alone is 216 MiB.
+                  for FILE in "$STAGE"/assets/*; do
+                      [ -e "$FILE" ] || continue
+                      gh release upload "$TAG" "$FILE" --clobber
+                      rm -f "$FILE"
+                  done
+
+                  # Keep the generated notes, replace what was under the marker.
+                  gh release view "$TAG" --json body --jq .body > "$STAGE/body.md"
+                  awk '/<!-- release-assets -->/ { exit } { print }' "$STAGE/body.md" > "$STAGE/notes.md"
+                  {
+                      printf '\n<!-- release-assets -->\n'
+                      cat "$STAGE/section.md"
+                  } >> "$STAGE/notes.md"
+                  gh release edit "$TAG" --notes-file "$STAGE/notes.md"
+
+                  # Publishing creates the tag; prerelease until the store rollout.
+                  gh release edit "$TAG" --draft=false --prerelease=true
+                  echo "::notice::$TAG published as a prerelease"

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { LedgerDeviceBusyError, PortfolioType } from '@safely/core';
+import { LedgerAppVersionUnknownError, LedgerDeviceBusyError, PortfolioType } from '@safely/core';
 import {
     LEDGER_FAILURE_STATES,
     useActivePortfolio,
@@ -14,8 +14,9 @@ import {
 
 import type { LedgerStepStatus } from '@mobile/features/ledger';
 import { getLedgerImage, getLedgerModelName, LedgerSteps } from '@mobile/features/ledger';
+import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { resources } from '@mobile/shared/resources';
-import { BottomSheet, Button, Image, Text, useBottomSheet } from '@mobile/shared/ui';
+import { Button, Image, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { styles } from './ConnectToSignSheet.styles';
 
@@ -38,6 +39,7 @@ const ConnectToSignContent = ({ actor }: Props) => {
 
     const isFailed = LEDGER_FAILURE_STATES.includes(value);
     const isUnsupportedApp = value === 'unsupportedApp';
+    const isVersionUnknown = error instanceof LedgerAppVersionUnknownError;
 
     useEffect(() => {
         if (isDone) {
@@ -70,7 +72,12 @@ const ConnectToSignContent = ({ actor }: Props) => {
             }),
             status: stepStatus(0)
         },
-        { label: t('ledgerSign.steps.openApp'), status: stepStatus(1) },
+        {
+            label: isVersionUnknown
+                ? t('ledgerSign.steps.openAppVersionUnknown')
+                : t('ledgerSign.steps.openApp'),
+            status: stepStatus(1)
+        },
         { label: t('ledgerSign.steps.approve'), status: stepStatus(2) }
     ];
 
@@ -152,8 +159,8 @@ export const ConnectToSignSheet = () => {
     };
 
     return (
-        <BottomSheet onClose={handleClose}>
+        <BottomSheetScreen onClose={handleClose}>
             {activeActor ? <ConnectToSignContent actor={activeActor} /> : <View />}
-        </BottomSheet>
+        </BottomSheetScreen>
     );
 };
