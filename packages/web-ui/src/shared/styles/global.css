@@ -1,0 +1,6 @@
+/*
+ * The CSS entry every web target imports (`@safely/web-ui/styles.css`). Panda recognises a
+ * stylesheet by these layer declarations and writes the generated CSS into them; base styles
+ * live in `globalCss` of `panda.config.ts` so they can use tokens.
+ */
+@layer reset, base, tokens, recipes, utilities;

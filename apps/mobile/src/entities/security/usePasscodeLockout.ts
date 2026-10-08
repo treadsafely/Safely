@@ -1,13 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { useCountdownToTimestamp, useSuspenseQuery } from '@safely/ux';
+import {
+    NO_LOCKOUT,
+    nextLockoutState,
+    useCountdownToTimestamp,
+    useSuspenseQuery
+} from '@safely/ux';
 
 import { useMobileLayerRegularStorage } from '@mobile/shared/storage';
 
 import { lockoutKeys } from './keys';
-import type { LockoutState } from './lockout';
-import { getLockoutDuration } from './lockout';
 
 export function usePasscodeLockout() {
     const client = useQueryClient();
@@ -20,14 +23,7 @@ export function usePasscodeLockout() {
     const { data } = useSuspenseQuery({
         queryKey: lockoutKeys.state.toKey(),
         async queryFn() {
-            const state = await storageGet();
-
-            return (
-                state ?? {
-                    failedAttempts: 0,
-                    lockedUntil: null
-                }
-            );
+            return (await storageGet()) ?? NO_LOCKOUT;
         }
     });
 
@@ -36,17 +32,11 @@ export function usePasscodeLockout() {
 
     const isLocked = remainingSeconds > 0;
 
+    /* re-read instead of trusting the query cache: a stale count silently forgives an attempt */
     const recordFailedAttempt = useCallback(async () => {
-        const current = await storageGet();
-        const failedAttempts = (current?.failedAttempts ?? 0) + 1;
-        const duration = getLockoutDuration(failedAttempts);
+        const current = (await storageGet()) ?? NO_LOCKOUT;
 
-        const newState: LockoutState = {
-            failedAttempts,
-            lockedUntil: duration ? Date.now() + duration : null
-        };
-
-        await storageSet(newState);
+        await storageSet(nextLockoutState(current, Date.now()));
         await client.invalidateQueries({
             queryKey: lockoutKeys.state.toKey()
         });

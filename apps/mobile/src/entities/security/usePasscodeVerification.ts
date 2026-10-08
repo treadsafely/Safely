@@ -4,11 +4,11 @@ import {
     notificationAsync,
     NotificationFeedbackType
 } from 'expo-haptics';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import { useSharedValue } from 'react-native-reanimated';
 
-import { PASSCODE_DIGITS } from '@mobile/shared/constants';
+import { PASSCODE_LENGTH, useSubmitWhenComplete } from '@safely/ux';
 
 import { usePasscode } from './usePasscode';
 import { usePasscodeLockout } from './usePasscodeLockout';
@@ -42,8 +42,7 @@ export function usePasscodeVerification(
     const isSuccess = useSharedValue(false);
     const isError = useSharedValue(false);
 
-    const digitsAmount = passcode.isSet ? passcode.passcodeLength : PASSCODE_DIGITS.SHORT;
-    const pinFullyEntered = inputValue.length === digitsAmount;
+    const digitsAmount = passcode.isSet ? passcode.passcodeLength : PASSCODE_LENGTH.short;
 
     const handleInputChange = useCallback((value: string) => {
         void impactAsync(ImpactFeedbackStyle.Light);
@@ -74,11 +73,11 @@ export function usePasscodeVerification(
         }
     }, [isSuccess, passcode, inputValue, resetAttempts, onSuccess, recordFailedAttempt, isError]);
 
-    useEffect(() => {
-        if (pinFullyEntered) {
-            void handleComplete();
-        }
-    }, [pinFullyEntered, handleComplete]);
+    useSubmitWhenComplete({
+        value: inputValue,
+        length: digitsAmount,
+        onComplete: () => void handleComplete()
+    });
 
     return {
         inputValue,

@@ -2,6 +2,7 @@ import { u16be, u8be } from '../utils/buffer';
 
 export type OnboardingMessagePayload = {
     masterKey: Buffer;
+    /* absent when the sender predates the field — see doc/spec.md 2.2 */
     inviterIkPub: Buffer | null;
 };
 

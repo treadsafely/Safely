@@ -1,7 +1,8 @@
 name: Desktop QA build
 
-# A build QA can install with the real data protection keychain. It is signed with an **Apple
-# Development** identity, so the pipeline never holds the Developer ID key: a leaked development
+# A build QA can install with the real data protection keychain. It is signed with a **Mac
+# Development** certificate issued for this pipeline alone, so the pipeline never holds the
+# Developer ID key and revoking its certificate touches no local identity: a leaked development
 # certificate is revoked in one click, cannot be notarised, and only grants the entitlement on the
 # machines listed in the profile. Releases stay a local, notarised Developer ID build —
 # `.claude/rules/desktop-signing.md`.
@@ -33,6 +34,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       number: ${{ steps.number.outputs.number }}
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -108,12 +110,18 @@ jobs:
           printf '%s' "$PROVISIONING_PROFILE" | base64 --decode > apps/desktop/signing/ci.provisionprofile
 
           security create-keychain -p "$password" "$keychain"
-          security set-keychain-settings -lut 1800 "$keychain"
+          # codesign resolves an identity through the search list; --keychain alone is not enough.
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          # No flags on purpose: the keychain must not relock while packaging is still signing.
+          security set-keychain-settings "$keychain"
           security unlock-keychain -p "$password" "$keychain"
           # -x: the private key cannot be exported again, only used — and only by codesign.
           security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign -x
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" > /dev/null
           rm -f "$RUNNER_TEMP/cert.p12"
+
+          # A truncated secret decodes to a file that only fails deep inside packaging.
+          security cms -D -i apps/desktop/signing/ci.provisionprofile > /dev/null
 
           # The keychain is fresh, so one identity is the only correct answer; two would make the
           # signature depend on ordering, none means the .p12 carried no usable key.
@@ -136,6 +144,8 @@ jobs:
           # Relative to apps/desktop: forge resolves it from the package directory.
           SAFELY_SIGN_PROFILE: signing/ci.provisionprofile
           SAFELY_SIGN_KEYCHAIN: ${{ steps.identity.outputs.keychain }}
+          # Becomes CFBundleVersion and the About panel's build number; a build without it says `local`.
+          SAFELY_BUILD_NUMBER: ${{ steps.number.outputs.number }}
         run: pnpm --filter @safely/desktop run make
 
       # The store's guarantees are properties of this signature, so a build that fails here must not
@@ -144,6 +154,7 @@ jobs:
         run: apps/desktop/signing/verify-signature.sh apps/desktop/out/Safely-darwin-arm64/Safely.app
 
       - name: Upload build
+        id: upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.number.outputs.artifact }}
@@ -158,7 +169,7 @@ jobs:
           {
             echo "### Safely desktop — DEV build $BUILD_NUMBER"
             echo
-            echo "Commit \`${GITHUB_SHA:0:7}\` on \`$GITHUB_REF_NAME\`, signed with an Apple"
+            echo "Commit \`${GITHUB_SHA:0:7}\` on \`$GITHUB_REF_NAME\`, signed with the Mac"
             echo "Development identity."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -191,3 +202,71 @@ jobs:
 
           gh variable set DESKTOP_BUILD_NUMBER_MACOS --repo "$GITHUB_REPOSITORY" --body "$NUMBER"
           echo "DESKTOP_BUILD_NUMBER_MACOS is now $NUMBER"
+
+  # Runs whatever `build` did, so a crash is reported too. Separate job on ubuntu: the webhook is a
+  # repository secret, and it has no business sitting in the job that holds the signing certificate.
+  report:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # Shallow checkout still carries HEAD, which is where the version and the subject come from.
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # The Slack side is a Workflow Builder trigger, which consumes a flat JSON whose keys are the
+      # variables that workflow declares: header, status_string, artifact_url.
+      - name: Post the build status to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          BUILD_NUMBER: ${{ needs.build.outputs.number }}
+          # Empty unless the upload step ran: the artifact link only exists once there is an artifact.
+          ARTIFACT_URL: ${{ needs.build.outputs.artifact_url }}
+        run: |
+          set -euo pipefail
+
+          # Guards against an unresolved `${{ secrets.* }}` literal, and against an unset secret.
+          case "${SLACK_WEBHOOK_URL:-}" in
+            https://*) ;;
+            *)
+              echo "::warning::SLACK_WEBHOOK_URL is unset or not a URL — skipping the Slack report"
+              exit 0
+              ;;
+          esac
+
+          version="$(jq -r .version apps/desktop/package.json)"
+          subject="$(git log -1 --pretty=%s)"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+          if [ "$BUILD_RESULT" = "success" ]; then
+            status="✅ Successful build $version (${BUILD_NUMBER:-?})"
+            url="${ARTIFACT_URL:-$run_url}"
+          else
+            status="❌ Desktop build failed"
+            url="$run_url"
+          fi
+
+          # jq builds the body so a commit subject carrying quotes or a backslash stays one string.
+          payload="$(jq -n \
+            --arg header "$GITHUB_REF_NAME <- $subject" \
+            --arg status_string "$status" \
+            --arg artifact_url "$url" \
+            '{header: $header, status_string: $status_string, artifact_url: $artifact_url}')"
+
+          echo "$payload"
+
+          # A reporting hiccup must not turn a signed, uploaded build red.
+          code="$(printf '%s' "$payload" \
+            | curl -sS -o /dev/stderr -w '%{http_code}' \
+                -X POST -H 'Content-Type: application/json' --data @- \
+                "$SLACK_WEBHOOK_URL" || echo 000)"
+
+          if [ "$code" = "200" ]; then
+            echo "Slack report posted."
+          else
+            echo "::warning::Slack rejected the report (HTTP $code)"
+          fi

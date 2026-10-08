@@ -5,25 +5,28 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { PortfolioType } from '@safely/core';
-import { useActivePortfolioEntitiesQuery, useDeletePortfolio, useToast } from '@safely/ux';
+import {
+    resolveRemoveWalletCopy,
+    useActivePortfolioEntitiesQuery,
+    useDeletePortfolio,
+    useToast
+} from '@safely/ux';
 
 import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
 
 import { HideDerivationContent } from './HideDerivationContent';
 import { styles } from './RemoveWalletSheet.styles';
-import { useRemoveWalletState } from './useRemoveWalletState';
 
 const RemoveWalletContent = () => {
     const { t } = useTranslation();
     const { close } = useBottomSheet();
     const entities = useRef(useActivePortfolioEntitiesQuery().data!).current;
     const portfolio = entities.portfolio;
-    const isLedgerDevice = portfolio.type === PortfolioType.LEDGER;
     const toast = useToast();
     const { mutateAsync: deletePortfolio, isPending: isDeleting } = useDeletePortfolio();
     const navigation = useNavigation();
-    const state = useRemoveWalletState(portfolio, isLedgerDevice);
+    const copy = resolveRemoveWalletCopy(portfolio);
     const [isConfirmed, setIsConfirmed] = useState(false);
 
     const walletsCount =
@@ -50,11 +53,11 @@ const RemoveWalletContent = () => {
         <View>
             <View style={styles.titleBox}>
                 <Text textAlign="center" variant="titleM">
-                    {t(state.titleKey, { name: portfolio.meta.name })}
+                    {t(copy.titleKey, { name: portfolio.meta.name })}
                 </Text>
                 <Text textAlign="center" variant="bodyL" color="secondary" style={styles.subtitle}>
-                    {t(state.subtitleKey, { count: walletsCount })}{' '}
-                    {state.hasBackUpLink && (
+                    {t(copy.subtitleKey, { count: walletsCount })}{' '}
+                    {copy.hasBackUpLink && (
                         <Text variant="bodyL" color="link" onPress={handleBackUpPress}>
                             {t('removeWallet.backUpLink')}
                         </Text>
@@ -62,9 +65,9 @@ const RemoveWalletContent = () => {
                 </Text>
             </View>
 
-            {state.hasCheckbox && (
+            {copy.checkboxKey !== undefined && (
                 <ConfirmCheckbox
-                    text={t(state.checkboxKey)}
+                    text={t(copy.checkboxKey)}
                     isChecked={isConfirmed}
                     onToggle={() => setIsConfirmed(prev => !prev)}
                 />
@@ -74,10 +77,10 @@ const RemoveWalletContent = () => {
                 <Button
                     type="destructive"
                     size="large"
-                    disabled={(state.hasCheckbox && !isConfirmed) || isDeleting}
+                    disabled={(copy.checkboxKey !== undefined && !isConfirmed) || isDeleting}
                     onPress={handleRemove}
                 >
-                    {t(state.buttonKey)}
+                    {t(copy.buttonKey)}
                 </Button>
                 <Button type="secondary" size="large" onPress={close}>
                     {t('removeWallet.cancelButton')}

@@ -29,6 +29,7 @@ export type SyncAccount = ISyncAccount<SyncedStorageStructure>;
 
 export type OnboardedAccount = {
     account: ISyncAccount<SyncedStorageStructure>;
+    /* null on reconnection, and when the authorising device predates the payload field */
     inviterIkPubHex: string | null;
 };
 

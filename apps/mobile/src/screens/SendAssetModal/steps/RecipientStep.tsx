@@ -6,7 +6,7 @@ import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { CONTACT_NAME_MAX_LENGTH } from '@safely/core';
-import type { RecipientView } from '@safely/ux';
+import { hasSuggestionMatches, type RecipientView } from '@safely/ux';
 
 import { Input } from '@mobile/shared/ui';
 
@@ -55,7 +55,7 @@ export const RecipientStep = (props: RecipientStepProps) => {
         [displaySuggestions, selectedSuggestionId]
     );
 
-    const hasSearchMatches = suggestions.portfolios.length > 0 || suggestions.contacts.length > 0;
+    const hasSearchMatches = hasSuggestionMatches(suggestions);
     const visibleError = hasSearchMatches ? undefined : errors.recipient;
     const isValid = status === 'valid';
 

@@ -7,7 +7,7 @@ export { Button } from './Button';
 export { Checkbox } from './Checkbox';
 export { ConfirmCheckbox } from './ConfirmCheckbox';
 export { Actions } from './Actions';
-export { Cell } from './Cell';
+export { Cell, type CellContainerProps } from './Cell';
 export { List } from './List';
 export { PopupMenu, type PopupMenuRef } from './PopupMenu';
 export { Banner } from './Banner';

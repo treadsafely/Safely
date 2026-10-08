@@ -2,46 +2,41 @@ import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SyncStatus } from '@safely/sync';
 import {
-    useAccounts,
-    useActiveAccount,
     useActiveAccountMeta,
     useAppContext,
     useDeleteAccount,
     useEraseAllData,
+    useActiveAccount,
     usePushSubscriptionSyncer,
+    useResolveSignOutPlan,
     useToast
 } from '@safely/ux';
 
 export function useSignOutAccountConfirmation() {
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const accounts = useAccounts();
     const activeAccount = useActiveAccount();
     const accountName = useActiveAccountMeta().name;
     const toast = useToast();
+    const resolvePlan = useResolveSignOutPlan();
     const { mutateAsync: deleteAccount } = useDeleteAccount();
     const { mutateAsync: eraseAllData } = useEraseAllData();
     const { storage } = useAppContext();
     const pushSubscriptionSyncer = usePushSubscriptionSyncer();
 
     return useCallback(() => {
-        const isLastAccount = accounts?.length === 1;
-        const isSyncAccount =
-            activeAccount.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE;
+        const plan = resolvePlan();
 
         navigation.navigate('SignOutAccountSheet', {
             accountName,
-            withLoader: isSyncAccount,
+            withLoader: plan.isSynced,
             onConfirm: async () => {
-                using secureEncryptedStorage = storage.sync.getSecureEncrypted();
-                await secureEncryptedStorage.unlock();
+                if (plan.shouldDeleteAccount) {
+                    using secureEncryptedStorage = storage.sync.getSecureEncrypted();
+                    await secureEncryptedStorage.unlock();
 
-                if (isLastAccount) {
-                    await eraseAllData();
-                } else {
-                    if (isSyncAccount) {
+                    if (plan.isSynced) {
                         await pushSubscriptionSyncer?.announceSyncEvent(
                             activeAccount.accountId,
                             'device-disconnected'
@@ -49,14 +44,21 @@ export function useSignOutAccountConfirmation() {
                     }
 
                     await deleteAccount(secureEncryptedStorage);
-                    toast(t('settings.signOutAccount.toastAccountRemoved'));
+                }
+
+                if (plan.shouldEraseAllData) {
+                    await eraseAllData();
+                }
+
+                if (plan.toastKey !== null) {
+                    toast(t(plan.toastKey));
                 }
             }
         });
     }, [
         navigation,
         accountName,
-        accounts?.length,
+        resolvePlan,
         activeAccount,
         deleteAccount,
         eraseAllData,

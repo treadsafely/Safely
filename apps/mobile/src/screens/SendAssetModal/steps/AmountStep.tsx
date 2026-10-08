@@ -5,14 +5,13 @@ import { TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import type { NumberFormatter } from '@safely/core';
-import type { AmountView } from '@safely/ux';
+import { useAmountStepView, type AmountView } from '@safely/ux';
 
 import { Text } from '@mobile/shared/ui/Text';
 
 import type { MaskedInputRef } from '../../../../modules/safely-masked-input/src';
 import { AmountInput, AmountStatus, AssetSelector } from '../components';
 import { styles } from './AmountStep.styles';
-import { useAmountStepView } from './useAmountStepView';
 
 interface AmountStepProps {
     view: AmountView;

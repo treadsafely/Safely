@@ -3,11 +3,11 @@ import { useCallback, useMemo, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import { useSharedValue } from 'react-native-reanimated';
 
-import type { PasscodeDigits } from '@mobile/shared/constants';
-import { PASSCODE_DIGITS } from '@mobile/shared/constants';
+import type { PasscodeLength } from '@safely/ux';
+import { PASSCODE_LENGTH } from '@safely/ux';
 
 export interface PasscodeState {
-    digitsAmount: PasscodeDigits;
+    digitsAmount: PasscodeLength;
     switchDigitsAmount: () => void;
     inputValue: string;
     setInputValue: (value: string) => void;
@@ -17,7 +17,7 @@ export interface PasscodeState {
 }
 
 export const usePasscodeState = (): PasscodeState => {
-    const [digitsAmount, setDigitsAmount] = useState<PasscodeDigits>(PASSCODE_DIGITS.SHORT);
+    const [digitsAmount, setDigitsAmount] = useState<PasscodeLength>(PASSCODE_LENGTH.short);
     const [inputValue, _setInputValue] = useState('');
     const isSuccess = useSharedValue<boolean>(false);
     const isError = useSharedValue<boolean>(false);
@@ -28,7 +28,7 @@ export const usePasscodeState = (): PasscodeState => {
         isSuccess.value = false;
         isError.value = false;
         setDigitsAmount(prev =>
-            prev === PASSCODE_DIGITS.SHORT ? PASSCODE_DIGITS.LONG : PASSCODE_DIGITS.SHORT
+            prev === PASSCODE_LENGTH.short ? PASSCODE_LENGTH.long : PASSCODE_LENGTH.short
         );
     }, [isSuccess, isError]);
 

@@ -25,6 +25,11 @@ export function useSuspenseQuery<
     const result = useQuery(options) as UseSuspenseQueryResult<TData, TError>;
 
     if (result.data === undefined) {
+        if (result.isError) {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw result.error;
+        }
+
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw result.refetch();
     }

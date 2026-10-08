@@ -1,20 +1,11 @@
 import type { StaticScreenProps } from '@react-navigation/native';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { BLOCKCHAIN_NAME, SPACE, ellipsisMiddle } from '@safely/core';
-import {
-    type BtcActivityItem,
-    isBtcTransactionPending,
-    useDateFormatter,
-    useExplorer,
-    useLinking,
-    useNumberFormatter,
-    useShowFullSentAmount,
-    useTransactionHistoryAmountOrder,
-    resolveSentAmount
-} from '@safely/ux';
+import { SPACE } from '@safely/core';
+import type { BtcActivityItem } from '@safely/ux';
+import { useLinking, useTransactionDetails } from '@safely/ux';
 
 import { TransactionConfirmationStatusBtc } from '@mobile/entities/activity';
 import {
@@ -44,59 +35,13 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
         }
     } = props;
     const { t } = useTranslation();
-    const isInitiator = activity.transaction.isInitiator;
-    const isPending = isBtcTransactionPending(activity.transaction.raw);
-    const formatter = useNumberFormatter();
-    const rate = activity.transaction.rate;
-    const explorer = useExplorer(BLOCKCHAIN_NAME.BTC);
-    const dateFormatter = useDateFormatter({
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
     const { openURL } = useLinking();
-    const showFullSentAmount = useShowFullSentAmount();
-    const amountOrder = useTransactionHistoryAmountOrder();
+    const details = useTransactionDetails(activity);
 
-    const { amount, isFullPrecision } = resolveSentAmount({
-        isInitiator,
-        value: activity.transaction.value,
-        fee: activity.transaction.fee?.amount,
-        showFullSentAmount
-    });
-
-    const formattedValue = amount.format(formatter, { fullPrecision: isFullPrecision });
-    const formattedFiat = rate
-        ? amount.convert(rate).format(formatter, { currencyDisplay: 'code' })
-        : null;
-
-    const isFiatFirst = amountOrder === 'fiat' && formattedFiat !== null;
-    const primaryAmount = isFiatFirst ? formattedFiat : formattedValue;
-    const secondaryAmount = isFiatFirst
-        ? formattedValue
-        : formattedFiat && `≈${SPACE.THSP}${formattedFiat}`;
-
-    const handleOpen = useCallback(() => {
-        const url = explorer.transaction(activity.transaction.raw.txid);
-        openURL(url);
-    }, [activity.transaction.raw.txid, explorer, openURL]);
-
-    const confirmedAt = useMemo(
-        () => dateFormatter.format(activity.timestamp),
-        [dateFormatter, activity.timestamp]
+    const handleOpen = useCallback(
+        () => openURL(details.explorerUrl),
+        [details.explorerUrl, openURL]
     );
-
-    const addressCell = useMemo(() => {
-        return {
-            address: isInitiator
-                ? activity.transaction.toAddress
-                : activity.transaction.fromAddress,
-            label: isInitiator
-                ? t('history.transactionInfo.recipient')
-                : t('history.transactionInfo.sender')
-        };
-    }, [isInitiator, activity.transaction.toAddress, activity.transaction.fromAddress, t]);
 
     return (
         <Screen>
@@ -104,21 +49,11 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                 <Screen.Header.BackButton />
                 <Screen.Header.Title>
                     <Text variant="titleS" color="primary" textAlign="center">
-                        {isInitiator
-                            ? t(
-                                  isPending
-                                      ? 'history.transactionInfo.sending'
-                                      : 'history.transactionInfo.sent'
-                              )
-                            : t(
-                                  isPending
-                                      ? 'history.transactionInfo.receiving'
-                                      : 'history.transactionInfo.received'
-                              )}
+                        {details.title}
                     </Text>
-                    {!isPending && (
+                    {details.confirmedAtLabel !== null && (
                         <Text variant="bodyM" color="secondary" textAlign="center">
-                            {confirmedAt}
+                            {details.confirmedAtLabel}
                         </Text>
                     )}
                 </Screen.Header.Title>
@@ -126,36 +61,36 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
             <Screen.Scrollable>
                 <View style={styles.headerContainer}>
                     <View style={styles.assetImageContainer}>
-                        <Image
-                            source={activity.transaction.value.asset.image}
-                            style={styles.assetImage}
-                        />
+                        <Image source={details.assetImage} style={styles.assetImage} />
                         <View style={styles.assetBadge}>
-                            <Icon icon={isInitiator ? ArrowTop16 : ArrowDown16} color="primary" />
+                            <Icon
+                                icon={details.isInitiator ? ArrowTop16 : ArrowDown16}
+                                color="primary"
+                            />
                         </View>
                     </View>
                     <View style={styles.amountContainer}>
                         <Text variant="titleL" color="primary" textAlign="center">
-                            {isInitiator ? '−' : '+'}
+                            {details.amountSign}
                             {SPACE.THSP}
-                            {primaryAmount}
+                            {details.primaryAmount}
                         </Text>
-                        {secondaryAmount && (
+                        {details.secondaryAmount && (
                             <Text variant="bodyL" color="secondary" textAlign="center">
-                                {secondaryAmount}
+                                {details.secondaryAmount}
                             </Text>
                         )}
                     </View>
                 </View>
                 <List style={styles.list}>
                     <List.Group withoutBottomMargin>
-                        <TableCell copyable={addressCell.address}>
+                        <TableCell copyable={details.counterpartyAddress}>
                             <TableCell.Column leading>
-                                <TableCell.Label>{addressCell.label}</TableCell.Label>
+                                <TableCell.Label>{details.counterpartyLabel}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
                                 <TableCell.Value>
-                                    {ellipsisMiddle(addressCell.address, 6)}
+                                    {details.counterpartyAddressLabel}
                                 </TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
@@ -172,22 +107,20 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                             </TableCell.Column>
                             <TableCell.Column>
                                 <TableCell.Value>
-                                    {!rate || !activity.transaction.fee ? (
+                                    {!details.fee ? (
                                         '-'
                                     ) : (
                                         <>
-                                            {activity.transaction.fee.amount
-                                                .convert(rate)
-                                                .format(formatter)}{' '}
+                                            {details.fee.formattedFiat}{' '}
                                             <TableCell.Value color="secondary">
-                                                {activity.transaction.fee.amount.format(formatter)}
+                                                {details.fee.formattedValue}
                                             </TableCell.Value>
                                         </>
                                     )}
                                 </TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
-                        <TableCell copyable={activity.transaction.raw?.txid}>
+                        <TableCell copyable={details.txid}>
                             {({ handleCopy }) => (
                                 <>
                                     <TableCell.Column leading>
@@ -196,9 +129,7 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                                         </TableCell.Label>
                                     </TableCell.Column>
                                     <TableCell.Column>
-                                        <TableCell.Value>
-                                            {ellipsisMiddle(activity.transaction.raw?.txid, 8)}
-                                        </TableCell.Value>
+                                        <TableCell.Value>{details.txidLabel}</TableCell.Value>
                                     </TableCell.Column>
                                     <View style={styles.iconsContainer}>
                                         <TouchableOpacity hitSlop={12} onPress={handleOpen}>
@@ -212,9 +143,9 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                             )}
                         </TableCell>
                     </List.Group>
-                    {rate && (
+                    {details.hasFiatRateNote && (
                         <List.Footer>
-                            <Text variant="bodyM" color="tertiary" textAlign="center">
+                            <Text variant="bodyM" color="tertiary">
                                 {t('history.transactionInfo.fiatRateNote')}
                             </Text>
                         </List.Footer>

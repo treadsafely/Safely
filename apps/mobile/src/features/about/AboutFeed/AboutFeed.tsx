@@ -4,11 +4,10 @@ import { useEffect, useImperativeHandle, useRef } from 'react';
 import { View } from 'react-native';
 
 import type { AboutPost } from '@safely/core';
-import { useAboutQuery } from '@safely/ux';
+import { getGroupedRowType, type GroupedRow, useAboutQuery, useGroupedRows } from '@safely/ux';
 
 import { Screen, Text } from '@mobile/shared/ui';
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
-import { useGroupedRows, getGroupedRowType, type GroupedRow } from '@mobile/shared/utils';
 
 import { styles } from './AboutFeed.styles';
 import { PostCard, AboutFeedSkeleton } from './components';

@@ -1,6 +1,6 @@
 import type { ImageProps } from 'expo-image';
 
-import BtcLogo from '@mobile/shared/resources/images/btc-logo.svg';
+import BtcLogo from '@safely/ux/assets/images/btc-logo.svg';
 
 const resourcesPattern = `/resources/images`;
 const knownSources = {

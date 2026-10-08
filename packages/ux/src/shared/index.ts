@@ -1,3 +1,4 @@
+export * from './theme';
 export * from './query-core';
 export * from './loader';
 export * from './toast';

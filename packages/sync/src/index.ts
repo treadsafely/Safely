@@ -27,7 +27,16 @@ export {
     Logger,
     ConsoleTransport,
     CombinedTransport,
+    FileTransport,
     logsFilterMinSeverityLevel
 } from './logger';
-export type { LogEntry, ILoggerTransport, LogsFilter } from './logger';
+export type {
+    LogEntry,
+    ILoggerTransport,
+    LogsFilter,
+    ILogFileWriter,
+    ILogFileStore,
+    LogMeta,
+    LogRecord
+} from './logger';
 export { MKDerivationDomain } from './crypto/service/master-key-service';

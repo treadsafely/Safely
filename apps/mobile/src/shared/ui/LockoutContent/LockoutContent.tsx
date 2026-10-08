@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { formatLockoutTime } from '@mobile/shared/utils';
+import { lockoutRemainingCopy } from '@safely/ux';
 
 import { Icon, Lock56 } from '../Icon';
 import { Screen } from '../Screen';
@@ -16,6 +16,8 @@ interface LockoutContentProps {
 export const LockoutContent = (props: LockoutContentProps) => {
     const { remainingSeconds, onSignOut } = props;
     const { t } = useTranslation();
+
+    const remaining = lockoutRemainingCopy(remainingSeconds);
 
     return (
         <Screen>
@@ -36,7 +38,7 @@ export const LockoutContent = (props: LockoutContentProps) => {
                         {t('passcode.lockout.title')}
                     </Text>
                     <Text textAlign="center" variant="bodyL" color="secondary">
-                        {formatLockoutTime(remainingSeconds, t)}
+                        {t(remaining.translationKey, { count: remaining.count })}
                     </Text>
                 </View>
             </View>

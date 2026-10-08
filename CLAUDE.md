@@ -15,8 +15,11 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/sync`             | E2EE sync protocol: key hierarchy, device onboarding, device list, snapshots, SSE stream, xstate machine, generated OpenAPI client.            |
 | `packages/sync-storage`     | Versioned schemas of user state (`v1`, `v2`, …) on top of slottree, plus migrations.                                                           |
 | `packages/core`             | Wallet domain: BTC (xpub, PSBT, fee estimation), Ledger, external APIs (config/price/rate/exchange), entities, DI interfaces. No React.        |
-| `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms. No RN/DOM specifics.            |
+| `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms, plus the design tokens (`./theme`) and the strings (`./translations`). No RN/DOM specifics. |
+| `packages/web-ui`           | React layer shared by the web targets: design system (Base UI + Panda), the screens built from it and the flows that drive them over `@safely/ux`. FSD + `pages`. No router, no Electron/extension code, no platform contract, no globals, no build config. |
 | `apps/mobile`               | Expo dev-client (iOS/Android): FSD + `screens`, native modules `modules/safely-*`, unistyles, i18n.                                            |
+| `apps/desktop`              | Electron (forge + vite), **macOS-only build for now**: split by process (`main`/`preload`/`renderer`/`shared`), native addon `native/keychain`, platform implementation, the security module (passcode, lockout, Touch ID) and the routing that drives the web UI. |
+| `apps/browser`              | MV3 extension — placeholder, see its README.                                                                                                    |
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
 Platform capabilities reach the domain through DI interfaces from `@safely/core` (`src/di/`:
@@ -36,11 +39,21 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
 - `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
   `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
   separate call — mobile's `lint` covers `./src ./scripts`
-- mobile: `pnpm --filter mobile ios|android|start` — dev-client, not Expo Go
+- mobile: `pnpm --filter @safely/mobile ios|android|start` — dev-client, not Expo Go
+- desktop: `pnpm --filter @safely/desktop start|package|make`; `build:native` compiles the keychain
+  addon (`package`/`make` run it first, `pnpm install` never does). A build QA can install
+  comes from the `Desktop QA build` workflow — a push to `release/**`, or run by hand — signed with
+  the development identity;
+  `.claude/rules/desktop-signing.md` has what CI may read and why the Developer ID key stays local
+- `packages/web-ui` generates `styled-system/` with `panda codegen`; its `compile`/`lint`/`test`
+  scripts run it first, and `pnpm -r run` is topological, so the apps that depend on it build after.
+  A standalone run in an app may need `pnpm --filter @safely/web-ui run codegen` first.
 
-Dependency versions go through `catalog:` in `pnpm-workspace.yaml` only: add the version to the
-catalog and reference `catalog:` from the package's package.json. `minimumReleaseAge: 5760` means
-pnpm refuses packages published less than four days ago.
+A dependency shared by more than one workspace package gets its version in the `catalog:` of
+`pnpm-workspace.yaml`, and the package.json references `catalog:` — so the version is stated once.
+A dependency only one package uses pins its version in that package's package.json; don't grow the
+catalog with single-consumer entries. `minimumReleaseAge: 5760` means pnpm refuses packages
+published less than four days ago.
 
 Root-level tooling stays at the root: `eslint`, its plugins and `prettier` are installed once in the
 root package.json, and a package only adds the `"lint": "eslint ./src"` script. The node scripts
@@ -57,19 +70,36 @@ plugins yes, root tooling no.
   silently overwritten on the next regeneration. Keep wrappers and domain logic outside `generated/`.
 - **Log through the logger, never `console`**, and run sensitive data through `filterSensitiveData`
   from `@safely/core`.
+- **A comment must carry what the code cannot** — one line, no JSDoc, rationale into a rules or doc
+  file; nothing in lint or CI guards this. See `.claude/rules/code-comments.md`.
 - **Import cycles are an eslint error** (`import/no-cycle`) — never suppress it. Modules call helpers
   at module-load time (e.g. `defineQueryKeys(...)` in `keys.ts`), so a cycle yields `undefined`
   instead of the export and crashes the app at startup.
+- **Design tokens live only in `packages/ux/src/shared/theme`** (`@safely/ux/theme`) — mobile feeds
+  them to unistyles, the web to Panda. A colour or spacing literal written anywhere else silently
+  desynchronises the platforms.
+- **Panda extracts styles statically and fails silently** — a runtime value in a style yields no CSS,
+  no error. See `.claude/rules/web-ui.md`; `styled-system/` must be generated before `tsc`/eslint.
+- **Filenames follow a convention no lint rule reads** — PascalCase for a component and its
+  siblings, camelCase for a file named after the hook it exports, kebab-case for everything else.
+  See `.claude/rules/typescript-style.md`.
 
 Everything else is enforced mechanically — layer boundaries, `any`, `console`, import order, type
-imports, naming. The full rule set lives in `eslint.config.js`; run lint instead of memorising it, and
-see `.claude/rules/typescript-style.md` for the conventions whose reason isn't obvious from the error
-message.
+imports, symbol naming. The full rule set lives in `eslint.config.js`; run lint instead of memorising
+it, and see `.claude/rules/typescript-style.md` for the conventions whose reason isn't obvious from
+the error message.
 
 ## Where the details are
 
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
-`typescript-style.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`, `testing.md`.
+`typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
+`web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-secret-store.md`, `desktop-signing.md`,
+`testing.md`.
+
+`desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
+schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
+keychain and signing files; read it before touching the `encrypted`/`secureEncrypted` scopes, the
+desktop security module or the signing configuration.
 
 Specs — read before changing the sync protocol or the state format; the rules files do not restate
 them:

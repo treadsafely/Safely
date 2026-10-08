@@ -11,6 +11,8 @@ import type {
 } from '@safely/sync-storage';
 
 import { useHiddenDeviceWarningsQuery } from './hidden-warnings';
+import type { SyncedDeviceDetails } from './types';
+import { SyncedDeviceDataStatus } from './types';
 import { isSensitivePortfolio } from './utils';
 import { useAppContext } from '../../shared';
 import type { SyncAccount } from '../account/account-state';
@@ -19,6 +21,12 @@ import { useAccountSyncStorageSlotUpdate } from '../account/useAccountSyncStorag
 
 export { useHideDeviceWarning } from './hidden-warnings';
 export { useArchiveDevice, useUnarchiveDevice } from './device-archive';
+export type { SyncedDeviceArchive, SyncedDeviceDetails } from './types';
+export { SyncedDeviceDataStatus } from './types';
+export type { SyncedDeviceRowStatus, SyncedDeviceStatusTone } from './device-row-status';
+export { resolveDeviceRowStatus } from './device-row-status';
+export type { SyncedDeviceConnectionLabel } from './connection-label';
+export { resolveConnectionLabel } from './connection-label';
 
 export function useSyncedDevicesMeta(): Record<string, SDeviceMeta> | null {
     return useActiveAccountStoreSlot('devicesMeta') ?? null;
@@ -35,30 +43,6 @@ export function useCurrentDeviceIkPub(): string {
 
     return useMemo(() => account.getMyDeviceIkPub().toString('hex'), [account]);
 }
-
-export enum SyncedDeviceDataStatus {
-    SYNCED = 'synced',
-    NOT_SYNCED = 'not_synced',
-    UNKNOWN = 'unknown'
-}
-
-export type SyncedDeviceArchive = {
-    archivedAt: number;
-    isSignedOut: boolean;
-    archivedFromDeviceName: string | null;
-};
-
-export type SyncedDeviceDetails = {
-    ikPubHex: string;
-    meta: SDeviceMeta;
-    isCurrent: boolean;
-    lastSyncAt: number | null;
-    isStale: boolean;
-    isStaleWarningHidden: boolean;
-    dataStatus: SyncedDeviceDataStatus;
-    pendingPortfolios: readonly Portfolio[];
-    archive: SyncedDeviceArchive | null;
-};
 
 const STALE_CONNECTION_MS = 30 * 24 * 60 * 60 * 1000;
 const PAIRING_GRACE_MS = 60 * 1000;
