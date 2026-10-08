@@ -10,6 +10,7 @@ import {
 } from '@safely/ux';
 import SwapVertical20 from '@safely/ux/assets/icons/20/swap-vertical-20.svg?react';
 
+import { AmountStatus } from './AmountStatus';
 import {
     alternativeStyles,
     amountInputStyles,
@@ -23,9 +24,10 @@ import {
     suffixStyles,
     valuesStyles
 } from './AmountStep.styles';
+import { PendingFundsModal } from './PendingFundsModal';
 import { useAmountInput } from './useAmountInput';
 import { AssetIcon } from '../../entities';
-import { Icon, Text } from '../../shared';
+import { Icon, Text, useDisclosure } from '../../shared';
 
 const ASSET_ICON_SIZE = 32;
 
@@ -65,6 +67,8 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
         event.preventDefault();
         input.inputRef.current?.focus();
     };
+
+    const pendingFunds = useDisclosure();
 
     const enterMax = 'enterMax' in view ? view.enterMax : undefined;
     const asset = view.parsed.asset?.amount.asset;
@@ -118,13 +122,12 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
             </div>
 
             <div className={statusRowStyles}>
-                <Text variant="bodyM" tone={amountError === undefined ? 'tertiary' : 'accentRed'}>
-                    {amountError !== undefined
-                        ? t(amountError)
-                        : isMax
-                          ? t('send.maxHint')
-                          : `${t('send.remaining')} ${remainingBalance}`}
-                </Text>
+                <AmountStatus
+                    isMax={isMax}
+                    amountError={amountError}
+                    remainingBalance={remainingBalance}
+                    onShowPending={pendingFunds.onOpen}
+                />
 
                 {enterMax !== undefined && view.isMaxAvailable && (
                     <button type="button" className={maxStyles} onClick={enterMax}>
@@ -132,6 +135,8 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
                     </button>
                 )}
             </div>
+
+            {pendingFunds.isOpen && <PendingFundsModal onClose={pendingFunds.onClose} />}
         </div>
     );
 };

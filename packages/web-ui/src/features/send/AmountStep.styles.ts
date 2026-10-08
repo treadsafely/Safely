@@ -84,7 +84,7 @@ export const alternativeStyles = css({
 
 export const statusRowStyles = css({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: '8',
     paddingInline: '8',
