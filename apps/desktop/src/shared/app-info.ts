@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const DESKTOP_BUILD = 'macos';
+
 export const sAppInfo = z.object({
     version: z.string(),
     environment: z.enum(['production', 'development']),

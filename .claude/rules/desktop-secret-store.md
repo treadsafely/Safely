@@ -156,6 +156,7 @@ Two things that come with it, and both are easy to miss:
 ```
 userData/store/regular.json               plaintext: CRDT snapshots, query cache
 userData/store/dev-keychain-*.json        development stub only, plaintext, never in a packaged build
+~/Library/Logs/Safely/safely-<day>.ndjson sanitized warnings and errors with context, 7 days, 2 MB
 ```
 
 `regular.json` is written temp file → `fsync` → `rename` → `fsync` of the directory

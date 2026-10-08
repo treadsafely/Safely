@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type {
-    CryptoFiatRate, BtcApiTx, BtcAsset, CryptoAssetAmount as CryptoAssetAmountType } from '@safely/core';
+    CryptoFiatRate,
+    BtcApiTx,
+    BtcAsset,
+    CryptoAssetAmount as CryptoAssetAmountType
+} from '@safely/core';
 import {
     BTC_ASSET,
     CryptoAssetAmount,

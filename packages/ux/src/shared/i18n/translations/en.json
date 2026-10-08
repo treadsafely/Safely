@@ -83,7 +83,8 @@
             "title": "Logs contain your wallet data ⚠️",
             "message": "Logs include your addresses, amounts and transaction IDs. Share them only with Safely support.\n\nYour recovery phrase and private keys never appear in logs.",
             "confirm": "Open logs"
-        }
+        },
+        "truncated": "Showing the last {{visible}} of {{total}} logs"
     },
     "send": {
         "title": "Send",

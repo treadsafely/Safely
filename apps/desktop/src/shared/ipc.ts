@@ -8,6 +8,13 @@ export const IPC_CHANNEL = {
     windowContentProtection: 'safely:window:content-protection',
     openExternal: 'safely:shell:open-external',
 
+    logs: {
+        append: 'safely:logs:append',
+        read: 'safely:logs:read',
+        erase: 'safely:logs:erase',
+        share: 'safely:logs:share'
+    },
+
     biometry: {
         availability: 'safely:biometry:availability',
         authenticate: 'safely:biometry:authenticate'
@@ -61,6 +68,11 @@ export const sStoreSetRequest = z.object({ key: sKey, value: sValue });
 export const sStorePrefixRequest = z.object({ prefix: sPrefix });
 
 export const sOpenExternalRequest = z.object({ url: z.string().max(2048) });
+
+export const sLogAppendRequest = z.object({
+    lines: z.array(z.string().max(64 * 1024)).max(1024)
+});
+export const sLogLines = z.array(z.string());
 
 export const sContentProtectionRequest = z.object({ isEnabled: z.boolean() });
 

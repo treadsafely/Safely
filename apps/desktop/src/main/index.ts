@@ -3,9 +3,10 @@ import { app } from 'electron';
 import path from 'node:path';
 
 import { configureAboutPanel } from './about-panel';
+import { readAppInfo } from './app-info';
 import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
 import { registerIpcHandlers } from './ipc';
-import { mainLogger } from './logger';
+import { logStore, mainLogger } from './logger';
 import { useSeparateDevUserData } from './paths';
 import { hardenSession, hardenWebContents } from './security';
 import { createStores } from './store';
@@ -43,7 +44,7 @@ function revealMainWindow(): void {
 }
 
 function attachMainWindow(): BrowserWindow {
-    const window = createMainWindow(devServerUrl);
+    const window = createMainWindow(devServerUrl, readAppInfo());
 
     window.on('focus', () => notifyAppState('active'));
     window.on('blur', () => notifyAppState('inactive'));
@@ -95,6 +96,7 @@ if (!app.requestSingleInstanceLock()) {
             hardenSession(devServerUrl);
             /* Before the handlers: an IPC call that arrives without a store must not be served. */
             createStores();
+            logStore.cleanup();
             registerIpcHandlers(() => mainWindow);
 
             app.on('did-resign-active', () => notifyAppState('background'));

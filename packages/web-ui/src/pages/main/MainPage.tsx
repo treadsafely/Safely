@@ -16,7 +16,7 @@ import { MainContent, MainEmptyState } from './content';
 import type { MainLocation, MainModal, MainView } from './location';
 import { dragRegionStyles } from './MainPage.styles';
 import { MainSidebar } from './MainSidebar';
-import type { SettingsSection } from './settings';
+import type { DevTool, SettingsSection } from './settings';
 import { SettingsContent } from './settings';
 import { SettingsSidebar } from './SettingsSidebar';
 import {
@@ -41,10 +41,11 @@ export type MainPageProps = {
     hasWindowControls?: boolean;
     isFullScreen?: boolean;
     security: ReactNode;
+    logs: ReactNode;
 };
 
 export const MainPage: FC<MainPageProps> = props => {
-    const { location, onNavigate, hasWindowControls, isFullScreen, security } = props;
+    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs } = props;
     const { view, modal } = location;
 
     const hasPortfolio = useHasPortfolio();
@@ -66,6 +67,7 @@ export const MainPage: FC<MainPageProps> = props => {
     const [selectedActivity, setSelectedActivity] = useState<BtcActivityItem | null>(null);
 
     const section = view.kind === 'settings' ? view.section : null;
+    const tool = view.kind === 'settings' ? view.tool : null;
 
     const clearSelectedActivity = useCallback(() => setSelectedActivity(null), []);
 
@@ -78,7 +80,7 @@ export const MainPage: FC<MainPageProps> = props => {
         changeView(
             view.kind === 'settings'
                 ? { kind: 'home' }
-                : { kind: 'settings', section: hasPortfolio ? 'wallet' : 'account' }
+                : { kind: 'settings', section: hasPortfolio ? 'wallet' : 'account', tool: null }
         );
 
     const openHome = (): void => changeView({ kind: 'home' });
@@ -91,7 +93,10 @@ export const MainPage: FC<MainPageProps> = props => {
     const openSafety = (): void => changeView({ kind: 'safety' });
 
     const selectSection = (next: SettingsSection): void =>
-        changeView({ kind: 'settings', section: next });
+        changeView({ kind: 'settings', section: next, tool: null });
+
+    const selectTool = (next: DevTool | null): void =>
+        changeView({ kind: 'settings', section: 'devTools', tool: next });
 
     /* orders have no detail view on the web targets yet */
     const selectActivity = (activity: ActivityItem): void =>
@@ -157,7 +162,14 @@ export const MainPage: FC<MainPageProps> = props => {
                 {section === null ? (
                     content
                 ) : (
-                    <SettingsContent section={section} account={account} security={security} />
+                    <SettingsContent
+                        section={section}
+                        tool={tool}
+                        account={account}
+                        security={security}
+                        logs={logs}
+                        onSelectTool={selectTool}
+                    />
                 )}
             </AppLayout.Content>
 
