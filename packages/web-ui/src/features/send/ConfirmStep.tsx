@@ -45,8 +45,10 @@ const FeeValue: FC<{ estimation: Estimation }> = ({ estimation }) => {
 
     return (
         <>
-            {fiat ? `${fiat.format(formatter)} ` : ''}
-            {estimation.fee.amount.format(formatter)}
+            {fiat != null && <span>{fiat.format(formatter)}</span>}
+            <Text variant="bodyM" tone="secondary">
+                {estimation.fee.amount.format(formatter)}
+            </Text>
         </>
     );
 };
@@ -70,6 +72,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
 
     const targetBlock = transaction ? Math.max(transaction.estimation.txTargetBlock, 1) : undefined;
+
+    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter);
+    const fiatAmount = result.amount.fiatAssetAmount.format(formatter);
+    const isFiatPrimary = result.amount.inputType === 'fiat';
 
     const handleSend = async (): Promise<void> => {
         try {
@@ -173,12 +179,14 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                             </TableCell.Column>
                             <TableCell.Column>
                                 <TableCell.Value>
-                                    {result.amount.cryptoAssetAmount.format(formatter)}
+                                    {isFiatPrimary ? fiatAmount : cryptoAmount}
                                 </TableCell.Value>
                                 <TableCell.Label>
                                     {result.isMax
                                         ? t('confirmation.allAvailableBalance')
-                                        : result.amount.fiatAssetAmount.format(formatter)}
+                                        : isFiatPrimary
+                                          ? cryptoAmount
+                                          : fiatAmount}
                                 </TableCell.Label>
                             </TableCell.Column>
                         </TableCell>
