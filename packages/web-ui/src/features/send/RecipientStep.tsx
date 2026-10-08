@@ -40,31 +40,43 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
 
             {hasSuggestions && (
                 <List className={listStyles}>
-                    <List.Group variant="divided">
-                        {suggestions.portfolios.map(suggestion => (
-                            <Cell
-                                key={suggestion.id}
-                                onClick={() => view.selectSuggestion(suggestion.id, suggestions)}
-                            >
-                                <Cell.Leading>
-                                    <WalletIcon icon={suggestion.meta.icon} />
-                                </Cell.Leading>
-                                <Cell.Content>
-                                    <Cell.Title>{suggestion.meta.name}</Cell.Title>
-                                </Cell.Content>
-                                {suggestion.id === view.selectedSuggestionId && <Cell.Checkmark />}
-                            </Cell>
-                        ))}
+                    {suggestions.portfolios.length > 0 && (
+                        <List.Group variant="divided">
+                            {suggestions.portfolios.map(suggestion => (
+                                <Cell
+                                    key={suggestion.id}
+                                    onClick={() =>
+                                        view.selectSuggestion(suggestion.id, suggestions)
+                                    }
+                                >
+                                    <Cell.Leading>
+                                        <WalletIcon icon={suggestion.meta.icon} />
+                                    </Cell.Leading>
+                                    <Cell.Content>
+                                        <Cell.Title>{suggestion.meta.name}</Cell.Title>
+                                    </Cell.Content>
+                                    {suggestion.id === view.selectedSuggestionId && (
+                                        <Cell.Checkmark />
+                                    )}
+                                </Cell>
+                            ))}
+                        </List.Group>
+                    )}
 
-                        {suggestions.contacts.map(suggestion => (
-                            <ContactCell
-                                key={suggestion.id}
-                                meta={suggestion.meta}
-                                isSelected={suggestion.id === view.selectedSuggestionId}
-                                onSelect={() => view.selectSuggestion(suggestion.id, suggestions)}
-                            />
-                        ))}
-                    </List.Group>
+                    {suggestions.contacts.length > 0 && (
+                        <List.Group variant="divided">
+                            {suggestions.contacts.map(suggestion => (
+                                <ContactCell
+                                    key={suggestion.id}
+                                    meta={suggestion.meta}
+                                    isSelected={suggestion.id === view.selectedSuggestionId}
+                                    onSelect={() =>
+                                        view.selectSuggestion(suggestion.id, suggestions)
+                                    }
+                                />
+                            ))}
+                        </List.Group>
+                    )}
                 </List>
             )}
 
