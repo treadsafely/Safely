@@ -36,6 +36,13 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
 - `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
   `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
   separate call — mobile's `lint` covers `./src ./scripts`
+- `pnpm check:unicode` — fails on invisible (`Default_Ignorable`) characters in any tracked file,
+  its name or a symlink target:
+  bidi, zero-width, variation selectors, Tag characters (emoji ZWJ sequences and a VS15/VS16 after
+  an emoji excepted); on any other format, private-use, unassigned or control character (tab and
+  CRLF excepted) and U+2028/U+2029; and on a NUL byte or UTF-16 outside known binary formats, which it
+  cannot scan; CI runs it on every pull request. An intentional one goes in as an escape
+  (`\u200D`), never as the raw character
 - mobile: `pnpm --filter mobile ios|android|start` — dev-client, not Expo Go
 
 Dependency versions go through `catalog:` in `pnpm-workspace.yaml` only: add the version to the

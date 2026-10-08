@@ -24,6 +24,11 @@ jobs:
         with:
           node-version: '24.10.0'
 
+      # Before install: needs nothing but node and git, so a hidden bidi or
+      # zero-width character fails the run in seconds.
+      - name: Check for hidden Unicode
+        run: node scripts/check-hidden-unicode.mjs
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
