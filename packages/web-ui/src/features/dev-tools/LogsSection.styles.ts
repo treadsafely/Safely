@@ -70,3 +70,5 @@ export const messageStyles = css({
 export const collapsedMessageStyles = css({ lineClamp: 8 });
 
 export const emptyStyles = css({ paddingBlock: '48', textAlign: 'center' });
+
+export const noticeStyles = css({ paddingBlock: '16', textAlign: 'center' });
