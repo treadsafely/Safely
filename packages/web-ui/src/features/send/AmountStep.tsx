@@ -20,10 +20,14 @@ import {
     labelStyles,
     maxStyles,
     statusRowStyles,
-    suffixStyles
+    suffixStyles,
+    valuesStyles
 } from './AmountStep.styles';
 import { useAmountInput } from './useAmountInput';
+import { AssetIcon } from '../../entities';
 import { Icon, Text } from '../../shared';
+
+const ASSET_ICON_SIZE = 32;
 
 export type AmountStepProps = {
     view: AmountView;
@@ -63,8 +67,8 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
     };
 
     const enterMax = 'enterMax' in view ? view.enterMax : undefined;
-    const symbol =
-        inputType === 'fiat' ? fiat.id.symbol : (view.parsed.asset?.amount.asset.symbol ?? '');
+    const asset = view.parsed.asset?.amount.asset;
+    const symbol = inputType === 'fiat' ? fiat.id.symbol : (asset?.symbol ?? '');
 
     return (
         <div className={fieldStyles}>
@@ -77,36 +81,40 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
                 data-invalid={amountError !== undefined ? '' : undefined}
                 onMouseDown={handleBoxMouseDown}
             >
-                <div className={amountRowStyles}>
-                    {isMax && <span className={approximateStyles}>≈</span>}
+                <div className={valuesStyles}>
+                    <div className={amountRowStyles}>
+                        {isMax && <span className={approximateStyles}>≈</span>}
 
-                    <input
-                        ref={input.inputRef}
-                        autoFocus
-                        className={amountInputStyles}
-                        value={input.value}
-                        placeholder="0"
-                        inputMode="decimal"
-                        autoComplete="off"
-                        onChange={input.onChange}
-                        onPaste={input.onPaste}
-                        onFocus={() => 'exitMax' in view && view.exitMax()}
-                    />
+                        <input
+                            ref={input.inputRef}
+                            autoFocus
+                            className={amountInputStyles}
+                            value={input.value}
+                            placeholder="0"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            onChange={input.onChange}
+                            onPaste={input.onPaste}
+                            onFocus={() => 'exitMax' in view && view.exitMax()}
+                        />
 
-                    <span className={suffixStyles}>{symbol}</span>
+                        <span className={suffixStyles}>{symbol}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        className={alternativeStyles}
+                        disabled={!hasPrice}
+                        onClick={() =>
+                            view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
+                        }
+                    >
+                        {alternativeAmount}
+                        {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
+                    </button>
                 </div>
 
-                <button
-                    type="button"
-                    className={alternativeStyles}
-                    disabled={!hasPrice}
-                    onClick={() =>
-                        view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
-                    }
-                >
-                    {alternativeAmount}
-                    {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
-                </button>
+                {asset !== undefined && <AssetIcon image={asset.image} size={ASSET_ICON_SIZE} />}
             </div>
 
             <div className={statusRowStyles}>

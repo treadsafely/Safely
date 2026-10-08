@@ -10,9 +10,11 @@ export const labelStyles = css({
 
 export const boxStyles = css({
     display: 'flex',
-    flexDirection: 'column',
-    gap: '4',
-    padding: '16',
+    alignItems: 'center',
+    gap: '12',
+    paddingBlock: '16',
+    paddingLeft: '16',
+    paddingRight: '24',
     borderRadius: 'sm',
     borderWidth: 'hairline',
     borderStyle: 'solid',
@@ -28,6 +30,14 @@ export const boxStyles = css({
     }
 });
 
+export const valuesStyles = css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1',
+    minWidth: '0',
+    gap: '4'
+});
+
 export const amountRowStyles = css({
     display: 'flex',
     alignItems: 'baseline',
@@ -41,8 +51,7 @@ export const approximateStyles = css({ textStyle: 'titleS', color: 'text.tertiar
 export const amountInputStyles = css({
     minWidth: '1ch',
     maxWidth: '100%',
-    fontSize: '32px',
-    lineHeight: '40px',
+    textStyle: 'titleL',
     color: 'text.primary',
     caretColor: 'accent.accent',
     backgroundColor: 'transparent',
