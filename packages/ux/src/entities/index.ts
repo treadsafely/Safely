@@ -11,6 +11,7 @@ export * from './synced-device';
 export * from './explorer';
 export * from './security';
 export * from './btc-blockchain';
+export * from './flame-blockchain';
 export * from './format';
 export * from './errors';
 export * from './linking';

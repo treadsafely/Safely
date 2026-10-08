@@ -9,7 +9,7 @@ import { assertUnreachable } from '../../utils';
 import type { ILedgerSessionPort } from '../signer';
 
 export type PortfolioRestoreDeps = {
-    encryptor: ISecretEncryptor;
+    secureEncryptor: ISecretEncryptor;
     ledgerSessionPort: ILedgerSessionPort;
 };
 
@@ -17,7 +17,7 @@ export class PortfolioFactory {
     public static restorePortfolio(portfolio: SPortfolio, deps: PortfolioRestoreDeps) {
         switch (portfolio.type) {
             case PortfolioType.BIP39:
-                return PortfolioBip39.restore(deps.encryptor, portfolio);
+                return PortfolioBip39.restore(deps.secureEncryptor, portfolio);
             case PortfolioType.LEDGER:
                 return PortfolioLedger.restore(portfolio, deps.ledgerSessionPort);
             case PortfolioType.WATCH_ONLY:

@@ -41,6 +41,10 @@ export const darkTheme = {
             tertiary: {
                 background: 'rgba(38, 38, 43, 1)',
                 foreground: 'rgba(255, 255, 255, 1)'
+            },
+            transparent: {
+                background: 'rgba(255, 255, 255, 0.2)',
+                foreground: 'rgba(255, 255, 255, 1)'
             }
         },
         accent: {
@@ -49,6 +53,10 @@ export const darkTheme = {
             red: 'rgba(229, 64, 69, 1)',
             orange: 'rgba(245, 168, 34, 1)',
             blue: 'rgba(1, 120, 255, 1)'
+        },
+        brand: {
+            bitcoin: 'rgba(247, 147, 26, 1)',
+            flame: 'rgba(250, 70, 25, 1)'
         },
         wallet: {
             lightGray: 'rgba(110, 110, 115, 1)',

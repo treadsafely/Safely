@@ -1,49 +1,48 @@
 import { useNavigation } from '@react-navigation/core';
 
-import { assertUnreachable, BLOCKCHAIN_NAME } from '@safely/core';
-import { useHomeScreenList } from '@safely/ux';
+import { useActiveBtcRatedAmount, useActiveFlameRatedAmount } from '@safely/ux';
 
-import { BtcAssetCell, AssetCellSkeleton } from '@mobile/entities/asset';
+import { AssetCellSkeleton, BtcAssetCell } from '@mobile/entities/asset';
+import { FlameAssetCell } from '@mobile/entities/flame';
 import { List } from '@mobile/shared/ui';
 
 import { styles } from './AssetsList.styles';
 
 export const AssetsList = () => {
     const navigation = useNavigation();
-    const { data } = useHomeScreenList() ?? [];
+    const { data: btc } = useActiveBtcRatedAmount();
+    const { data: flame, isError: isFlameError } = useActiveFlameRatedAmount();
 
-    if (!data) {
-        return (
-            <List>
-                <List.Group style={styles.list}>
-                    <AssetCellSkeleton />
-                </List.Group>
-            </List>
-        );
-    }
-
-    const { topTokens } = data;
     return (
         <List>
-            <List.Group style={styles.list}>
-                {topTokens.map(token =>
-                    token.amount.asset.id.blockchain === BLOCKCHAIN_NAME.BTC ? (
-                        <BtcAssetCell
-                            onPress={() => {
-                                void navigation.navigate('TabsNavigator', {
-                                    screen: 'HomeStack',
-                                    params: {
-                                        screen: 'HistoryScreen'
-                                    }
-                                });
-                            }}
-                            key={token.amount.asset.id.toString()}
-                            cryptoAssetAmount={token.amount}
-                            price={token.price ?? null}
-                        />
-                    ) : (
-                        assertUnreachable(token.amount.asset.id.blockchain)
-                    )
+            <List.Group style={styles.list} variant="separated">
+                {btc ? (
+                    <BtcAssetCell
+                        onPress={() => {
+                            void navigation.navigate('TabsNavigator', {
+                                screen: 'HomeStack',
+                                params: { screen: 'BtcScreen' }
+                            });
+                        }}
+                        cryptoAssetAmount={btc.amount}
+                        price={btc.price ?? null}
+                    />
+                ) : (
+                    <AssetCellSkeleton />
+                )}
+                {flame ? (
+                    <FlameAssetCell
+                        onPress={() => {
+                            void navigation.navigate('TabsNavigator', {
+                                screen: 'HomeStack',
+                                params: { screen: 'FlameScreen' }
+                            });
+                        }}
+                        cryptoAssetAmount={flame.amount}
+                        price={flame.price ?? null}
+                    />
+                ) : (
+                    flame === undefined && !isFlameError && <AssetCellSkeleton />
                 )}
             </List.Group>
         </List>

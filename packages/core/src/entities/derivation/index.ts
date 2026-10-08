@@ -5,3 +5,7 @@ export * from './btc/I-derivation-chain-item-btc';
 export * from './btc/I-btc-wallet';
 export { DerivationChainItemBtcSeed } from './btc/implementations/bip39/derivation-chain-item-btc-seed';
 export { DerivationChainItemBtcLedger } from './btc/implementations/ledger/derivation-chain-item-btc-ledger';
+export * from './flame/I-derivation-chain-item-flame';
+export * from './flame/I-flame-wallet';
+export { FlameWalletId } from './flame/flame-wallet-id';
+export { DerivationChainItemFlame } from './flame/derivation-chain-item-flame';

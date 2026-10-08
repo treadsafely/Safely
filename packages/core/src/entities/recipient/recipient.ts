@@ -6,7 +6,7 @@ export interface RecipientDisplayData {
 }
 
 export interface Recipient {
-    readonly blockchain: BLOCKCHAIN_NAME;
+    readonly blockchain: BLOCKCHAIN_NAME.BTC;
     readonly address: string;
     getDisplayData(): RecipientDisplayData;
 }

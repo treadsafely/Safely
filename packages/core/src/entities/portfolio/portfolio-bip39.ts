@@ -7,16 +7,20 @@ import {
 } from '@safely/sync-storage';
 
 import type { ReadOnlyCredential } from '../auth-cert';
-import type { IDerivation } from '../derivation';
-import { Derivation, DerivationChainItemBtcSeed } from '../derivation';
+import {
+    Bip39Derivation,
+    DerivationChainItemBtcSeed,
+    DerivationChainItemFlame
+} from '../derivation';
 import type { IPortfolioBip39, PortfolioSecretRevealedStatus } from './I-portfolio';
 import { PortfolioType } from './I-portfolio';
 import type { PortfolioIdBip39 } from './portfolio-id-bip39';
 import { toPortfolioIdBip39 } from './portfolio-id-bip39';
 import type { PortfolioMeta } from './portfolio-meta';
+import { PortfolioNetworkType } from './portfolio-network-type';
 import type { ISecretEncryptor } from '../../di';
 import type { Id } from '../../utils';
-import { BtcWalletType } from '../blockchain';
+import { BtcWalletType, flameNetworkByPortfolioNetworkType } from '../blockchain';
 import { InvalidMnemonicError, PortfolioGenerationFailedError } from '../errors';
 import type {
     IMnemonicAccessor,
@@ -26,6 +30,8 @@ import type {
 import { MNEMONIC_TYPE, validateMnemonic } from '../mnemonic';
 import { MnemonicResource, MnemonicVault } from '../mnemonic';
 import { BtcBip39SeedProducer } from '../seed';
+
+const FLAME_NETWORK_TYPE = PortfolioNetworkType.TESTNET;
 
 export class PortfolioBip39 implements IPortfolioBip39 {
     public static async createSerializedPortfolio({
@@ -51,12 +57,20 @@ export class PortfolioBip39 implements IPortfolioBip39 {
             validateMnemonic(MNEMONIC_TYPE.BIP39, mnemonicAccessor.value);
 
             const derivationIndex = 0;
+            const seedProducer = new BtcBip39SeedProducer(mnemonicAccessor);
             const xpub = await DerivationChainItemBtcSeed.getXpub({
-                seedProducer: new BtcBip39SeedProducer(mnemonicAccessor),
+                seedProducer,
                 walletType: BtcWalletType.NATIVE_SEGWIT,
                 network: id.network,
                 derivationIndex
             });
+            const flame =
+                id.network === FLAME_NETWORK_TYPE
+                    ? await DerivationChainItemFlame.createSChainItem(
+                          seedProducer,
+                          flameNetworkByPortfolioNetworkType(id.network)
+                      )
+                    : null;
 
             const encryptedSecret = (
                 await MnemonicVault.fromMnemonicAccessor(encryptor, mnemonicAccessor)
@@ -77,7 +91,9 @@ export class PortfolioBip39 implements IPortfolioBip39 {
                 meta,
                 encryptedSecret,
                 secretRevealedStatus,
-                derivations: [sDerivation.toJson({ index: 0, chains: { btc: { xpub } } })]
+                derivations: [
+                    sDerivation.toJson({ index: derivationIndex, chains: { btc: { xpub }, flame } })
+                ]
             });
         } catch (error) {
             if (error instanceof InvalidMnemonicError) {
@@ -88,8 +104,8 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         }
     }
 
-    public static restore(secretEncryptor: ISecretEncryptor, sPortfolio: SPortfolioBip39) {
-        const mnemonicVault = new MnemonicVault(secretEncryptor, sPortfolio.encryptedSecret);
+    public static restore(secureEncryptor: ISecretEncryptor, sPortfolio: SPortfolioBip39) {
+        const mnemonicVault = new MnemonicVault(secureEncryptor, sPortfolio.encryptedSecret);
         return new PortfolioBip39({
             id: toPortfolioIdBip39(sPortfolio.id),
             meta: sPortfolio.meta,
@@ -109,13 +125,19 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         mnemonicVault: MnemonicVault,
         portfolioRef: PortfolioBip39,
         sDerivationVal: SDerivation
-    ): IDerivation {
-        return new Derivation(portfolioRef, sDerivationVal.index, derivationRef => ({
+    ): Bip39Derivation {
+        return new Bip39Derivation(portfolioRef, sDerivationVal.index, derivationRef => ({
             btc: new DerivationChainItemBtcSeed({
                 sDerivation: sDerivationVal.chains.btc,
                 derivationIndex: sDerivationVal.index,
                 seedProducer: new BtcBip39SeedProducer(mnemonicVault),
                 derivationRef
+            }),
+            ...(sDerivationVal.chains.flame && {
+                flame: new DerivationChainItemFlame({
+                    derivationRef,
+                    sChainItem: sDerivationVal.chains.flame
+                })
             })
         }));
     }
@@ -132,7 +154,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         return this.id.network;
     }
 
-    public readonly derivations: IDerivation[];
+    public readonly derivations: Bip39Derivation[];
 
     private readonly mnemonicVault: IMnemonicVaultEncryptedSecretStored;
 
@@ -140,7 +162,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         id: PortfolioIdBip39;
         meta: PortfolioMeta;
         secretRevealedStatus: PortfolioSecretRevealedStatus;
-        derivations: IDerivation[] | ((self: PortfolioBip39) => IDerivation[]);
+        derivations: Bip39Derivation[] | ((self: PortfolioBip39) => Bip39Derivation[]);
         mnemonicVault: IMnemonicVaultEncryptedSecretStored;
     }) {
         this.id = params.id;
@@ -194,7 +216,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
             secretRevealedStatus: this.secretRevealedStatus,
             mnemonicVault: this.mnemonicVault,
             derivations: self => {
-                const newDerivation = new Derivation(self, index, derivationRef => ({
+                const newDerivation = new Bip39Derivation(self, index, derivationRef => ({
                     btc: DerivationChainItemBtcSeed.generate({
                         xpub,
                         seedProducer,
@@ -207,11 +229,11 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         });
     }
 
-    public getDerivation(id: Id): IDerivation | undefined {
+    public getDerivation(id: Id): Bip39Derivation | undefined {
         return this.derivations.find(d => d.id.isEq(id));
     }
 
-    public getDerivations(): IDerivation[] {
+    public getDerivations(): Bip39Derivation[] {
         return this.derivations;
     }
 

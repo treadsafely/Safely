@@ -10,7 +10,7 @@ type WithToJson<J> = { toJSON(): J };
 
 export class AccountStoreTransform {
     constructor(
-        private readonly getSecretEncryptor: () => ISecretEncryptor,
+        private readonly getSecureEncryptor: () => ISecretEncryptor,
         private readonly getLedgerSessionPort: () => ILedgerSessionPort
     ) {}
 
@@ -95,7 +95,7 @@ export class AccountStoreTransform {
         if (!json) return [];
         return this.reconcileById(prev, json, p =>
             PortfolioFactory.restorePortfolio(p, {
-                encryptor: this.getSecretEncryptor(),
+                secureEncryptor: this.getSecureEncryptor(),
                 ledgerSessionPort: this.getLedgerSessionPort()
             })
         );

@@ -6,12 +6,17 @@
   "scripts": {
     "compile": "tsc --noEmit",
     "dev": "tsc --watch",
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "test": "vitest run"
   },
   "dependencies": {
     "@safely/sync": "workspace:*",
     "@safely/slottree": "workspace:*",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": "./src/index.ts"

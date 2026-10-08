@@ -1,4 +1,4 @@
-import { IEnumerableStorage, IStorage } from '@safely/sync';
+import type { IEnumerableStorage, IStorage } from '@safely/sync';
 
 export class InMemoryStorage implements IStorage {
     public readonly map = new Map<string, string>();

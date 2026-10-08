@@ -37,7 +37,13 @@ export const bootConfigSchema = z.looseObject({
                 // Required for testnet wallets to work, but made optional for not to throw
                 // on the app bootstrap if server gives wrong config and user doesn't have any testent wallets
                 .optional()
-        })
+        }),
+        flame: z
+            .looseObject({
+                mainnet: z.looseObject({ rpc_url: z.string() }).optional(),
+                testnet: z.looseObject({ rpc_url: z.string() }).optional()
+            })
+            .optional()
     }),
 
     notices: z.looseObject({

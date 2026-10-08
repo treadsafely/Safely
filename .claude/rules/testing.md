@@ -13,7 +13,7 @@ code.
 
 The extension follows the package's convention, not personal taste:
 
-- `packages/slottree`, `packages/ux` — `*.spec.ts` / `*.spec.tsx`
+- `packages/slottree`, `packages/sync-storage`, `packages/ux` — `*.spec.ts` / `*.spec.tsx`
 - `packages/core`, `apps/mobile` — `*.test.ts`
 
 ## Running

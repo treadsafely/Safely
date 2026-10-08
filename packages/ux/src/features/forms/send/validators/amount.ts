@@ -1,4 +1,4 @@
-import type { CryptoAsset, NumberFormatter, RatedCryptoAssetAmount } from '@safely/core';
+import type { BtcAsset, CryptoAsset, NumberFormatter, RatedCryptoAssetAmount } from '@safely/core';
 import { BTC_ASSET, CryptoAssetAmount, FiatAssetAmount } from '@safely/core';
 
 import { SendFormError } from '../errors';
@@ -9,6 +9,12 @@ import type {
     AmountWithOutputType
 } from '../types';
 import { DEFAULT_FIAT_DECIMALS } from '../utils';
+
+export function isBtcAmountWithInputType(
+    amount: AmountWithInputType<CryptoAsset>
+): amount is AmountWithInputType<BtcAsset> {
+    return amount.cryptoAssetAmount.asset.id.isEq(BTC_ASSET.id);
+}
 
 // TODO CRITICAL for multichain: Get rid of default decimals
 export function resolveAmountDecimals(

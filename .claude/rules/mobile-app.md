@@ -28,6 +28,7 @@ and the platforms it actually ships are in its `expo-module.config.json`:
 | `safely-in-app-browser`     | `SFSafariViewController` / Android Custom Tabs                                     |
 | `safely-masked-input`       | `MaskedInput` — native amount input with decimal masking                           |
 | `safely-capture-prevention` | `CapturePreventionView` — hides its subtree from screenshots                       |
+| `safely-flame`              | Flame view key, address, contract decoding and note opening over the prebuilt `@runflame/wallet-rn`, installed as `globalThis.flameSdk` |
 
 `safely-capture-prevention` is the exception: `platforms: ["ios"]`, no `android/` at all — the facade
 swaps in an `expo-screen-capture` based component on Android. Everything else is iOS + Android.
@@ -48,6 +49,72 @@ cd apps/mobile/modules/safely-store-country/ios && swift test
 CI (`swift-core-tests`, `kotlin-core-tests`) runs only the two `safely-crypto` ones whenever a PR
 touches `apps/mobile/**` — `safely-store-country`'s Swift tests are local-only, so run them by hand
 when you touch that module.
+
+### `safely-flame`
+
+A thin wrapper over the UniFFI bindings of `@runflame/wallet-rn` (Rust, prebuilt), and the deliberate
+exception to the `*Core` arrangement above: the package ships an iOS-only xcframework and
+Android-only `.so` files, so nothing of it runs on the host and a `*Core` split would buy no tests.
+All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested lives in the JS facade
+`src/index.ts`, covered by `apps/mobile/test/safely-flame.test.ts` against a mocked native module.
+
+- **Native functions never throw for a Flame error.** They resolve `{ ok: true, value }` or
+  `{ ok: false, code, reason }`, and the facade turns the latter into a `FlameError` with `kind` and
+  `reason`. A thrown error would reach JS wrapped by Expo — on iOS its `message` is a
+  `FunctionCallException` debug chain — so `reason` could only be recovered by parsing that text.
+- **Batch calls fail per item, not as a whole.** `decodeContracts` and `openNotes` take many outputs,
+  but the library decodes and opens one at a time: a library error on one item lands in that item
+  (`{ decoded: false, code, reason }`, `{ opened: false, failure: 'error', code, reason }`), and only
+  argument, key or network errors fail the call. Otherwise one undecodable output on the wallet's
+  predicate would fail the whole scan and hide the balance. Core turns a failed item into
+  `{ status: 'unreadable' }`.
+- The facade validates arguments (network, `uint32` path) before calling native.
+  The native side still checks ranges, because Expo converts a JS number to a fixed-width integer
+  with a trapping `init` on iOS: an out-of-range value would crash instead of erroring.
+- The `FlameError` → `ERR_FLAME_*` mapping is exhaustive on both platforms (no `default`/`else`), so
+  a variant added by a `@runflame/wallet-rn` update fails the native build. That build runs on EAS
+  or locally, not in PR CI, and the `kindByCode` table in `src/index.ts` is still checked by nothing.
+- **The pod is linked by React Native's autolinking, not Expo's.** Expo's resolver only looks for a
+  podspec one directory down (or at `apple.podspecPath`), and the package keeps it at its root, so
+  Expo skips it on iOS and `use_native_modules!` picks it up. Android goes through Expo as the Gradle
+  project `:runflame-wallet-rn`, the name `android/build.gradle` depends on.
+- Only `viewKey` takes the portfolio's 64-byte BIP-39 seed (a `Uint8Array`, never the mnemonic) and
+  returns the account's bech32f view key; `address` and `openNotes` build a view wallet
+  (`Wallet.fromViewKey`) from it. Each call builds its `Wallet` and drops it before returning (Kotlin
+  also zeroes its seed copy). Never log the seed or the view key — the view key reads every amount
+  and memo. The library's `reason` is passed through as is — log it only through
+  `filterSensitiveData`.
+- Bridge encoding: u64 amounts travel as decimal strings (a JS number loses precision above 2^53)
+  and `safely-flame/index.ts` turns them into `bigint`; a missing note travels as an empty
+  `Uint8Array`, because Expo has no optional array elements. Seeds and contracts are copied into
+  plain `Uint8Array`s first, as in `safely-crypto` (a polyfilled `Buffer` crashes the bridge); the
+  facade zeroes its own seed copy once native returns, core zeroes the original.
+- The module only implements `SafelyFlame` from `@safely/core`; `safely-flame/index.ts` installs it
+  as `globalThis.flameSdk`. Keys, balances and history live in core and `@safely/ux`: the flame
+  chain (`DerivationChainItemFlame`) exists only where the derivation stores `chains.flame`
+  (sync-storage v5), and `PortfolioBip39.createSerializedPortfolio` writes it only for derivation 0 of
+  a new testnet portfolio. Portfolios created before v5, derivations added later, mainnet, Ledger and
+  watch-only portfolios have no flame. The chain uses the receiving path `{0,0}`. Balance and history
+  count only the native flavor (`Scalar::ONE`, `FLAME_NATIVE_FLAVOR`); FLM has 8 decimals. The node
+  URL is `blockchains.flame.<network>.rpc_url` from the boot config; without it the FLM asset is
+  hidden.
+- `chains.flame` holds `{ viewKey, address, predicate }`, all computed once at portfolio creation
+  (the mnemonic is already in hand): the chain builds `wallet` from them synchronously, so the
+  address needs no native call at startup, and scans with the view key, so the seed is never touched
+  again for Flame. **The view key is stored in plaintext.** It sits only inside the E2EE snapshot, but on every device it is
+  readable without the passcode and reads every amount and memo — encrypting it is a planned,
+  separate change. The chain caches every read amount per output id, except an output read without
+  its note (`missing`), whose contract failed to decode, or whose opening hit a native error (`error`):
+  native code reports any per-item exception the same way, so a transient one would stick.
+- The home list renders BTC, then FLM, from `useActiveBtcRatedAmount` / `useActiveFlameRatedAmount`
+  — no sorting, no combined asset list; the FLM cell is hidden when there is no flame source or node,
+  or the scan failed. Totals and the send flow count BTC only (FLM has no fiat price).
+- History marks a transaction as sent when it spends any of the wallet's outputs, even unreadable
+  ones — not when the spent sum is positive.
+- Core tests run with a fake `flameSdk` installed by `packages/core/test/setup-crypto.ts` (creating a
+  testnet portfolio calls `viewKey` and `address`); Flame-specific tests swap in their own mock.
+- Open: release builds with R8 have not been tried; JNA and the generated `com.flame.wallet` classes
+  will need keep rules before the module is used outside a dev-client.
 
 ## UI
 

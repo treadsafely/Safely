@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native-unistyles';
 
-export const styles = StyleSheet.create(() => ({
+export const styles = StyleSheet.create(theme => ({
     cell: {
         alignItems: 'flex-start'
     },
@@ -10,6 +10,11 @@ export const styles = StyleSheet.create(() => ({
     titleRow: {
         alignItems: 'center',
         minHeight: 24
+    },
+    title: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing[4]
     },
     subtitleRow: {
         alignItems: 'flex-start'

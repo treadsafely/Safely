@@ -8,3 +8,4 @@ export {
 export * from './I-storage';
 export { type QrScanner } from './qr-scanner';
 export * from './I-logger-transport';
+export * from './safely-flame';

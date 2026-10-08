@@ -267,7 +267,7 @@ export function useReorderDerivations() {
             if (portfolio.type === PortfolioType.WATCH_ONLY) return;
 
             const derivations = portfolio.getDerivations();
-            const byId = new Map(derivations.map(d => [d.id.toString(), d]));
+            const byId = new Map<string, IDerivation>(derivations.map(d => [d.id.toString(), d]));
             const ordered = orderedDerivationIds
                 .map(id => byId.get(id))
                 .filter((d): d is IDerivation => d !== undefined);

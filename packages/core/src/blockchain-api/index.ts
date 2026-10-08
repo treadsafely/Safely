@@ -7,3 +7,4 @@ export type SendResult = BtcSendResult;
 
 export * from './shared';
 export * from './btc';
+export * from './flame';

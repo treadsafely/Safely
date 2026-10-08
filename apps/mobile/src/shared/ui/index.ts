@@ -12,6 +12,8 @@ export { List } from './List';
 export { PopupMenu, type PopupMenuRef } from './PopupMenu';
 export { Banner } from './Banner';
 export { Switch } from './Switch';
+export { SegmentedControl } from './SegmentedControl';
+export { GradientBackground } from './GradientBackground';
 export { SlideButton } from './SlideButton';
 export { TableCell } from './TableCell';
 export { Draggable, useReorderEngine, type ReorderEngine } from './Draggable';

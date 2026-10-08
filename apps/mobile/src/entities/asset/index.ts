@@ -1,1 +1,1 @@
-export { BtcAssetCell, AssetCellSkeleton } from './AssetCell';
+export { AssetCell, type AssetCellProps, BtcAssetCell, AssetCellSkeleton } from './AssetCell';

@@ -14,7 +14,7 @@ import type {
     ILedgerDerivation
 } from './I-derivation';
 
-export class Derivation implements IDerivation {
+export abstract class Derivation implements IDerivation {
     public readonly id: DerivationId;
 
     public readonly chains: IDerivationChains;
@@ -32,10 +32,17 @@ export class Derivation implements IDerivation {
         this.chains = typeof chains === 'function' ? chains(this) : chains;
     }
 
-    public toJSON(): SDerivation {
+    public abstract toJSON(): SDerivation | SLedgerDerivation;
+}
+
+export class Bip39Derivation extends Derivation {
+    public override toJSON(): SDerivation {
         return sDerivation.toJson({
             index: this.index,
-            chains: derivationChainsToJSON(this.chains)
+            chains: {
+                btc: this.chains.btc.toJSON(),
+                flame: this.chains.flame?.toJSON() ?? null
+            }
         });
     }
 }
@@ -57,17 +64,11 @@ export class LedgerDerivation extends Derivation implements ILedgerDerivation {
         return sLedgerDerivation.toJson({
             index: this.index,
             meta: this.meta,
-            chains: derivationChainsToJSON(this.chains)
+            chains: { btc: this.chains.btc.toJSON() }
         });
     }
 }
 
 export function isLedgerDerivation(derivation: IDerivation): derivation is ILedgerDerivation {
     return derivation instanceof LedgerDerivation;
-}
-
-function derivationChainsToJSON(chains: IDerivationChains): SDerivation['chains'] {
-    return {
-        btc: chains.btc.toJSON()
-    };
 }

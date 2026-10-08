@@ -2,7 +2,6 @@ import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { BTC_ASSET } from '@safely/core';
 import { useAnalytics, useFlag, useIsActivePortfolioWatchOnly, useScanQrScheme } from '@safely/ux';
 
 import { TEST_ID } from '@mobile/shared/constants';
@@ -40,9 +39,7 @@ export const HomeActions = () => {
     });
 
     const handleNavigateToReceiveAsset = useCallback(() => {
-        navigation.navigate('ReceiveAssetModal', {
-            asset: BTC_ASSET
-        });
+        navigation.navigate('ReceiveAssetModal');
     }, [navigation]);
 
     const handleNavigateToSendAsset = useCallback(() => {

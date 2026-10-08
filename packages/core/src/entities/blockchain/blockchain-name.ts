@@ -1,3 +1,4 @@
 export enum BLOCKCHAIN_NAME {
-    BTC = 'BTC'
+    BTC = 'BTC',
+    FLAME = 'FLAME'
 }

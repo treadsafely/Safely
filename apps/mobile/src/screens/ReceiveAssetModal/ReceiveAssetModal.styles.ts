@@ -8,5 +8,10 @@ export const styles = StyleSheet.create(theme => ({
         gap: theme.spacing[4],
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    logo: {
+        height: 48,
+        width: 48,
+        borderRadius: theme.radius.full
     }
 }));

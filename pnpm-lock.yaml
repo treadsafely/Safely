@@ -227,6 +227,9 @@ importers:
       '@react-navigation/native-stack':
         specifier: ^7.19.2
         version: 7.19.2(@react-navigation/native@7.4.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-safe-area-context@5.7.0(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-screens@4.26.2(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
+      '@runflame/wallet-rn':
+        specifier: 0.0.1-rc.8
+        version: 0.0.1-rc.8
       '@safely/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -564,6 +567,13 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.1
+    devDependencies:
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@25.0.3)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@25.0.3)(happy-dom@20.9.0)(vite@8.3.0(@types/node@25.0.3)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.2))
 
   packages/ux:
     dependencies:
@@ -2106,6 +2116,9 @@ packages:
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+
+  '@runflame/wallet-rn@0.0.1-rc.8':
+    resolution: {integrity: sha512-WG8JmBAIhKayF3MP2SB7WihYd9WzdgiKWCKb6RdJr2IkGvjy6OVXPKEuoHbvbhuz0CVvWa76Lx727nsTAA3cOw==}
 
   '@scure/base@2.2.0':
     resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
@@ -7623,6 +7636,8 @@ snapshots:
   '@rolldown/pluginutils@1.0.1': {}
 
   '@rtsao/scc@1.1.0': {}
+
+  '@runflame/wallet-rn@0.0.1-rc.8': {}
 
   '@scure/base@2.2.0': {}
 

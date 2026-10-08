@@ -1,5 +1,5 @@
 import { keepPreviousData, skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type {
     BtcEstimator,
@@ -17,7 +17,7 @@ import {
     OutputsAreSpendingMoreThanInputsError
 } from '@safely/core';
 
-import { useActiveBtcWalletUtxoForEstimation, useAssets } from '../../../entities';
+import { useActiveBtcRatedAmount, useActiveBtcWalletUtxoForEstimation } from '../../../entities';
 import {
     defineQueryKeys,
     finalKey,
@@ -124,7 +124,7 @@ async function computeMaxSendValue(params: {
 
         if (btcBalance.amount.lte(fee)) return BtcAssetAmount.fromWeiAmount('0');
 
-        return btcBalance.amount.amountSub(fee);
+        return BtcAssetAmount.fromWeiAmount(btcBalance.amount.amountSub(fee).weiAmount);
     }
 
     assertUnreachable(form.blockchain);
@@ -132,7 +132,8 @@ async function computeMaxSendValue(params: {
 
 export function useMaxSendValueQueryConfig() {
     const btcEstimator = useBtcEstimator();
-    const { data: assets } = useAssets();
+    const { data: btc } = useActiveBtcRatedAmount();
+    const assets = useMemo(() => btc && [btc], [btc]);
     const { data: utxos } = useActiveBtcWalletUtxoForEstimation();
 
     return useCallback(

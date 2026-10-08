@@ -822,15 +822,12 @@
         "yesterday": "Yesterday"
     },
     "history": {
-        "title": "History",
         "bubble": {
             "one": "New transaction",
             "many": "New transactions"
         },
         "empty": {
-            "title": "Transaction history",
-            "subtitle": "Your transactions will appear here.",
-            "receive": "Receive BTC"
+            "subtitle": "Your transactions will appear here."
         },
         "transactionInfo": {
             "sending": "Sending",

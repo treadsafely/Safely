@@ -14,13 +14,15 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/slottree`         | CRDT slot tree + deterministic cbor: the primitive under all synced state. Has a formal spec.                                                  |
 | `packages/sync`             | E2EE sync protocol: key hierarchy, device onboarding, device list, snapshots, SSE stream, xstate machine, generated OpenAPI client.            |
 | `packages/sync-storage`     | Versioned schemas of user state (`v1`, `v2`, …) on top of slottree, plus migrations.                                                           |
-| `packages/core`             | Wallet domain: BTC (xpub, PSBT, fee estimation), Ledger, external APIs (config/price/rate/exchange), entities, DI interfaces. No React.        |
+| `packages/core`             | Wallet domain: BTC (xpub, PSBT, fee estimation), Flame, Ledger, external APIs (config/price/rate/exchange/flame RPC), entities, DI interfaces. No React. |
 | `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms. No RN/DOM specifics.            |
 | `apps/mobile`               | Expo dev-client (iOS/Android): FSD + `screens`, native modules `modules/safely-*`, unistyles, i18n.                                            |
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
 Platform capabilities reach the domain through DI interfaces from `@safely/core` (`src/di/`:
-`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`). Implementations live in the app,
+`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`, `SafelyFlame`; plus `SafelyCrypto`
+from `@safely/sync`). The native primitives `SafelyFlame` / `SafelyCrypto` are installed by the app
+as `globalThis.flameSdk` / `globalThis.safelyCrypto` from `global-polyfills.ts`. Implementations live in the app,
 never in a package: a package that needs a native API declares an interface instead of importing the
 platform.
 
@@ -38,8 +40,10 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   separate call — mobile's `lint` covers `./src ./scripts`
 - mobile: `pnpm --filter mobile ios|android|start` — dev-client, not Expo Go
 
-Dependency versions go through `catalog:` in `pnpm-workspace.yaml` only: add the version to the
-catalog and reference `catalog:` from the package's package.json. `minimumReleaseAge: 5760` means
+A dependency shared by two or more packages goes through `catalog:` in `pnpm-workspace.yaml`: add
+the version to the catalog and reference `catalog:` from each package.json. A dependency only one
+package can use (e.g. `@runflame/wallet-rn`, native to `apps/mobile`) is pinned in that package's
+package.json directly — don't add it to the catalog. `minimumReleaseAge: 5760` means
 pnpm refuses packages published less than four days ago.
 
 Root-level tooling stays at the root: `eslint`, its plugins and `prettier` are installed once in the

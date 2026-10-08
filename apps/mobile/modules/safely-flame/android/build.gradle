@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.android'
+  id 'expo-module-gradle-plugin'
+}
+
+// SDK and JVM versions come from the app through expo-module-gradle-plugin.
+android {
+  namespace "expo.modules.safelyflame"
+
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // The project name Expo autolinking gives @runflame/wallet-rn's android/ directory.
+  implementation project(':runflame-wallet-rn')
+}

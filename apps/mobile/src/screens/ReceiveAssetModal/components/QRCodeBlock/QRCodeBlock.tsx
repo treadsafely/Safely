@@ -1,30 +1,28 @@
 import { useNavigation } from '@react-navigation/core';
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
-import type { CryptoAsset } from '@safely/core';
-import { useIsActivePortfolioTestnet, useIsActivePortfolioWatchOnly } from '@safely/ux';
-
 import { TEST_ID } from '@mobile/shared/constants';
-import { Badge, Text, Image, TouchableOpacity } from '@mobile/shared/ui';
+import { Badge, Text, TouchableOpacity } from '@mobile/shared/ui';
 
 import { ReceiveCopyToast, useReceiveCopy } from '../ReceiveCopyToastProvider';
 import { styles } from './QRCodeBlock.styles';
 
 type QRCodeBlockProps = {
     address: string;
-    asset: CryptoAsset;
+    logo: ReactNode;
+    isWatchOnly: boolean;
+    isTestnet: boolean;
+    addressLines?: number;
 };
 
 export const QRCodeBlock = (props: QRCodeBlockProps) => {
-    const { address, asset } = props;
+    const { address, logo, isWatchOnly, isTestnet, addressLines } = props;
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const isWatchOnly = useIsActivePortfolioWatchOnly();
-    const isTestnet = useIsActivePortfolioTestnet();
 
     const handleCopyAddress = useCallback(() => {
         copy(address);
@@ -43,7 +41,7 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                         eyePatternShape: 'square'
                     }}
                     logoAreaSize={66}
-                    logo={<Image source={asset.image} style={styles.logo} />}
+                    logo={logo}
                     value={address}
                     size={198}
                 />
@@ -56,6 +54,8 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     style={styles.address}
                     variant="bodyLMono"
                     color="constantBlack"
+                    numberOfLines={addressLines}
+                    ellipsizeMode="middle"
                 >
                     {address}
                 </Text>

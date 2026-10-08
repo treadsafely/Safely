@@ -32,6 +32,9 @@ catalog:
   '@ledgerhq/signer-utils': '^1.2.0'
 
 minimumReleaseAge: 5760
+minimumReleaseAgeExclude:
+  # Drop once 0.0.1-rc.8 is older than four days.
+  - '@runflame/wallet-rn@0.0.1-rc.8'
 
 strictPeerDependencies: false
 autoInstallPeers: true

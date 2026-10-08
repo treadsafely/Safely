@@ -1,6 +1,6 @@
 import { useMachine } from '@xstate/react';
 
-import { useAssets } from '../../../../entities';
+import { useActiveBtcRatedAmount } from '../../../../entities';
 import { createSendFormMachine } from '../machine/machine';
 import type { SendFormInitialValues, SendFormResult } from '../types';
 import type { SendFormView } from '../view';
@@ -21,7 +21,8 @@ export function useSendForm(props: UseSendFormOptions): SendFormView {
     const { onSubmit, shouldResetForm = true, initialValues } = props;
 
     const { portfolioSuggestions, contactSuggestions } = useSendFormSuggestions();
-    const ratedAssets = useAssets().data ?? [];
+    const { data: btc } = useActiveBtcRatedAmount();
+    const ratedAssets = btc ? [btc] : [];
 
     const machineInput = useSendFormMachineInput({
         onSubmit,

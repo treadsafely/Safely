@@ -4,6 +4,7 @@ export { useUserCountryInfo } from './useUserCountryInfo';
 export { useBootConfigQuery, useBootConfig } from './useBootConfig';
 export { useAboutQuery } from './useAbout';
 export { useBtcApi, useGetBtcApi } from './useBtcApi';
+export { useFlameApi } from './useFlameApi';
 export { usePriceApi } from './usePriceApi';
 export { useExchangeApi } from './useExchangeApi';
 export { useAvailableFiats } from './useAvailableFiats';

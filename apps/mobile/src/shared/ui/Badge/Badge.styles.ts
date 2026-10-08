@@ -22,6 +22,9 @@ export const styles = StyleSheet.create(theme => ({
                 },
                 warningFilled: {
                     backgroundColor: theme.colors.accent.orange
+                },
+                translucent: {
+                    backgroundColor: Color(theme.colors.other.constant.white).alpha(0.16).toString()
                 }
             }
         }
@@ -43,6 +46,9 @@ export const styles = StyleSheet.create(theme => ({
                 },
                 warningFilled: {
                     color: theme.colors.other.constant.black
+                },
+                translucent: {
+                    color: theme.colors.other.constant.white
                 }
             }
         }

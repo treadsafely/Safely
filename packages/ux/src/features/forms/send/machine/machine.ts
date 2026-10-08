@@ -26,6 +26,7 @@ import type { SendFormEvent, SendFormMachineContext, SendFormMachineInput } from
 import {
     calculateMaxAmount,
     formatAmountForDisplay,
+    isBtcAmountWithInputType,
     reformatForInputType,
     resolveAmountDecimals,
     validateAmount
@@ -335,7 +336,13 @@ export const createSendFormMachine = () =>
                 ),
                 callOnSubmit: ({ context }) => {
                     const { parsed, suggestion } = context;
-                    if (!parsed.recipient || !parsed.amount) return;
+                    if (
+                        !parsed.recipient ||
+                        !parsed.amount ||
+                        !isBtcAmountWithInputType(parsed.amount)
+                    ) {
+                        return;
+                    }
 
                     context.onSubmit(
                         {

@@ -28,9 +28,16 @@ change the spec and the code together, never the code alone.
   platform's secure storage — not JS-side constants.
 - slottree's cbor encoding is deterministic: changing the encoding or field order changes merge
   results and hashes. That is a new format version, not an in-place edit.
-- User-state schemas are versioned: `packages/sync-storage/src/v1`, `v2`, `actual-version.ts`. A new
-  field or a different shape means a new version plus a migration plus migration tests; older
+- User-state schemas are versioned: `packages/sync-storage/src/v1` … `v5`, `actual-version.ts`. A new
+  field or a different shape means a new version plus a migration plus migration tests
+  (`packages/sync-storage/test/v<N>/`, through the public slottree API: build a snapshot with the
+  previous version list, open it with `syncedStorageVersions`, check both directions); older
   versions must stay readable.
+- **`src/v<N>` imports from `src/v<N-1>` only** — prefer its barrel (`'../../v<N-1>'`) and
+  `structure.ts`; never `v<N-2>` or older. Each version re-exports everything it keeps, so the
+  previous one always has what you need; skipping a version
+  silently picks up a schema that a later version has already replaced (e.g. v1's `sPortfolioType`
+  without `LEDGER`). Lint does not catch this.
 - `packages/sync/src/api/generated/**` is the generated OpenAPI client (`apis/`, `models/`,
   `runtime.ts`). Hand edits get overwritten — change the API spec/generation instead, and keep
   wrappers and domain logic outside `generated/`.
