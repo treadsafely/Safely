@@ -104,7 +104,7 @@ export const cellRecipe = defineSlotRecipe({
                 title: { color: 'cell.default.foreground' }
             },
             accentRed: {
-                root: { backgroundColor: 'cell.accentRed.background' },
+                root: { backgroundColor: 'cell.accentRed.background', textAlign: 'center' },
                 title: { color: 'cell.accentRed.foreground' },
                 trailing: { color: 'cell.accentRed.foreground' }
             }

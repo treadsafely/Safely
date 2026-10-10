@@ -16,6 +16,7 @@ import {
     useSendAssetTransfer,
     useTranslate
 } from '@safely/ux';
+import Copy16 from '@safely/ux/assets/icons/16/copy-16.svg?react';
 import Globe16 from '@safely/ux/assets/icons/16/globe-16.svg?react';
 import Checkmark96 from '@safely/ux/assets/icons/96/checkmark-96.svg?react';
 
@@ -24,11 +25,9 @@ import {
     bodyStyles,
     heroStyles,
     iconSlotStyles,
-    linkStyles,
     listStyles,
     successIconStyles,
-    successStyles,
-    transactionStyles
+    successStyles
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
 import { AssetIcon, WalletIcon } from '../../entities';
@@ -46,8 +45,10 @@ const FeeValue: FC<{ estimation: Estimation }> = ({ estimation }) => {
 
     return (
         <>
-            {fiat ? `${fiat.format(formatter)} ` : ''}
-            {estimation.fee.amount.format(formatter)}
+            {fiat != null && <span>{fiat.format(formatter)}</span>}
+            <Text variant="bodyM" tone="secondary">
+                {estimation.fee.amount.format(formatter)}
+            </Text>
         </>
     );
 };
@@ -71,6 +72,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
 
     const targetBlock = transaction ? Math.max(transaction.estimation.txTargetBlock, 1) : undefined;
+
+    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter);
+    const fiatAmount = result.amount.fiatAssetAmount.format(formatter);
+    const isFiatPrimary = result.amount.inputType === 'fiat';
 
     const handleSend = async (): Promise<void> => {
         try {
@@ -174,12 +179,14 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                             </TableCell.Column>
                             <TableCell.Column>
                                 <TableCell.Value>
-                                    {result.amount.cryptoAssetAmount.format(formatter)}
+                                    {isFiatPrimary ? fiatAmount : cryptoAmount}
                                 </TableCell.Value>
                                 <TableCell.Label>
                                     {result.isMax
                                         ? t('confirmation.allAvailableBalance')
-                                        : result.amount.fiatAssetAmount.format(formatter)}
+                                        : isFiatPrimary
+                                          ? cryptoAmount
+                                          : fiatAmount}
                                 </TableCell.Label>
                             </TableCell.Column>
                         </TableCell>
@@ -228,28 +235,40 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                             </TableCell>
 
                             <TableCell copyable={sendResult.txId} copiedLabel={t('actions.copied')}>
-                                <TableCell.Column width="label">
-                                    <TableCell.Label>
-                                        {t('confirmation.sendResult.transaction')}
-                                    </TableCell.Label>
-                                </TableCell.Column>
-                                <TableCell.Column>
-                                    <div className={transactionStyles}>
-                                        <TableCell.Value>
-                                            {ellipsisMiddle(sendResult.toString(), 6)}
-                                        </TableCell.Value>
-                                        <span
-                                            role="button"
-                                            tabIndex={0}
-                                            className={linkStyles}
-                                            onClick={() =>
-                                                openURL(sendResult.toExplorerUrl(explorerFactory))
-                                            }
-                                        >
-                                            <Icon asset={Globe16} tone="secondary" />
-                                        </span>
-                                    </div>
-                                </TableCell.Column>
+                                {({ copy }) => (
+                                    <>
+                                        <TableCell.Column width="label">
+                                            <TableCell.Label>
+                                                {t('confirmation.sendResult.transaction')}
+                                            </TableCell.Label>
+                                        </TableCell.Column>
+                                        <TableCell.Column>
+                                            <TableCell.Value>
+                                                {ellipsisMiddle(sendResult.toString(), 6)}
+                                            </TableCell.Value>
+                                        </TableCell.Column>
+                                        <TableCell.Actions>
+                                            <TableCell.Action
+                                                aria-label={t(
+                                                    'history.transactionInfo.openInExplorer'
+                                                )}
+                                                onClick={() =>
+                                                    openURL(
+                                                        sendResult.toExplorerUrl(explorerFactory)
+                                                    )
+                                                }
+                                            >
+                                                <Icon asset={Globe16} tone="inherit" />
+                                            </TableCell.Action>
+                                            <TableCell.Action
+                                                aria-label={t('actions.copy')}
+                                                onClick={copy}
+                                            >
+                                                <Icon asset={Copy16} tone="inherit" />
+                                            </TableCell.Action>
+                                        </TableCell.Actions>
+                                    </>
+                                )}
                             </TableCell>
                         </List.Group>
                     )}

@@ -1,23 +1,12 @@
 import type { RefObject } from 'react';
 import { useEffect, useRef } from 'react';
 
+import { findScrollRoot } from '../dom';
+
 export type UseOnVisibleOptions = {
     isEnabled?: boolean;
     rootMargin?: string;
 };
-
-// an ancestor scroller clips the target, so rootMargin only reaches ahead when that scroller is the root
-function findScrollRoot(node: HTMLElement): HTMLElement | null {
-    for (let parent = node.parentElement; parent !== null; parent = parent.parentElement) {
-        const { overflowY } = getComputedStyle(parent);
-
-        if (overflowY === 'auto' || overflowY === 'scroll') {
-            return parent;
-        }
-    }
-
-    return null;
-}
 
 export function useOnVisible(
     onVisible: () => void,

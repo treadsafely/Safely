@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 
 import type { ActivityItem } from '@safely/ux';
-import { useHistoryGroups } from '@safely/ux';
+import { useHistoryGroups, useHistoryPolling } from '@safely/ux';
 
 import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { groupStyles, listStyles, loaderStyles, sentinelStyles } from './HistoryList.styles';
 import { ActivityItem as ActivityItemView, ActivityItemSkeleton } from '../../entities';
-import { List, Skeleton, Spinner, useOnVisible } from '../../shared';
+import { List, Skeleton, Spinner, useIsDocumentVisible, useOnVisible } from '../../shared';
 
 const SKELETON_ROWS = [0, 1, 2];
 const PREFETCH_MARGIN = '400px';
@@ -15,12 +15,15 @@ export type HistoryListProps = {
     selectedActivityKey?: string;
     onSelectActivity: (activity: ActivityItem) => void;
     onReceive: () => void;
+    onNewActivity: () => void;
 };
 
 export const HistoryList: FC<HistoryListProps> = props => {
-    const { selectedActivityKey, onSelectActivity, onReceive } = props;
+    const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
 
     const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useHistoryGroups();
+
+    useHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
 
     const sentinelRef = useOnVisible(fetchNextPage, {
         isEnabled: hasNextPage && !isFetchingNextPage,
