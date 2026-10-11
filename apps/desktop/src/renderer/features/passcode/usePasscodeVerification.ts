@@ -70,8 +70,6 @@ export function usePasscodeVerification(
                 return;
             }
 
-            setValue('');
-
             void passcode.validate(entered).then(async isValid => {
                 if (isValid) {
                     await reset();
@@ -83,6 +81,7 @@ export function usePasscodeVerification(
                     return;
                 }
 
+                setValue('');
                 setIsInvalid(true);
                 await recordFailure();
             });
