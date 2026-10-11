@@ -10,7 +10,10 @@ import {
 } from '@safely/ux';
 
 import { actionsStyles, amountsStyles, rowStyles } from './Balance.styles';
-import { Button, Text } from '../../../shared';
+import { Button, Skeleton, Text } from '../../../shared';
+
+const PRIMARY_SKELETON = { width: 152, height: 32 };
+const SECONDARY_SKELETON = { width: 88, height: 20 };
 
 export type BalanceProps = {
     onSend: () => void;
@@ -30,8 +33,8 @@ export const Balance: FC<BalanceProps> = props => {
     const formatter = useNumberFormatter();
     const mainBalanceUnit = useMainBalanceUnit();
 
-    const fiatAmount = totalBalance?.format(formatter) ?? '—';
-    const cryptoAmount = btcBalance?.display.format(formatter) ?? '—';
+    const fiatAmount = totalBalance?.format(formatter);
+    const cryptoAmount = btcBalance?.display.format(formatter);
 
     const [primaryAmount, secondaryAmount] =
         mainBalanceUnit === 'crypto' ? [cryptoAmount, fiatAmount] : [fiatAmount, cryptoAmount];
@@ -39,10 +42,19 @@ export const Balance: FC<BalanceProps> = props => {
     return (
         <div className={rowStyles}>
             <div className={amountsStyles}>
-                <Text variant="titleL">{primaryAmount}</Text>
-                <Text variant="bodyL" tone="tertiary">
-                    {secondaryAmount}
-                </Text>
+                {primaryAmount === undefined ? (
+                    <Skeleton {...PRIMARY_SKELETON} />
+                ) : (
+                    <Text variant="titleL">{primaryAmount}</Text>
+                )}
+
+                {secondaryAmount === undefined ? (
+                    <Skeleton {...SECONDARY_SKELETON} />
+                ) : (
+                    <Text variant="bodyL" tone="tertiary">
+                        {secondaryAmount}
+                    </Text>
+                )}
             </div>
 
             <div className={actionsStyles}>
