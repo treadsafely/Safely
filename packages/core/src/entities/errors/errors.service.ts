@@ -1,5 +1,5 @@
-import type { customErrors } from './custom-error';
-import { isCustomError } from './custom-error';
+import type { CustomError } from './custom-error';
+import { customErrors, isCustomError } from './custom-error';
 
 export type ErrorsConfig = {
     [key in keyof typeof customErrors]?: (err: InstanceType<(typeof customErrors)[key]>) => string;
@@ -16,6 +16,12 @@ export type GetErrorTextOptions = {
 
 export function getExternalErrorText(error: unknown) {
     return getErrorText(error, undefined, { displayUnknownErrors: true });
+}
+
+const CUSTOM_ERROR_KEYS = Object.keys(customErrors) as (keyof typeof customErrors)[];
+
+function errorKey(error: CustomError): keyof typeof customErrors | undefined {
+    return CUSTOM_ERROR_KEYS.find(key => error instanceof customErrors[key]);
 }
 
 export function getErrorText(
@@ -42,7 +48,8 @@ export function getErrorText(
         return unknownError;
     }
 
-    const handler = config?.[error.constructor.name as keyof typeof customErrors];
+    const key = errorKey(error);
+    const handler = key === undefined ? undefined : config?.[key];
     if (handler) {
         return handler(error);
     }
