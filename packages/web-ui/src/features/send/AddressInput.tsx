@@ -1,5 +1,5 @@
 import type { FC, KeyboardEvent } from 'react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import type { ContactMeta, PortfolioMeta } from '@safely/core';
 import { ellipsisMiddle } from '@safely/core';
@@ -56,7 +56,7 @@ export const AddressInput: FC<AddressInputProps> = props => {
         onSubmit?.();
     };
 
-    const focusEnd = (): void => {
+    const focusEnd = useCallback((): void => {
         const input = inputRef.current;
 
         if (input === null) {
@@ -65,13 +65,15 @@ export const AddressInput: FC<AddressInputProps> = props => {
 
         input.focus();
         input.setSelectionRange(input.value.length, input.value.length);
-    };
+    }, []);
+
+    useLayoutEffect(() => focusEnd(), [focusEnd]);
 
     useLayoutEffect(() => {
         if (isPicked) {
             focusEnd();
         }
-    }, [isPicked, value]);
+    }, [isPicked, value, focusEnd]);
 
     useLayoutEffect(() => {
         setNameWidth(isRecognised ? (nameRef.current?.offsetWidth ?? 0) : 0);
@@ -125,7 +127,6 @@ export const AddressInput: FC<AddressInputProps> = props => {
                     <div className={fieldStyles}>
                         <textarea
                             ref={inputRef}
-                            autoFocus
                             rows={1}
                             className={inputStyles}
                             style={{ paddingRight: nameWidth === 0 ? undefined : nameWidth + 8 }}
