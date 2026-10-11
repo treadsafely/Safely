@@ -49,17 +49,21 @@ export const WelcomeScreen = () => {
         // don't ask for the password while setting app initially after first account creation during onboarding to provide smooth user experience
         secureEncryptedStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
 
-        const connector = await signIn.mutateAsync({ secureEncryptedStorage });
+        try {
+            const connector = await signIn.mutateAsync({ secureEncryptedStorage });
 
-        navigation.navigate('SignInScreen', {
-            connector,
-            closeStorage: () => secureEncryptedStorage[Symbol.dispose](),
-            onSuccess: (inviterIkPubHex: string | null) =>
-                navigation.navigate('SignInSuccessScreen', {
-                    inviterIkPubHex,
-                    onContinue: onSuccessSignIn
-                })
-        });
+            navigation.navigate('SignInScreen', {
+                connector,
+                closeStorage: () => secureEncryptedStorage[Symbol.dispose](),
+                onSuccess: (inviterIkPubHex: string | null) =>
+                    navigation.navigate('SignInSuccessScreen', {
+                        inviterIkPubHex,
+                        onContinue: onSuccessSignIn
+                    })
+            });
+        } catch {
+            secureEncryptedStorage[Symbol.dispose]();
+        }
     }, [signIn, navigation, getSecureEncrypted, onSuccessSignIn]);
 
     if (hasExistingAccountOnOpen) {

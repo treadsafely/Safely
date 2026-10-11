@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { OnboardingAbortedError } from '@safely/sync';
 import type { IUnlockableSecuredEncryptedStorage, OnboardedAccount } from '@safely/ux';
 import {
     SecurityCheckCancelledError,
@@ -97,7 +98,10 @@ export function useAccountFlow(props: AccountFlowProps) {
             await signIn.mutateAsync({ secureEncryptedStorage });
         } catch (error) {
             closeSignInStorage();
-            errorToast(error);
+
+            if (!(error instanceof OnboardingAbortedError)) {
+                errorToast(error);
+            }
             return;
         }
 
