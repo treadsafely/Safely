@@ -4,10 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BtcApi, BtcApiUtxo } from '../../../src/api/btc';
 import { BtcEstimator } from '../../../src/blockchain-api/btc/btc-estimator';
 import { BtcPsbtBuilder } from '../../../src/blockchain-api/btc/btc-psbt-builder';
+import { BtcInsufficientFundsForFeeError } from '../../../src/blockchain-api/btc/errors';
 import { BtcFeeType } from '../../../src/blockchain-api/btc/types';
 import type { SignableBtcWallet } from '../../../src/entities';
 import { BtcAssetAmount } from '../../../src/entities/asset';
 import { BtcNetwork } from '../../../src/entities/blockchain';
+import { OutputsAreSpendingMoreThanInputsError } from '../../../src/entities/errors/outputs-are-spending-more-than-inputs.error';
 
 const mainnet = NETWORK;
 
@@ -259,7 +261,21 @@ describe('BtcEstimator', () => {
             ).rejects.toThrow(/No UTXOs available/);
         });
 
-        it('throws when balance cannot cover amount + fee', async () => {
+        it('throws OutputsAreSpendingMoreThanInputsError when balance cannot cover the amount itself', async () => {
+            await expect(
+                estimator.estimate(
+                    {
+                        type: 'not-max',
+                        recipientAddress: RECIPIENT_ADDR,
+                        amount: BtcAssetAmount.fromWeiAmount(50_000n),
+                        feeType: BtcFeeType.FAST
+                    },
+                    [makeUtxo({ value: '49999' })]
+                )
+            ).rejects.toBeInstanceOf(OutputsAreSpendingMoreThanInputsError);
+        });
+
+        it('throws when balance covers the amount but not the fee', async () => {
             // total balance is barely above amount but well below amount + fee
             await expect(
                 estimator.estimate(
@@ -271,7 +287,7 @@ describe('BtcEstimator', () => {
                     },
                     [makeUtxo({ value: '50001' })]
                 )
-            ).rejects.toThrow(/Not enough funds/);
+            ).rejects.toBeInstanceOf(BtcInsufficientFundsForFeeError);
         });
     });
 
@@ -368,7 +384,7 @@ describe('BtcEstimator', () => {
                     },
                     utxos
                 )
-            ).rejects.toThrow(/greater than zero/);
+            ).rejects.toBeInstanceOf(BtcInsufficientFundsForFeeError);
         });
 
         it('throws when UTXO set is empty', async () => {
@@ -397,7 +413,7 @@ describe('BtcEstimator', () => {
                     },
                     [makeUtxo({ value: '50' })]
                 )
-            ).rejects.toThrow(/not enough to cover transaction fee/);
+            ).rejects.toBeInstanceOf(BtcInsufficientFundsForFeeError);
         });
     });
 
