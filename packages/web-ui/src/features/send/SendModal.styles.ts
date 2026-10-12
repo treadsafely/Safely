@@ -2,8 +2,9 @@ import { css } from '@safely/web-ui/styled-system/css';
 
 export const popupStyles = css({
     width: '480px',
-    height: '636px',
-    maxHeight: 'calc(100vh - token(spacing.32))'
+    /* 636 by default; a short window squeezes it down to 480, long content grows it up to 768 */
+    minHeight: 'clamp(480px, calc(100vh - token(spacing.64)), 636px)',
+    maxHeight: 'min(768px, calc(100vh - token(spacing.64)))'
 });
 
 export const headingStyles = css({

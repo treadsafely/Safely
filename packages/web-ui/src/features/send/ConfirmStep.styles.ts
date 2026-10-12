@@ -38,19 +38,3 @@ export const successIconStyles = css({
 export const listStyles = css({ display: 'flex', flexDirection: 'column', gap: '2', padding: '8' });
 
 export const actionsStyles = css({ padding: '8' });
-
-export const transactionStyles = css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12'
-});
-
-export const linkStyles = css({
-    display: 'flex',
-    alignItems: 'center',
-    color: 'icon.secondary',
-    backgroundColor: 'transparent',
-    borderWidth: '0',
-    padding: '0',
-    cursor: 'pointer'
-});

@@ -1,14 +1,11 @@
 import { useIsFocused, useScrollToTop } from '@react-navigation/native';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
 import {
     type ActivityItem as ActivityItemData,
-    type ActivityItemsDatedGroup,
-    assetKeys,
     useHistoryGroups,
-    useInterval
+    useHistoryPolling
 } from '@safely/ux';
 
 import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
@@ -21,9 +18,6 @@ import { styles } from './HistoryList.styles';
 import { useScrollToTopOnNewBroadcastedTx } from './hooks';
 import { type HistoryRowItem, buildHistoryRows } from './utils/rows';
 
-const getFirstActivityKey = (groups: ActivityItemsDatedGroup[] | undefined): string | undefined =>
-    groups?.[0]?.items?.[0]?.key;
-
 type HistoryListProps = {
     onNavigateToActivityItem: (activity: ActivityItemData) => void;
 };
@@ -33,8 +27,7 @@ export const HistoryList = (props: HistoryListProps) => {
 
     const isFocused = useIsFocused();
     const listRef = useRef<ListRef<HistoryRowItem>>(null);
-    const { groups, fetchNextPage, refetch } = useHistoryGroups();
-    const client = useQueryClient();
+    const { groups, fetchNextPage } = useHistoryGroups();
     const windowHeight = useWindowDimensions().height;
 
     useScrollToTop(listRef);
@@ -50,19 +43,7 @@ export const HistoryList = (props: HistoryListProps) => {
         topThreshold: 44
     });
 
-    const { mutate: runIntervalRefetch } = useMutation({
-        async mutationFn() {
-            const currentFirstKey = groups?.[0]?.rows[0]?.activity.key;
-            const result = await refetch();
-            const newFirstKey = getFirstActivityKey(result.data);
-            if (currentFirstKey !== newFirstKey) {
-                client.invalidateQueries({ queryKey: assetKeys.all.toKey() });
-                showBubble();
-            }
-        }
-    });
-
-    useInterval(() => runIntervalRefetch(), isFocused ? 3000 : null);
+    useHistoryPolling({ isEnabled: isFocused, onNewActivity: showBubble });
 
     const getItemType = useCallback((item: HistoryRowItem) => item.type, []);
 

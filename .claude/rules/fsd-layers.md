@@ -165,7 +165,9 @@ and what moves into it is the part with no platform and no flow in it:
   `useTransactionDetails` over the pure `buildTransactionDetailsView`, plus
   `buildBtcTransactionStatusView` for the confirmation copy that the order screen reuses. Mobile
   renders it as a screen and the web as a side panel, and neither decides a title, a sign, an amount
-  order or an explorer URL of its own.
+  order or an explorer URL of its own. `useHistoryPolling` sits next to them: the 3 s refetch, the
+  first-key comparison and the asset invalidation are one policy, and each app only supplies
+  `onNewActivity` — mobile raises its reanimated bubble, the web its `NewTransactionsBubble`.
 - **the mechanism of a typed key/value store** — `createStructuredStorage` / `useStructuredStorage`
   (`shared/storage/`): a zod shape plus a `TreeStorage` node in, typed `get`/`set`/`remove` out, with
   parse-on-read and parse-on-write written once. Each app supplies its own node and its own shape

@@ -1,4 +1,5 @@
 export * from './hooks';
+export * from './dom';
 export * from './assets';
 export * from './linking';
 export * from './loader';

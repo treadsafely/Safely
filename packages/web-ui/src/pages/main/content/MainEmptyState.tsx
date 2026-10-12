@@ -1,9 +1,9 @@
 import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
-import Plus28 from '@safely/ux/assets/icons/28/plus-28.svg?react';
+import AddWallet96 from '@safely/ux/assets/icons/96/add-wallet-96.svg?react';
 
-import { badgeStyles, containerStyles } from './MainEmptyState.styles';
+import { containerStyles, mediaStyles } from './MainEmptyState.styles';
 import { Button, EmptyState, Icon } from '../../../shared';
 
 export type MainEmptyStateProps = {
@@ -16,11 +16,7 @@ export const MainEmptyState: FC<MainEmptyStateProps> = ({ onAddWallet }) => {
     return (
         <EmptyState
             className={containerStyles}
-            media={
-                <div className={badgeStyles}>
-                    <Icon asset={Plus28} size={24} tone="inherit" />
-                </div>
-            }
+            media={<Icon asset={AddWallet96} size={96} className={mediaStyles} />}
             title={t('home.emptyState.title')}
             description={t('home.emptyState.subtitle')}
             action={

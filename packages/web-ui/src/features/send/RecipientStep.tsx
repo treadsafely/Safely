@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 
-import { CONTACT_NAME_MAX_LENGTH } from '@safely/core';
+import { CONTACT_NAME_MAX_LENGTH, PortfolioType } from '@safely/core';
 import type { RecipientView } from '@safely/ux';
 import { hasSuggestionMatches, resolveVisibleSuggestions, useTranslate } from '@safely/ux';
 
 import { AddressInput } from './AddressInput';
-import { addressBookStyles, listStyles } from './RecipientStep.styles';
-import { ContactCell, WalletIcon } from '../../entities';
+import { addressBookStyles, listStyles, walletRowStyles } from './RecipientStep.styles';
+import { ContactCell, PortfolioTypeBadge, WalletIcon } from '../../entities';
 import { Cell, Input, List } from '../../shared';
 
 export type RecipientStepProps = {
@@ -36,35 +36,56 @@ export const RecipientStep: FC<RecipientStepProps> = ({ view }) => {
                 contactMeta={selectedContact?.meta}
                 source={view.selectedSuggestionSource}
                 onChange={view.setRecipient}
+                onSubmit={'next' in view ? view.next : undefined}
             />
 
             {hasSuggestions && (
                 <List className={listStyles}>
-                    <List.Group variant="divided">
-                        {suggestions.portfolios.map(suggestion => (
-                            <Cell
-                                key={suggestion.id}
-                                onClick={() => view.selectSuggestion(suggestion.id, suggestions)}
-                            >
-                                <Cell.Leading>
-                                    <WalletIcon icon={suggestion.meta.icon} />
-                                </Cell.Leading>
-                                <Cell.Content>
-                                    <Cell.Title>{suggestion.meta.name}</Cell.Title>
-                                </Cell.Content>
-                                {suggestion.id === view.selectedSuggestionId && <Cell.Checkmark />}
-                            </Cell>
-                        ))}
+                    {suggestions.portfolios.length > 0 && (
+                        <List.Group variant="divided">
+                            {suggestions.portfolios.map(suggestion => (
+                                <Cell
+                                    key={suggestion.id}
+                                    onClick={() =>
+                                        view.selectSuggestion(suggestion.id, suggestions)
+                                    }
+                                >
+                                    <Cell.Leading>
+                                        <WalletIcon icon={suggestion.meta.icon} />
+                                    </Cell.Leading>
+                                    <Cell.Content>
+                                        <Cell.Row className={walletRowStyles}>
+                                            <Cell.Title>{suggestion.meta.name}</Cell.Title>
+                                            {suggestion.isWatchOnly && (
+                                                <PortfolioTypeBadge
+                                                    type={PortfolioType.WATCH_ONLY}
+                                                    tone="warning"
+                                                />
+                                            )}
+                                        </Cell.Row>
+                                    </Cell.Content>
+                                    {suggestion.id === view.selectedSuggestionId && (
+                                        <Cell.Checkmark />
+                                    )}
+                                </Cell>
+                            ))}
+                        </List.Group>
+                    )}
 
-                        {suggestions.contacts.map(suggestion => (
-                            <ContactCell
-                                key={suggestion.id}
-                                meta={suggestion.meta}
-                                isSelected={suggestion.id === view.selectedSuggestionId}
-                                onSelect={() => view.selectSuggestion(suggestion.id, suggestions)}
-                            />
-                        ))}
-                    </List.Group>
+                    {suggestions.contacts.length > 0 && (
+                        <List.Group variant="divided">
+                            {suggestions.contacts.map(suggestion => (
+                                <ContactCell
+                                    key={suggestion.id}
+                                    meta={suggestion.meta}
+                                    isSelected={suggestion.id === view.selectedSuggestionId}
+                                    onSelect={() =>
+                                        view.selectSuggestion(suggestion.id, suggestions)
+                                    }
+                                />
+                            ))}
+                        </List.Group>
+                    )}
                 </List>
             )}
 

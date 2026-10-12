@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, KeyboardEvent } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import type { ContactMeta, PortfolioMeta } from '@safely/core';
@@ -29,10 +29,11 @@ export type AddressInputProps = {
     contactMeta: ContactMeta | undefined;
     source: SuggestionSource | undefined;
     onChange: (value: string) => void;
+    onSubmit: (() => void) | undefined;
 };
 
 export const AddressInput: FC<AddressInputProps> = props => {
-    const { value, error, portfolioMeta, contactMeta, source, onChange } = props;
+    const { value, error, portfolioMeta, contactMeta, source, onChange, onSubmit } = props;
 
     const t = useTranslate();
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -45,6 +46,15 @@ export const AddressInput: FC<AddressInputProps> = props => {
     const isPicked = hasMeta && source === SuggestionSource.SUGGESTIONS;
     const isRecognised = hasMeta && source === SuggestionSource.USER_DEFINED;
     const shortAddress = ellipsisMiddle(value);
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+        onSubmit?.();
+    };
 
     const focusEnd = (): void => {
         const input = inputRef.current;
@@ -108,6 +118,7 @@ export const AddressInput: FC<AddressInputProps> = props => {
                             onChange={event =>
                                 onChange(event.target.value.slice(shortAddress.length))
                             }
+                            onKeyDown={handleKeyDown}
                         />
                     </div>
                 ) : (
@@ -123,6 +134,7 @@ export const AddressInput: FC<AddressInputProps> = props => {
                             autoComplete="off"
                             spellCheck={false}
                             onChange={event => onChange(event.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
 
                         {isRecognised && (

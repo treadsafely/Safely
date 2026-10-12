@@ -78,7 +78,7 @@ const ModalPopup: FC<ModalPopupProps> = props => {
 
     return (
         <Dialog.Portal>
-            <Dialog.Backdrop className={styles.backdrop} />
+            <Dialog.Backdrop forceRender className={styles.backdrop} />
 
             <Dialog.Popup
                 ref={popupRef}
