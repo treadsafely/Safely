@@ -1,5 +1,4 @@
 import { SyncAccountFactory } from '../../src';
-import { SyncAccount } from '../../src/account/sync-account';
 import { Logger } from '../../src/logger/logger';
 import type { TestSyncAccount, TestSyncAccountFactory } from '../fixtures/account';
 import { Versions } from '../fixtures/account';
@@ -46,16 +45,4 @@ export async function onboardDevice(
         inviterIkPub: onboarded.inviterIkPub,
         secureEncryptedStorage
     };
-}
-
-// Unlike factory.deleteLocalAccount, keeps the local keys, so the device can still reconnect
-export async function deleteThisDevice(
-    account: TestSyncAccount,
-    secureEncryptedStorage: InMemStorage
-): Promise<void> {
-    if (!(account instanceof SyncAccount)) {
-        throw new Error('Expected an online SyncAccount');
-    }
-    await account.deleteThisDevice(secureEncryptedStorage);
-    account.syncProvider.restart();
 }
