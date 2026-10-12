@@ -81,6 +81,18 @@ module.exports = {
                         '$(PRODUCT_NAME) needs access to Bluetooth to connect to your Ledger hardware wallet.'
                 }
             ],
+            [
+                'expo-build-properties',
+                {
+                    android: {
+                        enableMinifyInReleaseBuilds: true,
+                        enableShrinkResourcesInReleaseBuilds: true,
+                        // react-native-keyboard-controller reads ReactEditText.mListeners via reflection
+                        extraProguardRules:
+                            '-keepclassmembers class com.facebook.react.views.textinput.ReactEditText { *** mListeners; }'
+                    }
+                }
+            ],
             './plugins/withMMKVNoBackup',
             './plugins/withPushContentExtension'
         ],

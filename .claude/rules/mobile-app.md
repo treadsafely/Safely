@@ -88,6 +88,13 @@ update it when adding a language.
     reference scripts project-relative (`scripts/eas-report.mjs`).
   - EAS doesn't quote-safely interpolate values into its internal bash: unescaped `` ( ) ` $ " ' \ ``
     in a changelog cause exit 141 / empty logs, which is why the workflow strips them up front.
+- Android release builds run R8 (minify + resource shrinking), enabled through `expo-build-properties`
+  in `app.config.js` — Google Play flags an unobfuscated DEX. Every native dependency was checked
+  for shipped consumer rules; a new one that reaches Java/Kotlin by name (JNI `FindClass`,
+  reflection) without `@DoNotStrip`/`@Keep` or its own `proguard.txt` needs a rule in
+  `extraProguardRules`. A missing rule surfaces only in release builds, as `ClassNotFoundException`
+  / `NoSuchMethodError` or a silently skipped reflective path; the AAB carries `mapping.txt`, so
+  Play deobfuscates crash traces itself.
 - Icons: `pnpm --filter mobile run icons` (`scripts/generate-icons-file.js`); the generated file is
   not hand-edited.
 - Wallet names in pushes: the backend sends fallback `title`/`body` plus `data.target_ref`,
