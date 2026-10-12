@@ -82,7 +82,8 @@ module.exports = {
                 }
             ],
             './plugins/withMMKVNoBackup',
-            './plugins/withPushContentExtension'
+            './plugins/withPushContentExtension',
+            './plugins/withNetworkSecurityConfig'
         ],
         extra: {
             eas: {
