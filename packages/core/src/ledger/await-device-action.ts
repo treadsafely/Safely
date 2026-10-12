@@ -5,13 +5,27 @@ import type {
     ExecuteDeviceActionReturnType
 } from '@ledgerhq/device-management-kit';
 
-import { LedgerDeviceBusyError } from '../entities/errors';
+import { LedgerAppNotInstalledError, LedgerDeviceBusyError } from '../entities/errors';
 
 type ActionType<Output> = ExecuteDeviceActionReturnType<
     Output,
     DmkError,
     DeviceActionIntermediateValue
 >;
+
+const APP_NOT_INSTALLED_ERROR_CODE = '6807';
+
+const toError = (error: DmkError): Error => {
+    if (error._tag === 'UnknownDeviceExchangeError') {
+        return new LedgerDeviceBusyError();
+    }
+
+    if ('errorCode' in error && error.errorCode === APP_NOT_INSTALLED_ERROR_CODE) {
+        return new LedgerAppNotInstalledError();
+    }
+
+    return new Error(`${error._tag} ${error?.message}`);
+};
 
 export const awaitDeviceAction = <Output>(
     action: ActionType<Output>,
@@ -40,11 +54,7 @@ export const awaitDeviceAction = <Output>(
                 } else if (state.status === DeviceActionStatus.Error) {
                     signal?.removeEventListener('abort', onAbort);
                     subscription.unsubscribe();
-                    reject(
-                        state.error._tag === 'UnknownDeviceExchangeError'
-                            ? new LedgerDeviceBusyError()
-                            : new Error(`${state.error._tag} ${state.error?.message}`)
-                    );
+                    reject(toError(state.error));
                 }
             },
             error: error => {
