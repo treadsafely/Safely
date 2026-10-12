@@ -1,10 +1,7 @@
 {
     "readme": "Reviewed exceptions to the JavaScript dependency advisory gate. See .claude/rules/dependency-security.md before editing. Checked by scripts/audit-gate.mjs.",
     "policy": {
-        "blockingSeverities": [
-            "critical",
-            "high"
-        ]
+        "blockingSeverities": ["critical", "high"]
     },
     "exceptions": [
         {
@@ -103,6 +100,28 @@
             "owner": "liulekin@andreevco.com",
             "expires": "2026-10-31",
             "url": "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"
+        },
+        {
+            "id": "GHSA-8r5x-fm3f-whwj",
+            "package": "handlebars",
+            "severity": "critical",
+            "context": "dev",
+            "paths": ["safely > eslint-plugin-boundaries > @boundaries/elements > handlebars"],
+            "rationale": "Reached only through eslint-plugin-boundaries, which renders its rule messages with handlebars while lint runs; it executes on a developer machine and in the CI lint job and is in no bundle any app ships. Both advisories are fixed in 4.7.10, published 2026-10-12, which `minimumReleaseAge` (4 days) refuses until 2026-10-16 — then the existing `'handlebars@4'` override moves to `^4.7.10` and these entries are dropped.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2026-10-31",
+            "url": "https://github.com/advisories/GHSA-8r5x-fm3f-whwj"
+        },
+        {
+            "id": "GHSA-p8wg-vrv2-v86f",
+            "package": "handlebars",
+            "severity": "critical",
+            "context": "dev",
+            "paths": ["safely > eslint-plugin-boundaries > @boundaries/elements > handlebars"],
+            "rationale": "Reached only through eslint-plugin-boundaries, which renders its rule messages with handlebars while lint runs; it executes on a developer machine and in the CI lint job and is in no bundle any app ships. Both advisories are fixed in 4.7.10, published 2026-10-12, which `minimumReleaseAge` (4 days) refuses until 2026-10-16 — then the existing `'handlebars@4'` override moves to `^4.7.10` and these entries are dropped.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2026-10-31",
+            "url": "https://github.com/advisories/GHSA-p8wg-vrv2-v86f"
         }
     ]
 }
