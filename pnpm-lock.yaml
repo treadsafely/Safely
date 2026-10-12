@@ -88,13 +88,11 @@ catalogs:
 overrides:
   handlebars@4: ^4.7.10
   brace-expansion@1: ^1.1.21
-  brace-expansion@2: ^2.1.7
   brace-expansion@5: ^5.0.12
   minimatch@3: ^3.1.5
-  minimatch@9: ^9.0.9
+  minimatch@10: ^10.2.3
   flatted@3: ^3.4.2
   vite: ^8.3.2
-  rollup@4: ^4.59.0
   shell-quote@1: ^1.11.0
   '@xmldom/xmldom@0.8': ^0.8.13
   node-forge@1: ^1.4.0
@@ -106,8 +104,7 @@ overrides:
   js-yaml@4: ^4.3.2
   nanoid@3: ^3.3.18
   picomatch@2: ^2.3.2
-  postcss@8: ^8.5.18
-  source-map-js@1: ^1.2.2
+  postcss@8: ^8.5.29
   compression@1: ^1.8.2
   '@react-native/community-cli-plugin>metro': 0.84.5
   '@react-native/community-cli-plugin>metro-config': 0.84.5
@@ -4596,8 +4593,8 @@ packages:
   postcss-value-parser@4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
-  postcss@8.5.26:
-    resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
+  postcss@8.5.29:
+    resolution: {integrity: sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   prelude-ls@1.2.1:
@@ -6800,7 +6797,7 @@ snapshots:
       jsc-safe-url: 0.2.4
       lightningcss: 1.33.0
       picomatch: 4.0.7
-      postcss: 8.5.26
+      postcss: 8.5.29
       resolve-from: 5.0.0
     optionalDependencies:
       expo: 56.0.21(@babel/core@7.29.7)(@expo/dom-webview@56.0.5)(@expo/metro-runtime@56.0.21)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.8.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)(typescript@6.0.3)
@@ -10395,7 +10392,7 @@ snapshots:
 
   postcss-value-parser@4.2.0: {}
 
-  postcss@8.5.26:
+  postcss@8.5.29:
     dependencies:
       nanoid: 3.3.19
       picocolors: 1.1.1
@@ -11392,7 +11389,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
-      postcss: 8.5.26
+      postcss: 8.5.29
       rolldown: 1.2.12
       tinyglobby: 0.2.17
     optionalDependencies:
