@@ -99,9 +99,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/plugin-transform-explicit-resource-management": "^7.28.6",
-    "@babel/plugin-transform-flow-strip-types": "^7.27.1",
-    "@babel/plugin-transform-runtime": "^7.28.5",
+    "@babel/plugin-transform-explicit-resource-management": "^7.29.7",
+    "@babel/plugin-transform-flow-strip-types": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
     "@expo/config-plugins": "~56.0.16",
     "@react-native/metro-config": "0.85.3",
     "@safely/sync-storage": "workspace:*",
