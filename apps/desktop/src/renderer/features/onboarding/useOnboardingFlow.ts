@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useRef, useState } from 'react';
 
 import { MnemonicResource, PortfolioNetworkType } from '@safely/core';
+import { OnboardingAbortedError } from '@safely/sync';
 import type { IUnlockableSecuredEncryptedStorage, OnboardedAccount } from '@safely/ux';
 import {
     useAccountConnectedCallback,
@@ -96,7 +97,10 @@ export function useOnboardingFlow() {
             await signIn.mutateAsync({ secureEncryptedStorage });
         } catch (error) {
             closeSignInStorage();
-            errorToast(error);
+
+            if (!(error instanceof OnboardingAbortedError)) {
+                errorToast(error);
+            }
             return;
         }
 

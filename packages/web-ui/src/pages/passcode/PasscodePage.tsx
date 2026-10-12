@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { PASSCODE_LENGTH, useSubmitWhenComplete, useTranslate } from '@safely/ux';
 
@@ -11,6 +11,8 @@ import {
     popupStyles
 } from './PasscodePage.styles';
 import { Modal, Passcode, ScreenProtection, Switch, Text } from '../../shared';
+
+const CODE_VISIBLE_MS = 300;
 
 export type PasscodePageProps = {
     title: string;
@@ -27,13 +29,16 @@ export const PasscodePage: FC<PasscodePageProps> = props => {
 
     const [value, setValue] = useState('');
     const [length, setLength] = useState<number>(PASSCODE_LENGTH.short);
+    const clearTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    useEffect(() => () => clearTimeout(clearTimer.current), []);
 
     useSubmitWhenComplete({
         value,
         length,
         onComplete: entered => {
-            setValue('');
             onSubmit(entered);
+            clearTimer.current = setTimeout(() => setValue(''), CODE_VISIBLE_MS);
         }
     });
 
@@ -51,6 +56,7 @@ export const PasscodePage: FC<PasscodePageProps> = props => {
                             <Switch
                                 checked={length === PASSCODE_LENGTH.long}
                                 onCheckedChange={isLong => {
+                                    clearTimeout(clearTimer.current);
                                     setValue('');
                                     setLength(
                                         isLong ? PASSCODE_LENGTH.long : PASSCODE_LENGTH.short

@@ -3,10 +3,12 @@ import { useCallback, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ImageBackground, View } from 'react-native';
 
+import { OnboardingAbortedError } from '@safely/sync';
 import {
     useAppContext,
     useBootConfig,
     useCreateExistingAccountConnector,
+    useErrorToast,
     useHasAccount,
     useLinking,
     useTrackOnboardingOpen
@@ -28,6 +30,7 @@ export const WelcomeScreen = () => {
 
     const { onSuccessCreate, onSuccessSignIn } = useOnboardingFlow();
     const signIn = useCreateExistingAccountConnector();
+    const errorToast = useErrorToast({});
     const navigation = useNavigation();
     const { privacy_url, terms_url } = useBootConfig().references.legal;
 
@@ -49,18 +52,26 @@ export const WelcomeScreen = () => {
         // don't ask for the password while setting app initially after first account creation during onboarding to provide smooth user experience
         secureEncryptedStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
 
-        const connector = await signIn.mutateAsync({ secureEncryptedStorage });
+        try {
+            const connector = await signIn.mutateAsync({ secureEncryptedStorage });
 
-        navigation.navigate('SignInScreen', {
-            connector,
-            closeStorage: () => secureEncryptedStorage[Symbol.dispose](),
-            onSuccess: (inviterIkPubHex: string | null) =>
-                navigation.navigate('SignInSuccessScreen', {
-                    inviterIkPubHex,
-                    onContinue: onSuccessSignIn
-                })
-        });
-    }, [signIn, navigation, getSecureEncrypted, onSuccessSignIn]);
+            navigation.navigate('SignInScreen', {
+                connector,
+                closeStorage: () => secureEncryptedStorage[Symbol.dispose](),
+                onSuccess: (inviterIkPubHex: string | null) =>
+                    navigation.navigate('SignInSuccessScreen', {
+                        inviterIkPubHex,
+                        onContinue: onSuccessSignIn
+                    })
+            });
+        } catch (error) {
+            secureEncryptedStorage[Symbol.dispose]();
+
+            if (!(error instanceof OnboardingAbortedError)) {
+                errorToast(error);
+            }
+        }
+    }, [signIn, navigation, getSecureEncrypted, onSuccessSignIn, errorToast]);
 
     if (hasExistingAccountOnOpen) {
         throw new Error('WelcomeScreen opened with an existing account');
