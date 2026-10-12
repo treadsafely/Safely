@@ -615,6 +615,7 @@
             "pairingUnsuccess": {
                 "title": "Сопряжение не удалось",
                 "subtitle": "Убедитесь, что {{device}} находится рядом с телефоном, и попробуйте снова.",
+                "appNotInstalled": "Установите приложение Bitcoin на {{device}} через Ledger Wallet и попробуйте снова.",
                 "retry": "Повторить сопряжение"
             },
             "importAccounts": {

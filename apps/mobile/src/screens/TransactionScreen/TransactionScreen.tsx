@@ -83,7 +83,7 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
     }, [activity.transaction.raw.txid, explorer, openURL]);
 
     const confirmedAt = useMemo(
-        () => dateFormatter.format(activity.timestamp),
+        () => dateFormatter.formatWithNonCurrentYear(activity.timestamp),
         [dateFormatter, activity.timestamp]
     );
 

@@ -631,6 +631,7 @@
             "pairingUnsuccess": {
                 "title": "Pairing unsuccessful",
                 "subtitle": "Make sure your {{device}} is close to your mobile phone and try again.",
+                "appNotInstalled": "Install the Bitcoin app on your {{device}} via Ledger Wallet and try again.",
                 "retry": "Retry pairing"
             },
             "importAccounts": {
