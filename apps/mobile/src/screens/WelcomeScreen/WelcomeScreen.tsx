@@ -3,10 +3,12 @@ import { useCallback, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ImageBackground, View } from 'react-native';
 
+import { OnboardingAbortedError } from '@safely/sync';
 import {
     useAppContext,
     useBootConfig,
     useCreateExistingAccountConnector,
+    useErrorToast,
     useHasAccount,
     useLinking,
     useTrackOnboardingOpen
@@ -28,6 +30,7 @@ export const WelcomeScreen = () => {
 
     const { onSuccessCreate, onSuccessSignIn } = useOnboardingFlow();
     const signIn = useCreateExistingAccountConnector();
+    const errorToast = useErrorToast({});
     const navigation = useNavigation();
     const { privacy_url, terms_url } = useBootConfig().references.legal;
 
@@ -61,10 +64,14 @@ export const WelcomeScreen = () => {
                         onContinue: onSuccessSignIn
                     })
             });
-        } catch {
+        } catch (error) {
             secureEncryptedStorage[Symbol.dispose]();
+
+            if (!(error instanceof OnboardingAbortedError)) {
+                errorToast(error);
+            }
         }
-    }, [signIn, navigation, getSecureEncrypted, onSuccessSignIn]);
+    }, [signIn, navigation, getSecureEncrypted, onSuccessSignIn, errorToast]);
 
     if (hasExistingAccountOnOpen) {
         throw new Error('WelcomeScreen opened with an existing account');
