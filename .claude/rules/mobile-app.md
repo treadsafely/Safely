@@ -95,6 +95,11 @@ update it when adding a language.
   `extraProguardRules`. A missing rule surfaces only in release builds, as `ClassNotFoundException`
   / `NoSuchMethodError` or a silently skipped reflective path; the AAB carries `mapping.txt`, so
   Play deobfuscates crash traces itself.
+- `plugins/withNetworkSecurityConfig.js` makes Android trust user-installed CAs (Proxyman/Charles
+    on a real device) in debuggable builds and in the staging APK — gated on `EAS_BUILD_PROFILE` being
+    in an explicit allowlist, so `production` (and any new profile) keeps system CAs only. A new
+    tester profile that needs a proxy goes into that allowlist; never widen it to production.
+
 - Icons: `pnpm --filter mobile run icons` (`scripts/generate-icons-file.js`); the generated file is
   not hand-edited.
 - Wallet names in pushes: the backend sends fallback `title`/`body` plus `data.target_ref`,
