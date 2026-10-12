@@ -45,9 +45,11 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   (`\u200D`), never as the raw character
 - mobile: `pnpm --filter mobile ios|android|start` — dev-client, not Expo Go
 
-Dependency versions go through `catalog:` in `pnpm-workspace.yaml` only: add the version to the
-catalog and reference `catalog:` from the package's package.json. `minimumReleaseAge: 5760` means
-pnpm refuses packages published less than four days ago.
+A dependency used by more than one workspace package (root included) goes through `catalog:` in
+`pnpm-workspace.yaml`, so every package gets the same version; one used by a single package keeps
+its version in that package's package.json. When a second package starts using it, move the version
+into the catalog. `minimumReleaseAge: 5760` means pnpm refuses packages published less than four
+days ago.
 
 Root-level tooling stays at the root: `eslint`, its plugins and `prettier` are installed once in the
 root package.json, and a package only adds the `"lint": "eslint ./src"` script. The node scripts
