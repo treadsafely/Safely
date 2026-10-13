@@ -94,7 +94,11 @@ update it when adding a language.
   reflection) without `@DoNotStrip`/`@Keep` or its own `proguard.txt` needs a rule in
   `extraProguardRules`. A missing rule surfaces only in release builds, as `ClassNotFoundException`
   / `NoSuchMethodError` or a silently skipped reflective path; the AAB carries `mapping.txt`, so
-  Play deobfuscates crash traces itself.
+  Play deobfuscates crash traces itself. React Native's consumer rules keep `native` methods and
+  `@DoNotStrip` members but not a bare fbjni `mHybridData` field, which native code reads by name;
+  `expo-modules-core`'s `WorkletNativeRuntime` has no annotation, so without the generic
+  `mHybridData` rule every worklet callback into Compose (`NativeInput`'s `onChangeText`) crashes
+  with `NoSuchFieldError` — this broke the Maestro import/send flows.
 - `plugins/withNetworkSecurityConfig.js` makes Android trust user-installed CAs (Proxyman/Charles
     on a real device) in debuggable builds and in the staging APK — gated on `EAS_BUILD_PROFILE` being
     in an explicit allowlist, so `production` (and any new profile) keeps system CAs only. A new
