@@ -87,9 +87,12 @@ module.exports = {
                     android: {
                         enableMinifyInReleaseBuilds: true,
                         enableShrinkResourcesInReleaseBuilds: true,
-                        // react-native-keyboard-controller reads ReactEditText.mListeners via reflection
-                        extraProguardRules:
-                            '-keepclassmembers class com.facebook.react.views.textinput.ReactEditText { *** mListeners; }'
+                        extraProguardRules: [
+                            // react-native-keyboard-controller reads ReactEditText.mListeners via reflection
+                            '-keepclassmembers class com.facebook.react.views.textinput.ReactEditText { *** mListeners; }',
+                            // fbjni looks mHybridData up by name; expo's WorkletNativeRuntime lacks @DoNotStrip
+                            '-keepclassmembers class * { com.facebook.jni.HybridData mHybridData; }'
+                        ].join('\n')
                     }
                 }
             ],
