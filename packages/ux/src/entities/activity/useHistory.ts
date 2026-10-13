@@ -18,6 +18,7 @@ import {
     useAppContext,
     useBtcApi,
     useExchangeApi,
+    useFlag,
     useInfinitePersistQuery,
     useUserCountryInfo
 } from '../../shared';
@@ -36,6 +37,7 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
     const fiat = useActiveFiat();
     const signer = useReadOnlyRequestSigner();
     const exchangeApi = useExchangeApi(signer);
+    const isOnrampsEnabled = useFlag('enable_onramps');
 
     const { i18n, logger } = useAppContext();
     const userCountryInfo = useUserCountryInfo();
@@ -63,7 +65,7 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
                 ['btc', 'both'].includes(fetch) && btcPage !== null
                     ? fetchBtcActivity(btcApi, btcWallet, fiat, btcPage, filters)
                     : null,
-                ['orders', 'both'].includes(fetch) && signer
+                ['orders', 'both'].includes(fetch) && signer && isOnrampsEnabled
                     ? fetchOrdersActivity(exchangeApi, ordersRequest, ordersCursor, filters).catch(
                           ordersFailed
                       )
