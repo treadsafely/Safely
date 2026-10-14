@@ -11,13 +11,14 @@ export type PasscodeSetupCopy = {
 export type PasscodeSetupFlowProps = {
     create: PasscodeSetupCopy;
     confirm: PasscodeSetupCopy;
+    appearance?: 'modal' | 'onboarding';
     onConfirmed: (passcode: string) => void;
     onCancel: () => void;
 };
 
 /* both steps are one component on purpose: the entered code never reaches router state */
 export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
-    const { create, confirm, onConfirmed, onCancel } = props;
+    const { create, confirm, appearance, onConfirmed, onCancel } = props;
 
     const created = useRef('');
     const [isConfirming, setIsConfirming] = useState(false);
@@ -57,6 +58,7 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
         <PasscodePage
             title={confirm.title}
             description={confirm.description}
+            appearance={appearance}
             onBack={onBack}
             onSubmit={onReentered}
         />
@@ -64,6 +66,7 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
         <PasscodePage
             title={create.title}
             description={create.description}
+            appearance={appearance}
             isInvalid={isMismatched}
             onBack={onBack}
             onSubmit={onCreated}

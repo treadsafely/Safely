@@ -79,6 +79,14 @@ export const passcodeRecipe = defineSlotRecipe({
         }
     },
     variants: {
+        isInset: {
+            true: {
+                keypad: {
+                    paddingInline: '96px',
+                    paddingBlock: '16'
+                }
+            }
+        },
         isInvalid: {
             true: {
                 root: { animation: 'shake 400ms' },

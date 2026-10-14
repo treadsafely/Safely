@@ -13,7 +13,8 @@ export const lengthToggleStyles = css({
     height: '40px',
     paddingLeft: '16',
     paddingRight: '12',
-    borderRadius: 'full',
+    borderRadius: 'sm',
+    backgroundColor: 'background.primary',
     borderWidth: 'hairlineAlternate',
     borderStyle: 'solid',
     borderColor: 'other.transparentElement'

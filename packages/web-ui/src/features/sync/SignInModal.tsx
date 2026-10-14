@@ -11,52 +11,66 @@ import {
     copiedStyles,
     popupStyles,
     QR_SIZE,
-    qrStyles
+    qrStyles,
+    qrUnderHeaderStyles
 } from './SignInModal.styles';
-import { Banner, Modal, Toast, useCopyToClipboard } from '../../shared';
+import { Banner, Modal, OnboardingCard, Toast, useCopyToClipboard } from '../../shared';
 
 export type SignInModalProps = {
     connectionString: string;
+    appearance?: 'modal' | 'onboarding';
     onClose: () => void;
 };
 
-export const SignInModal: FC<SignInModalProps> = ({ connectionString, onClose }) => {
+export const SignInModal: FC<SignInModalProps> = props => {
+    const { connectionString, appearance = 'modal', onClose } = props;
+
     const t = useTranslate();
     const { isCopied, copy } = useCopyToClipboard();
+
+    const content = (
+        <>
+            <div className={appearance === 'onboarding' ? qrUnderHeaderStyles : qrStyles}>
+                <button type="button" className={cardStyles} onClick={() => copy(connectionString)}>
+                    <QRCodeSVG value={connectionString} size={QR_SIZE} level="H" />
+                </button>
+
+                {isCopied && (
+                    <Toast
+                        variant="white"
+                        message={t('actions.copied')}
+                        className={copiedStyles}
+                        role="status"
+                    />
+                )}
+            </div>
+
+            <Modal.Content className={contentStyles}>
+                <Modal.Title>{t('signIn.title')}</Modal.Title>
+                <Modal.Description>{t('signIn.description')}</Modal.Description>
+            </Modal.Content>
+
+            <Banner className={bannerStyles}>
+                <Banner.Content>
+                    <Banner.Text>{t('signIn.banner')}</Banner.Text>
+                </Banner.Content>
+                <Banner.Icon asset={DeviceLink} />
+            </Banner>
+        </>
+    );
+
+    if (appearance === 'onboarding') {
+        return (
+            <OnboardingCard hasShadow={false} onBack={onClose}>
+                {content}
+            </OnboardingCard>
+        );
+    }
 
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
-                <div className={qrStyles}>
-                    <button
-                        type="button"
-                        className={cardStyles}
-                        onClick={() => copy(connectionString)}
-                    >
-                        <QRCodeSVG value={connectionString} size={QR_SIZE} level="H" />
-                    </button>
-
-                    {isCopied && (
-                        <Toast
-                            variant="white"
-                            message={t('actions.copied')}
-                            className={copiedStyles}
-                            role="status"
-                        />
-                    )}
-                </div>
-
-                <Modal.Content className={contentStyles}>
-                    <Modal.Title>{t('signIn.title')}</Modal.Title>
-                    <Modal.Description>{t('signIn.description')}</Modal.Description>
-                </Modal.Content>
-
-                <Banner className={bannerStyles}>
-                    <Banner.Content>
-                        <Banner.Text>{t('signIn.banner')}</Banner.Text>
-                    </Banner.Content>
-                    <Banner.Icon asset={DeviceLink} />
-                </Banner>
+                {content}
             </Modal.Popup>
         </Modal>
     );

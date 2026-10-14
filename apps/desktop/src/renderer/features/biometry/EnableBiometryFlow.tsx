@@ -7,10 +7,11 @@ import { BiometryPage } from '@safely/web-ui';
 import { useSetBiometryEnabled } from './useBiometry';
 
 export type EnableBiometryFlowProps = {
+    appearance?: 'modal' | 'onboarding';
     onDone: () => void;
 };
 
-export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({ onDone }) => {
+export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({ appearance, onDone }) => {
     const t = useTranslate();
     const { mutateAsync: setBiometryEnabled } = useSetBiometryEnabled();
 
@@ -22,6 +23,7 @@ export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({ onDone }) => {
 
     return (
         <BiometryPage
+            appearance={appearance}
             icon={Fingerprint96}
             title={title}
             description={t('biometry.fingerprint.ios.description')}

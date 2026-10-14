@@ -14,9 +14,21 @@ export const bodyStyles = css({
     paddingInline: '24'
 });
 
+export const compactBodyStyles = css({
+    display: 'flex',
+    flexDirection: 'column',
+    paddingInline: '24'
+});
+
 export const fieldStyles = css({
     padding: '0',
     '& textarea': { minHeight: '96px' }
 });
 
 export const errorStyles = css({ paddingInline: '16', paddingTop: '8' });
+
+export const submitStyles = css({
+    display: 'flex',
+    justifyContent: 'center',
+    paddingTop: '24'
+});

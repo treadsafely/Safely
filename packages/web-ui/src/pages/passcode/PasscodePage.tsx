@@ -10,7 +10,7 @@ import {
     lengthToggleStyles,
     popupStyles
 } from './PasscodePage.styles';
-import { Modal, Passcode, ScreenProtection, Switch, Text } from '../../shared';
+import { Modal, OnboardingCard, Passcode, ScreenProtection, Switch, Text } from '../../shared';
 
 const CODE_VISIBLE_MS = 300;
 
@@ -18,12 +18,13 @@ export type PasscodePageProps = {
     title: string;
     description?: string;
     isInvalid?: boolean;
+    appearance?: 'modal' | 'onboarding';
     onSubmit: (code: string) => void;
     onBack: () => void;
 };
 
 export const PasscodePage: FC<PasscodePageProps> = props => {
-    const { title, description, isInvalid, onSubmit, onBack } = props;
+    const { title, description, isInvalid, appearance = 'modal', onSubmit, onBack } = props;
 
     const t = useTranslate();
 
@@ -42,6 +43,53 @@ export const PasscodePage: FC<PasscodePageProps> = props => {
         }
     });
 
+    const lengthToggle = (
+        <label className={lengthToggleStyles}>
+            <Text variant="bodyM">{t('onboarding.passcode.sixDigit')}</Text>
+            <Switch
+                size="small"
+                checked={length === PASSCODE_LENGTH.long}
+                onCheckedChange={isLong => {
+                    clearTimeout(clearTimer.current);
+                    setValue('');
+                    setLength(isLong ? PASSCODE_LENGTH.long : PASSCODE_LENGTH.short);
+                }}
+            />
+        </label>
+    );
+
+    const content = (
+        <>
+            <Modal.Content hasFloatingClose={false}>
+                <Modal.Title>{title}</Modal.Title>
+                {description !== undefined && (
+                    <Modal.Description className={descriptionStyles}>
+                        {description}
+                    </Modal.Description>
+                )}
+            </Modal.Content>
+
+            <Passcode
+                className={appearance === 'onboarding' ? undefined : keypadFillStyles}
+                isInset={appearance === 'onboarding'}
+                value={value}
+                length={length}
+                isInvalid={isInvalid}
+                onChange={setValue}
+            />
+        </>
+    );
+
+    if (appearance === 'onboarding') {
+        return (
+            <ScreenProtection>
+                <OnboardingCard trailing={lengthToggle} hasShadow={false} onBack={onBack}>
+                    {content}
+                </OnboardingCard>
+            </ScreenProtection>
+        );
+    }
+
     return (
         <ScreenProtection>
             <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onBack()}>
@@ -50,40 +98,9 @@ export const PasscodePage: FC<PasscodePageProps> = props => {
                     hasClose={false}
                     closeLabel={t('common.close')}
                 >
-                    <Modal.Header closeLabel={t('common.close')}>
-                        <label className={lengthToggleStyles}>
-                            <Text variant="bodyM">{t('onboarding.passcode.sixDigit')}</Text>
-                            <Switch
-                                checked={length === PASSCODE_LENGTH.long}
-                                onCheckedChange={isLong => {
-                                    clearTimeout(clearTimer.current);
-                                    setValue('');
-                                    setLength(
-                                        isLong ? PASSCODE_LENGTH.long : PASSCODE_LENGTH.short
-                                    );
-                                }}
-                            />
-                        </label>
-                    </Modal.Header>
+                    <Modal.Header closeLabel={t('common.close')}>{lengthToggle}</Modal.Header>
 
-                    <div className={bodyStyles}>
-                        <Modal.Content hasFloatingClose={false}>
-                            <Modal.Title>{title}</Modal.Title>
-                            {description !== undefined && (
-                                <Modal.Description className={descriptionStyles}>
-                                    {description}
-                                </Modal.Description>
-                            )}
-                        </Modal.Content>
-
-                        <Passcode
-                            className={keypadFillStyles}
-                            value={value}
-                            length={length}
-                            isInvalid={isInvalid}
-                            onChange={setValue}
-                        />
-                    </div>
+                    <div className={bodyStyles}>{content}</div>
                 </Modal.Popup>
             </Modal>
         </ScreenProtection>

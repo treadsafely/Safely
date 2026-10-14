@@ -11,6 +11,12 @@ export const qrStyles = css({
     paddingTop: '64'
 });
 
+export const qrUnderHeaderStyles = css({
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center'
+});
+
 export const cardStyles = css({
     margin: '16',
     padding: '24',

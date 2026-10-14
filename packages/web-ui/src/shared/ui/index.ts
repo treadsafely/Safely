@@ -20,3 +20,4 @@ export * from './Switch';
 export * from './TableCell';
 export * from './Text';
 export * from './Toast';
+export * from './OnboardingCard';

@@ -32,6 +32,7 @@ export type ModalPopupProps = {
     closeLabel: string;
     hasClose?: boolean;
     hasTransparentClose?: boolean;
+    hasBackdrop?: boolean;
     onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
     children?: ReactNode;
     className?: string;
@@ -39,7 +40,6 @@ export type ModalPopupProps = {
 
 export type ModalHeaderProps = {
     closeLabel: string;
-    /* off when the step puts its own control there, a back arrow for instance */
     hasClose?: boolean;
     title?: string;
     align?: 'start';
@@ -69,6 +69,7 @@ const ModalPopup: FC<ModalPopupProps> = props => {
         closeLabel,
         hasClose = true,
         hasTransparentClose,
+        hasBackdrop = true,
         onKeyDown,
         className,
         children
@@ -78,7 +79,7 @@ const ModalPopup: FC<ModalPopupProps> = props => {
 
     return (
         <Dialog.Portal>
-            <Dialog.Backdrop forceRender className={styles.backdrop} />
+            {hasBackdrop && <Dialog.Backdrop forceRender className={styles.backdrop} />}
 
             <Dialog.Popup
                 ref={popupRef}
