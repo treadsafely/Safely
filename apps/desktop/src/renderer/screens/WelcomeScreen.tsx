@@ -2,9 +2,11 @@ import type { FC } from 'react';
 
 import { useBootConfig, useLinking, useTranslate } from '@safely/ux';
 import {
+    BiometryCard,
     ImportWalletModal,
-    SignInModal,
-    SignInSuccessModal,
+    PasscodeCard,
+    SignInCard,
+    SignInSuccessCard,
     WatchAccountModal,
     WelcomePage
 } from '@safely/web-ui';
@@ -30,31 +32,29 @@ export const WelcomeScreen: FC = () => {
 
             {onboarding.step === 'import' && (
                 <ImportWalletModal
-                    appearance="onboarding"
+                    hasBackdrop={false}
                     onSubmit={onboarding.onMnemonicReady}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'watch' && (
                 <WatchAccountModal
-                    appearance="onboarding"
+                    hasBackdrop={false}
                     onSubmit={onboarding.onWatchInputReady}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'signIn' && onboarding.connectionString !== undefined && (
-                <SignInModal
-                    appearance="onboarding"
+                <SignInCard
                     connectionString={onboarding.connectionString}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'signInSuccess' && (
-                <SignInSuccessModal
-                    appearance="onboarding"
+                <SignInSuccessCard
                     inviterIkPubHex={onboarding.inviterIkPubHex}
                     onContinue={onboarding.onSignInSuccessContinue}
                 />
@@ -62,7 +62,7 @@ export const WelcomeScreen: FC = () => {
 
             {onboarding.step === 'passcode' && (
                 <PasscodeSetupFlow
-                    appearance="onboarding"
+                    Screen={PasscodeCard}
                     create={{
                         title: t('onboarding.passcode.title'),
                         description: t('onboarding.passcode.description')
@@ -79,10 +79,7 @@ export const WelcomeScreen: FC = () => {
             )}
 
             {onboarding.step === 'biometry' && (
-                <EnableBiometryFlow
-                    appearance="onboarding"
-                    onDone={onboarding.onBiometryFinished}
-                />
+                <EnableBiometryFlow Screen={BiometryCard} onDone={onboarding.onBiometryFinished} />
             )}
         </>
     );

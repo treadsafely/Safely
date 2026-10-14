@@ -18,17 +18,3 @@ export const textStyles = css({
     flexDirection: 'column',
     gap: '4'
 });
-
-export const compactIconStyles = css({
-    display: 'flex',
-    justifyContent: 'center',
-    paddingBlock: '8'
-});
-
-export const compactActionStyles = css({
-    display: 'flex',
-    justifyContent: 'center',
-    paddingBlock: '16'
-});
-
-export const skipStyles = css({ marginLeft: 'auto' });

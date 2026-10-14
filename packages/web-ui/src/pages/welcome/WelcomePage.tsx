@@ -19,7 +19,7 @@ import {
     rootStyles,
     subtitleStyles
 } from './WelcomePage.styles';
-import { Button, Icon, OnboardingCard, Text, welcomeBackdrop } from '../../shared';
+import { Button, Icon, StepCard, Text, welcomeBackdrop } from '../../shared';
 
 export type WelcomePageProps = {
     onCreateWallet: () => void;
@@ -50,7 +50,7 @@ export const WelcomePage: FC<WelcomePageProps> = props => {
         <div className={rootStyles}>
             <div className={backdropStyles} style={backdropImageStyles} />
 
-            <OnboardingCard>
+            <StepCard hasBackdrop={false}>
                 <div className={columnStyles}>
                     <div className={logoStyles}>
                         <SafelyTile width={LOGO_SIZE} height={LOGO_SIZE} />
@@ -135,7 +135,7 @@ export const WelcomePage: FC<WelcomePageProps> = props => {
                         />
                     </Text>
                 </div>
-            </OnboardingCard>
+            </StepCard>
         </div>
     );
 };

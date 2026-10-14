@@ -4,20 +4,21 @@ import { useTranslate } from '@safely/ux';
 import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 import { cx } from '@safely/web-ui/styled-system/css';
 
-import { bodyStyles, popupStyles, shadowStyles } from './OnboardingCard.styles';
+import { bodyStyles, popupStyles, shadowStyles } from './StepCard.styles';
 import { Button } from '../Button';
 import { Icon } from '../Icon';
 import { Modal } from '../Modal';
 
-export type OnboardingCardProps = {
+export type StepCardProps = {
     trailing?: ReactNode;
     hasShadow?: boolean;
+    hasBackdrop?: boolean;
     onBack?: () => void;
     children: ReactNode;
 };
 
-export const OnboardingCard: FC<OnboardingCardProps> = props => {
-    const { trailing, hasShadow = true, onBack, children } = props;
+export const StepCard: FC<StepCardProps> = props => {
+    const { trailing, hasShadow = true, hasBackdrop = true, onBack, children } = props;
 
     const t = useTranslate();
 
@@ -26,7 +27,7 @@ export const OnboardingCard: FC<OnboardingCardProps> = props => {
             <Modal.Popup
                 className={cx(popupStyles, hasShadow && shadowStyles)}
                 hasClose={false}
-                hasBackdrop={false}
+                hasBackdrop={hasBackdrop}
                 closeLabel={t('common.close')}
             >
                 {(onBack !== undefined || trailing !== undefined) && (

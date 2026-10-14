@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
 
+import type { PasscodeScreenProps } from '@safely/web-ui';
 import { PasscodePage } from '@safely/web-ui';
 
 export type PasscodeSetupCopy = {
@@ -11,14 +12,14 @@ export type PasscodeSetupCopy = {
 export type PasscodeSetupFlowProps = {
     create: PasscodeSetupCopy;
     confirm: PasscodeSetupCopy;
-    appearance?: 'modal' | 'onboarding';
+    Screen?: FC<PasscodeScreenProps>;
     onConfirmed: (passcode: string) => void;
     onCancel: () => void;
 };
 
 /* both steps are one component on purpose: the entered code never reaches router state */
 export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
-    const { create, confirm, appearance, onConfirmed, onCancel } = props;
+    const { create, confirm, Screen = PasscodePage, onConfirmed, onCancel } = props;
 
     const created = useRef('');
     const [isConfirming, setIsConfirming] = useState(false);
@@ -55,18 +56,16 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
     };
 
     return isConfirming ? (
-        <PasscodePage
+        <Screen
             title={confirm.title}
             description={confirm.description}
-            appearance={appearance}
             onBack={onBack}
             onSubmit={onReentered}
         />
     ) : (
-        <PasscodePage
+        <Screen
             title={create.title}
             description={create.description}
-            appearance={appearance}
             isInvalid={isMismatched}
             onBack={onBack}
             onSubmit={onCreated}

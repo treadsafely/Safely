@@ -29,11 +29,11 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
             return (
                 <ImportWalletModal
                     onSubmit={mnemonic => void flow.onMnemonicReady(mnemonic)}
-                    onClose={flow.open}
+                    onBack={flow.open}
                 />
             );
         case 'watch':
-            return <WatchAccountModal onSubmit={flow.onWatchInputReady} onClose={flow.open} />;
+            return <WatchAccountModal onSubmit={flow.onWatchInputReady} onBack={flow.open} />;
         case 'duplicate':
             return (
                 flow.duplicate && (
