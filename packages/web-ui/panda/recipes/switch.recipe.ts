@@ -36,5 +36,24 @@ export const switchRecipe = defineSlotRecipe({
                 transform: 'translateX(20px)'
             }
         }
+    },
+    variants: {
+        size: {
+            small: {
+                root: {
+                    width: '28px',
+                    height: '16px',
+                    borderRadius: 'full'
+                },
+                thumb: {
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: 'full',
+                    _checked: {
+                        transform: 'translateX(12px)'
+                    }
+                }
+            }
+        }
     }
 });
