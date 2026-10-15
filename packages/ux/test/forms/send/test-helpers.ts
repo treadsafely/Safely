@@ -153,6 +153,7 @@ export function makeMockInput(opts: MockInputOptions = {}): SendFormMachineInput
         contactSuggestions,
         ratedAssets,
         activeWallet,
+        flameWalletAddress: opts.flameWalletAddress ?? null,
         networkType: opts.networkType ?? PortfolioNetworkType.MAINNET,
         shouldResetForm: () => shouldResetFormValue,
         onSubmit,

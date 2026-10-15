@@ -19,5 +19,7 @@ globalThis.flameSdk = {
         }),
     decodeContracts: () =>
         Promise.reject(new Error('flameSdk.decodeContracts is not available in tests')),
-    openNotes: () => Promise.reject(new Error('flameSdk.openNotes is not available in tests'))
+    openNotes: () => Promise.reject(new Error('flameSdk.openNotes is not available in tests')),
+    buildTransfer: () =>
+        Promise.reject(new Error('flameSdk.buildTransfer is not available in tests'))
 };

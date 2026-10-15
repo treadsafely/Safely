@@ -7,6 +7,8 @@ import type { DerivedQueryResult } from '../../shared';
 import { QUERIES_REFETCH_INTERVAL, useDerivedQuery, useFlameApi } from '../../shared';
 import { useActiveFiat } from '../fiat';
 import { flameBlockchain } from './keys';
+import { releaseSettledFlameSpends } from './pending-spends';
+import { useFlameSentMemos } from './sent-memos';
 import type { FlameSource } from './source';
 import { useActiveFlameSource } from './source';
 
@@ -24,8 +26,10 @@ export function useFlameWalletOutputs(source: FlameSource | null) {
             const { wallet } = source.chain;
             const { outputs } = await api.scan([wallet.predicate]);
             const amounts = await source.chain.readAmounts(outputs.map(toFlameOutputBytes));
+            const flameOutputs = FlameOutputs.fromScan(outputs, amounts);
+            releaseSettledFlameSpends(source.chain.id.toString(), flameOutputs);
 
-            return { wallet, outputs: FlameOutputs.fromScan(outputs, amounts) };
+            return { wallet, outputs: flameOutputs };
         },
         enabled,
         // Without a source or a node there is nothing to scan: settle as `null`, not as pending
@@ -49,10 +53,15 @@ export function useActiveFlameBalance() {
 
 export function useFlameHistory(source: FlameSource | null) {
     const outputsQuery = useFlameWalletOutputs(source);
+    const sentMemosQuery = useFlameSentMemos();
 
     return useDerivedQuery({
-        queries: [outputsQuery],
-        queryFn: ([data]) => data?.outputs.history ?? []
+        queries: [outputsQuery, sentMemosQuery],
+        queryFn: ([data, sentMemos]) =>
+            (data?.outputs.history ?? []).map(item => ({
+                ...item,
+                memo: item.memo ?? sentMemos[item.txid] ?? null
+            }))
     });
 }
 

@@ -35,6 +35,7 @@ export const RecipientStep = (props: RecipientStepProps) => {
         setRecipient,
         setAddressBookName,
         selectSuggestion,
+        canSaveContact,
         status
     } = view;
 
@@ -86,7 +87,7 @@ export const RecipientStep = (props: RecipientStepProps) => {
                     selectedId={selectedSuggestionId}
                     onSelect={handleSelect}
                 />
-                {!selectedSuggestionId && isValid && (
+                {!selectedSuggestionId && isValid && canSaveContact && (
                     <Input>
                         <Input.Label>{t('send.addressBook.label')}</Input.Label>
                         <Input.Field

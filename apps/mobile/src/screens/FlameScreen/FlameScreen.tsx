@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/core';
 import { StackActions } from '@react-navigation/native';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useUnistyles } from 'react-native-unistyles';
 
+import type { FlameActivityItem } from '@safely/core';
 import { FLAME_ASSET } from '@safely/core';
 import {
     useActiveFlameSource,
@@ -32,6 +33,13 @@ const FlameContent = () => {
         }
     }, [hasFlame, navigation]);
 
+    const onNavigateToActivityItem = useCallback(
+        (activity: FlameActivityItem) => {
+            navigation.navigate('FlameTransactionScreen', { activity });
+        },
+        [navigation]
+    );
+
     const price = ratedAmount?.price;
     const fiatAmount = price ? ratedAmount.amount.convert(price).format(formatter) : undefined;
 
@@ -46,7 +54,7 @@ const FlameContent = () => {
                 fiatAmount={fiatAmount}
                 actions={<FlameActions />}
             />
-            <FlameHistoryList />
+            <FlameHistoryList onNavigateToActivityItem={onNavigateToActivityItem} />
         </>
     );
 };

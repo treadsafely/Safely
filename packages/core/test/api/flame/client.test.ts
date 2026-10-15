@@ -61,4 +61,65 @@ describe('FlameApi', () => {
             FlameApiError
         );
     });
+
+    it('requests proofs for every id and returns them in request order', async () => {
+        const ids = ['01'.repeat(32), '02'.repeat(32), '03'.repeat(32)];
+        const statuses = [
+            { status: 'unspent', proof: 'AQID' },
+            { status: 'spent', height: 9, txid: 'cd'.repeat(32) },
+            { status: 'unknown' }
+        ];
+        const result = [
+            [ids[2], statuses[2]],
+            [ids[0], statuses[0]],
+            [ids[1], statuses[1]]
+        ];
+        const fetchMock = respond({ jsonrpc: '2.0', id: 1, result });
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(new FlameApi({ rpcUrl: RPC_URL }).proofs(ids)).resolves.toEqual(statuses);
+        expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).toMatchObject({
+            method: 'proofs',
+            params: [ids]
+        });
+    });
+
+    it('rejects proofs that leave a requested id out', async () => {
+        vi.stubGlobal(
+            'fetch',
+            respond({ jsonrpc: '2.0', id: 1, result: [['01'.repeat(32), { status: 'unknown' }]] })
+        );
+
+        await expect(
+            new FlameApi({ rpcUrl: RPC_URL }).proofs(['01'.repeat(32), '02'.repeat(32)])
+        ).rejects.toBeInstanceOf(FlameApiError);
+    });
+
+    it('submits a base64 block tx and returns the hex txid', async () => {
+        const txid = 'ef'.repeat(32);
+        const fetchMock = respond({ jsonrpc: '2.0', id: 1, result: txid });
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(new FlameApi({ rpcUrl: RPC_URL }).submitTx('AQID')).resolves.toBe(txid);
+        expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).toMatchObject({
+            method: 'submit_tx',
+            params: ['AQID']
+        });
+    });
+
+    it('reads a confirmed tx status', async () => {
+        vi.stubGlobal(
+            'fetch',
+            respond({
+                jsonrpc: '2.0',
+                id: 1,
+                result: { status: 'confirmed', height: 12, block: 'aa'.repeat(32) }
+            })
+        );
+
+        await expect(new FlameApi({ rpcUrl: RPC_URL }).txStatus('ef'.repeat(32))).resolves.toEqual({
+            status: 'confirmed',
+            height: 12
+        });
+    });
 });

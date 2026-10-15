@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/core';
 import { type ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
 import { TEST_ID } from '@mobile/shared/constants';
@@ -15,11 +15,11 @@ type QRCodeBlockProps = {
     logo: ReactNode;
     isWatchOnly: boolean;
     isTestnet: boolean;
-    addressLines?: number;
+    addressParts?: { head: string; shared: string; rest: string };
 };
 
 export const QRCodeBlock = (props: QRCodeBlockProps) => {
-    const { address, logo, isWatchOnly, isTestnet, addressLines } = props;
+    const { address, logo, isWatchOnly, isTestnet, addressParts } = props;
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -54,10 +54,16 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     style={styles.address}
                     variant="bodyLMono"
                     color="constantBlack"
-                    numberOfLines={addressLines}
-                    ellipsizeMode="middle"
                 >
-                    {address}
+                    {addressParts ? (
+                        <>
+                            {addressParts.head}
+                            <RNText style={styles.addressShared}>{addressParts.shared}</RNText>
+                            <RNText style={styles.addressRest}>{addressParts.rest}</RNText>
+                        </>
+                    ) : (
+                        address
+                    )}
                 </Text>
             </TouchableOpacity>
             {isWatchOnly && (

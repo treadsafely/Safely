@@ -1,5 +1,5 @@
 import type { PortfolioNetworkType, Recipient } from '@safely/core';
-import { BLOCKCHAIN_NAME, BtcRecipient } from '@safely/core';
+import { BLOCKCHAIN_NAME, BtcRecipient, FlameRecipient } from '@safely/core';
 
 import { detectAddressType } from '../../../../shared/address';
 import { SendFormError } from '../errors';
@@ -8,7 +8,8 @@ import { MIN_RECIPIENT_ADDRESS_LENGTH, createRecipientSchema } from '../utils';
 
 function parseRecipient(
     input: string,
-    networkType: PortfolioNetworkType
+    networkType: PortfolioNetworkType,
+    canSendFlame: boolean
 ): Recipient | SendFormError {
     const detected = detectAddressType(input, networkType);
 
@@ -19,6 +20,10 @@ function parseRecipient(
     switch (detected.blockchain) {
         case BLOCKCHAIN_NAME.BTC:
             return new BtcRecipient(detected.address);
+        case BLOCKCHAIN_NAME.FLAME:
+            return canSendFlame
+                ? new FlameRecipient(detected.address)
+                : SendFormError.UNSUPPORTED_BLOCKCHAIN;
         default:
             return SendFormError.UNSUPPORTED_BLOCKCHAIN;
     }
@@ -40,6 +45,7 @@ export function validateRecipientInput(
     value: string,
     context: {
         activeWalletAddress: string;
+        flameWalletAddress: string | null;
         networkType: PortfolioNetworkType;
         portfolioSuggestions: PortfolioSuggestion[];
         contactSuggestions: ContactSuggestion[];
@@ -58,7 +64,11 @@ export function validateRecipientInput(
         };
     }
 
-    const parsedRecipient = parseRecipient(zodResult.data, context.networkType);
+    const parsedRecipient = parseRecipient(
+        zodResult.data,
+        context.networkType,
+        context.flameWalletAddress !== null
+    );
     if (typeof parsedRecipient === 'string') {
         return { recipient: undefined, error: parsedRecipient };
     }
@@ -87,7 +97,11 @@ export function validateRecipientInput(
           }
         : undefined;
 
-    if (parsedRecipient.address === context.activeWalletAddress) {
+    const ownAddress =
+        parsedRecipient.blockchain === BLOCKCHAIN_NAME.FLAME
+            ? context.flameWalletAddress
+            : context.activeWalletAddress;
+    if (parsedRecipient.address === ownAddress) {
         return { recipient: undefined, error: SendFormError.SELF_TRANSFER, suggestion };
     }
 

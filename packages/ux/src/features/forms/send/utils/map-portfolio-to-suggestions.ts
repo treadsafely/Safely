@@ -1,5 +1,5 @@
 import type { IDerivation, IPortfolioId, Portfolio } from '@safely/core';
-import { isLedgerDerivation, PortfolioType } from '@safely/core';
+import { BLOCKCHAIN_NAME, isLedgerDerivation, PortfolioType } from '@safely/core';
 
 import type { PortfolioSuggestion } from '../types';
 
@@ -11,12 +11,17 @@ export interface ActivePortfolioEntity {
 export function mapPortfolioToSuggestions(
     portfolio: Portfolio,
     active: ActivePortfolioEntity | undefined,
-    derivationName: (index: number) => string
+    derivationName: (index: number) => string,
+    blockchain: BLOCKCHAIN_NAME = BLOCKCHAIN_NAME.BTC
 ): PortfolioSuggestion[] {
     const isActivePortfolio = !!active && portfolio.id.isEq(active.portfolioId);
+    const addressOf = (derivation: IDerivation): string | undefined =>
+        blockchain === BLOCKCHAIN_NAME.FLAME
+            ? derivation.chains.flame?.wallet.address
+            : derivation.chains.btc.wallets[0]?.address;
 
     if (portfolio.type === PortfolioType.WATCH_ONLY) {
-        if (isActivePortfolio) return [];
+        if (isActivePortfolio || blockchain !== BLOCKCHAIN_NAME.BTC) return [];
 
         return [
             {
@@ -34,9 +39,10 @@ export function mapPortfolioToSuggestions(
 
     return derivations
         .filter(d => !(isActivePortfolio && active?.derivation && d.id.isEq(active.derivation.id)))
+        .filter(derivation => addressOf(derivation) !== undefined)
         .map(derivation => ({
             id: derivation.id.toString(),
-            address: derivation.chains.btc.wallets[0]?.address,
+            address: addressOf(derivation)!,
             meta: isPerDerivation
                 ? {
                       name: isLedgerDerivation(derivation)

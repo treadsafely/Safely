@@ -92,6 +92,11 @@
         "maxHint": "All available balance will be sent. Fee included.",
         "remaining": "Remaining:",
         "pending": "Pending:",
+        "memo": {
+            "label": "Encrypted memo",
+            "placeholder": "Optional",
+            "description": "Only the recipient can read it."
+        },
         "addressBook": {
             "label": "Save to your address book",
             "placeholder": "Name",
@@ -453,6 +458,7 @@
         "continueWithLedger": "Continue with Ledger",
         "from": "From",
         "to": "To",
+        "memo": "Encrypted memo",
         "amount": "Amount",
         "allAvailableBalance": "All available balance",
         "networkFee": {
@@ -481,6 +487,9 @@
             "default": "Check details and try again",
             "btc": {
                 "dust": "Transaction value is too small."
+            },
+            "flame": {
+                "inputsSpent": "Your balance has changed. Go back and try again."
             }
         },
         "estimateError": {
@@ -488,6 +497,9 @@
             "default": "Check details and try again",
             "btc": {
                 "outputsAreSpendingMoreThanInputs": "Insufficient balance for transfer amount and fee"
+            },
+            "flame": {
+                "insufficientBalance": "Insufficient balance for transfer amount and fee"
             }
         }
     },
@@ -842,6 +854,11 @@
             "received": "Received",
             "recipient": "Recipient",
             "sender": "Sender",
+            "unknownSender": "Unknown sender",
+            "unknownRecipient": "Unknown recipient",
+            "unknown": "Unknown",
+            "memo": "Encrypted memo",
+            "block": "Block",
             "fee": "Network fee",
             "hash": "Transaction",
             "fiatRateNote": "Fiat value calculated at transaction date.",

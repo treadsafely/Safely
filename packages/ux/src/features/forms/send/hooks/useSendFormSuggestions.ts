@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { PortfolioNetworkType } from '@safely/core';
+import { BLOCKCHAIN_NAME, PortfolioNetworkType } from '@safely/core';
 
 import {
     isDerivableEntities,
@@ -9,6 +9,7 @@ import {
     usePortfolios
 } from '../../../../entities';
 import { useTranslate } from '../../../../shared';
+import { detectAddressType } from '../../../../shared/address';
 import type { ContactSuggestion, PortfolioSuggestion } from '../types';
 import { mapContactToSuggestions, mapPortfolioToSuggestions } from '../utils';
 
@@ -17,7 +18,9 @@ export interface SendFormSuggestions {
     contactSuggestions: ContactSuggestion[];
 }
 
-export function useSendFormSuggestions(): SendFormSuggestions {
+export function useSendFormSuggestions(
+    blockchain: BLOCKCHAIN_NAME = BLOCKCHAIN_NAME.BTC
+): SendFormSuggestions {
     const t = useTranslate();
     const contacts = useContacts();
     const entities = useActivePortfolioEntities();
@@ -38,19 +41,28 @@ export function useSendFormSuggestions(): SendFormSuggestions {
             portfolios
                 .filter(p => p.networkType === networkType)
                 .flatMap(p =>
-                    mapPortfolioToSuggestions(p, activePortfolio, number =>
-                        t('portfolio.ledgerWallet', { number })
+                    mapPortfolioToSuggestions(
+                        p,
+                        activePortfolio,
+                        number => t('portfolio.ledgerWallet', { number }),
+                        blockchain
                     )
                 ),
-        [portfolios, activePortfolio, networkType, t]
+        [portfolios, activePortfolio, networkType, t, blockchain]
     );
 
     const contactSuggestions = useMemo(
         () =>
             networkType === PortfolioNetworkType.TESTNET
                 ? []
-                : contacts.flatMap(c => mapContactToSuggestions(c)),
-        [contacts, networkType]
+                : contacts
+                      .flatMap(c => mapContactToSuggestions(c))
+                      .filter(
+                          s =>
+                              blockchain === BLOCKCHAIN_NAME.BTC ||
+                              detectAddressType(s.address, networkType)?.blockchain === blockchain
+                      ),
+        [contacts, networkType, blockchain]
     );
 
     return { portfolioSuggestions, contactSuggestions };

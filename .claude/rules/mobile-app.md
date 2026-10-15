@@ -28,7 +28,7 @@ and the platforms it actually ships are in its `expo-module.config.json`:
 | `safely-in-app-browser`     | `SFSafariViewController` / Android Custom Tabs                                     |
 | `safely-masked-input`       | `MaskedInput` — native amount input with decimal masking                           |
 | `safely-capture-prevention` | `CapturePreventionView` — hides its subtree from screenshots                       |
-| `safely-flame`              | Flame view key, address, contract decoding and note opening over the prebuilt `@runflame/wallet-rn`, installed as `globalThis.flameSdk` |
+| `safely-flame`              | Flame view key, address, contract decoding, note opening and transfer building over the prebuilt `@runflame/wallet-rn`, installed as `globalThis.flameSdk` |
 | `safely-push-content`       | `setWalletNames` — `target_ref → wallet name` dictionary shared with the push pipeline |
 
 `safely-capture-prevention` is the exception: `platforms: ["ios"]`, no `android/` at all — the facade
@@ -76,14 +76,18 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   podspec one directory down (or at `apple.podspecPath`), and the package keeps it at its root, so
   Expo skips it on iOS and `use_native_modules!` picks it up. Android goes through Expo as the Gradle
   project `:runflame-wallet-rn`, the name `android/build.gradle` depends on.
-- Only `viewKey` takes the portfolio's 64-byte BIP-39 seed (a `Uint8Array`, never the mnemonic) and
-  returns the account's bech32f view key; `address` and `openNotes` build a view wallet
-  (`Wallet.fromViewKey`) from it. Each call builds its `Wallet` and drops it before returning (Kotlin
+- Only `viewKey` and `buildTransfer` take the portfolio's 64-byte BIP-39 seed (a `Uint8Array`, never
+  the mnemonic); `viewKey` returns the account's bech32f view key, and `address` and `openNotes`
+  build a view wallet (`Wallet.fromViewKey`) from it. `buildTransfer` builds a spend wallet, opens
+  each confidential input's note itself (the blindings never cross the bridge), then proves and signs;
+  binary inputs travel as three parallel arrays and the rest as one `TransferPlan` record (outputs as
+  parallel `addresses`/`qtys`/`memos`, an empty memo for none), because
+  Kotlin Expo functions take at most 8 arguments. Each call builds its `Wallet` and drops it before returning (Kotlin
   also zeroes its seed copy). Never log the seed or the view key — the view key reads every amount
   and memo. The library's `reason` is passed through as is — log it only through
   `filterSensitiveData`.
-- Bridge encoding: u64 amounts travel as decimal strings (a JS number loses precision above 2^53)
-  and `safely-flame/index.ts` turns them into `bigint`; a missing note travels as an empty
+- Bridge encoding: u64 amounts travel as decimal strings in both directions (a JS number loses
+  precision above 2^53) and `safely-flame/index.ts` converts them from and to `bigint`; a missing note travels as an empty
   `Uint8Array`, because Expo has no optional array elements. Seeds and contracts are copied into
   plain `Uint8Array`s first, as in `safely-crypto` (a polyfilled `Buffer` crashes the bridge); the
   facade zeroes its own seed copy once native returns, core zeroes the original.
@@ -94,8 +98,9 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   a new testnet portfolio. Portfolios created before v6, derivations added later, mainnet, Ledger and
   watch-only portfolios have no flame. The chain uses the receiving path `{0,0}`. Balance and history
   count only the native flavor (`Scalar::ONE`, `FLAME_NATIVE_FLAVOR`); FLM has 8 decimals. The node
-  URL is `blockchains.flame.<network>.rpc_url` from the boot config; without it the FLM asset is
-  hidden.
+  URL is `blockchains.flame.<network>.rpc_url` from the boot config; until the config serves it,
+  `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet, so the FLM asset is
+  always shown there.
 - `chains.flame` holds `{ viewKey, address, predicate }`, all computed once at portfolio creation
   (the mnemonic is already in hand): the chain builds `wallet` from them synchronously, so the
   address needs no native call at startup, and scans with the view key, so the seed is never touched
@@ -106,9 +111,39 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   native code reports any per-item exception the same way, so a transient one would stick.
 - The home list renders BTC, then FLM, from `useActiveBtcRatedAmount` / `useActiveFlameRatedAmount`
   — no sorting, no combined asset list; the FLM cell is hidden when there is no flame source or node,
-  or the scan failed. Totals and the send flow count BTC only (FLM has no fiat price).
+  or the scan failed. Totals count BTC only (FLM has no fiat price).
+- **Sending FLM.** A testnet address is bech32m with HRP `tf` and a 64-byte payload (112 characters,
+  past bech32's 90-character limit); `FlameAddress` validates it in JS, so the form stays synchronous.
+  The mainnet HRP is unknown, so no mainnet address validates. A Flame recipient makes the amount
+  step pick FLM, and a zero-rated asset (FLM, any testnet asset) is entered in crypto only. Send from
+  the FLM screen opens the form with `suggestionsBlockchain: FLAME`: wallet suggestions carry each
+  derivation's Flame address and drop wallets without one; a typed BTC address still sends BTC.
+  `FlameEstimator` spends the largest readable native-flavor outputs first, pays the fixed
+  `FLAME_TRANSFER_FEE` (1000 sparks; the node has no fee market yet) with a `FLAME_TRANSFER_GAS`
+  limit of 1,000,000, and returns change to the wallet's own address `{0,0}`, the only predicate the
+  scan watches. A proof outlives its tip by one block, so `FlameTransactionTemplate.send` fetches
+  `proofs`, builds and calls `submit_tx` back to back, and rebuilds once on `MEMPOOL_REJECTED`.
+  The amount step shows an encrypted memo field for a Flame recipient only (`AmountView.setMemo`);
+  the form clamps it to `FLAME_MEMO_MAX_BYTES` (8102 UTF-8 bytes, the library's limit) and drops it
+  when the recipient changes. The template puts it on the recipient's output only, never on change;
+  the library seals it into that output's note, so only the recipient's view key reads it.
+  The sender therefore can't read its own memo back from the chain: after a successful send it is
+  kept in `AccountLocalStorage` (`flameSentMemos`, `txid → memo`, plaintext, this device only — not
+  synced, gone after a reinstall). History shows a received memo from the opened note
+  (`FlameOutputAmount.memo` → `FlameActivityItem.memo`) and fills a sent one from that local map;
+  the confirmation screen shows the memo being sent.
+  Spent inputs stay unspent in the scan until the transfer confirms: `pending-spends.ts` holds them
+  back from the next estimate in memory, until the scan reports them spent. There is no explorer
+  link and no contact saving for a Flame recipient (contacts restore every address as BTC).
 - History marks a transaction as sent when it spends any of the wallet's outputs, even unreadable
   ones — not when the spent sum is positive.
+- **No counterparty in Flame history.** `scan` returns only outputs on the wallet's own predicate,
+  and the chain holds predicates, not addresses, so neither the sender of a receipt nor the
+  recipient of a send is known: the list and `FlameTransactionScreen` show an "Unknown
+  sender/recipient" placeholder. The predicate is the address's spending key `S`, and its tracking
+  address is `bech32m("tc", S)` (`FlameAddress.toTracking`, no native call). The receive modal
+  bolds the data the full address shares with it and dims the rest (`FlameAddress.splitByTracking`): 51 characters,
+  occasionally 52 when the view key's first bits happen to match.
 - Core tests run with a fake `flameSdk` installed by `packages/core/test/setup-crypto.ts` (creating a
   testnet portfolio calls `viewKey` and `address`); Flame-specific tests swap in their own mock.
 - Open: release builds with R8 have not been tried; JNA and the generated `com.flame.wallet` classes

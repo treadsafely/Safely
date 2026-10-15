@@ -1,6 +1,6 @@
 import type {
-    BtcAssetAmount,
     Contact,
+    CryptoAssetAmount,
     CryptoAsset,
     NumberFormatter,
     PortfolioNetworkType,
@@ -29,7 +29,7 @@ export interface CreateContactInput {
     }[];
 }
 
-export type FetchMaxValue = (recipient: Recipient) => Promise<BtcAssetAmount | undefined>;
+export type FetchMaxValue = (recipient: Recipient) => Promise<CryptoAssetAmount | undefined>;
 
 export interface SendFormMachineInput {
     resolvedInitialValues: SendFormInitialValues | undefined;
@@ -39,6 +39,7 @@ export interface SendFormMachineInput {
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
     activeWallet: PortfolioSuggestion;
+    flameWalletAddress: string | null;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: () => boolean;
@@ -55,7 +56,7 @@ export interface SendFormMachineContext {
         recipient: Recipient | undefined;
         amount: AmountWithInputType<CryptoAsset> | undefined;
         asset: RatedCryptoAssetAmount | undefined;
-        maxValue: BtcAssetAmount | undefined;
+        maxValue: CryptoAssetAmount | undefined;
     };
     errors: SendFormErrors;
     suggestion: SendSuggestionState;
@@ -66,6 +67,7 @@ export interface SendFormMachineContext {
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
     activeWallet: PortfolioSuggestion;
+    flameWalletAddress: string | null;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: SendFormMachineInput['shouldResetForm'];
@@ -84,6 +86,7 @@ export type SendFormEvent =
     | { type: 'PASTE_AMOUNT'; raw: string }
     | { type: 'SET_AMOUNT_INPUT_TYPE'; value: AmountInputType }
     | { type: 'SET_ASSET'; assetId: string }
+    | { type: 'SET_MEMO'; value: string }
     | { type: 'ENTER_MAX' }
     | { type: 'EXIT_MAX' }
     | { type: 'NEXT' }

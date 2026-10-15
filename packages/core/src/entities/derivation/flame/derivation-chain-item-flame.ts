@@ -5,7 +5,12 @@ import type { SFlameAccountChainItem } from '@safely/sync-storage';
 import { FlameWalletId } from './flame-wallet-id';
 import type { IDerivationChainItemFlame } from './I-derivation-chain-item-flame';
 import type { FlameOutputAmount, FlameOutputBytes, FlameWallet } from './I-flame-wallet';
-import type { FlameNetwork, FlameNoteOpening } from '../../../di/safely-flame';
+import type {
+    FlameBuiltTransfer,
+    FlameNetwork,
+    FlameNoteOpening,
+    FlameTransferRequest
+} from '../../../di/safely-flame';
 import { assertUnreachable } from '../../../utils/types';
 import { FLAME_RECEIVING_KEY_PATH, flameNetworkByPortfolioNetworkType } from '../../blockchain';
 import type { ISeedProducer } from '../../seed/I-seed-producer';
@@ -13,7 +18,13 @@ import type { Derivation } from '../derivation';
 
 function amountFromOpening(opening: FlameNoteOpening): FlameOutputAmount {
     if (opening.opened) {
-        return { status: 'counted', qty: opening.qty, flavor: bytesToHex(opening.flavor) };
+        const memo = Buffer.from(opening.memo).toString('utf8');
+        return {
+            status: 'counted',
+            qty: opening.qty,
+            flavor: bytesToHex(opening.flavor),
+            ...(memo ? { memo } : {})
+        };
     }
 
     const { failure } = opening;
@@ -64,13 +75,18 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
 
     private readonly amountsCache = new Map<string, FlameOutputAmount>();
 
+    private readonly seedProducer: ISeedProducer;
+
     constructor({
         derivationRef,
-        sChainItem
+        sChainItem,
+        seedProducer
     }: {
         derivationRef: Derivation;
         sChainItem: SFlameAccountChainItem;
+        seedProducer: ISeedProducer;
     }) {
+        this.seedProducer = seedProducer;
         this.id = new FlameWalletId(derivationRef.id);
         this.network = flameNetworkByPortfolioNetworkType(derivationRef.portfolioRef.networkType);
         this.viewKey = sChainItem.viewKey;
@@ -152,6 +168,20 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
                 fresh.get(output.id) ?? this.amountsCache.get(output.id)!
             ])
         );
+    }
+
+    public async buildTransfer(request: FlameTransferRequest): Promise<FlameBuiltTransfer> {
+        const seed = await this.seedProducer.getSeed();
+        try {
+            return await globalThis.flameSdk.buildTransfer(
+                seed,
+                this.network,
+                FLAME_RECEIVING_KEY_PATH,
+                request
+            );
+        } finally {
+            seed.fill(0);
+        }
     }
 
     public toJSON(): SFlameAccountChainItem {

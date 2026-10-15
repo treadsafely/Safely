@@ -7,11 +7,17 @@ import { View } from 'react-native';
 import { State } from 'react-native-ble-plx';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { LedgerSigningCancelledError, PortfolioType } from '@safely/core';
+import {
+    BLOCKCHAIN_NAME,
+    FLAME_ASSET,
+    LedgerSigningCancelledError,
+    PortfolioType
+} from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
     useActiveBtcWallet,
     useActiveFiat,
+    useActiveFlameSource,
     useActivePortfolio,
     useActivePortfolioLedgerIndex,
     useActiveWalletMeta,
@@ -22,6 +28,7 @@ import {
     useSendAssetTransfer
 } from '@safely/ux';
 
+import { FlameLogo } from '@mobile/entities/flame';
 import { getBluetoothState, useBleManager } from '@mobile/features/ledger';
 import { TransactionFee } from '@mobile/screens/ConfirmationScreen/components/TransactionFee';
 import { TransactionSendResult } from '@mobile/screens/ConfirmationScreen/components/TransactionSendResult';
@@ -48,6 +55,11 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     const navigation = useNavigation();
     const getBleManager = useBleManager();
     const btcWallet = useActiveBtcWallet();
+    const flameSource = useActiveFlameSource();
+    const fromAddress =
+        confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME
+            ? (flameSource?.chain.wallet.address ?? '')
+            : btcWallet.address;
     const activePortfolio = useActivePortfolio();
     const activeWalletMeta = useActiveWalletMeta();
     const activeLedgerIndex = useActivePortfolioLedgerIndex();
@@ -58,7 +70,8 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     const { data: txTemplate, error: txTemplateError } = useEstimateAssetTransfer(
         confirmationResult,
         {
-            enabled: confirmationState.type !== 'success'
+            // Sending marks the inputs as spent, so a re-estimate from here would see too little balance
+            enabled: confirmationState.type === 'idle'
         }
     );
     const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
@@ -124,7 +137,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     }, [navigation, onSend, getBleManager]);
 
     const displayState = useMemo(() => {
-        if (txTemplateError) {
+        if (txTemplateError && confirmationState.type === 'idle') {
             return { type: 'estimateError' as const, error: txTemplateError };
         }
 
@@ -150,7 +163,13 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                         style={styles.titleWithLogoContainer}
                     >
                         <View style={styles.assetLogoContainer}>
-                            {asset.image && <Image source={asset.image} style={styles.assetLogo} />}
+                            {asset.id.isEq(FLAME_ASSET.id) ? (
+                                <FlameLogo size="xlarge" />
+                            ) : (
+                                asset.image && (
+                                    <Image source={asset.image} style={styles.assetLogo} />
+                                )
+                            )}
                         </View>
                         <Text style={styles.title} variant="titleM">
                             {t('confirmation.title', {
@@ -192,7 +211,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                             title={t('confirmation.from')}
                             value={
                                 <Wallet
-                                    address={btcWallet.address}
+                                    address={fromAddress}
                                     meta={{
                                         kind: 'portfolio',
                                         meta: activeWalletMeta,
@@ -215,6 +234,14 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 />
                             }
                         />
+                        {confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME &&
+                            !!confirmationResult.memo && (
+                                <TransactionCell
+                                    title={t('confirmation.memo')}
+                                    value={confirmationResult.memo}
+                                    valueProps={{ numberOfLines: 4 }}
+                                />
+                            )}
                     </List.Group>
                     <List.Group style={styles.listGroup}>
                         {confirmationResult.isMax ? (
@@ -231,7 +258,10 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 inputType={confirmationResult.amount.inputType}
                             />
                         )}
-                        <TransactionFee estimation={txTemplate?.estimation} />
+                        <TransactionFee
+                            estimation={txTemplate?.estimation}
+                            blockchain={confirmationResult.blockchain}
+                        />
                     </List.Group>
                     {!!sendResult && (
                         <List.Group style={styles.listGroup}>

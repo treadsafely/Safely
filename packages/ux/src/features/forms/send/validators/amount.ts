@@ -1,5 +1,11 @@
-import type { BtcAsset, CryptoAsset, NumberFormatter, RatedCryptoAssetAmount } from '@safely/core';
-import { BTC_ASSET, CryptoAssetAmount, FiatAssetAmount } from '@safely/core';
+import type {
+    BtcAsset,
+    CryptoAsset,
+    FlameAsset,
+    NumberFormatter,
+    RatedCryptoAssetAmount
+} from '@safely/core';
+import { BTC_ASSET, CryptoAssetAmount, FiatAssetAmount, FLAME_ASSET } from '@safely/core';
 
 import { SendFormError } from '../errors';
 import type {
@@ -14,6 +20,17 @@ export function isBtcAmountWithInputType(
     amount: AmountWithInputType<CryptoAsset>
 ): amount is AmountWithInputType<BtcAsset> {
     return amount.cryptoAssetAmount.asset.id.isEq(BTC_ASSET.id);
+}
+
+export function isFlameAmountWithInputType(
+    amount: AmountWithInputType<CryptoAsset>
+): amount is AmountWithInputType<FlameAsset> {
+    return amount.cryptoAssetAmount.asset.id.isEq(FLAME_ASSET.id);
+}
+
+// FLM and every testnet asset are rated at zero, so a fiat amount can't be converted into them
+export function hasFiatPrice(asset: RatedCryptoAssetAmount | undefined): boolean {
+    return !!asset?.price && !asset.price.value.eq(0);
 }
 
 // TODO CRITICAL for multichain: Get rid of default decimals

@@ -7,6 +7,8 @@ import { styles } from './FlameLogo.styles';
 
 type FlameLogoProps = UnistylesVariants<typeof styles>;
 
+const ICON_SIZE = { medium: 32, large: 32, xlarge: 48 } as const;
+
 export const FlameLogo = (props: FlameLogoProps) => {
     const { background = 'brand', size = 'medium' } = props;
 
@@ -14,7 +16,7 @@ export const FlameLogo = (props: FlameLogoProps) => {
 
     return (
         <View style={styles.container}>
-            <Icon icon={Flame32} />
+            <Icon icon={Flame32} size={ICON_SIZE[size]} />
         </View>
     );
 };

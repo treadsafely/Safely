@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { SnapshotFrom } from 'xstate';
 
-import { assertUnreachable } from '@safely/core';
+import { assertUnreachable, BLOCKCHAIN_NAME } from '@safely/core';
 
 import type { createSendFormMachine } from '../machine/machine';
 import type { SendSuggestions } from '../types';
@@ -50,6 +50,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
         pasteAmount,
         setAmountInputType,
         setAsset,
+        setMemo,
         enterMax,
         exitMax,
         selectSuggestion,
@@ -117,6 +118,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
     const ctxParsedAmount = snapshot.context.parsed.amount;
     const ctxParsedAsset = snapshot.context.parsed.asset;
     const ctxParsedMaxValue = snapshot.context.parsed.maxValue;
+    const memoSetter = recipientBlockchain === BLOCKCHAIN_NAME.FLAME ? setMemo : undefined;
 
     return useMemo<SendFormView>(() => {
         if (snapshot.matches('restoring')) return { state: 'restoring' };
@@ -139,6 +141,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
                 selectedSuggestionId,
                 selectedSuggestionSource,
                 fromMeta,
+                canSaveContact: ctxParsedRecipient?.blockchain === BLOCKCHAIN_NAME.BTC,
                 setRecipient,
                 setAddressBookName,
                 selectSuggestion
@@ -168,7 +171,8 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
                 values: {
                     amount: ctxValues.amount,
                     assetId: ctxValues.assetId,
-                    amountInputType: ctxValues.amountInputType
+                    amountInputType: ctxValues.amountInputType,
+                    memo: ctxValues.memo
                 },
                 errors: { amount: ctxErrors.amount, asset: ctxErrors.asset },
                 parsed: {
@@ -184,6 +188,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
                 pasteAmount,
                 setAmountInputType,
                 setAsset,
+                setMemo: memoSetter,
                 prev: goPrev
             };
 
@@ -225,6 +230,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
         pasteAmount,
         setAmountInputType,
         setAsset,
+        memoSetter,
         enterMax,
         exitMax,
         goPrev,

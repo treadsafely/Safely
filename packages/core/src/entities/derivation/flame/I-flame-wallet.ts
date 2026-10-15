@@ -9,7 +9,7 @@ export interface FlameWallet {
 }
 
 export type FlameOutputAmount =
-    | { status: 'counted'; qty: bigint; flavor: string }
+    | { status: 'counted'; qty: bigint; flavor: string; memo?: string }
     | { status: 'unreadable' }
     | { status: 'flagged' }
     | { status: 'notToken' };

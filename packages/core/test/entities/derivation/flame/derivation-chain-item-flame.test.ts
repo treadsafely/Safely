@@ -60,7 +60,11 @@ function mockSafelyFlame() {
                         : { opened: false as const, failure: 'missing' as const }
                 )
             )
-        )
+        ),
+        buildTransfer: vi.fn<SafelyFlame['buildTransfer']>(seed => {
+            seeds.push(new Uint8Array(seed));
+            return Promise.resolve({ txid: bytes(0x11), blockTx: bytes(0x22, 4) });
+        })
     };
     return { flame, seeds };
 }
@@ -294,6 +298,29 @@ describe('DerivationChainItemFlame', () => {
         });
     });
 
+    it('reads the memo of an opened note as UTF-8', async () => {
+        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        mocked.flame.openNotes.mockResolvedValueOnce([
+            {
+                opened: true,
+                qty: 5n,
+                flavor: bytes(0xf),
+                memo: Uint8Array.from(Buffer.from('за кофе', 'utf8'))
+            }
+        ]);
+
+        const amounts = await chain.readAmounts([
+            { id: 'opened', contract: bytes(2), note: bytes(4) }
+        ]);
+
+        expect(amounts.get('opened')).toEqual({
+            status: 'counted',
+            qty: 5n,
+            flavor: '0f'.repeat(32),
+            memo: 'за кофе'
+        });
+    });
+
     it('decodes a contract again after a failed decode', async () => {
         const chain = (await createPortfolio()).derivations[0].chains.flame!;
         const outputs = [{ id: 'flaky', contract: bytes(1), note: null }];
@@ -319,6 +346,47 @@ describe('DerivationChainItemFlame', () => {
 
         await expect(
             DerivationChainItemFlame.createSChainItem(seedProducer, 'testnet')
+        ).rejects.toThrow('native failure');
+
+        expect(seed.every(byte => byte === 0)).toBe(true);
+    });
+
+    it('builds a transfer with the portfolio seed on the receiving path', async () => {
+        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const request = {
+            inputs: [{ contract: bytes(1), note: null, proof: bytes(3) }],
+            outputs: [{ address: 'tf1recipient', qty: 5n }],
+            fee: 1_000n,
+            gas: 1_000_000n
+        };
+
+        await expect(chain.buildTransfer(request)).resolves.toEqual({
+            txid: bytes(0x11),
+            blockTx: bytes(0x22, 4)
+        });
+
+        expect(mocked.flame.buildTransfer).toHaveBeenCalledWith(
+            expect.any(Uint8Array),
+            'testnet',
+            { branch: 0, index: 0 },
+            request
+        );
+        expect(mocked.seeds.at(-1)).toEqual(mocked.seeds[0]);
+    });
+
+    it('wipes the seed once the transfer is built, even on failure', async () => {
+        const portfolio = await createPortfolio();
+        const derivation = portfolio.derivations[0];
+        const seed = Buffer.alloc(64, 9);
+        const chain = new DerivationChainItemFlame({
+            derivationRef: derivation,
+            sChainItem: derivation.chains.flame!.toJSON(),
+            seedProducer: { getSeed: () => Promise.resolve(seed) }
+        });
+        mocked.flame.buildTransfer.mockRejectedValueOnce(new Error('native failure'));
+
+        await expect(
+            chain.buildTransfer({ inputs: [], outputs: [], fee: 0n, gas: 0n })
         ).rejects.toThrow('native failure');
 
         expect(seed.every(byte => byte === 0)).toBe(true);

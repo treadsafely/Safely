@@ -26,6 +26,7 @@ export type ActivityItemProps = {
     timestampLabel: string | null;
     background: 'tertiary' | 'secondary';
     counterparty: ActivityItemCounterparty;
+    note?: string | null;
     onPress?: () => void;
 };
 
@@ -72,6 +73,7 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
         timestampLabel,
         background,
         counterparty,
+        note,
         onPress
     } = props;
     const amountOrder = useTransactionHistoryAmountOrder();
@@ -107,6 +109,11 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
                     <Counterparty counterparty={counterparty} />
                     <Cell.Subvalue>{secondaryAmount}</Cell.Subvalue>
                 </Cell.Row>
+                {!!note && (
+                    <Cell.Row>
+                        <Cell.Subtitle numberOfLines={2}>{note}</Cell.Subtitle>
+                    </Cell.Row>
+                )}
             </Cell.Content>
         </Cell>
     );

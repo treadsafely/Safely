@@ -1,7 +1,8 @@
 import * as x from 'xstate';
 import { assertEvent, assign } from 'xstate';
 
-import type { BtcAssetAmount, Contact } from '@safely/core';
+import type { Contact, CryptoAssetAmount } from '@safely/core';
+import { BLOCKCHAIN_NAME, clampFlameMemo } from '@safely/core';
 
 import { SendFormError } from '../errors';
 import { SuggestionSource } from '../types';
@@ -22,16 +23,50 @@ import {
     withResetDependentValues
 } from './context';
 import { guards } from './guards';
+import type { SendFormResult } from '../types';
 import type { SendFormEvent, SendFormMachineContext, SendFormMachineInput } from './types';
 import {
     calculateMaxAmount,
     formatAmountForDisplay,
+    hasFiatPrice,
     isBtcAmountWithInputType,
+    isFlameAmountWithInputType,
     reformatForInputType,
     resolveAmountDecimals,
     validateAmount
 } from '../validators/amount';
 import { validateRecipientInput } from '../validators/recipient';
+
+function buildSendFormResult(context: SendFormMachineContext): SendFormResult | undefined {
+    const { recipient, amount } = context.parsed;
+    if (!recipient || !amount) return undefined;
+
+    const isMax = context.values.isMax;
+    const recipientMeta = computeRecipientMeta(
+        context.suggestion.selectedId,
+        context.portfolioSuggestions,
+        context.contactSuggestions
+    );
+    switch (recipient.blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            return isBtcAmountWithInputType(amount)
+                ? { blockchain: BLOCKCHAIN_NAME.BTC, recipient, amount, isMax, recipientMeta }
+                : undefined;
+        case BLOCKCHAIN_NAME.FLAME:
+            return isFlameAmountWithInputType(amount)
+                ? {
+                      blockchain: BLOCKCHAIN_NAME.FLAME,
+                      recipient,
+                      amount,
+                      isMax,
+                      memo: context.values.memo,
+                      recipientMeta
+                  }
+                : undefined;
+        default:
+            return undefined;
+    }
+}
 
 export const createSendFormMachine = () =>
     x
@@ -55,6 +90,7 @@ export const createSendFormMachine = () =>
 
                     const result = validateRecipientInput(event.value, {
                         activeWalletAddress: context.activeWallet.address,
+                        flameWalletAddress: context.flameWalletAddress,
                         networkType: context.networkType,
                         portfolioSuggestions: context.portfolioSuggestions,
                         contactSuggestions: context.contactSuggestions,
@@ -91,6 +127,7 @@ export const createSendFormMachine = () =>
 
                     const result = validateRecipientInput(picked.address, {
                         activeWalletAddress: context.activeWallet.address,
+                        flameWalletAddress: context.flameWalletAddress,
                         networkType: context.networkType,
                         portfolioSuggestions: context.portfolioSuggestions,
                         contactSuggestions: context.contactSuggestions,
@@ -230,6 +267,11 @@ export const createSendFormMachine = () =>
                         parsed: { ...context.parsed, amount: result.parsed }
                     };
                 }),
+                handleSetMemo: assign(({ context, event }) => {
+                    assertEvent(event, 'SET_MEMO');
+
+                    return { values: { ...context.values, memo: clampFlameMemo(event.value) } };
+                }),
                 persistAmountInputType: ({ context, event }) => {
                     assertEvent(event, 'SET_AMOUNT_INPUT_TYPE');
                     context.persistAmountInputType(event.value);
@@ -269,6 +311,9 @@ export const createSendFormMachine = () =>
                     return {
                         values: {
                             ...context.values,
+                            amountInputType: hasFiatPrice(parsedAsset)
+                                ? context.values.amountInputType
+                                : 'crypto',
                             assetId: event.assetId,
                             amount: hadAmount ? '' : context.values.amount,
                             isMax: hadAmount ? false : context.values.isMax
@@ -307,7 +352,7 @@ export const createSendFormMachine = () =>
                     };
                 }),
                 assignMaxValue: assign(
-                    ({ context }, params: { value: BtcAssetAmount | undefined }) => ({
+                    ({ context }, params: { value: CryptoAssetAmount | undefined }) => ({
                         parsed: { ...context.parsed, maxValue: params.value }
                     })
                 ),
@@ -335,29 +380,12 @@ export const createSendFormMachine = () =>
                     }
                 ),
                 callOnSubmit: ({ context }) => {
-                    const { parsed, suggestion } = context;
-                    if (
-                        !parsed.recipient ||
-                        !parsed.amount ||
-                        !isBtcAmountWithInputType(parsed.amount)
-                    ) {
+                    const result = buildSendFormResult(context);
+                    if (!result) {
                         return;
                     }
 
-                    context.onSubmit(
-                        {
-                            blockchain: parsed.recipient.blockchain,
-                            recipient: parsed.recipient,
-                            amount: parsed.amount,
-                            isMax: context.values.isMax,
-                            recipientMeta: computeRecipientMeta(
-                                suggestion.selectedId,
-                                context.portfolioSuggestions,
-                                context.contactSuggestions
-                            )
-                        },
-                        () => undefined
-                    );
+                    context.onSubmit(result, () => undefined);
                 },
                 resetAll: assign(({ context }) => buildEmptyContext(context)),
                 resolveDefaultAssetForChain: assign(({ context }) => {
@@ -376,7 +404,13 @@ export const createSendFormMachine = () =>
 
                     return {
                         parsed: { ...context.parsed, asset: ratedAsset },
-                        values: { ...context.values, assetId: defaultAsset.id.toString() }
+                        values: {
+                            ...context.values,
+                            assetId: defaultAsset.id.toString(),
+                            amountInputType: hasFiatPrice(ratedAsset)
+                                ? context.values.amountInputType
+                                : 'crypto'
+                        }
                     };
                 }),
                 applyInitialAmountIfNeeded: assign(({ context }) => {
@@ -586,11 +620,16 @@ export const createSendFormMachine = () =>
                                     target: '.routing'
                                 },
                                 SET_AMOUNT_INPUT_TYPE: {
+                                    guard: 'canSwitchAmountInputType',
                                     actions: ['handleSetAmountInputType', 'persistAmountInputType']
                                 },
                                 ENTER_MAX: {
                                     guard: 'canEnterMax',
                                     target: '.max'
+                                },
+                                SET_MEMO: {
+                                    guard: 'isFlameRecipient',
+                                    actions: 'handleSetMemo'
                                 }
                             },
                             states: {
@@ -640,6 +679,7 @@ export const createSendFormMachine = () =>
                                             target: 'idle'
                                         },
                                         SET_AMOUNT_INPUT_TYPE: {
+                                            guard: 'canSwitchAmountInputType',
                                             actions: [
                                                 'handleSetAmountInputType',
                                                 'enterMax',

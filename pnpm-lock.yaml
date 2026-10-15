@@ -468,6 +468,9 @@ importers:
       '@safely/sync-storage':
         specifier: workspace:*
         version: link:../sync-storage
+      '@scure/base':
+        specifier: 2.2.0
+        version: 2.2.0
       '@scure/bip32':
         specifier: 2.2.0
         version: 2.2.0

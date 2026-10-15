@@ -13,6 +13,7 @@ import { DeviceLinkedModal } from '@mobile/screens/DeviceLinkedModal';
 import { DeviceSupportWizardModal } from '@mobile/screens/DeviceSupportWizardModal';
 import { DeviceUnarchivedSheet } from '@mobile/screens/DeviceUnarchivedSheet';
 import { ExchangeModal } from '@mobile/screens/ExchangeModal';
+import { FlameTransactionScreen } from '@mobile/screens/FlameTransactionScreen';
 import { LinkDeviceWarningModal } from '@mobile/screens/LinkDeviceWarningModal';
 import { MoreOptionsSheet } from '@mobile/screens/MoreOptionsSheet';
 import { NewContactModal } from '@mobile/screens/NewContactModal';
@@ -83,6 +84,7 @@ export const RootStack = createNativeStackNavigator({
                 },
                 RestrictedFlow: RestrictedStack,
                 TransactionScreen: TransactionScreen,
+                FlameTransactionScreen: FlameTransactionScreen,
                 OrderScreen: OrderScreen,
                 DeviceDetailsScreen: DeviceDetailsScreen,
                 PasscodeVerificationScreen: {

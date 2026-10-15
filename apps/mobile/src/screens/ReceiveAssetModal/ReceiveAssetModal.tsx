@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
 
-import { BTC_ASSET, FLAME_ASSET } from '@safely/core';
+import { BTC_ASSET, FLAME_ASSET, FlameAddress } from '@safely/core';
 import {
     useActiveFlameSource,
     useIsActivePortfolioTestnet,
@@ -23,7 +23,6 @@ import { styles } from './ReceiveAssetModal.styles';
 type ReceiveTab = 'btc' | 'flm';
 
 const GRADIENT_HEIGHT = 600;
-const FLAME_ADDRESS_LINES = 2;
 
 const TABS = [
     { value: 'btc', title: BTC_ASSET.symbol },
@@ -49,6 +48,9 @@ export const ReceiveAssetModal = (props: ReceiveAssetModalProps) => {
     const symbol = isBtc ? BTC_ASSET.symbol : FLAME_ASSET.symbol;
     const name = isBtc ? BTC_ASSET.name : FLAME_ASSET.name;
     const address = isBtc ? receiveInfo.displayAddress : flameSource?.chain.wallet.address;
+    const flameWallet = isBtc ? undefined : flameSource?.chain.wallet;
+    const flameTracking =
+        flameWallet && FlameAddress.toTracking(flameWallet.predicate, flameWallet.network);
 
     return (
         <Screen>
@@ -86,7 +88,11 @@ export const ReceiveAssetModal = (props: ReceiveAssetModalProps) => {
                                 }
                                 isWatchOnly={isBtc && isWatchOnly}
                                 isTestnet={isPortfolioTestnet}
-                                addressLines={isBtc ? undefined : FLAME_ADDRESS_LINES}
+                                addressParts={
+                                    flameTracking
+                                        ? FlameAddress.splitByTracking(address, flameTracking)
+                                        : undefined
+                                }
                             />
                             <ReceiveActions address={address} />
                         </>

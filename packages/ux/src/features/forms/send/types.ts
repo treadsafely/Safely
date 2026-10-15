@@ -1,6 +1,7 @@
 import type {
     BLOCKCHAIN_NAME,
     BtcAsset,
+    FlameAsset,
     ContactMeta,
     CryptoAsset,
     CryptoAssetAmount,
@@ -68,7 +69,16 @@ export type SendFormResultBtc = {
     recipientMeta?: RecipientMeta;
 };
 
-export type SendFormResult = SendFormResultBtc;
+export type SendFormResultFlame = {
+    blockchain: BLOCKCHAIN_NAME.FLAME;
+    recipient: Recipient;
+    amount: AmountWithInputType<FlameAsset>;
+    isMax: boolean;
+    memo: string;
+    recipientMeta?: RecipientMeta;
+};
+
+export type SendFormResult = SendFormResultBtc | SendFormResultFlame;
 
 export enum FormStepNames {
     RECIPIENT = 'recipient',
@@ -92,6 +102,7 @@ export interface SendFormValues {
     amountInputType: AmountInputType;
     isMax: boolean;
     assetId: string;
+    memo: string;
 }
 
 export interface SendFormParsed {

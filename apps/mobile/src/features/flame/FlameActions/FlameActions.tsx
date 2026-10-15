@@ -2,6 +2,9 @@ import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { BLOCKCHAIN_NAME } from '@safely/core';
+import { useAnalytics } from '@safely/ux';
+
 import { Actions, ArrowDown28, ArrowTop28, QrCodeScan28 } from '@mobile/shared/ui';
 
 import { styles } from './FlameActions.styles';
@@ -13,6 +16,15 @@ const noop = () => {};
 export const FlameActions = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
+    const analytics = useAnalytics();
+
+    const handleSend = useCallback(() => {
+        void analytics.trackSendStart();
+        navigation.navigate('SendAssetModal', {
+            screen: 'SendFormModal',
+            params: { suggestionsBlockchain: BLOCKCHAIN_NAME.FLAME }
+        });
+    }, [navigation, analytics]);
 
     const handleReceive = useCallback(() => {
         navigation.navigate('ReceiveAssetModal', { initialTab: 'flm' });
@@ -20,12 +32,7 @@ export const FlameActions = () => {
 
     return (
         <Actions style={styles.container}>
-            <Actions.Button
-                title={t('home.actions.send')}
-                icon={ArrowTop28}
-                onPress={noop}
-                opacity={UNAVAILABLE_OPACITY}
-            />
+            <Actions.Button title={t('home.actions.send')} icon={ArrowTop28} onPress={handleSend} />
             <Actions.Button
                 title={t('home.actions.receive')}
                 icon={ArrowDown28}

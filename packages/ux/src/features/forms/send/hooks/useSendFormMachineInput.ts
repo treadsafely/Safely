@@ -2,6 +2,7 @@ import type { RatedCryptoAssetAmount } from '@safely/core';
 
 import {
     useActiveBtcWallet,
+    useActiveFlameSource,
     useActivePortfolio,
     useActiveWalletMeta,
     useCreateContact,
@@ -39,6 +40,7 @@ export function useSendFormMachineInput(props: UseSendFormMachineInputProps): Se
     const formatter = useNumberFormatter();
     const fetchMaxValue = useFetchMaxValue();
     const activeBtcWallet = useActiveBtcWallet();
+    const flameSource = useActiveFlameSource();
     const activePortfolio = useActivePortfolio();
     const activeWalletMeta = useActiveWalletMeta();
     const { mutateAsync: createContact } = useCreateContact();
@@ -57,6 +59,7 @@ export function useSendFormMachineInput(props: UseSendFormMachineInputProps): Se
             address: activeBtcWallet.address,
             meta: activeWalletMeta
         },
+        flameWalletAddress: flameSource?.chain.wallet.address ?? null,
         networkType: activePortfolio.networkType,
         shouldResetForm: () => shouldResetForm,
         onSubmit,

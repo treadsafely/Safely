@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { FlameActivityItem } from '@safely/core';
-import { ellipsisMiddle } from '@safely/core';
 import { useActiveFlameHistory, useNumberFormatter } from '@safely/ux';
 
 import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
@@ -12,7 +11,12 @@ import { List, Screen } from '@mobile/shared/ui';
 import { HistoryEmptyPlaceholder } from '../HistoryEmptyPlaceholder';
 import { styles } from './FlameHistoryList.styles';
 
-export const FlameHistoryList = () => {
+type FlameHistoryListProps = {
+    onNavigateToActivityItem: (activity: FlameActivityItem) => void;
+};
+
+export const FlameHistoryList = (props: FlameHistoryListProps) => {
+    const { onNavigateToActivityItem } = props;
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
     const { data: history } = useActiveFlameHistory();
@@ -33,10 +37,17 @@ export const FlameHistoryList = () => {
                 formattedFiat={null}
                 timestampLabel={null}
                 background="secondary"
-                counterparty={{ kind: 'address', label: ellipsisMiddle(item.txid, 6) }}
+                counterparty={{
+                    kind: 'address',
+                    label: item.isInitiator
+                        ? t('history.transactionInfo.unknownRecipient')
+                        : t('history.transactionInfo.unknownSender')
+                }}
+                note={item.memo}
+                onPress={() => onNavigateToActivityItem(item)}
             />
         ),
-        [t, formatter]
+        [t, formatter, onNavigateToActivityItem]
     );
 
     if (!history) {

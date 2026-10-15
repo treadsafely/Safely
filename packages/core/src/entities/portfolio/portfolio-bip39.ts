@@ -126,17 +126,19 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         portfolioRef: PortfolioBip39,
         sDerivationVal: SDerivation
     ): Bip39Derivation {
+        const seedProducer = new BtcBip39SeedProducer(mnemonicVault);
         return new Bip39Derivation(portfolioRef, sDerivationVal.index, derivationRef => ({
             btc: new DerivationChainItemBtcSeed({
                 sDerivation: sDerivationVal.chains.btc,
                 derivationIndex: sDerivationVal.index,
-                seedProducer: new BtcBip39SeedProducer(mnemonicVault),
+                seedProducer,
                 derivationRef
             }),
             ...(sDerivationVal.chains.flame && {
                 flame: new DerivationChainItemFlame({
                     derivationRef,
-                    sChainItem: sDerivationVal.chains.flame
+                    sChainItem: sDerivationVal.chains.flame,
+                    seedProducer
                 })
             })
         }));

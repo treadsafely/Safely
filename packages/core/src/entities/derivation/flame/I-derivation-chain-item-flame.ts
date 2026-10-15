@@ -2,7 +2,7 @@ import type { SFlameAccountChainItem } from '@safely/sync-storage';
 
 import type { FlameWalletId } from './flame-wallet-id';
 import type { FlameOutputAmount, FlameOutputBytes, FlameWallet } from './I-flame-wallet';
-import type { FlameNetwork } from '../../../di';
+import type { FlameBuiltTransfer, FlameNetwork, FlameTransferRequest } from '../../../di';
 
 export interface IDerivationChainItemFlame {
     id: FlameWalletId;
@@ -12,6 +12,8 @@ export interface IDerivationChainItemFlame {
     wallet: FlameWallet;
 
     readAmounts(outputs: FlameOutputBytes[]): Promise<Map<string, FlameOutputAmount>>;
+
+    buildTransfer(request: FlameTransferRequest): Promise<FlameBuiltTransfer>;
 
     toJSON(): SFlameAccountChainItem;
 }

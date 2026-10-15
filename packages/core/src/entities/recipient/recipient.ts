@@ -6,13 +6,23 @@ export interface RecipientDisplayData {
 }
 
 export interface Recipient {
-    readonly blockchain: BLOCKCHAIN_NAME.BTC;
+    readonly blockchain: BLOCKCHAIN_NAME;
     readonly address: string;
     getDisplayData(): RecipientDisplayData;
 }
 
 export class BtcRecipient implements Recipient {
     public readonly blockchain = BLOCKCHAIN_NAME.BTC;
+
+    constructor(public readonly address: string) {}
+
+    public getDisplayData(): RecipientDisplayData {
+        return { address: this.address };
+    }
+}
+
+export class FlameRecipient implements Recipient {
+    public readonly blockchain = BLOCKCHAIN_NAME.FLAME;
 
     constructor(public readonly address: string) {}
 

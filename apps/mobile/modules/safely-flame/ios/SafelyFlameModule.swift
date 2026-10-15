@@ -68,6 +68,22 @@ private func uint32(_ value: Int) throws -> UInt32 {
     return result
 }
 
+// u64 amounts arrive as decimal strings for the same reason they leave as strings.
+private func uint64(_ value: String) throws -> UInt64 {
+    guard let result = UInt64(value) else {
+        throw invalidArgument("\(value) is not a uint64")
+    }
+    return result
+}
+
+struct TransferPlan: Record {
+    @Field var addresses: [String] = []
+    @Field var qtys: [String] = []
+    @Field var memos: [Data] = []
+    @Field var fee: String = ""
+    @Field var gas: String = ""
+}
+
 private func noteFailure(_ failure: NoteFailure) -> String {
     switch failure {
     case .missing: return "missing"
@@ -129,6 +145,39 @@ public class SafelyFlameModule: Module {
                         return failureFields(error, ["decoded": false])
                     }
                 }
+            }
+        }
+
+        // A confidential input is opened here, so its blindings never cross the bridge.
+        AsyncFunction("buildTransfer") { (seed: Data, networkName: String, branch: Int, index: Int, contracts: [Data], notes: [Data], proofs: [Data], plan: TransferPlan) -> [String: Any] in
+            outcome {
+                guard contracts.count == notes.count, contracts.count == proofs.count else {
+                    throw invalidArgument("\(contracts.count) contracts for \(notes.count) notes and \(proofs.count) proofs")
+                }
+                guard plan.addresses.count == plan.qtys.count, plan.addresses.count == plan.memos.count else {
+                    throw invalidArgument("\(plan.addresses.count) addresses for \(plan.qtys.count) amounts and \(plan.memos.count) memos")
+                }
+                let wallet = try Wallet(seed: seed, network: network(networkName), nextIndex: 0)
+                let path = KeyPath(branch: try uint32(branch), index: try uint32(index))
+                let inputs = try contracts.indices.map { i -> TransferInput in
+                    let value = try FlameWallet.decodeContract(bytes: contracts[i]).value
+                    var opening: Opening? = nil
+                    if case .confidential = value {
+                        opening = try wallet.openNote(contract: contracts[i], note: notes[i].isEmpty ? nil : notes[i], path: path).opening
+                    }
+                    return TransferInput(contract: contracts[i], proof: proofs[i], path: path, opening: opening)
+                }
+                let outputs = try plan.addresses.indices.map { i in
+                    TransferOutput(address: plan.addresses[i], qty: try uint64(plan.qtys[i]), flavor: nil, memo: plan.memos[i])
+                }
+                let transfer = try wallet.buildTransfer(request: TransferRequest(
+                    inputs: inputs,
+                    outputs: outputs,
+                    fee: try uint64(plan.fee),
+                    gas: try uint64(plan.gas),
+                    locktime: 0
+                ))
+                return ["txid": transfer.txid, "blockTx": transfer.blockTx]
             }
         }
 

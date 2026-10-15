@@ -5,10 +5,15 @@ import com.flame.wallet.FlameException
 import com.flame.wallet.KeyPath
 import com.flame.wallet.Network
 import com.flame.wallet.NoteFailure
+import com.flame.wallet.TransferInput
+import com.flame.wallet.TransferOutput
+import com.flame.wallet.TransferRequest
 import com.flame.wallet.Wallet
 import com.flame.wallet.decodeContract
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
 
 private class FlameFailure(val code: String, val reason: String) : Exception(reason)
 
@@ -43,6 +48,18 @@ private fun network(value: String): Network = when (value) {
 private fun uint32(value: Long): UInt {
     if (value !in 0..UInt.MAX_VALUE.toLong()) throw invalidArgument("$value is not a uint32")
     return value.toUInt()
+}
+
+// u64 amounts arrive as decimal strings for the same reason they leave as strings.
+private fun uint64(value: String): ULong =
+    value.toULongOrNull() ?: throw invalidArgument("$value is not a uint64")
+
+class TransferPlan : Record {
+    @Field val addresses: List<String> = emptyList()
+    @Field val qtys: List<String> = emptyList()
+    @Field val memos: List<ByteArray> = emptyList()
+    @Field val fee: String = ""
+    @Field val gas: String = ""
 }
 
 private fun noteFailure(failure: NoteFailure): String = when (failure) {
@@ -104,6 +121,40 @@ class SafelyFlameModule : Module() {
                     } catch (error: Throwable) {
                         failureFields(error) + ("decoded" to false)
                     }
+                }
+            }
+        }
+
+        // A confidential input is opened here, so its blindings never cross the bridge.
+        AsyncFunction("buildTransfer") { seed: ByteArray, networkName: String, branch: Long, index: Long, contracts: List<ByteArray>, notes: List<ByteArray>, proofs: List<ByteArray>, plan: TransferPlan ->
+            outcome {
+                try {
+                    if (contracts.size != notes.size || contracts.size != proofs.size) {
+                        throw invalidArgument("${contracts.size} contracts for ${notes.size} notes and ${proofs.size} proofs")
+                    }
+                    if (plan.addresses.size != plan.qtys.size || plan.addresses.size != plan.memos.size) {
+                        throw invalidArgument("${plan.addresses.size} addresses for ${plan.qtys.size} amounts and ${plan.memos.size} memos")
+                    }
+                    val path = KeyPath(uint32(branch), uint32(index))
+                    Wallet(seed, network(networkName), 0u).use { wallet ->
+                        val inputs = contracts.indices.map { i ->
+                            val opening = if (decodeContract(contracts[i]).value is ContractValue.Confidential) {
+                                wallet.openNote(contracts[i], notes[i].takeIf { it.isNotEmpty() }, path).opening
+                            } else {
+                                null
+                            }
+                            TransferInput(contracts[i], proofs[i], path, opening)
+                        }
+                        val outputs = plan.addresses.indices.map { i ->
+                            TransferOutput(plan.addresses[i], uint64(plan.qtys[i]), null, plan.memos[i])
+                        }
+                        val transfer = wallet.buildTransfer(
+                            TransferRequest(inputs, outputs, uint64(plan.fee), uint64(plan.gas), 0u)
+                        )
+                        mapOf("txid" to transfer.txid, "blockTx" to transfer.blockTx)
+                    }
+                } finally {
+                    seed.fill(0)
                 }
             }
         }

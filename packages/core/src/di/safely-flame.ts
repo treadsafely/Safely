@@ -42,6 +42,30 @@ export type FlameNoteOpening =
     | { opened: false; failure: FlameNoteFailure }
     | { opened: false; failure: 'error'; reason: string };
 
+export interface FlameTransferInput {
+    contract: Uint8Array;
+    note: Uint8Array | null;
+    proof: Uint8Array;
+}
+
+export interface FlameTransferOutput {
+    address: string;
+    qty: bigint;
+    memo?: Uint8Array;
+}
+
+export interface FlameTransferRequest {
+    inputs: FlameTransferInput[];
+    outputs: FlameTransferOutput[];
+    fee: bigint;
+    gas: bigint;
+}
+
+export interface FlameBuiltTransfer {
+    txid: Uint8Array;
+    blockTx: Uint8Array;
+}
+
 export interface SafelyFlame {
     viewKey(seed: Uint8Array, network: FlameNetwork): Promise<string>;
     address(
@@ -56,6 +80,12 @@ export interface SafelyFlame {
         path: FlameKeyPath,
         notes: FlameNoteInput[]
     ): Promise<FlameNoteOpening[]>;
+    buildTransfer(
+        seed: Uint8Array,
+        network: FlameNetwork,
+        path: FlameKeyPath,
+        request: FlameTransferRequest
+    ): Promise<FlameBuiltTransfer>;
 }
 
 declare global {

@@ -22,6 +22,10 @@ export const styles = StyleSheet.create(theme => ({
                 large: {
                     width: 48,
                     height: 48
+                },
+                xlarge: {
+                    width: 72,
+                    height: 72
                 }
             }
         }

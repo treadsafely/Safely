@@ -6,6 +6,7 @@ import type { TextInput } from 'react-native';
 import { View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 
+import type { BLOCKCHAIN_NAME } from '@safely/core';
 import { assertUnreachable } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
@@ -31,10 +32,11 @@ import type { MaskedInputRef } from '../../../modules/safely-masked-input/src';
 type SendAssetModalProps = StaticScreenProps<{
     address?: string;
     amount?: string;
+    suggestionsBlockchain?: BLOCKCHAIN_NAME;
 }>;
 
 export const SendAssetModal = (props: SendAssetModalProps) => {
-    const { address, amount } = props.route.params ?? {};
+    const { address, amount, suggestionsBlockchain } = props.route.params ?? {};
     const { t } = useTranslation();
     const navigation = useNavigation();
     const pagerRef = useRef<PagerView>(null);
@@ -60,6 +62,7 @@ export const SendAssetModal = (props: SendAssetModalProps) => {
     const view = useSendForm({
         onSubmit: handleSubmit,
         shouldResetForm: false,
+        suggestionsBlockchain,
         initialValues: {
             recipient: address,
             amount

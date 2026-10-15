@@ -1,6 +1,12 @@
 import type { SafelyFlame } from '@safely/core';
 
-import { address, decodeContracts, deriveViewKey, openNotes } from '../modules/safely-flame/src';
+import {
+    address,
+    buildTransfer,
+    decodeContracts,
+    deriveViewKey,
+    openNotes
+} from '../modules/safely-flame/src';
 
 export const flameSdk: SafelyFlame = {
     viewKey: deriveViewKey,
@@ -34,7 +40,19 @@ export const flameSdk: SafelyFlame = {
                 ? { opened: false, failure: 'error', reason: opening.error.message }
                 : opening;
         });
-    }
+    },
+
+    buildTransfer: (seed, network, path, request) =>
+        buildTransfer(seed, network, path.branch, path.index, {
+            inputs: request.inputs,
+            outputs: request.outputs.map(({ address: to, qty, memo }) => ({
+                address: to,
+                qty: qty.toString(),
+                memo: memo ?? new Uint8Array(0)
+            })),
+            fee: request.fee.toString(),
+            gas: request.gas.toString()
+        })
 };
 
 global.flameSdk = flameSdk;

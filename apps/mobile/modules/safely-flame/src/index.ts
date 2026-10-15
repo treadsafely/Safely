@@ -34,6 +34,18 @@ export type FlameNoteOpening =
 export type FlameContractDecoding =
     { decoded: true; info: FlameContractInfo } | { decoded: false; error: FlameError };
 
+export interface FlameTransferPlan {
+    inputs: { contract: Uint8Array; note: Uint8Array | null; proof: Uint8Array }[];
+    outputs: { address: string; qty: string; memo: Uint8Array }[];
+    fee: string;
+    gas: string;
+}
+
+export interface FlameTransfer {
+    txid: Uint8Array;
+    blockTx: Uint8Array;
+}
+
 export type FlameErrorKind =
     | 'invalidMnemonic'
     | 'invalidSeed'
@@ -102,6 +114,22 @@ interface SafelyFlameNativeModule {
         contracts: Uint8Array[],
         notes: Uint8Array[]
     ): Promise<NativeOutcome<NativeNoteOpening[]>>;
+    buildTransfer(
+        seed: Uint8Array,
+        network: FlameNetwork,
+        branch: number,
+        index: number,
+        contracts: Uint8Array[],
+        notes: Uint8Array[],
+        proofs: Uint8Array[],
+        plan: {
+            addresses: string[];
+            qtys: string[];
+            memos: Uint8Array[];
+            fee: string;
+            gas: string;
+        }
+    ): Promise<NativeOutcome<FlameTransfer>>;
 }
 
 const native = requireNativeModule<SafelyFlameNativeModule>('SafelyFlame');
@@ -112,6 +140,14 @@ const UINT32_MAX = 0xffffffff;
 const assertUint32 = (name: string, value: number) => {
     if (!Number.isInteger(value) || value < 0 || value > UINT32_MAX) {
         throw new FlameError('invalidArgument', `${name} ${value} is not a uint32`);
+    }
+};
+
+const UINT64_MAX = 0xffffffffffffffffn;
+
+const assertUint64 = (name: string, value: string) => {
+    if (!/^\d+$/.test(value) || BigInt(value) > UINT64_MAX) {
+        throw new FlameError('invalidArgument', `${name} ${value} is not a uint64`);
     }
 };
 
@@ -195,4 +231,43 @@ export async function openNotes(
             ? { opened: false, failure: 'error', error: toFlameError(opening) }
             : opening
     );
+}
+
+export async function buildTransfer(
+    seed: Uint8Array,
+    network: FlameNetwork,
+    branch: number,
+    index: number,
+    plan: FlameTransferPlan
+): Promise<FlameTransfer> {
+    assertNetwork(network);
+    assertUint32('branch', branch);
+    assertUint32('index', index);
+    plan.outputs.forEach(({ qty }) => assertUint64('qty', qty));
+    assertUint64('fee', plan.fee);
+    assertUint64('gas', plan.gas);
+
+    const plainSeed = toPlainUint8Array(seed);
+    try {
+        return await unwrap(
+            native.buildTransfer(
+                plainSeed,
+                network,
+                branch,
+                index,
+                plan.inputs.map(({ contract }) => toPlainUint8Array(contract)),
+                plan.inputs.map(({ note }) => (note ? toPlainUint8Array(note) : new Uint8Array(0))),
+                plan.inputs.map(({ proof }) => toPlainUint8Array(proof)),
+                {
+                    addresses: plan.outputs.map(({ address }) => address),
+                    qtys: plan.outputs.map(({ qty }) => qty),
+                    memos: plan.outputs.map(({ memo }) => toPlainUint8Array(memo)),
+                    fee: plan.fee,
+                    gas: plan.gas
+                }
+            )
+        );
+    } finally {
+        if (plainSeed !== seed) plainSeed.fill(0);
+    }
 }

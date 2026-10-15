@@ -8,6 +8,7 @@ import type {
 
 export interface FlameOutput {
     id: string;
+    bytes: FlameOutputBytes;
     height: number;
     txid: string;
     spent: { height: number; txid: string } | null;
@@ -20,6 +21,7 @@ export type FlameActivityItem = {
     isInitiator: boolean;
     value: FlameAssetAmount;
     hasUnreadableOutputs: boolean;
+    memo: string | null;
 };
 
 export function toFlameOutputBytes(entry: FlameApiScanEntry): FlameOutputBytes {
@@ -47,6 +49,7 @@ export class FlameOutputs {
         return new FlameOutputs(
             entries.map(entry => ({
                 id: entry.id,
+                bytes: toFlameOutputBytes(entry),
                 height: entry.height,
                 txid: entry.txid,
                 spent: entry.spent ?? null,
@@ -57,6 +60,10 @@ export class FlameOutputs {
 
     public get unspent(): FlameOutput[] {
         return this.outputs.filter(output => output.spent === null && !isForeignToken(output));
+    }
+
+    public get spendable(): FlameOutput[] {
+        return this.unspent.filter(output => countedQty(output) !== null);
     }
 
     public get balance(): FlameAssetAmount {
@@ -77,6 +84,7 @@ export class FlameOutputs {
                 spent: bigint;
                 spendsOwnOutput: boolean;
                 hasUnreadable: boolean;
+                memo: string | null;
             }
         >();
         const entry = (txid: string, height: number) => {
@@ -87,7 +95,8 @@ export class FlameOutputs {
                     received: 0n,
                     spent: 0n,
                     spendsOwnOutput: false,
-                    hasUnreadable: false
+                    hasUnreadable: false,
+                    memo: null
                 };
                 byTxid.set(txid, item);
             }
@@ -101,6 +110,7 @@ export class FlameOutputs {
             const receipt = entry(output.txid, output.height);
             receipt.received += qty ?? 0n;
             receipt.hasUnreadable ||= qty === null;
+            receipt.memo ??= (output.amount.status === 'counted' && output.amount.memo) || null;
 
             if (output.spent) {
                 const spend = entry(output.spent.txid, output.spent.height);
@@ -119,7 +129,8 @@ export class FlameOutputs {
                     height: item.height,
                     isInitiator,
                     value: FlameAssetAmount.fromWeiAmount(value < 0n ? 0n : value),
-                    hasUnreadableOutputs: item.hasUnreadable
+                    hasUnreadableOutputs: item.hasUnreadable,
+                    memo: item.memo
                 };
             })
             .sort((a, b) => b.height - a.height);

@@ -1,5 +1,8 @@
+import { BLOCKCHAIN_NAME } from '@safely/core';
+
 import { SendFormError } from '../errors';
 import type { SendFormEvent, SendFormMachineContext } from './types';
+import { hasFiatPrice } from '../validators/amount';
 
 type GuardArg = { context: SendFormMachineContext; event: SendFormEvent };
 
@@ -24,8 +27,13 @@ export const isAmountStepValid = ({ context }: GuardArg): boolean =>
     !context.errors.amount &&
     !context.errors.asset;
 
+export const isFlameRecipient = ({ context }: GuardArg): boolean =>
+    context.parsed.recipient?.blockchain === BLOCKCHAIN_NAME.FLAME;
+
+// Contacts restore every address as BTC, so a Flame one would come back on the wrong chain
 export const shouldCreateContact = ({ context }: GuardArg): boolean =>
     !!context.parsed.recipient &&
+    context.parsed.recipient.blockchain === BLOCKCHAIN_NAME.BTC &&
     context.values.addressBookName.trim().length > 0 &&
     !context.suggestion.selectedId;
 
@@ -49,6 +57,10 @@ export const isAmountValueEmpty = ({ event }: GuardArg): boolean =>
 export const isAmountContextEmpty = ({ context }: GuardArg): boolean =>
     context.values.amount === '' && !context.parsed.amount;
 
+export const canSwitchAmountInputType = ({ context, event }: GuardArg): boolean =>
+    event.type === 'SET_AMOUNT_INPUT_TYPE' &&
+    (event.value === 'crypto' || hasFiatPrice(context.parsed.asset));
+
 export const isNewSuggestion = ({ context, event }: GuardArg): boolean =>
     event.type === 'SELECT_SUGGESTION' && context.suggestion.selectedId !== event.id;
 
@@ -59,6 +71,7 @@ export const guards = {
     hasRecipientError,
     isRecipientStepValid,
     isAmountStepValid,
+    isFlameRecipient,
     shouldCreateContact,
     canEnterMax,
     shouldRestoreMax,
@@ -66,5 +79,6 @@ export const guards = {
     isAmountValueUnchanged,
     isAmountValueEmpty,
     isAmountContextEmpty,
-    isNewSuggestion
+    isNewSuggestion,
+    canSwitchAmountInputType
 };

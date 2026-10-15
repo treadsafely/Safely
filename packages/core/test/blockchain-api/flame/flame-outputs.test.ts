@@ -62,6 +62,19 @@ describe('FlameOutputs', () => {
         ]);
     });
 
+    it('carries the memo of a received output into its transaction', () => {
+        const withMemo = FlameOutputs.fromScan(
+            [entry('1', 10, 'a'), entry('2', 10, 'a'), entry('3', 12, 'b')],
+            new Map<string, FlameOutputAmount>([
+                [hex('1'), counted(1n)],
+                [hex('2'), { ...counted(2n), memo: 'rent' }],
+                [hex('3'), counted(3n)]
+            ])
+        );
+
+        expect(withMemo.history.map(item => item.memo)).toEqual([null, 'rent']);
+    });
+
     it('shows a transaction spending an unreadable own output as sent, not received', () => {
         const spentUnreadable = FlameOutputs.fromScan(
             [entry('7', 50, 'g', { height: 60, txid: 'h' }), entry('8', 60, 'h')],

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import type { NumberFormatter } from '@safely/core';
-import { SendFormError, resolveAmountDecimals, type AmountView } from '@safely/ux';
+import { SendFormError, hasFiatPrice, resolveAmountDecimals, type AmountView } from '@safely/ux';
 
 interface UseAmountStepViewParams {
     view: AmountView;
@@ -15,7 +15,7 @@ export function useAmountStepView(params: UseAmountStepViewParams) {
     const asset = view.parsed.asset;
     const inputType = view.values.amountInputType;
     const decimals = resolveAmountDecimals(inputType, asset);
-    const hasPrice = !!asset?.price;
+    const hasPrice = hasFiatPrice(asset);
     const rawAmountError = view.errors.amount;
     const amountError =
         rawAmountError === SendFormError.INSUFFICIENT_BALANCE ||

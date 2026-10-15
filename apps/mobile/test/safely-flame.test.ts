@@ -4,7 +4,8 @@ const native = {
     viewKey: vi.fn(),
     address: vi.fn(),
     decodeContracts: vi.fn(),
-    openNotes: vi.fn()
+    openNotes: vi.fn(),
+    buildTransfer: vi.fn()
 };
 
 vi.mock('expo-modules-core', () => ({ requireNativeModule: () => native }));
@@ -22,6 +23,7 @@ describe('safely-flame facade', () => {
         native.address.mockReset();
         native.decodeContracts.mockReset();
         native.openNotes.mockReset();
+        native.buildTransfer.mockReset();
     });
 
     it('returns the native value on success', async () => {
@@ -197,5 +199,72 @@ describe('safely-flame facade', () => {
             { opened: false, failure: 'error', reason: 'keyMismatch: input 0' },
             { opened: true, qty: 1n, flavor, memo: new Uint8Array(0) }
         ]);
+    });
+
+    describe('buildTransfer', () => {
+        const request = {
+            inputs: [{ contract: Buffer.from([1]), note: null, proof: Buffer.from([2]) }],
+            outputs: [
+                { address: 'tf1recipient', qty: 2n ** 64n - 1n, memo: Buffer.from([7]) },
+                { address: 'tf1change', qty: 1n }
+            ],
+            fee: 1_000n,
+            gas: 1_000_000n
+        };
+
+        it('sends u64 amounts as strings and binary inputs as plain arrays', async () => {
+            const transfer = { txid: new Uint8Array(32), blockTx: new Uint8Array([9]) };
+            native.buildTransfer.mockResolvedValue({ ok: true, value: transfer });
+
+            await expect(
+                flameSdk.buildTransfer(Buffer.from(SEED), 'testnet', PATH, request)
+            ).resolves.toEqual(transfer);
+
+            const [seed, network, branch, index, contracts, notes, proofs, plan] = native
+                .buildTransfer.mock.calls[0] as [
+                Uint8Array,
+                string,
+                number,
+                number,
+                Uint8Array[],
+                Uint8Array[],
+                Uint8Array[],
+                unknown
+            ];
+            expect([network, branch, index]).toEqual(['testnet', 0, 0]);
+            expect(seed.every(byte => byte === 0)).toBe(true);
+            expect(contracts.map(c => c.constructor)).toEqual([Uint8Array]);
+            expect(notes).toEqual([new Uint8Array(0)]);
+            expect(proofs).toEqual([new Uint8Array([2])]);
+            expect(plan).toEqual({
+                addresses: ['tf1recipient', 'tf1change'],
+                qtys: ['18446744073709551615', '1'],
+                memos: [new Uint8Array([7]), new Uint8Array(0)],
+                fee: '1000',
+                gas: '1000000'
+            });
+        });
+
+        it('rejects an amount above u64 before calling native', async () => {
+            await expect(
+                flameSdk.buildTransfer(SEED, 'testnet', PATH, {
+                    ...request,
+                    outputs: [{ address: 'tf1recipient', qty: 2n ** 64n }]
+                })
+            ).rejects.toMatchObject({ kind: 'invalidArgument' });
+            expect(native.buildTransfer).not.toHaveBeenCalled();
+        });
+
+        it('turns a native transfer failure into a FlameError', async () => {
+            native.buildTransfer.mockResolvedValue({
+                ok: false,
+                code: 'ERR_FLAME_TRANSFER',
+                reason: 'inputs do not balance'
+            });
+
+            await expect(
+                flameSdk.buildTransfer(SEED, 'testnet', PATH, request)
+            ).rejects.toMatchObject({ kind: 'transfer', reason: 'inputs do not balance' });
+        });
     });
 });
