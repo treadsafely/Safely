@@ -1,40 +1,41 @@
 import type { FC } from 'react';
 
-import { useTranslate } from '@safely/ux';
-
-import { descriptionStyles, lengthToggleStyles } from './PasscodeCard.styles';
+import { descriptionStyles } from './PasscodeCard.styles';
 import type { PasscodeScreenProps } from '../../shared';
 import {
     Modal,
     Passcode,
+    PasscodeLengthToggle,
     ScreenProtection,
     StepCard,
-    Switch,
-    Text,
     usePasscodeEntry
 } from '../../shared';
 
 export const PasscodeCard: FC<PasscodeScreenProps> = props => {
-    const { title, description, isInvalid, onSubmit, onBack } = props;
+    const {
+        title,
+        description,
+        length,
+        isInvalid,
+        onLengthChange,
+        onSubmit,
+        onInvalidCleared,
+        onClose,
+        onBack
+    } = props;
 
-    const t = useTranslate();
-    const entry = usePasscodeEntry(onSubmit);
+    const entry = usePasscodeEntry({ length, isInvalid, onSubmit, onInvalidCleared });
 
     return (
         <ScreenProtection>
             <StepCard
                 hasShadow={false}
                 hasBackdrop={false}
-                onBack={onBack}
+                onBack={onBack ?? onClose}
                 trailing={
-                    <label className={lengthToggleStyles}>
-                        <Text variant="bodyM">{t('onboarding.passcode.sixDigit')}</Text>
-                        <Switch
-                            size="small"
-                            checked={entry.isLong}
-                            onCheckedChange={entry.setIsLong}
-                        />
-                    </label>
+                    onLengthChange === undefined ? undefined : (
+                        <PasscodeLengthToggle length={length} onChange={onLengthChange} />
+                    )
                 }
             >
                 <Modal.Content hasFloatingClose={false}>
@@ -48,7 +49,7 @@ export const PasscodeCard: FC<PasscodeScreenProps> = props => {
 
                 <Passcode
                     value={entry.value}
-                    length={entry.length}
+                    length={length}
                     isInvalid={isInvalid}
                     isInset
                     onChange={entry.setValue}

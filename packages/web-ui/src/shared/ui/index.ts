@@ -14,6 +14,7 @@ export * from './LockoutContent';
 export * from './Modal';
 export * from './PageHeader';
 export * from './Passcode';
+export * from './PasscodeLengthToggle';
 export * from './Skeleton';
 export * from './Spinner';
 export * from './StepCard';

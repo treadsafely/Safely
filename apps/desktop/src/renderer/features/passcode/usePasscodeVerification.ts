@@ -6,6 +6,8 @@ import { usePasscode } from './usePasscode';
 import { usePasscodeLockout } from './usePasscodeLockout';
 import { authenticateBiometry, useBiometryQuery } from '../biometry';
 
+const CODE_VISIBLE_MS = 300;
+
 interface UsePasscodeVerificationParams {
     onVerified: () => void;
     /* only the lock screen opens on its own; reaching the gate's prompt means the factor was refused */
@@ -16,7 +18,9 @@ export interface UsePasscodeVerificationResult {
     value: string;
     length: number;
     isInvalid: boolean;
+    isSuccess: boolean;
     isLocked: boolean;
+    hasLockedOut: boolean;
     remainingSeconds: number;
     promptBiometry: (() => void) | undefined;
     onChange: (value: string) => void;
@@ -29,12 +33,17 @@ export function usePasscodeVerification(
 
     const passcode = usePasscode();
     const { data: biometry } = useBiometryQuery();
-    const { isLocked, remainingSeconds, recordFailure, reset } = usePasscodeLockout();
+    const { isLocked, hasLockedOut, remainingSeconds, recordFailure, reset } = usePasscodeLockout();
 
     const [value, setValue] = useState('');
     const [isInvalid, setIsInvalid] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
     const isSettledRef = useRef(false);
     const hasAutoPromptedRef = useRef(false);
+    const invalidTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+    const successTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    useEffect(() => () => clearTimeout(invalidTimerRef.current), []);
 
     const length = passcode.length ?? 0;
 
@@ -47,10 +56,16 @@ export function usePasscodeVerification(
         onVerified();
     }, [onVerified]);
 
-    const onChange = useCallback((next: string) => {
-        setIsInvalid(false);
-        setValue(next);
-    }, []);
+    const onChange = useCallback(
+        (next: string) => {
+            if (isSuccess || isInvalid) {
+                return;
+            }
+
+            setValue(next);
+        },
+        [isSuccess, isInvalid]
+    );
 
     /* dropping this reset accumulates mistypes across sessions until the lockout hides the factor */
     const promptBiometry = useCallback(() => {
@@ -72,8 +87,10 @@ export function usePasscodeVerification(
 
             void passcode.validate(entered).then(async isValid => {
                 if (isValid) {
-                    await reset();
-                    verified();
+                    setIsSuccess(true);
+                    successTimerRef.current = setTimeout(() => {
+                        void reset().then(verified);
+                    }, CODE_VISIBLE_MS);
                     return;
                 }
 
@@ -81,9 +98,12 @@ export function usePasscodeVerification(
                     return;
                 }
 
-                setValue('');
                 setIsInvalid(true);
                 await recordFailure();
+                invalidTimerRef.current = setTimeout(() => {
+                    setValue('');
+                    setIsInvalid(false);
+                }, CODE_VISIBLE_MS);
             });
         },
         [passcode.isSet, passcode.validate, verified, recordFailure, reset]
@@ -109,7 +129,9 @@ export function usePasscodeVerification(
         value,
         length,
         isInvalid,
+        isSuccess,
         isLocked,
+        hasLockedOut,
         remainingSeconds,
         promptBiometry: biometry?.isEnabled ? promptBiometry : undefined,
         onChange

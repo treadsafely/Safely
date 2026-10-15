@@ -28,11 +28,14 @@ const transparentCloseStyles = css({
 
 export type ModalRootProps = ComponentPropsWithoutRef<typeof Dialog.Root>;
 
+export type ModalLayer = 'passcodePrompt';
+
 export type ModalPopupProps = {
     closeLabel: string;
     hasClose?: boolean;
     hasTransparentClose?: boolean;
     hasBackdrop?: boolean;
+    layer?: ModalLayer;
     onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
     children?: ReactNode;
     className?: string;
@@ -70,21 +73,23 @@ const ModalPopup: FC<ModalPopupProps> = props => {
         hasClose = true,
         hasTransparentClose,
         hasBackdrop = true,
+        layer,
         onKeyDown,
         className,
         children
     } = props;
 
     const popupRef = useRef<HTMLDivElement>(null);
+    const popupStyles = modal({ layer });
 
     return (
         <Dialog.Portal>
-            {hasBackdrop && <Dialog.Backdrop forceRender className={styles.backdrop} />}
+            {hasBackdrop && <Dialog.Backdrop forceRender className={popupStyles.backdrop} />}
 
             <Dialog.Popup
                 ref={popupRef}
                 initialFocus={popupRef}
-                className={cx(styles.popup, className)}
+                className={cx(popupStyles.popup, className)}
                 onKeyDown={onKeyDown}
             >
                 {hasClose && (
