@@ -599,7 +599,8 @@
             "discovery": {
                 "title": "Выберите Ledger",
                 "subtitle": "Выберите ближайший Ledger, чтобы начать сопряжение.",
-                "notFound": "Устройства не найдены"
+                "notFound": "Устройства не найдены",
+                "locationDisabled": "Включите геолокацию в настройках устройства, чтобы найти Ledger"
             },
             "pairing": {
                 "title": "Сопряжение с Ledger {{device}}",
