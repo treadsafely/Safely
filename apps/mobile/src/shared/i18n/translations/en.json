@@ -614,6 +614,7 @@
             },
             "discovery": {
                 "notFound": "No devices found",
+                "locationDisabled": "Turn on Location in your device settings to find your Ledger",
                 "title": "Looking for devices…",
                 "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with."
             },
