@@ -28,6 +28,14 @@ export function useDateFormatter(options?: Intl.DateTimeFormatOptions) {
 
         formatterCallback.format = createFormatCallback(new Intl.DateTimeFormat(language, options));
 
+        formatterCallback.formatWithNonCurrentYear = (date: Date | number) => {
+            const isCurrentYear = new Date(date).getFullYear() === new Date().getFullYear();
+
+            return isCurrentYear
+                ? formatterCallback.format(date)
+                : formatterCallback({ year: 'numeric' }).format(date);
+        };
+
         return formatterCallback;
     }, [language, options]);
 }

@@ -36,11 +36,20 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
 - `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
   `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
   separate call — mobile's `lint` covers `./src ./scripts`
+- `pnpm check:unicode` — fails on invisible (`Default_Ignorable`) characters in any tracked file,
+  its name or a symlink target:
+  bidi, zero-width, variation selectors, Tag characters (emoji ZWJ sequences and a VS15/VS16 after
+  an emoji excepted); on any other format, private-use, unassigned or control character (tab and
+  CRLF excepted) and U+2028/U+2029; and on a NUL byte or UTF-16 outside known binary formats, which it
+  cannot scan; CI runs it on every pull request. An intentional one goes in as an escape
+  (`\u200D`), never as the raw character
 - mobile: `pnpm --filter mobile ios|android|start` — dev-client, not Expo Go
 
-Dependency versions go through `catalog:` in `pnpm-workspace.yaml` only: add the version to the
-catalog and reference `catalog:` from the package's package.json. `minimumReleaseAge: 5760` means
-pnpm refuses packages published less than four days ago.
+A dependency used by more than one workspace package (root included) goes through `catalog:` in
+`pnpm-workspace.yaml`, so every package gets the same version; one used by a single package keeps
+its version in that package's package.json. When a second package starts using it, move the version
+into the catalog. `minimumReleaseAge: 5760` means pnpm refuses packages published less than four
+days ago.
 
 Root-level tooling stays at the root: `eslint`, its plugins and `prettier` are installed once in the
 root package.json, and a package only adds the `"lint": "eslint ./src"` script. The node scripts

@@ -88,6 +88,22 @@ update it when adding a language.
     reference scripts project-relative (`scripts/eas-report.mjs`).
   - EAS doesn't quote-safely interpolate values into its internal bash: unescaped `` ( ) ` $ " ' \ ``
     in a changelog cause exit 141 / empty logs, which is why the workflow strips them up front.
+- Android release builds run R8 (minify + resource shrinking), enabled through `expo-build-properties`
+  in `app.config.js` — Google Play flags an unobfuscated DEX. Every native dependency was checked
+  for shipped consumer rules; a new one that reaches Java/Kotlin by name (JNI `FindClass`,
+  reflection) without `@DoNotStrip`/`@Keep` or its own `proguard.txt` needs a rule in
+  `extraProguardRules`. A missing rule surfaces only in release builds, as `ClassNotFoundException`
+  / `NoSuchMethodError` or a silently skipped reflective path; the AAB carries `mapping.txt`, so
+  Play deobfuscates crash traces itself. React Native's consumer rules keep `native` methods and
+  `@DoNotStrip` members but not a bare fbjni `mHybridData` field, which native code reads by name;
+  `expo-modules-core`'s `WorkletNativeRuntime` has no annotation, so without the generic
+  `mHybridData` rule every worklet callback into Compose (`NativeInput`'s `onChangeText`) crashes
+  with `NoSuchFieldError` — this broke the Maestro import/send flows.
+- `plugins/withNetworkSecurityConfig.js` makes Android trust user-installed CAs (Proxyman/Charles
+    on a real device) in debuggable builds and in the staging APK — gated on `EAS_BUILD_PROFILE` being
+    in an explicit allowlist, so `production` (and any new profile) keeps system CAs only. A new
+    tester profile that needs a proxy goes into that allowlist; never widen it to production.
+
 - Icons: `pnpm --filter mobile run icons` (`scripts/generate-icons-file.js`); the generated file is
   not hand-edited.
 - Wallet names in pushes: the backend sends fallback `title`/`body` plus `data.target_ref`,

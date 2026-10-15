@@ -49,10 +49,12 @@ export const usePopupMenu = (screenHeight: number, menuMargin = 8) => {
         });
     }, [offsetY, triggerHeight, triggerFrame, isClosing]);
 
+    // isClosing is reset only in open: a late Android onMenuLayout would otherwise leave progress at 1
     const hide = useCallback(() => {
-        isClosing.value = false;
+        progress.value = 0;
+        scale.value = 0.75;
         setVisible(false);
-    }, [triggerFrame, triggerHeight, menuHeight, isClosing]);
+    }, [progress, scale]);
 
     const close = useCallback(() => {
         isClosing.value = true;
