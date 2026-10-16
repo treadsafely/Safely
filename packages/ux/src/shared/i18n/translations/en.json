@@ -507,7 +507,8 @@
             "title": "Can't estimate transaction",
             "default": "Check details and try again",
             "btc": {
-                "outputsAreSpendingMoreThanInputs": "Insufficient balance for transfer amount and fee"
+                "outputsAreSpendingMoreThanInputs": "Insufficient balance for transfer amount and fee",
+                "insufficientFundsForFee": "Not enough funds to send the specified amount and pay the network fee. Reduce the amount."
             }
         }
     },
@@ -639,6 +640,7 @@
             },
             "discovery": {
                 "notFound": "No devices found",
+                "locationDisabled": "Turn on Location in your device settings to find your Ledger",
                 "title": "Looking for devices…",
                 "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with."
             },
@@ -657,6 +659,7 @@
             "pairingUnsuccess": {
                 "title": "Pairing unsuccessful",
                 "subtitle": "Make sure your {{device}} is close to your mobile phone and try again.",
+                "appNotInstalled": "Install the Bitcoin app on your {{device}} via Ledger Wallet and try again.",
                 "retry": "Retry pairing"
             },
             "importAccounts": {

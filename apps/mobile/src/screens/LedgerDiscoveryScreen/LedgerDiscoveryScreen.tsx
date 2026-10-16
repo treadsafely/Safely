@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import type { DiscoveryError } from '@safely/ux';
 import { useLedgerDeviceScan, useLedgerSession, useToast } from '@safely/ux';
 
 import { Screen, Text } from '@mobile/shared/ui';
@@ -11,11 +12,16 @@ import { Screen, Text } from '@mobile/shared/ui';
 import { BluetoothPulse } from './components/BluetoothPulse';
 import { styles } from './LedgerDiscoveryScreen.styles';
 
+const errorMessageKeys = {
+    timedOut: 'addWallet.connectLedger.discovery.notFound',
+    locationDisabled: 'addWallet.connectLedger.discovery.locationDisabled'
+} as const satisfies Record<DiscoveryError, string>;
+
 export const LedgerDiscoveryScreen = () => {
     const toast = useToast();
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const { devices, status } = useLedgerDeviceScan();
+    const { devices, error } = useLedgerDeviceScan();
     const { setSelectedDevice, setFindMorePortfolioId } = useLedgerSession();
     const hasNavigated = useRef(false);
 
@@ -45,14 +51,14 @@ export const LedgerDiscoveryScreen = () => {
     }, [device, navigation, setSelectedDevice]);
 
     useEffect(() => {
-        if (status !== 'timedOut' || hasNavigated.current) {
+        if (!error || hasNavigated.current) {
             return;
         }
 
         hasNavigated.current = true;
-        toast(t('addWallet.connectLedger.discovery.notFound'));
+        toast(t(errorMessageKeys[error]));
         navigation.goBack();
-    }, [status, toast, t, navigation]);
+    }, [error, toast, t, navigation]);
 
     return (
         <Screen>

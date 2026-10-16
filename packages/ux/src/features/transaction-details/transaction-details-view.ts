@@ -56,7 +56,7 @@ export function buildTransactionDetailsView(
               ),
         confirmedAtLabel: isPending
             ? null
-            : context.confirmedAtFormatter.format(activity.timestamp),
+            : context.confirmedAtFormatter.formatWithNonCurrentYear(activity.timestamp),
         isInitiator,
         assetImage: transaction.value.asset.image,
         amountSign: isInitiator ? '−' : '+',

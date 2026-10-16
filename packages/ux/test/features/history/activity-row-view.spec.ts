@@ -38,7 +38,10 @@ const DAY_MONTH_LABEL = '12 Aug';
 const t: TranslateFn = key => key;
 
 const stubFormatter = (label: string): DateFormatter =>
-    Object.assign(() => ({ format: () => label }), { format: () => label });
+    Object.assign(() => ({ format: () => label }), {
+        format: () => label,
+        formatWithNonCurrentYear: () => label
+    });
 
 const numberFormatter = new NumberFormatter(new WebNumberFormatLocale('en-US'), new Logger());
 

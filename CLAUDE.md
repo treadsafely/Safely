@@ -39,6 +39,13 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
 - `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
   `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
   separate call — mobile's `lint` covers `./src ./scripts`
+- `pnpm check:unicode` — fails on invisible (`Default_Ignorable`) characters in any tracked file,
+  its name or a symlink target:
+  bidi, zero-width, variation selectors, Tag characters (emoji ZWJ sequences and a VS15/VS16 after
+  an emoji excepted); on any other format, private-use, unassigned or control character (tab and
+  CRLF excepted) and U+2028/U+2029; and on a NUL byte or UTF-16 outside known binary formats, which it
+  cannot scan; CI runs it on every pull request. An intentional one goes in as an escape
+  (`\u200D`), never as the raw character
 - mobile: `pnpm --filter @safely/mobile ios|android|start` — dev-client, not Expo Go
 - desktop: `pnpm --filter @safely/desktop start|package|make`; `build:native` compiles the keychain
   addon (`package`/`make` run it first, `pnpm install` never does). A build QA can install
@@ -72,6 +79,10 @@ plugins yes, root tooling no.
   from `@safely/core`.
 - **A comment must carry what the code cannot** — one line, no JSDoc, rationale into a rules or doc
   file; nothing in lint or CI guards this. See `.claude/rules/code-comments.md`.
+- **Android release builds are minified by R8; the dev-client is not.** A feature touching a native
+  module, a dependency with Android native code, or inputs/keyboard/gestures can work in the
+  dev-client and break only in release. Check it while designing and verify on the release variant
+  after — `.claude/rules/android-minification.md`.
 - **Import cycles are an eslint error** (`import/no-cycle`) — never suppress it. Modules call helpers
   at module-load time (e.g. `defineQueryKeys(...)` in `keys.ts`), so a cycle yields `undefined`
   instead of the export and crashes the app at startup.
@@ -94,7 +105,7 @@ the error message.
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
 `web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-secret-store.md`, `desktop-signing.md`,
-`testing.md`.
+`testing.md`, `android-minification.md`.
 
 `desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
 schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
