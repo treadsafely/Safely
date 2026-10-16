@@ -2,15 +2,20 @@ import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
 import Fingerprint96 from '@safely/ux/assets/icons/96/fingerprint-96.svg?react';
+import type { BiometryScreenProps } from '@safely/web-ui';
 import { BiometryPage } from '@safely/web-ui';
 
 import { useSetBiometryEnabled } from './useBiometry';
 
 export type EnableBiometryFlowProps = {
+    Screen?: FC<BiometryScreenProps>;
     onDone: () => void;
 };
 
-export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({ onDone }) => {
+export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({
+    Screen = BiometryPage,
+    onDone
+}) => {
     const t = useTranslate();
     const { mutateAsync: setBiometryEnabled } = useSetBiometryEnabled();
 
@@ -21,7 +26,7 @@ export const EnableBiometryFlow: FC<EnableBiometryFlowProps> = ({ onDone }) => {
     };
 
     return (
-        <BiometryPage
+        <Screen
             icon={Fingerprint96}
             title={title}
             description={t('biometry.fingerprint.ios.description')}

@@ -21,7 +21,7 @@ import { isBiometryAvailable } from '../biometry';
 import { usePasscode } from '../passcode';
 
 export type OnboardingStep =
-    'moreOptions' | 'import' | 'watch' | 'signIn' | 'signInSuccess' | 'passcode' | 'biometry';
+    'import' | 'watch' | 'signIn' | 'signInSuccess' | 'passcode' | 'biometry';
 
 type OnboardingSource =
     | { kind: 'generated' }
@@ -64,7 +64,6 @@ export function useOnboardingFlow() {
         closeSignInStorage();
         setStep(null);
     }, [signIn, closeSignInStorage]);
-    const openMoreOptions = useCallback(() => setStep('moreOptions'), []);
     const openImport = useCallback(() => setStep('import'), []);
     const openWatch = useCallback(() => setStep('watch'), []);
 
@@ -240,7 +239,6 @@ export function useOnboardingFlow() {
         close,
         startSignIn,
         onSignInSuccessContinue,
-        openMoreOptions,
         openImport,
         openWatch,
         startCreate,

@@ -15,6 +15,7 @@ export type LockScreenProps = {
     value: string;
     length: number;
     isInvalid?: boolean;
+    isSuccess?: boolean;
     isLocked?: boolean;
     remainingSeconds?: number;
     onCheckBiometry?: () => void;
@@ -27,6 +28,7 @@ export const LockScreen: FC<LockScreenProps> = props => {
         value,
         length,
         isInvalid,
+        isSuccess,
         isLocked,
         remainingSeconds,
         onCheckBiometry,
@@ -61,6 +63,7 @@ export const LockScreen: FC<LockScreenProps> = props => {
                                 value={value}
                                 length={length}
                                 isInvalid={isInvalid}
+                                isSuccess={isSuccess}
                                 onCheckBiometry={onCheckBiometry}
                                 onChange={onChange}
                             />

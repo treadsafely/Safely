@@ -12,25 +12,23 @@ export const backdropStyles = css({
     position: 'absolute',
     inset: '0',
     backgroundImage: 'var(--welcome-backdrop)',
-    backgroundSize: '100% 100%',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat'
 });
 
-export const footerStyles = css({
-    position: 'absolute',
-    bottom: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+export const columnStyles = css({
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    width: '480px'
+    marginTop: 'auto',
+    width: '100%'
 });
 
 export const logoStyles = css({
     display: 'flex',
-    alignItems: 'center',
-    padding: '8'
+    justifyContent: 'center',
+    paddingTop: '64',
+    paddingBottom: '8'
 });
 
 export const headingStyles = css({
@@ -42,20 +40,26 @@ export const headingStyles = css({
     paddingBlock: '16'
 });
 
-export const subtitleStyles = css({
-    opacity: 0.64,
-    textWrap: 'balance'
-});
+export const subtitleStyles = css({ opacity: 0.64 });
 
 export const actionsStyles = css({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '32',
+    justifyContent: 'center',
+    gap: '24',
     width: '100%',
     paddingInline: '64',
     paddingTop: '24',
     paddingBottom: '32'
+});
+
+export const actionsColumnStyles = css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24',
+    width: '100%',
+    paddingInline: '32'
 });
 
 export const primaryActionsStyles = css({
@@ -65,9 +69,11 @@ export const primaryActionsStyles = css({
     width: '100%'
 });
 
+export const linkWithQrStyles = css({ paddingInline: '24' });
+
 export const legalStyles = css({
-    /* the shared string breaks the line with \n, the only form mobile's Trans also honours */
-    whiteSpace: 'pre-line',
+    /* the shared string carries mobile's line break, and the card is wide enough to ignore it */
+    whiteSpace: 'normal',
     width: '100%',
     paddingInline: '16',
     paddingBottom: '32'
@@ -78,6 +84,6 @@ export const legalLinkStyles = css({
     backgroundColor: 'transparent',
     borderWidth: '0',
     padding: '0',
-    font: 'inherit',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    _hover: { color: 'text.primary' }
 });

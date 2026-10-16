@@ -5,3 +5,4 @@ export * from './useOnVisible';
 export * from './useIsVisible';
 export * from './useIsDocumentVisible';
 export * from './useReorderList';
+export * from './usePasscodeEntry';

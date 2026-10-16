@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 
 import { PortfolioNetworkType } from '@safely/core';
-import { useToast, useTranslate } from '@safely/ux';
 
 import { AddWalletModal } from './AddWalletModal';
 import { ImportWalletModal } from './ImportWalletModal';
@@ -15,9 +14,6 @@ export type AddWalletModalsProps = {
 };
 
 export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
-    const t = useTranslate();
-    const toast = useToast();
-
     switch (flow.step) {
         case 'menu':
             return (
@@ -25,9 +21,6 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
                     onCreateNew={flow.startCreate}
                     onImportExisting={() => flow.openImport(PortfolioNetworkType.MAINNET)}
                     onWatchAccount={flow.openWatch}
-                    onConnectLedger={() =>
-                        toast({ message: t('common.errors.notSupportedYet'), type: 'error' })
-                    }
                     onImportTestnet={() => flow.openImport(PortfolioNetworkType.TESTNET)}
                     onClose={flow.close}
                 />
@@ -36,11 +29,11 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
             return (
                 <ImportWalletModal
                     onSubmit={mnemonic => void flow.onMnemonicReady(mnemonic)}
-                    onClose={flow.open}
+                    onBack={flow.open}
                 />
             );
         case 'watch':
-            return <WatchAccountModal onSubmit={flow.onWatchInputReady} onClose={flow.open} />;
+            return <WatchAccountModal onSubmit={flow.onWatchInputReady} onBack={flow.open} />;
         case 'duplicate':
             return (
                 flow.duplicate && (

@@ -60,6 +60,10 @@ isolation keeps the shell one stacking context, so the viewports rendered outsid
 (`ToastViewport`, `LoaderViewport`, the passcode prompt) and the Base UI portals stay above the
 whole app. A local `z-index` is therefore fine inside the shell, and must stay inside it.
 
+A dialog opened from *above* the passcode prompt is the one modal that does need a layer: the erase
+confirmation on the lockout screen takes `layer="passcodePrompt"` and hands it to `Modal.Popup`, or
+it paints under the prompt and its button looks dead.
+
 Only a dark palette exists. When a light one appears, the mapper starts emitting `{ base, _dark }`
 values and components stay untouched: token paths don't change.
 

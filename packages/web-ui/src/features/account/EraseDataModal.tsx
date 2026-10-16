@@ -2,21 +2,23 @@ import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
 
+import type { ModalLayer } from '../../shared';
 import { Button, Modal } from '../../shared';
 
 export type EraseDataModalProps = {
+    layer?: ModalLayer;
     onConfirm: () => void;
     onClose: () => void;
 };
 
 export const EraseDataModal: FC<EraseDataModalProps> = props => {
-    const { onConfirm, onClose } = props;
+    const { layer, onConfirm, onClose } = props;
 
     const t = useTranslate();
 
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
-            <Modal.Popup closeLabel={t('common.close')}>
+            <Modal.Popup layer={layer} closeLabel={t('common.close')}>
                 <Modal.Content>
                     <Modal.Title>{t('logOutAllAccounts.title')}</Modal.Title>
                     <Modal.Description>{t('logOutAllAccounts.message')}</Modal.Description>

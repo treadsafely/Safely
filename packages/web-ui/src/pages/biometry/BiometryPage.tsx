@@ -3,19 +3,12 @@ import type { FC } from 'react';
 import { useTranslate } from '@safely/ux';
 
 import { contentStyles, popupStyles, textStyles } from './BiometryPage.styles';
-import type { IconAsset } from '../../shared';
+import type { BiometryScreenProps } from '../../shared';
 import { Button, Icon, Modal } from '../../shared';
 
-export type BiometryPageProps = {
-    icon: IconAsset;
-    title: string;
-    description: string;
-    enableLabel: string;
-    onEnable: () => void;
-    onSkip: () => void;
-};
+const ICON_SIZE = 96;
 
-export const BiometryPage: FC<BiometryPageProps> = props => {
+export const BiometryPage: FC<BiometryScreenProps> = props => {
     const { icon, title, description, enableLabel, onEnable, onSkip } = props;
 
     const t = useTranslate();
@@ -30,7 +23,7 @@ export const BiometryPage: FC<BiometryPageProps> = props => {
                 </Modal.Header>
 
                 <Modal.Content className={contentStyles} hasFloatingClose={false}>
-                    <Icon asset={icon} size={96} />
+                    <Icon asset={icon} size={ICON_SIZE} />
 
                     <div className={textStyles}>
                         <Modal.Title>{title}</Modal.Title>

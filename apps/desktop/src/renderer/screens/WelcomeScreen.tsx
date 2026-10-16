@@ -1,11 +1,12 @@
 import type { FC } from 'react';
 
-import { useBootConfig, useLinking, useToast, useTranslate } from '@safely/ux';
+import { useBootConfig, useLinking, useTranslate } from '@safely/ux';
 import {
+    BiometryCard,
     ImportWalletModal,
-    MoreOptionsModal,
-    SignInModal,
-    SignInSuccessModal,
+    PasscodeCard,
+    SignInCard,
+    SignInSuccessCard,
     WatchAccountModal,
     WelcomePage
 } from '@safely/web-ui';
@@ -14,56 +15,46 @@ import { EnableBiometryFlow, PasscodeSetupFlow, useOnboardingFlow } from '../fea
 
 export const WelcomeScreen: FC = () => {
     const t = useTranslate();
-    const toast = useToast();
     const onboarding = useOnboardingFlow();
     const { openURL } = useLinking();
     const legal = useBootConfig().references.legal;
-
-    const notSupported = (): void =>
-        toast({ message: t('common.errors.notSupportedYet'), type: 'error' });
 
     return (
         <>
             <WelcomePage
                 onCreateWallet={onboarding.startCreate}
                 onImportWallet={onboarding.openImport}
-                onMoreOptions={onboarding.openMoreOptions}
+                onWatchAccount={onboarding.openWatch}
                 onLinkWithQr={() => void onboarding.startSignIn()}
                 onOpenTerms={() => openURL(legal.terms_url)}
                 onOpenPrivacy={() => openURL(legal.privacy_url)}
             />
 
-            {onboarding.step === 'moreOptions' && (
-                <MoreOptionsModal
-                    onWatchAccount={onboarding.openWatch}
-                    onConnectLedger={notSupported}
-                    onClose={onboarding.close}
-                />
-            )}
-
             {onboarding.step === 'import' && (
                 <ImportWalletModal
+                    hasBackdrop={false}
                     onSubmit={onboarding.onMnemonicReady}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'watch' && (
                 <WatchAccountModal
+                    hasBackdrop={false}
                     onSubmit={onboarding.onWatchInputReady}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'signIn' && onboarding.connectionString !== undefined && (
-                <SignInModal
+                <SignInCard
                     connectionString={onboarding.connectionString}
-                    onClose={onboarding.close}
+                    onBack={onboarding.close}
                 />
             )}
 
             {onboarding.step === 'signInSuccess' && (
-                <SignInSuccessModal
+                <SignInSuccessCard
                     inviterIkPubHex={onboarding.inviterIkPubHex}
                     onContinue={onboarding.onSignInSuccessContinue}
                 />
@@ -71,6 +62,7 @@ export const WelcomeScreen: FC = () => {
 
             {onboarding.step === 'passcode' && (
                 <PasscodeSetupFlow
+                    Screen={PasscodeCard}
                     create={{
                         title: t('onboarding.passcode.title'),
                         description: t('onboarding.passcode.description')
@@ -87,7 +79,7 @@ export const WelcomeScreen: FC = () => {
             )}
 
             {onboarding.step === 'biometry' && (
-                <EnableBiometryFlow onDone={onboarding.onBiometryFinished} />
+                <EnableBiometryFlow Screen={BiometryCard} onDone={onboarding.onBiometryFinished} />
             )}
         </>
     );

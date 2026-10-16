@@ -22,6 +22,7 @@ export const bannerRecipe = defineSlotRecipe({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
+            alignSelf: 'center',
             flex: '1',
             minWidth: '0',
             paddingInline: '16',

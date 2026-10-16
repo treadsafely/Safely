@@ -20,9 +20,9 @@ export function getBtcTransactionDisplayStatus(
     }
     const timestamp = new Date(tx.blockTime * 1000);
     const confirmations =
-        currentBlockNumber !== undefined
-            ? currentBlockNumber - tx.blockHeight + 1
-            : tx.confirmations;
+        currentBlockNumber === undefined
+            ? tx.confirmations
+            : Math.max(currentBlockNumber - tx.blockHeight + 1, tx.confirmations);
     const confirmedAgoConfirmationsNumber = 6;
 
     if (confirmations > confirmedAgoConfirmationsNumber) {
