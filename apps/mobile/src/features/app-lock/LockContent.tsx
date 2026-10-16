@@ -1,20 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { BackHandler } from 'react-native';
 
-import { useAppState, useEraseAllData } from '@safely/ux';
+import { useAppState } from '@safely/ux';
 
 import { usePasscodeVerification } from '@mobile/entities/security';
 import { authenticateBiometry, getBiometryIcon, useBiometryQuery } from '@mobile/features/biometry';
-import {
-    BottomSheet,
-    DestructiveConfirm,
-    LockoutContent,
-    PasscodeView,
-    Screen,
-    Text
-} from '@mobile/shared/ui';
+import { LockoutContent, PasscodeView, Screen, Text } from '@mobile/shared/ui';
+
+import { LogOutConfirmSheet } from './LogOutConfirmSheet';
 
 type LockContentProps = {
     onUnlock: () => void;
@@ -24,7 +18,6 @@ export const LockContent = ({ onUnlock }: LockContentProps) => {
     const { t } = useTranslation();
     const { current } = useAppState();
     const { data: biometry } = useBiometryQuery();
-    const { mutateAsync: eraseAllData } = useEraseAllData();
     const hasPromptedRef = useRef(false);
     const hasUnlockedRef = useRef(false);
     const [isLogOutConfirmVisible, setIsLogOutConfirmVisible] = useState(false);
@@ -78,18 +71,7 @@ export const LockContent = ({ onUnlock }: LockContentProps) => {
     }, [isLocked, biometry?.isEnabled, handleUnlock, current]);
 
     const logOutConfirm = isLogOutConfirmVisible ? (
-        <View style={StyleSheet.absoluteFill}>
-            <BottomSheet onClose={() => setIsLogOutConfirmVisible(false)}>
-                <DestructiveConfirm
-                    title={t('logOutAllAccounts.title')}
-                    message={t('logOutAllAccounts.message')}
-                    sliderLabel={t('logOutAllAccounts.slider.label')}
-                    sliderDescription={t('logOutAllAccounts.slider.description')}
-                    cancelLabel={t('logOutAllAccounts.cancel')}
-                    onConfirm={eraseAllData}
-                />
-            </BottomSheet>
-        </View>
+        <LogOutConfirmSheet onClose={() => setIsLogOutConfirmVisible(false)} />
     ) : null;
 
     if (isLocked) {

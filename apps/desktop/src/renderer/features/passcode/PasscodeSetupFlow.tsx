@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
 
+import type { PasscodeLength } from '@safely/ux';
+import { PASSCODE_LENGTH } from '@safely/ux';
 import type { PasscodeScreenProps } from '@safely/web-ui';
 import { PasscodePage } from '@safely/web-ui';
 
@@ -22,6 +24,7 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
     const { create, confirm, Screen = PasscodePage, onConfirmed, onCancel } = props;
 
     const created = useRef('');
+    const [length, setLength] = useState<PasscodeLength>(PASSCODE_LENGTH.short);
     const [isConfirming, setIsConfirming] = useState(false);
     const [isMismatched, setIsMismatched] = useState(false);
 
@@ -32,42 +35,46 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
     };
 
     const onReentered = (passcode: string): void => {
-        const isMatch = passcode === created.current;
-        created.current = '';
-
-        if (!isMatch) {
+        if (passcode !== created.current) {
             setIsMismatched(true);
-            setIsConfirming(false);
             return;
         }
 
+        created.current = '';
         onConfirmed(passcode);
     };
 
-    const onBack = (): void => {
+    const onClose = (): void => {
         created.current = '';
-
-        if (isConfirming) {
-            setIsConfirming(false);
-            return;
-        }
-
         onCancel();
+    };
+
+    const onBackToCreate = (): void => {
+        created.current = '';
+        setIsMismatched(false);
+        setIsConfirming(false);
     };
 
     return isConfirming ? (
         <Screen
+            key="confirm"
             title={confirm.title}
             description={confirm.description}
-            onBack={onBack}
+            length={length}
+            isInvalid={isMismatched}
+            onInvalidCleared={() => setIsMismatched(false)}
+            onClose={onClose}
+            onBack={onBackToCreate}
             onSubmit={onReentered}
         />
     ) : (
         <Screen
+            key="create"
             title={create.title}
             description={create.description}
-            isInvalid={isMismatched}
-            onBack={onBack}
+            length={length}
+            onLengthChange={setLength}
+            onClose={onClose}
             onSubmit={onCreated}
         />
     );

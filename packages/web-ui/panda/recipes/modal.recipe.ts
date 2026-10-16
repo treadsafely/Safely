@@ -91,6 +91,12 @@ export const modalRecipe = defineSlotRecipe({
         }
     },
     variants: {
+        layer: {
+            passcodePrompt: {
+                backdrop: { zIndex: 'passcodePrompt' },
+                popup: { zIndex: 'passcodePrompt' }
+            }
+        },
         hasFloatingClose: {
             false: { content: { paddingTop: '16' } }
         },

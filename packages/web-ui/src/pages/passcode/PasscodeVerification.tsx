@@ -8,7 +8,8 @@ import {
     closeStyles,
     headerStyles,
     promptStyles,
-    rootStyles
+    rootStyles,
+    signOutStyles
 } from './PasscodeVerification.styles';
 import { Button, Icon, LockoutContent, Passcode, ScreenProtection, Text } from '../../shared';
 
@@ -18,11 +19,14 @@ export type PasscodeVerificationProps = {
     value: string;
     length: number;
     isInvalid?: boolean;
+    isSuccess?: boolean;
     isLocked?: boolean;
+    hasLockedOut?: boolean;
     remainingSeconds?: number;
     onCheckBiometry?: () => void;
     onChange: (value: string) => void;
     onCancel: () => void;
+    onSignOut: () => void;
 };
 
 export const PasscodeVerification: FC<PasscodeVerificationProps> = props => {
@@ -32,30 +36,39 @@ export const PasscodeVerification: FC<PasscodeVerificationProps> = props => {
         value,
         length,
         isInvalid,
+        isSuccess,
         isLocked,
+        hasLockedOut,
         remainingSeconds,
         onCheckBiometry,
         onChange,
-        onCancel
+        onCancel,
+        onSignOut
     } = props;
 
     const t = useTranslate();
 
+    const headerButton = hasLockedOut ? (
+        <Button className={signOutStyles} variant="secondary" size="small" onClick={onSignOut}>
+            {t('passcode.lockout.signOut')}
+        </Button>
+    ) : (
+        <Button
+            className={closeStyles}
+            variant="secondary"
+            size="small"
+            isIconOnly
+            aria-label={t('common.close')}
+            onClick={onCancel}
+        >
+            <Icon asset={Xmark16} />
+        </Button>
+    );
+
     return (
         <ScreenProtection>
             <div className={rootStyles}>
-                <div className={headerStyles}>
-                    <Button
-                        className={closeStyles}
-                        variant="secondary"
-                        size="small"
-                        isIconOnly
-                        aria-label={t('common.close')}
-                        onClick={onCancel}
-                    >
-                        <Icon asset={Xmark16} />
-                    </Button>
-                </div>
+                <div className={headerStyles}>{headerButton}</div>
 
                 <div className={bodyStyles}>
                     {isLocked ? (
@@ -73,6 +86,7 @@ export const PasscodeVerification: FC<PasscodeVerificationProps> = props => {
                                 value={value}
                                 length={length}
                                 isInvalid={isInvalid}
+                                isSuccess={isSuccess}
                                 onCheckBiometry={onCheckBiometry}
                                 onChange={onChange}
                             />

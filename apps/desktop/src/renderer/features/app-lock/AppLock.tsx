@@ -10,9 +10,15 @@ import {
 } from '@safely/ux';
 import { EraseDataModal, LockScreen, PasscodeVerification } from '@safely/web-ui';
 
+import { guardedStyles } from './AppLock.styles';
 import { useLockScreen } from './useLockScreen';
 import { isBiometryPromptOpen } from '../biometry';
-import { usePasscode, usePasscodePromptStore, usePasscodeVerification } from '../passcode';
+import {
+    usePasscode,
+    usePasscodeLockout,
+    usePasscodePromptStore,
+    usePasscodeVerification
+} from '../passcode';
 
 export type AppLockProps = {
     children: ReactNode;
@@ -35,12 +41,11 @@ export const AppLock: FC<AppLockProps> = ({ children }) => {
         return <AppLockScreen onUnlocked={() => setIsLocked(false)} />;
     }
 
-    return (
-        <>
-            {children}
-            {passcode.isSet && <PasscodePromptOverlay />}
-        </>
-    );
+    if (!passcode.isSet) {
+        return children;
+    }
+
+    return <PasscodePromptOverlay>{children}</PasscodePromptOverlay>;
 };
 
 type AppLockScreenProps = {
@@ -65,6 +70,7 @@ const AppLockScreen: FC<AppLockScreenProps> = props => {
                 value={verification.value}
                 length={verification.length}
                 isInvalid={verification.isInvalid}
+                isSuccess={verification.isSuccess}
                 isLocked={verification.isLocked}
                 remainingSeconds={verification.remainingSeconds}
                 onCheckBiometry={verification.promptBiometry}
@@ -103,52 +109,95 @@ function useSettledActiveAppState(): boolean {
     return isSettled;
 }
 
-const PasscodePromptOverlay: FC = () => {
+const noop = (): void => undefined;
+
+type PasscodePromptOverlayProps = {
+    children: ReactNode;
+};
+
+const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => {
     const request = usePasscodePromptStore(state => state.request);
     const close = usePasscodePromptStore(state => state.close);
+    const { hasLockedOut } = usePasscodeLockout();
+    const isAppSettled = useSettledActiveAppState();
 
-    if (request === null) {
-        return null;
-    }
+    const isOpen = request !== null || hasLockedOut;
 
     return (
-        <PasscodePromptScreen
-            title={request.title}
-            subtitle={request.subtitle}
-            onVerified={() => {
-                request.resolve();
-                close();
-            }}
-            onCancel={() => {
-                request.reject(new SecurityCheckCancelledError());
-                close();
-            }}
-        />
+        <>
+            <div inert={isOpen} className={guardedStyles}>
+                {children}
+            </div>
+
+            {request !== null ? (
+                <PasscodePromptScreen
+                    key="request"
+                    title={request.title}
+                    subtitle={request.subtitle}
+                    onVerified={() => {
+                        request.resolve();
+                        close();
+                    }}
+                    onCancel={() => {
+                        request.reject(new SecurityCheckCancelledError());
+                        close();
+                    }}
+                />
+            ) : (
+                hasLockedOut && (
+                    <PasscodePromptScreen
+                        key="lockout"
+                        hasBiometryAutoPrompt={isAppSettled}
+                        onVerified={noop}
+                        onCancel={noop}
+                    />
+                )
+            )}
+        </>
     );
 };
 
 type PasscodePromptScreenProps = {
     title?: string;
     subtitle?: string;
+    hasBiometryAutoPrompt?: boolean;
     onVerified: () => void;
     onCancel: () => void;
 };
 
 const PasscodePromptScreen: FC<PasscodePromptScreenProps> = props => {
-    const verification = usePasscodeVerification({ onVerified: props.onVerified });
+    const { title, subtitle, hasBiometryAutoPrompt, onVerified, onCancel } = props;
+
+    const { withLoader } = useLoader();
+    const { mutateAsync: eraseAllData } = useEraseAllData();
+    const [isErasing, setIsErasing] = useState(false);
+    const verification = usePasscodeVerification({ onVerified, hasBiometryAutoPrompt });
 
     return (
-        <PasscodeVerification
-            title={props.title}
-            subtitle={props.subtitle}
-            value={verification.value}
-            length={verification.length}
-            isInvalid={verification.isInvalid}
-            isLocked={verification.isLocked}
-            remainingSeconds={verification.remainingSeconds}
-            onCheckBiometry={verification.promptBiometry}
-            onChange={verification.onChange}
-            onCancel={props.onCancel}
-        />
+        <>
+            <PasscodeVerification
+                title={title}
+                subtitle={subtitle}
+                value={verification.value}
+                length={verification.length}
+                isInvalid={verification.isInvalid}
+                isSuccess={verification.isSuccess}
+                isLocked={verification.isLocked}
+                hasLockedOut={verification.hasLockedOut}
+                remainingSeconds={verification.remainingSeconds}
+                onCheckBiometry={verification.promptBiometry}
+                onChange={verification.onChange}
+                onCancel={onCancel}
+                onSignOut={() => setIsErasing(true)}
+            />
+
+            {isErasing && (
+                <EraseDataModal
+                    layer="passcodePrompt"
+                    onConfirm={() => void withLoader(() => eraseAllData())}
+                    onClose={() => setIsErasing(false)}
+                />
+            )}
+        </>
     );
 };

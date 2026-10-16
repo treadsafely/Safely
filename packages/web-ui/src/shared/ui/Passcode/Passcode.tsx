@@ -13,6 +13,7 @@ export type PasscodeProps = {
     value: string;
     length: number;
     isInvalid?: boolean;
+    isSuccess?: boolean;
     isInset?: boolean;
     onCheckBiometry?: () => void;
     onChange: (value: string) => void;
@@ -28,10 +29,11 @@ const KEYPAD_ROWS = [
 ];
 
 export const Passcode: FC<PasscodeProps> = props => {
-    const { value, length, isInvalid, isInset, onCheckBiometry, onChange, className } = props;
+    const { value, length, isInvalid, isSuccess, isInset, onCheckBiometry, onChange, className } =
+        props;
 
     const t = useTranslate();
-    const styles = passcode({ isInvalid, isInset });
+    const styles = passcode({ isInvalid, isSuccess, isInset });
 
     const append = (digit: string): void => {
         if (value.length < length) {
