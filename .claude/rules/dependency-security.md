@@ -275,6 +275,13 @@ version: `latest` is 2.0.2, itself vulnerable, and Metro's `^1.0.2` resolves 1.2
 the 1.x line, published under the `legacy` tag. So an override cannot close them — closing them
 means forcing Metro across a major, not a version bump.
 
+The JavaScript registry holds `node-forge` and `braces`, both waiting on a patched release that npm
+does not have yet. The `image-size` pair left it through Metro rather than image-size: the fix only
+exists in image-size 2.x, while metro 0.84.5 dropped the dependency for its own parser. The metro-\*
+packages pin each other exactly, so a bare `metro@0.84` override would mix two families; the
+`@react-native/*>metro*` overrides are scoped per parent and exact, landing on the family
+`@expo/metro` pins. Drop them once react-native's tooling declares `^0.84.5` or later on its own.
+
 ## Dependabot
 
 Covers JavaScript and Actions only; it finds and proposes, the gates block. Alerts know nothing about

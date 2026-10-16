@@ -60,6 +60,12 @@ export class DeviceManagementService {
         });
 
         try {
+            const existingDevice = await this.deviceRepository.getStoredDevice(getKID(ikPub));
+            if (existingDevice && existingDevice.type !== 'revoked') {
+                flow.logEnd('already_exists');
+                return;
+            }
+
             const device = await this.makeDevice(ikPub, dmkSignerService);
             await this.deviceRepository.addDevice(device);
             flow.logEnd('added');

@@ -38,7 +38,10 @@ const t: TranslateFn = (key, options) =>
     options === undefined ? key : `${key}:${JSON.stringify(options)}`;
 
 const stubFormatter = (label: string): DateFormatter =>
-    Object.assign(() => ({ format: () => label }), { format: () => label });
+    Object.assign(() => ({ format: () => label }), {
+        format: () => label,
+        formatWithNonCurrentYear: () => label
+    });
 
 const numberFormatter = new NumberFormatter(new WebNumberFormatLocale('en-US'), new Logger());
 const rate = new Rate(
