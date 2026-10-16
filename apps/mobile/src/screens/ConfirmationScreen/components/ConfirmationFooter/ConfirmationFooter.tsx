@@ -32,7 +32,9 @@ export const ConfirmationFooter = (props: Props) => {
     const parseEstimateError = useParseError(
         {
             OutputsAreSpendingMoreThanInputsError:
-                'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs'
+                'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs',
+            BtcInsufficientFundsForFeeError:
+                'confirmation.estimateError.btc.insufficientFundsForFee'
         },
         { fallback: 'confirmation.estimateError.default' }
     );

@@ -80,10 +80,13 @@ jobs:
           echo "Diff size: $TOTAL lines (additions=$ADDITIONS, deletions=$DELETIONS)"
 
       - id: claude
-        uses: anthropics/claude-code-action@ed670b4cf9de2a5a570d130d2f6197b9e543cd64 # v1.0.240
+        uses: anthropics/claude-code-action@1d6de8cb0c237e7c15e9e1bdf973826ebae490cc # v1.0.248
         timeout-minutes: 18
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Dependabot-triggered runs read secrets from the Dependabot store, not Actions:
+          # ANTHROPIC_API_KEY must be duplicated there (Settings → Secrets → Dependabot).
+          allowed_bots: 'dependabot[bot]'
           claude_args: |
             --model claude-sonnet-4-6
             --max-turns 12

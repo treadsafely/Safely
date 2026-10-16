@@ -81,8 +81,24 @@ module.exports = {
                         '$(PRODUCT_NAME) needs access to Bluetooth to connect to your Ledger hardware wallet.'
                 }
             ],
+            [
+                'expo-build-properties',
+                {
+                    android: {
+                        enableMinifyInReleaseBuilds: true,
+                        enableShrinkResourcesInReleaseBuilds: true,
+                        extraProguardRules: [
+                            // react-native-keyboard-controller reads ReactEditText.mListeners via reflection
+                            '-keepclassmembers class com.facebook.react.views.textinput.ReactEditText { *** mListeners; }',
+                            // fbjni looks mHybridData up by name; expo's WorkletNativeRuntime lacks @DoNotStrip
+                            '-keepclassmembers class * { com.facebook.jni.HybridData mHybridData; }'
+                        ].join('\n')
+                    }
+                }
+            ],
             './plugins/withMMKVNoBackup',
-            './plugins/withPushContentExtension'
+            './plugins/withPushContentExtension',
+            './plugins/withNetworkSecurityConfig'
         ],
         extra: {
             eas: {
