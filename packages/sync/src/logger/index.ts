@@ -8,3 +8,7 @@ export { SyncFlowLogger, makeQrLogId, withSyncFlow } from './sync-flow-logger';
 export type { SyncFlowLogFields, SyncFlowLoggerOptions } from './sync-flow-logger';
 export type { LogEntry } from './log-entry';
 export type { ILoggerTransport } from './I-logger-transport';
+export { FileTransport } from './file-transport';
+export type { ILogFileWriter } from './I-log-file-writer';
+export type { ILogFileStore } from './I-log-file-store';
+export type { LogMeta, LogRecord } from './log-record';

@@ -13,7 +13,7 @@ the less trusted the source, the **stricter** the parsing — not the more forgi
 
 | Channel | Parser |
 | --- | --- |
-| Keyboard typing | `MaskEngine` (native, Kotlin + Swift, in `safely-masked-input`) |
+| Keyboard typing | `MaskEngine` (native, Kotlin + Swift, in `safely-masked-input`) on mobile, `sanitizeAmount` (`packages/web-ui/src/features/send/amount-mask.ts`) on the web targets |
 | Clipboard paste | `PastedAmountNormalizer` via `NumberFormatter.normalizePastedInput` |
 | QR / deeplink (BIP21) | `NumberFormatter.normalizeCanonicalInput` |
 
@@ -21,7 +21,13 @@ The allowed number of fraction digits comes from `resolveAmountDecimals(inputTyp
 (8 for BTC, 2 for fiat) — never compute it inline. Before that helper existed the mask and the
 form disagreed, and fiat mode accepted 8 digits while the form kept 2.
 
-## Typing — `MaskEngine`
+## Typing — `MaskEngine`, and `sanitizeAmount` on the web
+
+Both implement the rules below; the web one is a plain function because a DOM field has none of the
+native pathologies (no suffix inside the editable text, no echo race), and it drops the segments and
+the character mapping the native view needs for styling and the caret. What the web field does not
+inherit is display: it shows exactly what the form holds, so the caret only has to survive dropped
+characters (`resolveCaret`).
 
 Runs per character on the live buffer, so it cannot reject input as a whole: it rebuilds the
 value from whatever is in the field.

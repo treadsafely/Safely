@@ -14,3 +14,4 @@ export * from './storage';
 export * from './external-input';
 export * from './di';
 export { filterSensitiveData } from './logger/sensitive-filter';
+export { SanitizedTransport } from './logger/sanitized-transport';

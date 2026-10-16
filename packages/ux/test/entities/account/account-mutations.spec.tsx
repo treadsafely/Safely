@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { act, cleanup } from '@testing-library/react';
+import { act, cleanup, waitFor } from '@testing-library/react';
 import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +15,7 @@ import {
     PortfolioWatchOnlyBtc,
     WatchOnlySource
 } from '@safely/core';
+import { OnboardingAbortedError } from '@safely/sync';
 
 import {
     useChangeAccountMeta,
@@ -808,8 +809,7 @@ describe('useCreateExistingAccountConnector (add device → existing account)', 
             });
         });
 
-        // Force a re-render so the latest closure of `reset` (which references
-        // mutation.data) is the one we call below.
+        /* the mutation publishes its connector on the next render, and the ref follows it */
         rerender(undefined);
 
         await act(async () => {
@@ -817,5 +817,81 @@ describe('useCreateExistingAccountConnector (add device → existing account)', 
         });
 
         expect(abort).toHaveBeenCalledTimes(1);
+    });
+
+    it('aborts a connector that was reset while it was being made', async () => {
+        const abort = vi.fn();
+        let settle: (() => void) | undefined;
+        const factory = createFactoryStub({
+            connectToExistingSyncAccount: vi.fn(async () => {
+                await new Promise<void>(resolve => {
+                    settle = resolve;
+                });
+
+                return {
+                    data: Buffer.from('hello'),
+                    waitForCompletion: () => new Promise(() => undefined),
+                    abort
+                };
+            })
+        });
+        setupAccountState({ accounts: [], factory });
+        setupSyncedDevice();
+
+        const appContext = createTestAppContext();
+        const { result } = renderHookWithProviders(() => useCreateExistingAccountConnector(), {
+            appContext
+        });
+
+        const pairing = result.current.mutateAsync({
+            secureEncryptedStorage: appContext.storage.sync.encrypted as unknown as Parameters<
+                typeof result.current.mutateAsync
+            >[0]['secureEncryptedStorage']
+        });
+
+        await waitFor(() => expect(settle).toBeDefined());
+
+        await act(async () => {
+            result.current.reset();
+            settle?.();
+            await pairing.catch(() => undefined);
+        });
+
+        await expect(pairing).rejects.toBeInstanceOf(OnboardingAbortedError);
+        expect(abort).toHaveBeenCalledTimes(1);
+        expect(result.current.data).toBeUndefined();
+    });
+
+    it('keeps reset stable once the connector appears', async () => {
+        const factory = createFactoryStub({
+            connectToExistingSyncAccount: vi.fn(async () => ({
+                data: Buffer.from('hello'),
+                waitForCompletion: () => new Promise(() => undefined),
+                abort: vi.fn()
+            }))
+        });
+        setupAccountState({ accounts: [], factory });
+        setupSyncedDevice();
+
+        const appContext = createTestAppContext();
+        const { result, rerender } = renderHookWithProviders(
+            () => useCreateExistingAccountConnector(),
+            { appContext }
+        );
+
+        const previousReset = result.current.reset;
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                secureEncryptedStorage: appContext.storage.sync.encrypted as unknown as Parameters<
+                    typeof result.current.mutateAsync
+                >[0]['secureEncryptedStorage']
+            });
+        });
+
+        rerender(undefined);
+
+        /* a reset that changed here would be re-run by an effect watching it, aborting the pairing */
+        expect(result.current.reset).toBe(previousReset);
     });
 });

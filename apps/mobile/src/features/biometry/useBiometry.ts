@@ -9,7 +9,8 @@ import { biometryKeys } from './keys';
 async function authenticateWithBlurFreeze(): Promise<LocalAuthentication.LocalAuthenticationResult> {
     blurFreeze.freeze();
     try {
-        return await LocalAuthentication.authenticateAsync();
+        /* the device passcode would unlock every gate in the app, so only ours may serve as fallback */
+        return await LocalAuthentication.authenticateAsync({ disableDeviceFallback: true });
     } finally {
         blurFreeze.unfreeze();
     }
@@ -64,10 +65,13 @@ export function useSetBiometryEnabled() {
     const { set: storageSet } = useMobileLayerRegularStorage('biometryEnabled');
 
     return useMutation({
+        /* proving the factor works is part of turning it on; giving it up is authorized by the caller */
         mutationFn: async (enabled: boolean) => {
-            const result = await authenticateWithBlurFreeze();
-            if (!result.success) {
-                throw new Error('Authentication failed');
+            if (enabled) {
+                const result = await authenticateWithBlurFreeze();
+                if (!result.success) {
+                    throw new Error('Authentication failed');
+                }
             }
             await storageSet(enabled);
         },

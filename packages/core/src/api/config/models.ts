@@ -143,6 +143,8 @@ export const aboutSchema = z.object({
     posts: z.array(aboutPostSchema)
 });
 
+export type AboutOrder = 'asc' | 'desc';
+
 export type TaggedTextPost = z.infer<typeof taggedTextPostSchema>;
 export type ExternalLinkPost = z.infer<typeof externalLinkPostSchema>;
 export type AboutPost = z.infer<typeof aboutPostSchema>;

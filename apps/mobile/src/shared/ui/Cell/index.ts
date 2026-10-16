@@ -22,3 +22,5 @@ export const Cell = Object.assign(CellContainer, {
     Chevron,
     Checkmark
 });
+
+export type { CellContainerProps } from './Cell';

@@ -33,10 +33,11 @@ export const SentAmountPreview = () => {
             title={t('history.transactionInfo.sent')}
             amountSign="−"
             formattedValue={amount.format(formatter, { fullPrecision: isFullPrecision })}
-            valueColor="primary"
+            valueTone="primary"
             formattedFiat={rate.data ? amount.convert(rate.data).format(formatter) : null}
             timestampLabel={DEMO_TIMESTAMP_LABEL}
             background="tertiary"
+            isPending={false}
             counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
         />
     );

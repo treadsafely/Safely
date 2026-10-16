@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Deliberately without the keychain entitlements: the renderer runs in these processes, and
+         a boundary the OS enforces is worth more than one main promises to honour. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- The QR scanner. Listed on the helper too: the capture runs in the GPU process, and the
+         hardened runtime checks resource access per process. -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+</dict>
+</plist>

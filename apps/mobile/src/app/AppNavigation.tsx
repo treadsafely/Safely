@@ -7,7 +7,12 @@ import { useUnistyles } from 'react-native-unistyles';
 
 import { PushSubscriptionSyncProvider, SyncStorageProvider } from '@safely/ux';
 
-import { useLockScreenControl } from '@mobile/entities/security';
+import {
+    useLockScreenControl,
+    usePasscode,
+    usePasscodeLockout,
+    usePasscodePrompt
+} from '@mobile/entities/security';
 import { BleManagerProvider } from '@mobile/features/ledger';
 
 import Navigation from './navigation';
@@ -20,7 +25,12 @@ import { SelfUnarchiveWatcher } from './SelfUnarchiveWatcher';
 export function AppNavigation() {
     const { theme } = useUnistyles();
     const { isLocked } = useLockScreenControl();
-    const linking = useLockAwareLinking(isLocked);
+    const { isSet: hasPasscode } = usePasscode();
+    const { hasLockedOut } = usePasscodeLockout();
+    const { request } = usePasscodePrompt();
+    const linking = useLockAwareLinking(
+        isLocked || request !== null || (hasLockedOut && hasPasscode)
+    );
     const initialState = useInitialNavigationState();
     const enforceRestriction = useRestrictionGuard();
 

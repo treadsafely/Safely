@@ -1,0 +1,52 @@
+{
+  "name": "@safely/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "productName": "Safely",
+  "type": "commonjs",
+  "main": ".vite/build/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "build:native": "node-gyp rebuild -C native/keychain",
+    "package": "pnpm run build:native && electron-forge package",
+    "make": "pnpm run build:native && electron-forge make",
+    "compile": "tsc --noEmit",
+    "lint": "eslint ./src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noble/hashes": "catalog:",
+    "@safely/core": "workspace:*",
+    "@safely/sync": "workspace:*",
+    "@safely/ux": "workspace:*",
+    "@safely/web-ui": "workspace:*",
+    "@safely/xhr-event-source": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "1.170.31",
+    "buffer": "6.0.3",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-i18next": "catalog:",
+    "zod": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-zip": "7.11.2",
+    "@electron-forge/plugin-fuses": "7.11.2",
+    "@electron-forge/plugin-vite": "7.11.2",
+    "@electron-forge/shared-types": "7.11.2",
+    "@electron/fuses": "1.8.0",
+    "@pandacss/postcss": "1.12.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "43.7.7",
+    "node-addon-api": "8.5.0",
+    "node-gyp": "12.4.0",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-svgr": "catalog:",
+    "vitest": "^4.0.18"
+  }
+}
