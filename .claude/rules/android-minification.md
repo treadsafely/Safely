@@ -1,0 +1,59 @@
+---
+paths:
+  - 'apps/mobile/modules/**'
+  - 'apps/mobile/plugins/**'
+  - 'apps/mobile/app.config.js'
+  - 'apps/mobile/package.json'
+  - 'apps/mobile/src/shared/ui/**'
+  - 'apps/mobile/src/**/*Input*'
+---
+
+# Android release minification (R8)
+
+Android release builds run R8 (minify + resource shrinking), enabled through `expo-build-properties`
+in `app.config.js` — Google Play flags an unobfuscated DEX. The dev-client is a debug build without
+R8, so a feature that works there proves nothing about release. A breakage surfaces only in release,
+as `ClassNotFoundException` / `NoSuchMethodError` / `NoSuchFieldError`, or worse as a silently
+skipped reflective path: no crash, the feature just doesn't react.
+
+Every native dependency was checked for shipped consumer rules; the gaps are covered by
+`extraProguardRules`. Both rules there came from UI, not from obviously "native" work:
+
+- `react-native-keyboard-controller` reads `ReactEditText.mListeners` via reflection.
+- React Native's consumer rules keep `native` methods and `@DoNotStrip` members but not a bare fbjni
+  `mHybridData` field, which native code reads by name; `expo-modules-core`'s `WorkletNativeRuntime`
+  has no annotation, so without the generic `mHybridData` rule every worklet callback into Compose
+  (`NativeInput`'s `onChangeText`) crashes with `NoSuchFieldError` — this broke the Maestro
+  import/send flows.
+
+## When a change is at risk
+
+- a native module in `modules/` is added or changed;
+- a dependency with Android native code is added or upgraded (an `android/` dir, a Maven artifact,
+  a config plugin that touches Gradle);
+- text inputs, keyboard handling, gestures, worklets, or anything bridging JS to Compose/Views —
+  libraries in this area reach into React Native internals by name.
+
+## Before implementing
+
+Part of the design, not a follow-up. For every native dependency or module the feature touches:
+
+1. Does it ship consumer rules (`consumerProguardFiles` in its `build.gradle`, `proguard.txt` in
+   the AAR) or annotate what it reaches by name with `@Keep` / `@DoNotStrip`?
+2. Search its Android sources for name-based access: `getDeclaredField`, `getDeclaredMethod`,
+   `Class.forName`, JNI `FindClass` / `GetFieldID` / `GetMethodID`, serialization by field name.
+3. Anything reached by name and not kept → the `extraProguardRules` entry is part of the plan,
+   with a one-line comment naming the library and the member.
+
+State the outcome in the plan, including "nothing at risk" — the check has to be visible.
+
+## After implementing
+
+- Run the release variant on an Android device or emulator and walk the changed flow by hand:
+  `cd apps/mobile && pnpm exec expo run:android --variant release`. For inputs: type, paste,
+  delete, switch focus, open and dismiss the keyboard.
+- The Maestro flows in `.eas/workflows/build-and-distribute.yml` run on the minified APK, but cover
+  only their own flows; a feature outside them needs the manual pass above.
+- Crash traces from a release build are obfuscated; deobfuscate with
+  `android/app/build/outputs/mapping/release/mapping.txt` (the AAB carries it, so Play does this
+  itself).

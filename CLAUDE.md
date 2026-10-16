@@ -66,6 +66,10 @@ plugins yes, root tooling no.
   silently overwritten on the next regeneration. Keep wrappers and domain logic outside `generated/`.
 - **Log through the logger, never `console`**, and run sensitive data through `filterSensitiveData`
   from `@safely/core`.
+- **Android release builds are minified by R8; the dev-client is not.** A feature touching a native
+  module, a dependency with Android native code, or inputs/keyboard/gestures can work in the
+  dev-client and break only in release. Check it while designing and verify on the release variant
+  after — `.claude/rules/android-minification.md`.
 - **Import cycles are an eslint error** (`import/no-cycle`) — never suppress it. Modules call helpers
   at module-load time (e.g. `defineQueryKeys(...)` in `keys.ts`), so a cycle yields `undefined`
   instead of the export and crashes the app at startup.
@@ -78,7 +82,8 @@ message.
 ## Where the details are
 
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
-`typescript-style.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`, `testing.md`.
+`typescript-style.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`, `testing.md`,
+`android-minification.md`.
 
 Specs — read before changing the sync protocol or the state format; the rules files do not restate
 them:
