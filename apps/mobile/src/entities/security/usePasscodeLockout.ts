@@ -51,6 +51,7 @@ export function usePasscodeLockout() {
 
     return {
         isLocked,
+        hasLockedOut: lockedUntil !== null,
         remainingSeconds,
         failedAttempts: data.failedAttempts,
         recordFailedAttempt,

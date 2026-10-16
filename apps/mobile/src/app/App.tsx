@@ -10,7 +10,7 @@ import {
     QueryProvider
 } from '@safely/ux';
 
-import { BlurOverlay, LockScreenProvider } from '@mobile/entities/security';
+import { BlurOverlay, LockScreenProvider, PasscodePromptProvider } from '@mobile/entities/security';
 import { LockOverlay } from '@mobile/features/app-lock';
 import { logger } from '@mobile/shared/logger';
 import { LoaderProvider, LoaderServiceProvider } from '@mobile/shared/providers/loader';
@@ -45,25 +45,27 @@ export const App = () => {
                         >
                             <ToastServiceProvider>
                                 <LoaderServiceProvider>
-                                    <AppContextProvider>
-                                        <LedgerSessionProvider
-                                            openConnectScreen={openLedgerConnectScreen}
-                                        >
-                                            <RootSuspenseGate>
-                                                <AnalyticsProvider>
-                                                    <SecurityCheckInitializer />
-                                                    <LoaderProvider>
-                                                        <LockScreenProvider>
-                                                            <AppNavigation />
-                                                            <LockOverlay />
-                                                        </LockScreenProvider>
-                                                        <ToastProvider />
-                                                    </LoaderProvider>
-                                                </AnalyticsProvider>
-                                            </RootSuspenseGate>
-                                        </LedgerSessionProvider>
-                                        <BlurOverlay />
-                                    </AppContextProvider>
+                                    <PasscodePromptProvider>
+                                        <AppContextProvider>
+                                            <LedgerSessionProvider
+                                                openConnectScreen={openLedgerConnectScreen}
+                                            >
+                                                <RootSuspenseGate>
+                                                    <AnalyticsProvider>
+                                                        <SecurityCheckInitializer />
+                                                        <LoaderProvider>
+                                                            <LockScreenProvider>
+                                                                <AppNavigation />
+                                                                <LockOverlay />
+                                                            </LockScreenProvider>
+                                                            <ToastProvider />
+                                                        </LoaderProvider>
+                                                    </AnalyticsProvider>
+                                                </RootSuspenseGate>
+                                            </LedgerSessionProvider>
+                                            <BlurOverlay />
+                                        </AppContextProvider>
+                                    </PasscodePromptProvider>
                                 </LoaderServiceProvider>
                             </ToastServiceProvider>
                         </QueryProvider>

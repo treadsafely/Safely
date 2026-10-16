@@ -1,38 +1,77 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { PASSCODE_LENGTH, useSubmitWhenComplete } from '@safely/ux';
+import type { PasscodeLength } from '@safely/ux';
+import { useSubmitWhenComplete } from '@safely/ux';
 
 const CODE_VISIBLE_MS = 300;
 
-export type PasscodeEntry = {
-    value: string;
-    length: number;
-    isLong: boolean;
-    setValue: (value: string) => void;
-    setIsLong: (isLong: boolean) => void;
+export type PasscodeEntryParams = {
+    length: PasscodeLength;
+    isInvalid?: boolean;
+    onSubmit: (code: string) => void;
+    onInvalidCleared?: () => void;
 };
 
-export function usePasscodeEntry(onSubmit: (code: string) => void): PasscodeEntry {
+export type PasscodeEntry = {
+    value: string;
+    setValue: (value: string) => void;
+};
+
+export function usePasscodeEntry(params: PasscodeEntryParams): PasscodeEntry {
+    const { length, isInvalid, onSubmit, onInvalidCleared } = params;
+
     const [value, setValue] = useState('');
-    const [length, setLength] = useState<number>(PASSCODE_LENGTH.short);
+    const [enteredLength, setEnteredLength] = useState<PasscodeLength>(length);
+
+    const submitTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const clearTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-    useEffect(() => () => clearTimeout(clearTimer.current), []);
+    const invalidCleared = useRef(onInvalidCleared);
+    invalidCleared.current = onInvalidCleared;
+
+    if (enteredLength !== length) {
+        setEnteredLength(length);
+        setValue('');
+    }
+
+    useEffect(() => {
+        clearTimeout(submitTimer.current);
+    }, [length]);
+
+    useEffect(
+        () => () => {
+            clearTimeout(submitTimer.current);
+            clearTimeout(clearTimer.current);
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (!isInvalid) {
+            return;
+        }
+
+        clearTimer.current = setTimeout(() => {
+            setValue('');
+            invalidCleared.current?.();
+        }, CODE_VISIBLE_MS);
+
+        return () => clearTimeout(clearTimer.current);
+    }, [isInvalid]);
 
     useSubmitWhenComplete({
         value,
         length,
         onComplete: entered => {
-            onSubmit(entered);
-            clearTimer.current = setTimeout(() => setValue(''), CODE_VISIBLE_MS);
+            clearTimeout(submitTimer.current);
+            submitTimer.current = setTimeout(() => onSubmit(entered), CODE_VISIBLE_MS);
         }
     });
 
-    const setIsLong = (isLong: boolean): void => {
-        clearTimeout(clearTimer.current);
-        setValue('');
-        setLength(isLong ? PASSCODE_LENGTH.long : PASSCODE_LENGTH.short);
-    };
+    const change = useCallback(
+        (next: string) => setValue(current => (current.length < length ? next : current)),
+        [length]
+    );
 
-    return { value, length, isLong: length === PASSCODE_LENGTH.long, setValue, setIsLong };
+    return { value, setValue: change };
 }

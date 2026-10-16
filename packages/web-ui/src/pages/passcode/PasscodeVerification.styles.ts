@@ -28,6 +28,11 @@ export const closeStyles = css({
     appRegion: 'no-drag'
 });
 
+export const signOutStyles = css({
+    borderRadius: 'sm',
+    appRegion: 'no-drag'
+});
+
 export const bodyStyles = css({
     display: 'flex',
     flexDirection: 'column',
