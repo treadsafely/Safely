@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageSourcePropType } from 'react-native';
 
-import { LedgerDeviceBusyError } from '@safely/core';
+import { LedgerAppNotInstalledError, LedgerDeviceBusyError } from '@safely/core';
 import { useLedgerPairing, useLedgerSession, useToast } from '@safely/ux';
 
 import type { LedgerStep, LedgerStepStatus } from '@mobile/features/ledger';
@@ -37,6 +37,7 @@ export const useLedgerPairingScreen = (): LedgerPairingScreenState => {
     const modelLabel = selectedDevice ? (MODEL_LABEL[selectedDevice.deviceModel.model] ?? '') : '';
 
     const isDeviceBusy = error instanceof LedgerDeviceBusyError;
+    const isAppNotInstalled = error instanceof LedgerAppNotInstalledError;
 
     useEffect(() => {
         if (status === 'connected') {
@@ -56,8 +57,10 @@ export const useLedgerPairingScreen = (): LedgerPairingScreenState => {
             toast(t('ledgerSign.deviceBusyToast'));
         }
 
-        navigation.dispatch(StackActions.replace('LedgerPairingUnsuccessModal'));
-    }, [status, navigation, isDeviceBusy, toast, t]);
+        navigation.dispatch(
+            StackActions.replace('LedgerPairingUnsuccessModal', { isAppNotInstalled })
+        );
+    }, [status, navigation, isDeviceBusy, isAppNotInstalled, toast, t]);
 
     const currentStep = status === 'connecting' ? 0 : status === 'openingApp' ? 1 : 2;
 

@@ -4,14 +4,25 @@ import { useEffect, useState } from 'react';
 import { useLedgerSession } from './LedgerSessionProvider';
 import { useAppContext } from '../../shared';
 
-export type DiscoveryStatus = 'searching' | 'found' | 'timedOut';
+export type DiscoveryStatus = 'searching' | 'found' | 'error';
+
+export type DiscoveryError = 'timedOut' | 'locationDisabled';
 
 const SCAN_TIMEOUT_MS = 30_000;
+
+// BleErrorCode.LocationServicesDisabled from react-native-ble-plx, which ux must not import
+const BLE_LOCATION_SERVICES_DISABLED = 601;
+
+const isLocationServicesDisabledError = (error: unknown) =>
+    typeof error === 'object' &&
+    error !== null &&
+    'errorCode' in error &&
+    error.errorCode === BLE_LOCATION_SERVICES_DISABLED;
 
 export const useLedgerDeviceScan = () => {
     const { getLedgerKit } = useLedgerSession();
     const { ledgerTransport } = useAppContext();
-    const [isTimedOut, setIsTimedOut] = useState(false);
+    const [error, setError] = useState<DiscoveryError | null>(null);
     const [devices, setDevices] = useState<DiscoveredDevice[]>([]);
 
     useEffect(() => {
@@ -19,12 +30,15 @@ export const useLedgerDeviceScan = () => {
             .listenToAvailableDevices({ transport: ledgerTransport.transportIdentifier })
             .subscribe({
                 next: setDevices,
-                error: () => setIsTimedOut(true)
+                error: (scanError: unknown) =>
+                    setError(
+                        isLocationServicesDisabledError(scanError) ? 'locationDisabled' : 'timedOut'
+                    )
             });
 
         const timer = setTimeout(() => {
             subscription.unsubscribe();
-            setIsTimedOut(true);
+            setError(current => current ?? 'timedOut');
         }, SCAN_TIMEOUT_MS);
 
         return () => {
@@ -34,11 +48,7 @@ export const useLedgerDeviceScan = () => {
         };
     }, [getLedgerKit, ledgerTransport]);
 
-    const status: DiscoveryStatus = isTimedOut
-        ? 'timedOut'
-        : devices.length > 0
-          ? 'found'
-          : 'searching';
+    const status: DiscoveryStatus = error ? 'error' : devices.length > 0 ? 'found' : 'searching';
 
-    return { devices, status };
+    return { devices, status, error };
 };

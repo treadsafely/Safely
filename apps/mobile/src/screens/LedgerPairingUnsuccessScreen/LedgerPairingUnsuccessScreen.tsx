@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/core';
+import type { StaticScreenProps } from '@react-navigation/native';
 import { CommonActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +12,9 @@ import {
 } from '@mobile/features/ledger';
 import { ExclamationmarkCircle96, Icon } from '@mobile/shared/ui';
 
-export const LedgerPairingUnsuccessScreen = () => {
+type LedgerPairingUnsuccessScreenProps = StaticScreenProps<{ isAppNotInstalled?: boolean }>;
+
+export const LedgerPairingUnsuccessScreen = ({ route }: LedgerPairingUnsuccessScreenProps) => {
     const { t } = useTranslation();
     const navigation = useNavigation();
     const exitToConnect = useExitToConnectLedger();
@@ -33,7 +36,11 @@ export const LedgerPairingUnsuccessScreen = () => {
         <LedgerStatusScreen
             media={<Icon icon={ExclamationmarkCircle96} />}
             title={t('addWallet.connectLedger.pairingUnsuccess.title')}
-            subtitle={t('addWallet.connectLedger.pairingUnsuccess.subtitle', { device })}
+            subtitle={
+                route.params?.isAppNotInstalled
+                    ? t('addWallet.connectLedger.pairingUnsuccess.appNotInstalled', { device })
+                    : t('addWallet.connectLedger.pairingUnsuccess.subtitle', { device })
+            }
             buttonLabel={t('addWallet.connectLedger.pairingUnsuccess.retry')}
             onButtonPress={handleRetry}
             onBackPress={exitToConnect}

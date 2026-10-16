@@ -48,7 +48,17 @@ export function useOnboardingFlow() {
     }, [navigation]);
 
     const onSuccessSignIn = useCallback(() => {
-        navigation.navigate('OnboardingPasscodeScreen', { source: null, headerType: 'back' });
+        navigation.dispatch(
+            CommonActions.reset({
+                index: 0,
+                routes: [
+                    {
+                        name: 'OnboardingPasscodeScreen',
+                        params: { source: null, headerType: 'placeholder' }
+                    }
+                ]
+            })
+        );
     }, [navigation]);
 
     const onMnemonicReady = useCallback(
