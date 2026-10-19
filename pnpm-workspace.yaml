@@ -97,6 +97,7 @@ overrides:
   # cacache@16 declares tar ^6 and every fix is on the 7 line; the rebuild step that would
   # run it is switched off in forge.config.ts, so this chain only has to resolve.
   'tar@6': '^7.5.21' # GHSA-23hp-3jrh-7fpw (critical) + 11 more
+  'http-cache-semantics@4': '^4.3.0' # GHSA-ch52-4w7c-c8xp, via @electron/get
   # scoped to inquirer's editor prompt: tmp 0.2 drops the 0.0 API that nothing else here uses
   'external-editor>tmp': '^0.2.6' # GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6
 
