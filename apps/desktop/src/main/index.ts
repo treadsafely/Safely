@@ -7,6 +7,7 @@ import { readAppInfo } from './app-info';
 import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
 import { registerIpcHandlers } from './ipc';
 import { logStore, mainLogger } from './logger';
+import { installApplicationMenu } from './menu';
 import { useSeparateDevUserData } from './paths';
 import { hardenSession, hardenWebContents } from './security';
 import { createStores } from './store';
@@ -88,6 +89,7 @@ if (!app.requestSingleInstanceLock()) {
         .whenReady()
         .then(() => {
             configureAboutPanel();
+            installApplicationMenu();
 
             if (!devServerUrl) {
                 registerAppProtocol(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`));

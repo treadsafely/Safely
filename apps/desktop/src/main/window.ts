@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import path from 'node:path';
 
 import { darkTheme } from '@safely/ux/theme';
@@ -39,7 +39,8 @@ export function createMainWindow(
             sandbox: true,
             contextIsolation: true,
             nodeIntegration: false,
-            webSecurity: true
+            webSecurity: true,
+            devTools: !app.isPackaged
         }
     });
 
