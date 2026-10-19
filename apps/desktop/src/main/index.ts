@@ -70,6 +70,12 @@ function attachMainWindow(): BrowserWindow {
     return window;
 }
 
+const DEBUG_SWITCHES = ['remote-debugging-port', 'remote-debugging-pipe', 'inspect', 'inspect-brk'];
+
+if (app.isPackaged && DEBUG_SWITCHES.some(flag => app.commandLine.hasSwitch(flag))) {
+    app.exit(1);
+}
+
 /* Both must happen before the app is ready. */
 useSeparateDevUserData();
 registerPrivilegedSchemes();
