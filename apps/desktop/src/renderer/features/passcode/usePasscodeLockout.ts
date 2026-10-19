@@ -10,11 +10,11 @@ import {
 } from '@safely/ux';
 
 import { lockoutKeys } from './keys';
-import { useDesktopLayerRegularStorage } from '../../shared';
+import { useDesktopLayerEncryptedStorage } from '../../shared';
 
 export function usePasscodeLockout() {
     const client = useQueryClient();
-    const { get: storageGet, set: storageSet } = useDesktopLayerRegularStorage('passcodeLockout');
+    const { get: storageGet, set: storageSet } = useDesktopLayerEncryptedStorage('passcodeLockout');
 
     const { data } = useSuspenseQuery({
         queryKey: lockoutKeys.state.toKey(),
