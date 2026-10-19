@@ -106,6 +106,7 @@ overrides:
   rollup@4: ^4.59.0
   source-map-js@1: ^1.2.2
   tar@6: ^7.5.21
+  http-cache-semantics@4: ^4.3.0
   external-editor>tmp: ^0.2.6
   shell-quote@1: ^1.11.0
   '@xmldom/xmldom@0.8': ^0.8.13
@@ -6732,6 +6733,7 @@ packages:
 
   react-native-edge-to-edge@1.8.1:
     resolution: {integrity: sha512-bhvsKqeX9PGkY9wBUk9vni/tJNJdKtLPbs/j3e/3CdV4JmUWfTXYYoL+4Hc8Wmej+5eJxkc8KOFa454ruFWBCA==}
+    deprecated: This package is deprecated. Set edgeToEdgeEnabled=true in android/gradle.properties instead.
     peerDependencies:
       react: '*'
       react-native: '*'
