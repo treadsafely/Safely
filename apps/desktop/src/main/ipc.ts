@@ -22,6 +22,12 @@ import {
 /** Protocols main is willing to hand to the OS, regardless of what the renderer claims. */
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['https:', 'mailto:', 'tg:']);
 
+/** https links come from the boot config, so even a valid one must point at a host we expect. */
+const ALLOWED_EXTERNAL_HOSTS = ['safely.app', 'mempool.space', 't.me'];
+
+const isAllowedExternalHost = (hostname: string): boolean =>
+    ALLOWED_EXTERNAL_HOSTS.some(host => hostname === host || hostname.endsWith(`.${host}`));
+
 /**
  * Validated here rather than in the sandboxed preload: main is the authoritative side, and the
  * renderer is not a trusted caller even though it is our own code.
@@ -108,10 +114,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     });
 
     handle(IPC_CHANNEL.openExternal, sOpenExternalRequest, async payload => {
-        const { protocol } = new URL(payload.url);
+        const { protocol, hostname } = new URL(payload.url);
 
         if (!ALLOWED_EXTERNAL_PROTOCOLS.has(protocol)) {
             throw new Error(`Refusing to open ${protocol} externally`);
+        }
+
+        if (protocol === 'https:' && !isAllowedExternalHost(hostname)) {
+            throw new Error(`Refusing to open ${hostname} externally`);
         }
 
         await shell.openExternal(payload.url);
