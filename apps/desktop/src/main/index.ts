@@ -1,5 +1,5 @@
 import type { BrowserWindow } from 'electron';
-import { app } from 'electron';
+import { app, powerMonitor } from 'electron';
 import path from 'node:path';
 
 import { configureAboutPanel } from './about-panel';
@@ -108,6 +108,9 @@ if (!app.requestSingleInstanceLock()) {
             registerIpcHandlers(() => mainWindow);
 
             app.on('did-resign-active', () => notifyAppState('background'));
+
+            powerMonitor.on('lock-screen', () => notifyAppState('background'));
+            powerMonitor.on('suspend', () => notifyAppState('background'));
 
             mainWindow = attachMainWindow();
         })
