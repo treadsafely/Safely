@@ -39,6 +39,7 @@ export function usePasscodeVerification(
     const [isInvalid, setIsInvalid] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const isSettledRef = useRef(false);
+    const isVerifyingRef = useRef(false);
     const hasAutoPromptedRef = useRef(false);
     const invalidTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
     const successTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -81,30 +82,39 @@ export function usePasscodeVerification(
 
     const onEntered = useCallback(
         (entered: string) => {
-            if (!passcode.isSet) {
+            if (!passcode.isSet || isVerifyingRef.current) {
                 return;
             }
 
-            void passcode.validate(entered).then(async isValid => {
-                if (isValid) {
-                    setIsSuccess(true);
-                    successTimerRef.current = setTimeout(() => {
-                        void reset().then(verified);
-                    }, CODE_VISIBLE_MS);
-                    return;
-                }
+            isVerifyingRef.current = true;
 
-                if (isSettledRef.current) {
-                    return;
-                }
+            void (async () => {
+                try {
+                    if (await passcode.validate(entered)) {
+                        setIsSuccess(true);
+                        successTimerRef.current = setTimeout(() => {
+                            void reset().then(verified);
+                        }, CODE_VISIBLE_MS);
+                        return;
+                    }
 
-                setIsInvalid(true);
-                await recordFailure();
-                invalidTimerRef.current = setTimeout(() => {
-                    setValue('');
-                    setIsInvalid(false);
-                }, CODE_VISIBLE_MS);
-            });
+                    if (isSettledRef.current) {
+                        return;
+                    }
+
+                    setIsInvalid(true);
+                    try {
+                        await recordFailure();
+                    } finally {
+                        invalidTimerRef.current = setTimeout(() => {
+                            setValue('');
+                            setIsInvalid(false);
+                        }, CODE_VISIBLE_MS);
+                    }
+                } finally {
+                    isVerifyingRef.current = false;
+                }
+            })();
         },
         [passcode.isSet, passcode.validate, verified, recordFailure, reset]
     );
