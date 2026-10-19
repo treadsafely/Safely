@@ -10,14 +10,14 @@ catalogs:
       specifier: ^9.39.5
       version: 9.39.5
     '@ledgerhq/device-management-kit':
-      specifier: ^1.5.1
-      version: 1.6.0
+      specifier: ^1.11.0
+      version: 1.11.0
     '@ledgerhq/device-signer-kit-bitcoin':
-      specifier: ^1.3.1
-      version: 1.3.1
+      specifier: ^1.3.3
+      version: 1.3.3
     '@ledgerhq/signer-utils':
-      specifier: ^1.2.0
-      version: 1.2.0
+      specifier: ^1.3.0
+      version: 1.3.0
     '@noble/curves':
       specifier: 2.2.0
       version: 2.2.0
@@ -209,10 +209,10 @@ importers:
         version: 5.2.14(@types/react@19.2.14)(react-native-gesture-handler@2.31.2(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-reanimated@4.3.1(react-native-worklets@0.8.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
       '@ledgerhq/device-management-kit':
         specifier: 'catalog:'
-        version: 1.6.0(rxjs@7.8.2)
+        version: 1.11.0(rxjs@7.8.2)
       '@ledgerhq/device-transport-kit-react-native-ble':
         specifier: ^1.3.2
-        version: 1.3.2(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(react-native-ble-plx@3.5.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(rxjs@7.8.2)
+        version: 1.3.2(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(react-native-ble-plx@3.5.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(rxjs@7.8.2)
       '@noble/hashes':
         specifier: 'catalog:'
         version: 2.2.0
@@ -453,13 +453,13 @@ importers:
     dependencies:
       '@ledgerhq/device-management-kit':
         specifier: 'catalog:'
-        version: 1.6.0(rxjs@7.8.2)
+        version: 1.11.0(rxjs@7.8.2)
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: 'catalog:'
-        version: 1.3.1(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(bitcoinjs-lib@6.1.7)
+        version: 1.3.3(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(bitcoinjs-lib@6.1.7)
       '@ledgerhq/signer-utils':
         specifier: 'catalog:'
-        version: 1.2.0(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))
+        version: 1.3.0(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))
       '@noble/curves':
         specifier: 'catalog:'
         version: 2.2.0
@@ -576,7 +576,7 @@ importers:
     dependencies:
       '@ledgerhq/device-management-kit':
         specifier: 'catalog:'
-        version: 1.6.0(rxjs@7.8.2)
+        version: 1.11.0(rxjs@7.8.2)
       '@noble/hashes':
         specifier: 'catalog:'
         version: 2.2.0
@@ -1709,15 +1709,15 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@ledgerhq/device-management-kit@1.6.0':
-    resolution: {integrity: sha512-WVWALWxEALhBkRetk46bFpnfQjhY1wspORCjB9SxBLvNg0C4lf9cHf/EzFRTdz2UnYMQsWTjaeZLvtA7furQHQ==}
+  '@ledgerhq/device-management-kit@1.11.0':
+    resolution: {integrity: sha512-1KAC6tmtLZz+9X0KQY0lukzEAXgIDoMM3LP0pTRh9/Rab/NmZv5+74R9coL2mYTnDQTp8EfR41uJLJ5FylRCug==}
     peerDependencies:
       rxjs: 7.8.2
 
-  '@ledgerhq/device-signer-kit-bitcoin@1.3.1':
-    resolution: {integrity: sha512-BhNLfy9pP/VqhV9V1//zM9H56eksosXEu5q94s43sLafYd7jKkIfdm/NluL+FxECmCe3QdKcEC71pfef5cO4xQ==}
+  '@ledgerhq/device-signer-kit-bitcoin@1.3.3':
+    resolution: {integrity: sha512-jLdZsq3eQKli7zOYsP4NxETY40FzA3WlMP7aMWsrajOShVNJmj/p8RLoURA77zM8Fxhr88qMz8ziJm3XuzIjkA==}
     peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.5.1
+      '@ledgerhq/device-management-kit': ^1.7.1
       bitcoinjs-lib: ^6.1.6
 
   '@ledgerhq/device-transport-kit-react-native-ble@1.3.2':
@@ -1728,10 +1728,10 @@ packages:
       react-native-ble-plx: 3.4.0
       rxjs: 7.8.2
 
-  '@ledgerhq/signer-utils@1.2.0':
-    resolution: {integrity: sha512-Ek4/NXGt6gfiZUmiAFE19534f8wnlQSHvZMsjmqCEktbJd/mYbzvTrvYeo0+PQPw2D/kTYD1fRC6ADKQRSBeGw==}
+  '@ledgerhq/signer-utils@1.3.0':
+    resolution: {integrity: sha512-qe+HQMgZxq6SPv8ghvlq4c33RchUwlf1qE/qp7MtUGPbKGAqD/0PKNyzx05sKLpmA8m6YZdtndHH4CEkikzqSQ==}
     peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.2.0
+      '@ledgerhq/device-management-kit': ^1.7.1
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -4629,9 +4629,6 @@ packages:
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
-  punycode@1.4.1:
-    resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
-
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
@@ -4646,10 +4643,6 @@ packages:
     resolution: {integrity: sha512-1ca71Zgiu6ORjHqFBDpnSMTR2ReToX4l1Au1VFLyVeBTFavzQnv5JxMFr3ukHVKpSrSA2MCk0lNJSykjUfz7Zg==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-
-  qs@6.14.1:
-    resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
-    engines: {node: '>=0.6'}
 
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
@@ -5425,10 +5418,6 @@ packages:
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
-
-  url@0.11.4:
-    resolution: {integrity: sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==}
-    engines: {node: '>= 0.4'}
 
   use-callback-ref@1.3.3:
     resolution: {integrity: sha512-jQL3lRnocaFtu3V00JToYz/4QkNWswxijDaCVNZRiRTO3HQDLsdu1ZtmIUvV4yPp+rvWm5j0y0TG/S61cuijTg==}
@@ -7109,7 +7098,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2)':
+  '@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2)':
     dependencies:
       '@noble/hashes': 1.8.0
       '@sentry/minimal': 6.19.7
@@ -7119,7 +7108,6 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       semver: 7.7.2
-      url: 0.11.4
       uuid: 11.0.3
       ws: 8.21.3
       xstate: 5.19.2
@@ -7127,9 +7115,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@ledgerhq/device-signer-kit-bitcoin@1.3.1(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(bitcoinjs-lib@6.1.7)':
+  '@ledgerhq/device-signer-kit-bitcoin@1.3.3(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(bitcoinjs-lib@6.1.7)':
     dependencies:
-      '@ledgerhq/device-management-kit': 1.6.0(rxjs@7.8.2)
+      '@ledgerhq/device-management-kit': 1.11.0(rxjs@7.8.2)
+      '@ledgerhq/signer-utils': 1.3.0(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))
       '@types/crypto-js': 4.2.2
       bitcoinjs-lib: 6.1.7
       crypto-js: 4.2.0
@@ -7138,9 +7127,9 @@ snapshots:
       reflect-metadata: 0.2.2
       xstate: 5.19.2
 
-  '@ledgerhq/device-transport-kit-react-native-ble@1.3.2(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(react-native-ble-plx@3.5.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(rxjs@7.8.2)':
+  '@ledgerhq/device-transport-kit-react-native-ble@1.3.2(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(react-native-ble-plx@3.5.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(rxjs@7.8.2)':
     dependencies:
-      '@ledgerhq/device-management-kit': 1.6.0(rxjs@7.8.2)
+      '@ledgerhq/device-management-kit': 1.11.0(rxjs@7.8.2)
       '@sentry/minimal': 6.19.7
       js-base64: 3.7.8
       purify-ts: 2.1.0
@@ -7149,9 +7138,9 @@ snapshots:
       rxjs: 7.8.2
       uuid: 11.0.3
 
-  '@ledgerhq/signer-utils@1.2.0(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))':
+  '@ledgerhq/signer-utils@1.3.0(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))':
     dependencies:
-      '@ledgerhq/device-management-kit': 1.6.0(rxjs@7.8.2)
+      '@ledgerhq/device-management-kit': 1.11.0(rxjs@7.8.2)
       semver: 7.7.2
 
   '@napi-rs/wasm-runtime@0.2.12':
@@ -10421,8 +10410,6 @@ snapshots:
       object-assign: 4.1.1
       react-is: 16.13.1
 
-  punycode@1.4.1: {}
-
   punycode@2.3.1: {}
 
   pure-rand@8.4.0: {}
@@ -10436,10 +10423,6 @@ snapshots:
       dijkstrajs: 1.0.3
       pngjs: 5.0.0
       yargs: 15.4.1
-
-  qs@6.14.1:
-    dependencies:
-      side-channel: 1.1.0
 
   range-parser@1.2.1: {}
 
@@ -11301,11 +11284,6 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
-
-  url@0.11.4:
-    dependencies:
-      punycode: 1.4.1
-      qs: 6.14.1
 
   use-callback-ref@1.3.3(@types/react@19.2.14)(react@19.2.3):
     dependencies:
