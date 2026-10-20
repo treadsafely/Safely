@@ -85,7 +85,10 @@ export class BtcEstimator implements IIdentifiable {
         request: BtcTransferRequest,
         utxo: BtcApiUtxo[]
     ): Promise<BtcTransactionTemplate> {
-        this.logger?.info('estimating transaction', { request, utxo });
+        this.logger?.info('estimating transaction', {
+            type: request.type,
+            utxoCount: utxo.length
+        });
         let result: BtcTransactionTemplate;
 
         switch (request.type) {
@@ -99,7 +102,14 @@ export class BtcEstimator implements IIdentifiable {
                 assertUnreachable(request);
         }
 
-        this.logger?.info('transaction estimated', result);
+        this.logger?.info('transaction estimated', {
+            blockchain: result.blockchain,
+            feeType: result.estimation.feeType,
+            feeSat: result.estimation.fee.amount.weiAmount.toString(),
+            targetBlock: result.estimation.txTargetBlock,
+            inputs: result.inputs.length,
+            hasChange: result.request.hasChange
+        });
         return result;
     }
 
