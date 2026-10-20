@@ -1,5 +1,5 @@
 import type { Build } from '@safely/core';
-import { FileTransport } from '@safely/sync';
+import { FileTransport, compareLogRecords } from '@safely/sync';
 
 import { createEnumerableStorage, synchronousStorage } from './storage';
 import type { DesktopPlatform } from './types';
@@ -63,7 +63,8 @@ export const platform: DesktopPlatform = {
         read: async () =>
             (await bridge.logs.read())
                 .map(line => FileTransport.parse(line))
-                .filter(record => record !== null),
+                .filter(record => record !== null)
+                .sort(compareLogRecords),
         erase: () => bridge.logs.erase(),
         share: () => bridge.logs.share()
     },

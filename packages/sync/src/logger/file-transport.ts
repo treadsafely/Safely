@@ -11,6 +11,7 @@ const CONTEXT_BUFFER_SIZE = 1000;
 
 const sStoredLog = z.object({
     t: z.string(),
+    s: z.number().optional(),
     l: z.enum(LogLevel),
     p: z.array(z.string()),
     m: z.string(),
@@ -50,6 +51,7 @@ export class FileTransport implements ILoggerTransport {
 
         return {
             timestamp: stored.t,
+            seq: stored.s,
             level: stored.l,
             path: stored.p,
             message: stored.m,
@@ -89,6 +91,7 @@ export class FileTransport implements ILoggerTransport {
     private serialize(entry: LogEntry): string {
         const stored: StoredLog = {
             t: entry.timestamp.toISOString(),
+            s: entry.seq,
             l: entry.level,
             p: entry.path,
             m: entry.message.map(message => this.serializeMessage(message)).join(' '),

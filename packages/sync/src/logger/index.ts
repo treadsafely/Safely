@@ -14,3 +14,4 @@ export type { ILogFileStore } from './I-log-file-store';
 export type { LogMeta, LogRecord } from './log-record';
 export { safeStringify } from './safe-stringify';
 export type { SafeStringifyOptions } from './safe-stringify';
+export { compareLogRecords } from './compare-log-records';

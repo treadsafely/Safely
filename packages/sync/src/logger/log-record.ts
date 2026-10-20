@@ -8,6 +8,7 @@ export type LogMeta = {
 
 export type LogRecord = {
     timestamp: string;
+    seq?: number;
     level: LogLevel;
     path: string[];
     message: string;
