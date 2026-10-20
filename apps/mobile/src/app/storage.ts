@@ -117,7 +117,7 @@ const storagesList = {
     regular: createMMKVTreeStorage('regular'),
     encrypted: createKeychainTreeStorage(
         'safely.encrypted',
-        SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY
+        SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
     ),
     secureEncrypted: createKeychainTreeStorage(
         'safely.secureEncrypted',
