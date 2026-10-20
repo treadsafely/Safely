@@ -11,6 +11,10 @@ export class Logger {
 
     constructor(private readonly transport: ILoggerTransport = new ConsoleTransport()) {}
 
+    public toJSON(): string {
+        return '[Logger]';
+    }
+
     public setLogsFilter(filter: LogsFilter): void {
         this.logsFilter = filter;
     }

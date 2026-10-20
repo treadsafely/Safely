@@ -28,6 +28,7 @@ export {
     ConsoleTransport,
     CombinedTransport,
     FileTransport,
+    safeStringify,
     logsFilterMinSeverityLevel
 } from './logger';
 export type {

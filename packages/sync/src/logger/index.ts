@@ -12,3 +12,5 @@ export { FileTransport } from './file-transport';
 export type { ILogFileWriter } from './I-log-file-writer';
 export type { ILogFileStore } from './I-log-file-store';
 export type { LogMeta, LogRecord } from './log-record';
+export { safeStringify } from './safe-stringify';
+export type { SafeStringifyOptions } from './safe-stringify';
