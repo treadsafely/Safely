@@ -29,6 +29,15 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
         const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
         const unsubscribePush = ExpoPushNotifications.subscribeToTappedUrls(handleUrl);
 
+        if (!hasConsumedInitialUrlRef.current) {
+            hasConsumedInitialUrlRef.current = true;
+            void Linking.getInitialURL().then(url => {
+                if (url !== null) {
+                    handleUrl(url);
+                }
+            });
+        }
+
         return () => {
             subscription.remove();
             unsubscribePush();
