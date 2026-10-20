@@ -1,7 +1,10 @@
 {
     "readme": "Reviewed exceptions to the JavaScript dependency advisory gate. See .claude/rules/dependency-security.md before editing. Checked by scripts/audit-gate.mjs.",
     "policy": {
-        "blockingSeverities": ["critical", "high"]
+        "blockingSeverities": [
+            "critical",
+            "high"
+        ]
     },
     "exceptions": [
         {
@@ -59,41 +62,6 @@
             "owner": "liulekin@andreevco.com",
             "expires": "2027-01-04",
             "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
-        },
-        {
-            "id": "GHSA-ch52-4w7c-c8xp",
-            "package": "http-cache-semantics",
-            "severity": "high",
-            "context": "build",
-            "paths": [
-                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > @electron/get > got > cacheable-request > http-cache-semantics"
-            ],
-            "rationale": "Reached only through @electron/get, the downloader @electron/packager uses for the Electron binary at packaging time; it runs on a developer machine or the CI packaging job and ships in no app. The fix is 4.3.0, published 2026-10-04, which `minimumReleaseAge` (4 days) refuses until 2026-10-08 — then `'http-cache-semantics@4': '^4.3.0'` goes into `overrides` and this entry is dropped.",
-            "owner": "liulekin@andreevco.com",
-            "expires": "2026-10-31",
-            "url": "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"
-        },
-        {
-            "id": "GHSA-8r5x-fm3f-whwj",
-            "package": "handlebars",
-            "severity": "critical",
-            "context": "dev",
-            "paths": ["safely > eslint-plugin-boundaries > @boundaries/elements > handlebars"],
-            "rationale": "Reached only through eslint-plugin-boundaries, which renders its rule messages with handlebars while lint runs; it executes on a developer machine and in the CI lint job and is in no bundle any app ships. Both advisories are fixed in 4.7.10, published 2026-10-12, which `minimumReleaseAge` (4 days) refuses until 2026-10-16 — then the existing `'handlebars@4'` override moves to `^4.7.10` and these entries are dropped.",
-            "owner": "liulekin@andreevco.com",
-            "expires": "2026-10-31",
-            "url": "https://github.com/advisories/GHSA-8r5x-fm3f-whwj"
-        },
-        {
-            "id": "GHSA-p8wg-vrv2-v86f",
-            "package": "handlebars",
-            "severity": "critical",
-            "context": "dev",
-            "paths": ["safely > eslint-plugin-boundaries > @boundaries/elements > handlebars"],
-            "rationale": "Reached only through eslint-plugin-boundaries, which renders its rule messages with handlebars while lint runs; it executes on a developer machine and in the CI lint job and is in no bundle any app ships. Both advisories are fixed in 4.7.10, published 2026-10-12, which `minimumReleaseAge` (4 days) refuses until 2026-10-16 — then the existing `'handlebars@4'` override moves to `^4.7.10` and these entries are dropped.",
-            "owner": "liulekin@andreevco.com",
-            "expires": "2026-10-31",
-            "url": "https://github.com/advisories/GHSA-p8wg-vrv2-v86f"
         }
     ]
 }

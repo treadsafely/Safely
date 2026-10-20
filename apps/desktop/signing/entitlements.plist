@@ -16,11 +16,25 @@
         <string>3ZVCUSJU6R.com.safely.wallet-desktop</string>
     </array>
 
+    <!-- The Mac App Store admits sandboxed apps only; the helpers inherit this sandbox. -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Chromium in a MAS build names its shared memory and Mach ports under this group, built from
+         `ElectronTeamID` and the bundle id: a mismatch leaves the helpers unable to start. -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>3ZVCUSJU6R.com.safely.wallet-desktop</string>
+    </array>
+
+    <key>com.apple.security.network.client</key>
+    <true/>
+
     <key>com.apple.security.cs.allow-jit</key>
     <true/>
 
-    <!-- The QR scanner. Listed on the helper too: the capture runs in the GPU process, and the
-         hardened runtime checks resource access per process. -->
+    <!-- The QR scanner. The capture runs in the GPU helper, which reaches the camera through the
+         sandbox it inherits from here. -->
     <key>com.apple.security.device.camera</key>
     <true/>
 </dict>

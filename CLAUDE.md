@@ -18,7 +18,7 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms, plus the design tokens (`./theme`) and the strings (`./translations`). No RN/DOM specifics. |
 | `packages/web-ui`           | React layer shared by the web targets: design system (Base UI + Panda), the screens built from it and the flows that drive them over `@safely/ux`. FSD + `pages`. No router, no Electron/extension code, no platform contract, no globals, no build config. |
 | `apps/mobile`               | Expo dev-client (iOS/Android): FSD + `screens`, native modules `modules/safely-*`, unistyles, i18n.                                            |
-| `apps/desktop`              | Electron (forge + vite), **macOS-only build for now**: split by process (`main`/`preload`/`renderer`/`shared`), native addon `native/keychain`, platform implementation, the security module (passcode, lockout, Touch ID) and the routing that drives the web UI. |
+| `apps/desktop`              | Electron (forge + vite), **Mac App Store–only build for now**: split by process (`main`/`preload`/`renderer`/`shared`), native addon `native/keychain`, platform implementation, the security module (passcode, lockout, Touch ID) and the routing that drives the web UI. |
 | `apps/browser`              | MV3 extension — placeholder, see its README.                                                                                                    |
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
@@ -47,11 +47,15 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   cannot scan; CI runs it on every pull request. An intentional one goes in as an escape
   (`\u200D`), never as the raw character
 - mobile: `pnpm --filter @safely/mobile ios|android|start` — dev-client, not Expo Go
-- desktop: `pnpm --filter @safely/desktop start|package|make`; `build:native` compiles the keychain
-  addon (`package`/`make` run it first, `pnpm install` never does). A build QA can install
-  comes from the `Desktop QA build` workflow — a push to `release/**`, or run by hand — signed with
-  the development identity;
-  `.claude/rules/desktop-signing.md` has what CI may read and why the Developer ID key stays local
+- desktop: `pnpm --filter @safely/desktop start|package:mas|make:mas` — one `package:<target>` /
+  `make:<target>` pair per platform, while `forge.config.ts` holds everything platform-specific and
+  refuses a target it does not support; Mac App Store (sandboxed) is the only one for now.
+  `build:native` compiles the keychain addon (the package/make scripts run it first, `pnpm install`
+  never does). Store builds are signed only by the `Desktop TestFlight` workflow — a push to
+  `release/*`, or run by hand — which uploads them to App Store Connect for TestFlight; locally a
+  developer builds `package:mas` with their own development identity.
+  `.claude/rules/desktop-signing.md` has the certificates, the environment, the `release/*` ruleset and what each job
+  may hold
 - `packages/web-ui` generates `styled-system/` with `panda codegen`; its `compile`/`lint`/`test`
   scripts run it first, and `pnpm -r run` is topological, so the apps that depend on it build after.
   A standalone run in an app may need `pnpm --filter @safely/web-ui run codegen` first.
