@@ -1,5 +1,5 @@
-import type { FC } from 'react';
-import { useEffect } from 'react';
+import type { FC, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useTranslate } from '@safely/ux';
 import Backspace28 from '@safely/ux/assets/icons/28/backspace-28.svg?react';
@@ -43,25 +43,32 @@ export const Passcode: FC<PasscodeProps> = props => {
 
     const removeLast = (): void => onChange(value.slice(0, -1));
 
+    const rootRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent): void => {
-            if (event.key === 'Backspace') {
-                removeLast();
-                return;
-            }
+        rootRef.current?.focus();
+    }, []);
 
-            if (/^[0-9]$/.test(event.key)) {
-                append(event.key);
-            }
-        };
+    const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+        if (event.key === 'Backspace') {
+            event.preventDefault();
+            removeLast();
+            return;
+        }
 
-        window.addEventListener('keydown', onKeyDown);
-
-        return () => window.removeEventListener('keydown', onKeyDown);
-    });
+        if (/^[0-9]$/.test(event.key)) {
+            event.preventDefault();
+            append(event.key);
+        }
+    };
 
     return (
-        <div className={cx(styles.root, className)}>
+        <div
+            ref={rootRef}
+            tabIndex={-1}
+            onKeyDown={onKeyDown}
+            className={cx(styles.root, className)}
+        >
             <div className={styles.boxes}>
                 {Array.from({ length }, (_, index) => (
                     <div key={index} className={styles.box}>

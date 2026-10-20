@@ -10,7 +10,6 @@ import {
 } from '@safely/ux';
 import { EraseDataModal, LockScreen, PasscodeVerification } from '@safely/web-ui';
 
-import { guardedStyles } from './AppLock.styles';
 import { useLockScreen } from './useLockScreen';
 import { isBiometryPromptOpen } from '../biometry';
 import {
@@ -124,13 +123,9 @@ const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => 
     const { hasLockedOut } = usePasscodeLockout();
     const isAppSettled = useSettledActiveAppState();
 
-    const isOpen = request !== null || hasLockedOut;
-
     return (
         <>
-            <div inert={isOpen} className={guardedStyles}>
-                {children}
-            </div>
+            {children}
 
             {request !== null ? (
                 <PasscodePromptScreen
