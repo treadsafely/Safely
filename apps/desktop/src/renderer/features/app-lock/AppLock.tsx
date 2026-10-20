@@ -28,11 +28,14 @@ export const AppLock: FC<AppLockProps> = ({ children }) => {
     const passcode = usePasscode();
     const lockScreen = useLockScreen();
 
+    const cancelPrompt = usePasscodePromptStore(state => state.cancel);
+
     const isEnabled = passcode.isSet && lockScreen.isEnabled;
     const [isLocked, setIsLocked] = useState(isEnabled);
 
     useEnteredBackground(() => {
         if (isEnabled && !isBiometryPromptOpen()) {
+            cancelPrompt();
             setIsLocked(true);
         }
     });
@@ -136,11 +139,11 @@ const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => 
                     subtitle={request.subtitle}
                     onVerified={() => {
                         request.resolve();
-                        close();
+                        close(request);
                     }}
                     onCancel={() => {
                         request.reject(new SecurityCheckCancelledError());
-                        close();
+                        close(request);
                     }}
                 />
             ) : (
