@@ -55,7 +55,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
         return getWindow()?.isFullScreen() ?? false;
     });
 
-    ipcMain.handle(IPC_CHANNEL.appRelaunch, event => {
+    ipcMain.handle(IPC_CHANNEL.appReload, event => {
         assertTrustedSender(event);
         getWindow()?.reload();
     });

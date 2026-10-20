@@ -47,7 +47,7 @@ export interface DesktopBridge {
 
     readonly appInfo: AppInfo;
 
-    relaunch(): void;
+    reload(): void;
 
     clearAllData(): Promise<void>;
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const IPC_CHANNEL = {
-    appRelaunch: 'safely:app:relaunch',
+    appReload: 'safely:app:reload',
     appClearData: 'safely:app:clear-data',
     appState: 'safely:app:state',
     windowFullScreen: 'safely:window:full-screen',

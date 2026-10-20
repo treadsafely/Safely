@@ -69,7 +69,7 @@ export const platform: DesktopPlatform = {
     },
     openExternalUrl: url => bridge.openExternalUrl(url),
     protectScreen: isProtected => void bridge.setContentProtection(isProtected),
-    reloadApp: () => bridge.relaunch(),
+    reloadApp: () => bridge.reload(),
     clearAllData: async () => {
         await bridge.clearAllData();
         synchronousStorage.clear();
