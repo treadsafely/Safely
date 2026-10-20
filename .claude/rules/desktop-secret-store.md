@@ -64,7 +64,7 @@ access group                  = the default one, our `application-identifier`
 
 | Scope | Service | Holds |
 | ----- | ------- | ----- |
-| `encrypted` | `com.safely.wallet-desktop.encrypted` | `sync/dmk_pub`, `sync/sync_key`, `sync/self_ik_pub`, `sync/self_ik_prv`, `desktop_security/passcode` |
+| `encrypted` | `com.safely.wallet-desktop.encrypted` | `sync/dmk_pub`, `sync/sync_key`, `sync/self_ik_pub`, `sync/self_ik_prv`, `desktop/passcode`, `desktop/passcodeLockout`, `desktop/biometryEnabled` |
 | `secureEncrypted` | `com.safely.wallet-desktop.secureEncrypted` | `sync/master_key`, `sync/vault_key`, `sync/dmk_prv` |
 
 **The passcode is in `encrypted`, not in `secureEncrypted`, and that is not an oversight.** It is the
@@ -72,9 +72,10 @@ thing the gate checks, so reading it cannot itself go through the gate — `secu
 scope `UnlockableSecuredEncryptedStorage` wraps, and putting the passcode there would be circular.
 Mobile makes the same split. Both scopes are equally protected by the code signature; what differs is
 only which items the renderer's unlockable wrapper covers. Everything the security module owns sits
-under a `desktop_security` node (`src/renderer/shared/storage/structured/`), the way mobile uses
-`child('mobile')`, so it cannot collide with the `sync` tree. `TreeStorage` escapes `_` as `_u`, so
-that node reads `desktop_usecurity` in `regular.json` — grep the encoded form, not the source string.
+under a `desktop` node (`DESKTOP_LAYER_NODE` in `src/renderer/shared/storage/structured/`), the way
+mobile uses `child('mobile')`, so it cannot collide with the `sync` tree. The lockout counter and the
+biometry flag live in this node under the `encrypted` scope too — not in the plaintext `regular`
+file — so editing a file cannot reset the counter or enable biometry.
 
 **The accessibility is one constant, not a setting.** Both scopes are
 `WhenUnlockedThisDeviceOnly`: nothing in this app is worth reading while the Mac is locked, and a

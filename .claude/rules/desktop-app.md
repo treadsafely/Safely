@@ -235,8 +235,8 @@ value in `src/renderer/i18n.ts` — the gate translates outside React.
 **Either factor clears the lockout.** A successful Touch ID resets the failed-attempt counter
 exactly as a correct passcode does. Without that the counter only ever grows for anyone who mistypes
 and then uses the sensor, and the lockout screen renders instead of the keypad — which is where the
-biometry key lives — so the escape hatch disappears at the moment it is needed. `apps/mobile` still
-has that defect in `entities/security/usePasscodeVerification.ts`.
+biometry key lives — so the escape hatch disappears at the moment it is needed. `apps/mobile` clears
+it the same way (`features/app-lock/LockOverlay.tsx`, `PasscodePromptContent.tsx`).
 
 The settings row names it from the `biometry.fingerprint.ios.*` keys, and the `ios` there is correct
 rather than a stray paste: macOS brands the sensor Touch ID exactly as iOS does, while
