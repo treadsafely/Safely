@@ -4,7 +4,7 @@ paths:
     - 'apps/desktop/forge.config.ts'
     - 'apps/desktop/postcss.config.cjs'
     - 'apps/desktop/signing/**'
-    - '.github/workflows/desktop-preview.yml'
+    - '.github/workflows/desktop-testflight.yml'
 ---
 
 # `apps/desktop` — Electron
@@ -13,7 +13,11 @@ The desktop app is a thin adapter: the UI comes from `@safely/web-ui`, the domai
 `@safely/core`/`@safely/sync`/`@safely/ux`. What lives here is the build, the Electron-specific
 services and the platform implementation injected into the shared UI.
 
-**macOS is the only build target for now** (`makers` in `forge.config.ts`). That is a security
+**The Mac App Store is the only build target for now** (`package:mas`/`make:mas`; `desktop-signing.md`
+has the sandbox it brings). A script only names the target; `forge.config.ts` owns everything
+platform-specific and its `prePackage` hook refuses any target but `mas`, because forge otherwise
+falls back to the host platform and would sign a darwin build with the sandbox entitlements. A new
+platform is a `package:<target>`/`make:<target>` pair plus its branch in the config. That is a security
 decision, not just a scheduling one: the secret store relies on keychain access groups being bound
 to the app's code signature, and Windows has no equivalent — see `desktop-secret-store.md`. Platform
 guards already in the code (`process.platform` checks, the `win32` branch in `utils/atomic-file.ts`)
@@ -91,8 +95,9 @@ module graphs would then be evaluated above the install calls.
 
 The renderer therefore holds secret material in memory. Moving the secret handling and the signer
 into main is a known, deliberately deferred option — it protects the seed's confidentiality but not
-the funds, because a compromised renderer can still ask main to sign; only a main-owned confirmation
-window would change that. Keep the seams intact for it: everything platform-specific reaches the UI
+the funds, because a compromised renderer can still ask main to sign; and a main-owned confirmation
+window alone would not change that either, since synthetic input answers it. What would is spelled
+out in `desktop-secret-store.md`, "What it deliberately does not protect". Keep the seams intact for it: everything platform-specific reaches the UI
 through `DesktopPlatform`, and secrets never land in zustand, react-query or an xstate context.
 
 ## Storage lives in main, not in the renderer
@@ -344,8 +349,9 @@ import — `app.getPath('logs')` is usable before `ready` (measured on Electron 
 record main writes is already on disk, including a keychain failure that exits during module
 evaluation. Its device field is `os.hostname()`, not `scutil`: nothing that spawns a process belongs
 on the import path. `src/main/logs/log-file-store.ts` owns `app.getPath('logs')` —
-`~/Library/Logs/Safely`, where Console.app and electron-log look, shared by dev and packaged builds
-on purpose (on a Windows/Linux target `logs` resolves under `userData`, and the path would then have
+`~/Library/Logs/Safely` under `pnpm start`, and the same path inside the sandbox container
+(`~/Library/Containers/com.safely.wallet-desktop/Data/Library/Logs/Safely`) in a packaged build
+(on a Windows/Linux target `logs` resolves under `userData`, and the path would then have
 to go through `useSeparateDevUserData()` like the stores): one `safely-<day>.ndjson` per UTC day,
 seven days kept, 2 MB in total — a cap on what a leaked directory can hold, the same budget as
 mobile; retention is enforced on start and before anything leaves the directory (`read`, `share`),
@@ -360,7 +366,7 @@ the renderer only has a console transport there.
 `electron-forge` (7.x) + `vite` (6.x) — `pnpm --filter @safely/desktop start | package | make`.
 
 - **The native addon is built by one script**: `pnpm --filter @safely/desktop run build:native`,
-  which is `node-gyp rebuild -C native/keychain`. `package` and `make` run it first; `start` does
+  which is `node-gyp rebuild -C native/keychain`. `package:mas` and `make:mas` run it first; `start` does
   not need it, because development is aliased to the stub. The build tooling belongs to the app:
   `node-gyp` and `node-addon-api` are its devDependencies, and `binding.gyp` still resolves the
   headers because gyp runs `<!(…)` commands with the gyp file's directory as the working directory,
@@ -391,21 +397,25 @@ the renderer only has a console transport there.
 - **The camera needs three build-time entries**, in `forge.config.ts` and `signing/`:
   `usageDescription.Camera` (Electron's own plist carries a generic string, which is what the macOS
   prompt would otherwise show), `extendInfo` plus `extendHelperInfo` with
-  `NSCameraUseContinuityCameraDeviceType`, and `com.apple.security.device.camera` on both
-  entitlement plists. `verify-signature.sh` gates the entitlement and the absence of a microphone
-  one; `desktop-qr.md` says which of the three is actually load-bearing.
-- `make` produces a **macOS zip only**. Signing is env-driven and listed at the top of
-  `forge.config.ts`: `SAFELY_SIGN_IDENTITY` turns it on, `SAFELY_SIGN_PROFILE` is mandatory with it
-  (forge throws on one without the other, because a signature without its profile reaches nothing),
-  `SAFELY_SIGN_KEYCHAIN` is for CI's throwaway keychain. Unsigned stays valid because the profiles
+  `NSCameraUseContinuityCameraDeviceType`, and `com.apple.security.device.camera` on the main
+  entitlement plist — the helpers only inherit its sandbox (`desktop-signing.md`).
+  `verify-signature.sh` gates the entitlement and the absence of a microphone one; `desktop-qr.md`
+  says which of the three is actually load-bearing.
+- `package:mas` produces the sandboxed MAS app (`out/Safely-mas-arm64/`), `make:mas` wraps it into the
+  **`.pkg` App Store Connect takes** and needs `SAFELY_INSTALLER_IDENTITY` for that. Signing is
+  env-driven and listed at the top of `forge.config.ts`: `SAFELY_SIGN_IDENTITY` turns it on,
+  `SAFELY_SIGN_PROFILE` is mandatory with it (forge throws on one without the other, because a
+  signature without its profile reaches nothing), `SAFELY_SIGN_KEYCHAIN` is for CI's throwaway
+  keychain. The icon is `assets/icon.icns`, built from the designer's iconset with `iconutil -c
+  icns`; `iconutil -c iconset` takes it apart again. Unsigned stays valid because the profiles
   are uncommitted, and signing is a prerequisite of the store rather than a cosmetic step: the
   hardened runtime is what keeps another process out of our memory, and the data protection keychain
   needs an embedded provisioning profile with `com.apple.application-identifier`. Never add
   `com.apple.security.cs.disable-library-validation` or `get-task-allow` to a production build —
-  `signing/verify-signature.sh` fails on both, and CI runs it as a gate. Notarisation is still
-  missing, so a downloaded build needs its quarantine flag removed by hand.
+  `signing/verify-signature.sh` fails on both, and CI runs it as a gate. A development-signed
+  download needs its quarantine flag removed by hand.
 - **The build number reaches the app twice, from one variable.** `SAFELY_BUILD_NUMBER` — CI passes
-  the counter it allocated (`../../.github/workflows/desktop-preview.yml`) — becomes
+  the counter it allocated (`../../.github/workflows/desktop-testflight.yml`) — becomes
   `packagerConfig.buildVersion`, and macOS renders `Version 0.0.1 (42)` in the About panel out of
   Info.plist with no code involved; it is also a vite `define` in `vite.main.config.ts`, which
   `src/main/about-panel.ts` hands to `setAboutPanelOptions` so the panel is right in `pnpm start`
@@ -415,9 +425,10 @@ the renderer only has a console transport there.
   main bundle**, so a renderer read compiles and throws at runtime; and the About item comes from
   Electron's default menu, so a `Menu.setApplicationMenu` without `role: 'about'` silently removes
   it.
-- **QA builds are signed by CI with its own Mac Development certificate, releases locally with
-  Developer ID** (`../../.github/workflows/desktop-preview.yml`, `desktop-signing.md`). Two
-  consequences for anything that touches the build: CI proves the signature is well-formed and
+- **Store builds are signed only in CI, with Mac App Distribution, and reach testers through
+  TestFlight** (`../../.github/workflows/desktop-testflight.yml`, `desktop-signing.md`); a
+  developer signs a local build with their own development identity. Two consequences for anything
+  that touches the build: CI proves the signature is well-formed and
   nothing more — whether securityd honours it is only visible when the app runs — and a change to
   the entitlements or the bundle id has to reach the provisioning profile before the workflow can
   sign again.
@@ -440,6 +451,8 @@ the renderer only has a console transport there.
   (forge's transitive `@electron/rebuild` declares it as a git URL, which `blockExoticSubdeps`
   rejects). Neither changes the installed layout.
 - `pnpm install` does not always run electron's postinstall; if `node_modules/electron/dist` is
-  missing, run `node install.js` inside that package. A packaging CI job will need the same.
+  missing, run `node install.js` inside that package. Only `pnpm start` needs it: `package:mas`
+  downloads Electron's MAS build on its own and packages without `electron/dist` — measured
+  locally, which is why the TestFlight workflow has no such step.
 - `productName` in `package.json` decides `app.getName()`, the `userData` directory and the bundle
   name — without it they would all be the scoped package name.
