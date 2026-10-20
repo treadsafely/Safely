@@ -34,19 +34,21 @@ export function usePasscodePrompt() {
 export const PasscodePromptProvider: FC<PropsWithChildren> = ({ children }) => {
     const [request, setRequest] = useState<PasscodePromptRequest | null>(null);
     const nextIdRef = useRef(0);
+    const requestRef = useRef<PasscodePromptRequest | null>(null);
 
     const open = useCallback((input: PasscodePromptInput) => {
+        requestRef.current?.reject(new SecurityCheckCancelledError());
+
         const next = { ...input, id: ++nextIdRef.current };
-
-        setRequest(previous => {
-            previous?.reject(new SecurityCheckCancelledError());
-
-            return next;
-        });
+        requestRef.current = next;
+        setRequest(next);
     }, []);
 
     const close = useCallback((id: number) => {
-        setRequest(previous => (previous?.id === id ? null : previous));
+        if (requestRef.current?.id === id) {
+            requestRef.current = null;
+            setRequest(null);
+        }
     }, []);
 
     const value = useMemo(() => ({ request, open, close }), [request, open, close]);
