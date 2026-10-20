@@ -229,6 +229,7 @@ Napi::Value Set(const Napi::CallbackInfo& info) {
         item[(__bridge id)kSecValueData] = data;
 
         OSStatus status = SecItemAdd((__bridge CFDictionaryRef)item, NULL);
+        const char* operation = "SecItemAdd";
 
         if (status == errSecDuplicateItem) {
           // The accessibility travels with the update, so an item left by an earlier policy
@@ -242,10 +243,11 @@ Napi::Value Set(const Napi::CallbackInfo& info) {
           status = SecItemUpdate(
               (__bridge CFDictionaryRef)ItemQuery(ToNSString(service), ToNSString(account)),
               (__bridge CFDictionaryRef)update);
+          operation = "SecItemUpdate";
         }
 
         if (status != errSecSuccess) {
-          error = StatusMessage("SecItemAdd", status);
+          error = StatusMessage(operation, status);
 
           return false;
         }
