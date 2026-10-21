@@ -54,8 +54,8 @@ const bridge: DesktopBridge = {
 
     appInfo: parseAppInfoArgument(process.argv),
 
-    relaunch(): void {
-        void ipcRenderer.invoke(IPC_CHANNEL.appRelaunch);
+    reload(): void {
+        void ipcRenderer.invoke(IPC_CHANNEL.appReload);
     },
 
     async clearAllData(): Promise<void> {

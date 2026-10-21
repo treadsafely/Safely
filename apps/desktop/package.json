@@ -47,6 +47,6 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-svgr": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "catalog:"
   }
 }
