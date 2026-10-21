@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { biometryKeys } from './keys';
 import { i18n } from '../../i18n';
 import { platform } from '../../platform';
-import { desktopLayerRegularStorage, useDesktopLayerRegularStorage } from '../../shared';
+import { desktopLayerEncryptedStorage, useDesktopLayerEncryptedStorage } from '../../shared';
 
 export function isBiometryAvailable(): Promise<boolean> {
     return platform.biometry.isAvailable();
@@ -30,7 +30,7 @@ export async function authenticateBiometry(): Promise<boolean> {
 export async function isBiometryUnlockEnabled(): Promise<boolean> {
     const [isAvailable, isEnabled] = await Promise.all([
         platform.biometry.isAvailable(),
-        desktopLayerRegularStorage.get('biometryEnabled')
+        desktopLayerEncryptedStorage.get('biometryEnabled')
     ]);
 
     return isAvailable && isEnabled === true;
@@ -38,7 +38,7 @@ export async function isBiometryUnlockEnabled(): Promise<boolean> {
 
 /* deliberately not suspending: an availability round-trip must not blank the app it renders inside */
 export function useBiometryQuery() {
-    const { get: storageGet } = useDesktopLayerRegularStorage('biometryEnabled');
+    const { get: storageGet } = useDesktopLayerEncryptedStorage('biometryEnabled');
 
     return useQuery({
         queryKey: biometryKeys.state.toKey(),
@@ -56,7 +56,7 @@ export function useBiometryQuery() {
 
 export function useSetBiometryEnabled() {
     const client = useQueryClient();
-    const { set: storageSet } = useDesktopLayerRegularStorage('biometryEnabled');
+    const { set: storageSet } = useDesktopLayerEncryptedStorage('biometryEnabled');
 
     return useMutation({
         /* proving the factor works is part of turning it on; giving it up is authorized by the caller */

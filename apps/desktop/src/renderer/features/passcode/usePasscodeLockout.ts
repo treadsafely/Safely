@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import type { LockoutState } from '@safely/ux';
 import {
@@ -10,11 +10,11 @@ import {
 } from '@safely/ux';
 
 import { lockoutKeys } from './keys';
-import { useDesktopLayerRegularStorage } from '../../shared';
+import { useDesktopLayerEncryptedStorage } from '../../shared';
 
 export function usePasscodeLockout() {
     const client = useQueryClient();
-    const { get: storageGet, set: storageSet } = useDesktopLayerRegularStorage('passcodeLockout');
+    const { get: storageGet, set: storageSet } = useDesktopLayerEncryptedStorage('passcodeLockout');
 
     const { data } = useSuspenseQuery({
         queryKey: lockoutKeys.state.toKey(),
@@ -33,14 +33,25 @@ export function usePasscodeLockout() {
         [storageSet, client]
     );
 
+    const writes = useRef<Promise<void>>(Promise.resolve());
+    const serialize = useCallback((task: () => Promise<void>): Promise<void> => {
+        const next = writes.current.then(task, task);
+        writes.current = next;
+        return next;
+    }, []);
+
     /* re-read instead of trusting the query cache: a stale count silently forgives an attempt */
-    const recordFailure = useCallback(async () => {
-        const current = (await storageGet()) ?? NO_LOCKOUT;
+    const recordFailure = useCallback(
+        () =>
+            serialize(async () => {
+                const current = (await storageGet()) ?? NO_LOCKOUT;
 
-        await persist(nextLockoutState(current, Date.now()));
-    }, [storageGet, persist]);
+                await persist(nextLockoutState(current, Date.now()));
+            }),
+        [serialize, storageGet, persist]
+    );
 
-    const reset = useCallback(() => persist(NO_LOCKOUT), [persist]);
+    const reset = useCallback(() => serialize(() => persist(NO_LOCKOUT)), [serialize, persist]);
 
     return {
         isLocked: remainingSeconds > 0,

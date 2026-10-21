@@ -9,6 +9,7 @@ import {
     createPersister,
     createQueryClient,
     LedgerSessionPortProvider,
+    NO_LOCKOUT,
     QueryProvider,
     SyncStorageProvider,
     UnlockableSecuredEncryptedStorage
@@ -43,9 +44,18 @@ export interface AppProvidersProps {
     loader?: ReactNode;
 }
 
+async function clearLockoutAfterFactor(): Promise<void> {
+    const current = await desktopLayerEncryptedStorage.get('passcodeLockout');
+
+    if (current !== null && current.failedAttempts !== 0) {
+        await desktopLayerEncryptedStorage.set('passcodeLockout', NO_LOCKOUT);
+    }
+}
+
 const securityGate: Security = {
     async check(options) {
         if ((await isBiometryUnlockEnabled()) && (await authenticateBiometry())) {
+            await clearLockoutAfterFactor();
             return;
         }
 

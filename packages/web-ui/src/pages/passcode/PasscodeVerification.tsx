@@ -1,3 +1,4 @@
+import { Dialog } from '@base-ui/react/dialog';
 import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
@@ -66,34 +67,40 @@ export const PasscodeVerification: FC<PasscodeVerificationProps> = props => {
     );
 
     return (
-        <ScreenProtection>
-            <div className={rootStyles}>
-                <div className={headerStyles}>{headerButton}</div>
+        <Dialog.Root open modal>
+            <Dialog.Portal>
+                <Dialog.Popup className={rootStyles}>
+                    <ScreenProtection>
+                        <div className={headerStyles}>{headerButton}</div>
 
-                <div className={bodyStyles}>
-                    {isLocked ? (
-                        <LockoutContent remainingSeconds={remainingSeconds ?? 0} />
-                    ) : (
-                        <div className={promptStyles}>
-                            <Text variant="labelL">{title ?? t('passcode.verify.title')}</Text>
-                            {subtitle !== undefined && (
-                                <Text variant="bodyM" tone="secondary" align="center">
-                                    {subtitle}
-                                </Text>
+                        <div className={bodyStyles}>
+                            {isLocked ? (
+                                <LockoutContent remainingSeconds={remainingSeconds ?? 0} />
+                            ) : (
+                                <div className={promptStyles}>
+                                    <Text variant="labelL">
+                                        {title ?? t('passcode.verify.title')}
+                                    </Text>
+                                    {subtitle !== undefined && (
+                                        <Text variant="bodyM" tone="secondary" align="center">
+                                            {subtitle}
+                                        </Text>
+                                    )}
+
+                                    <Passcode
+                                        value={value}
+                                        length={length}
+                                        isInvalid={isInvalid}
+                                        isSuccess={isSuccess}
+                                        onCheckBiometry={onCheckBiometry}
+                                        onChange={onChange}
+                                    />
+                                </div>
                             )}
-
-                            <Passcode
-                                value={value}
-                                length={length}
-                                isInvalid={isInvalid}
-                                isSuccess={isSuccess}
-                                onCheckBiometry={onCheckBiometry}
-                                onChange={onChange}
-                            />
                         </div>
-                    )}
-                </div>
-            </div>
-        </ScreenProtection>
+                    </ScreenProtection>
+                </Dialog.Popup>
+            </Dialog.Portal>
+        </Dialog.Root>
     );
 };

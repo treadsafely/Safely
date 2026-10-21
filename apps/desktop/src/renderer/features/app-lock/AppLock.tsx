@@ -10,7 +10,6 @@ import {
 } from '@safely/ux';
 import { EraseDataModal, LockScreen, PasscodeVerification } from '@safely/web-ui';
 
-import { guardedStyles } from './AppLock.styles';
 import { useLockScreen } from './useLockScreen';
 import { isBiometryPromptOpen } from '../biometry';
 import {
@@ -28,11 +27,14 @@ export const AppLock: FC<AppLockProps> = ({ children }) => {
     const passcode = usePasscode();
     const lockScreen = useLockScreen();
 
+    const cancelPrompt = usePasscodePromptStore(state => state.cancel);
+
     const isEnabled = passcode.isSet && lockScreen.isEnabled;
     const [isLocked, setIsLocked] = useState(isEnabled);
 
     useEnteredBackground(() => {
         if (isEnabled && !isBiometryPromptOpen()) {
+            cancelPrompt();
             setIsLocked(true);
         }
     });
@@ -121,13 +123,9 @@ const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => 
     const { hasLockedOut } = usePasscodeLockout();
     const isAppSettled = useSettledActiveAppState();
 
-    const isOpen = request !== null || hasLockedOut;
-
     return (
         <>
-            <div inert={isOpen} className={guardedStyles}>
-                {children}
-            </div>
+            {children}
 
             {request !== null ? (
                 <PasscodePromptScreen
@@ -136,11 +134,11 @@ const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => 
                     subtitle={request.subtitle}
                     onVerified={() => {
                         request.resolve();
-                        close();
+                        close(request);
                     }}
                     onCancel={() => {
                         request.reject(new SecurityCheckCancelledError());
-                        close();
+                        close(request);
                     }}
                 />
             ) : (
