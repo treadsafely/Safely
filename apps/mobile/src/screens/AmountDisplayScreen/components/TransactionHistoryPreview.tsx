@@ -19,10 +19,11 @@ export const TransactionHistoryPreview = () => {
             title={t('history.transactionInfo.received')}
             amountSign="+"
             formattedValue={DEMO_AMOUNT.format(formatter)}
-            valueColor="accentGreen"
+            valueTone="accentGreen"
             formattedFiat={rate.data ? DEMO_AMOUNT.convert(rate.data).format(formatter) : null}
             timestampLabel={DEMO_TIMESTAMP_LABEL}
             background="tertiary"
+            isPending={false}
             counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
         />
     );

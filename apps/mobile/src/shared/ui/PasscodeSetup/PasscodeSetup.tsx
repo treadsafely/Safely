@@ -1,10 +1,10 @@
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { assertUnreachable } from '@safely/core';
+import { PASSCODE_LENGTH, useSubmitWhenComplete } from '@safely/ux';
 
-import { PASSCODE_DIGITS } from '@mobile/shared/constants';
 import { PasscodeView } from '@mobile/shared/ui/PasscodeView';
 import { Screen } from '@mobile/shared/ui/Screen';
 import { Text } from '@mobile/shared/ui/Text';
@@ -49,7 +49,6 @@ export const PasscodeSetup = ({
     const [firstPasscode, setFirstPasscode] = useState<string | null>(null);
 
     const isReenterStep = firstPasscode !== null;
-    const pinFullyEntered = passcodeState.inputValue.length === passcodeState.digitsAmount;
 
     const handlePasscodeComplete = useCallback(async () => {
         if (passcodeState.isSuccess.value) return;
@@ -84,11 +83,11 @@ export const PasscodeSetup = ({
         }
     }, [passcodeState, isReenterStep, firstPasscode, onComplete]);
 
-    useEffect(() => {
-        if (pinFullyEntered) {
-            void handlePasscodeComplete();
-        }
-    }, [pinFullyEntered, handlePasscodeComplete]);
+    useSubmitWhenComplete({
+        value: passcodeState.inputValue,
+        length: passcodeState.digitsAmount,
+        onComplete: () => void handlePasscodeComplete()
+    });
 
     const currentTitle = isReenterStep ? reenterTitle : title;
     const currentDescription = isReenterStep ? reenterDescription : description;
@@ -101,7 +100,7 @@ export const PasscodeSetup = ({
                 {!isReenterStep && (
                     <Screen.Header.Button type="small" onPress={passcodeState.switchDigitsAmount}>
                         <Text variant="labelM" color="primary">
-                            {passcodeState.digitsAmount === PASSCODE_DIGITS.SHORT
+                            {passcodeState.digitsAmount === PASSCODE_LENGTH.short
                                 ? t('passcode.switchToSix')
                                 : t('passcode.switchToFour')}
                         </Text>

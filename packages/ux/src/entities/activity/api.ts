@@ -33,11 +33,33 @@ export function getBiggestBtcIOAddress(io: BtcApiTx['vin' | 'vout']) {
         ?.addresses?.[0];
 }
 
+function sumBtcIOValues(io: BtcApiTx['vin' | 'vout']) {
+    return io.reduce((acc, v) => acc.plus(toBigOrZero(v.value)), toBig(0));
+}
+
+function btcTxNetAmount(tx: BtcApiTx) {
+    const hasOnlyOwnInputs = tx.vin.length > 0 && tx.vin.every(v => v.isOwn);
+    if (hasOnlyOwnInputs) {
+        return { isInitiator: true, weiAmount: sumBtcIOValues(tx.vout.filter(v => !v.isOwn)) };
+    }
+
+    // foreign inputs (coinjoin, batched payouts) fund foreign outputs: only our balance change counts
+    const delta = sumBtcIOValues(tx.vout.filter(v => v.isOwn)).minus(
+        sumBtcIOValues(tx.vin.filter(v => v.isOwn))
+    );
+    if (delta.gte(0)) {
+        return { isInitiator: false, weiAmount: delta };
+    }
+
+    const sentWithoutFee = delta.abs().minus(toBigOrZero(tx.fees));
+    return { isInitiator: true, weiAmount: sentWithoutFee.gt(0) ? sentWithoutFee : toBig(0) };
+}
+
 export function btcTxToActivityItem(
     tx: BtcApiTx,
     rate: Rate<BtcAsset, FiatAsset> | null
 ): BtcActivityItem | null {
-    const isInitiator = !!tx.vin?.some(input => input.isOwn);
+    const { isInitiator, weiAmount } = btcTxNetAmount(tx);
 
     const fromAddress = getBiggestBtcIOAddress(
         tx.vin.filter(v => Boolean(v.isOwn) === isInitiator)
@@ -50,10 +72,6 @@ export function btcTxToActivityItem(
     if (!fromAddress || !toAddress) {
         return null;
     }
-
-    const weiAmount = tx.vout
-        .filter(v => Boolean(v.isOwn) === !isInitiator)
-        .reduce((acc, v) => acc.plus(toBigOrZero(v.value)), toBig(0));
 
     let fee: TransactionFeeCrypto<BtcAsset> | undefined;
     try {

@@ -3,12 +3,10 @@ import { useCallback } from 'react';
 
 import { useSuspenseQuery } from '@safely/ux';
 
-// TODO: IMPORT find a way to navigate without this ref
-// eslint-disable-next-line boundaries/element-types
-import { navigationRef } from '@mobile/app/navigation/navigationRef';
 import { useMobileLayerEncryptedStorage } from '@mobile/shared/storage';
 
 import { passcodeKeys } from './keys';
+import { usePasscodePrompt } from './PasscodePromptProvider';
 import type { PromptAndCheckOptions } from './types';
 
 export type UsePasscodeResult =
@@ -31,6 +29,7 @@ export type UsePasscodeResult =
 
 export function usePasscode(): UsePasscodeResult {
     const client = useQueryClient();
+    const { open: openPrompt } = usePasscodePrompt();
     const {
         get: storageGet,
         set: storageSet,
@@ -71,14 +70,9 @@ export function usePasscode(): UsePasscodeResult {
     const promptAndCheck = useCallback(
         (options?: PromptAndCheckOptions): Promise<void> =>
             new Promise<void>((resolve, reject) => {
-                navigationRef.current?.navigate('PasscodeVerificationScreen', {
-                    onSuccess: resolve,
-                    onClose: reject,
-                    title: options?.title,
-                    subtitle: options?.subtitle
-                });
+                openPrompt({ ...options, resolve, reject });
             }),
-        []
+        [openPrompt]
     );
 
     const set = useCallback(

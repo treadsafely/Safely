@@ -34,6 +34,8 @@ export const ConfirmationFooter = (props: Props) => {
         {
             OutputsAreSpendingMoreThanInputsError:
                 'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs',
+            BtcInsufficientFundsForFeeError:
+                'confirmation.estimateError.btc.insufficientFundsForFee',
             FlameInsufficientBalanceError: 'confirmation.estimateError.flame.insufficientBalance'
         },
         { fallback: 'confirmation.estimateError.default' }

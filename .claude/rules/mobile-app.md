@@ -151,9 +151,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
 
 ## UI
 
-- Styling is `react-native-unistyles`. The theme is configured once in `src/shared/unistyles`
-  (currently only `dark`, which is also the initial theme). Take colors and spacing from the theme
-  instead of hardcoding them.
+- Styling is `react-native-unistyles`. The token values live in `@safely/ux/theme` — shared with the
+  web targets — and `src/shared/unistyles` only feeds them to `StyleSheet.configure` (currently only
+  `dark`, which is also the initial theme). Take colors and spacing from the theme instead of
+  hardcoding them, and edit the values in `packages/ux/src/shared/theme`, not here.
 - A screen is a directory under `src/screens`; navigation and providers live in `src/app`
   (`AppNavigation.tsx`, `AppContext.tsx`, `root-error-boundary`, `root-suspense`).
 - **`src/shared/ui` does not depend on navigation.** Components there never call `useNavigation` /
@@ -171,18 +172,24 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
 
 ## i18n
 
-The source of strings is `src/shared/i18n/translations/en.json`; the other locale files are produced
-by translation and are not edited by hand. Add new copy to `en.json` and read it through
-`useTranslate()`. Supported locales are also listed in `app.config.js` (`CFBundleLocalizations`) —
-update it when adding a language.
+The strings live in `@safely/ux/translations` (`packages/ux/src/shared/i18n/translations/`), shared
+with the web targets; `src/shared/i18n` only creates the i18next instance and detects the language.
+The source of strings is `en.json`; the other locale files are produced by translation and are not
+edited by hand. Add new copy to `en.json` and read it through `useTranslate()`. Supported locales are
+also listed in `app.config.js` (`CFBundleLocalizations`) — update it when adding a language.
 
 ## Build and release
 
 - EAS profiles are in `eas.json` (`staging-base`, `staging-cached`, `production`; build numbers come
   from `appVersionSource: remote`).
 - Tester distribution runs through the EAS Workflow `.eas/workflows/build-and-distribute.yml`;
-  trigger it locally with `pnpm --filter mobile run build`. Read that file's comments before editing
-  it — EAS Workflows has sharp edges the syntax doesn't hint at:
+  trigger it locally with `pnpm --filter mobile run build`. It fires on a push to `master` or to a
+  `release/<major>.<minor>.<patch>` branch (`release/1.4.0`, pattern `release/*.*.*`) — a
+  differently named `release/*` branch is deliberately ignored — and on manual dispatch. Read that
+  file's comments before editing it — EAS Workflows has sharp edges the syntax doesn't hint at:
+  - `on.push.branches` globs support only `*`, `**` and `!`. A character class is not an error, it
+    just never matches: `release/[0-9]*.[0-9]*.[0-9]*` passed minimatch and triggered nothing on
+    `release/1.3.0`. Validate the version elsewhere (`release-draft.yml` does).
   - `env:` must be job-level. A step-level `env:` is unsupported and its `${{ }}` values arrive as
     raw literals; interpolate inside `run:` instead, or put the value on the job.
   - a custom `steps:` job starts with an empty working dir — `- uses: eas/checkout` first, otherwise
@@ -190,6 +197,13 @@ update it when adding a language.
     reference scripts project-relative (`scripts/eas-report.mjs`).
   - EAS doesn't quote-safely interpolate values into its internal bash: unescaped `` ( ) ` $ " ' \ ``
     in a changelog cause exit 141 / empty logs, which is why the workflow strips them up front.
+- Android release builds run R8 (minify + resource shrinking) through `expo-build-properties` in
+  `app.config.js`; what it breaks and how to check a feature against it: `android-minification.md`.
+- `plugins/withNetworkSecurityConfig.js` makes Android trust user-installed CAs (Proxyman/Charles
+    on a real device) in debuggable builds and in the staging APK — gated on `EAS_BUILD_PROFILE` being
+    in an explicit allowlist, so `production` (and any new profile) keeps system CAs only. A new
+    tester profile that needs a proxy goes into that allowlist; never widen it to production.
+
 - Icons: `pnpm --filter mobile run icons` (`scripts/generate-icons-file.js`); the generated file is
   not hand-edited.
 - Wallet names in pushes: the backend sends fallback `title`/`body` plus `data.target_ref`,

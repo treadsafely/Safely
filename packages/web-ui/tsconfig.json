@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "jsx": "react-jsx"
+    },
+    "include": [
+        "src/**/*",
+        "test/**/*",
+        "panda/**/*",
+        "panda.config.ts",
+        "vitest.config.ts"
+    ],
+    "exclude": ["node_modules", "styled-system"]
+}

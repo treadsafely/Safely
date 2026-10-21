@@ -33,9 +33,10 @@ export const FlameHistoryList = (props: FlameHistoryListProps) => {
                 }
                 amountSign={item.isInitiator ? '−' : '+'}
                 formattedValue={item.hasUnreadableOutputs ? '–' : item.value.format(formatter)}
-                valueColor={item.isInitiator ? 'primary' : 'accentGreen'}
+                valueTone={item.isInitiator ? 'primary' : 'accentGreen'}
                 formattedFiat={null}
                 timestampLabel={null}
+                isPending={false}
                 background="secondary"
                 counterparty={{
                     kind: 'address',

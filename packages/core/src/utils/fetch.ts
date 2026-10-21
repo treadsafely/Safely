@@ -52,6 +52,10 @@ export class ApiClient {
         this.signer = signer;
     }
 
+    public toJSON(): string {
+        return `[${this.constructor.name}]`;
+    }
+
     protected async getJson<T extends z.ZodTypeAny, Q extends object>(
         path: string,
         schema: T,

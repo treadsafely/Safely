@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import type { Build, UserCountryInfo } from '../../entities';
 
+const sHttpsUrl = z.url().refine(value => value.startsWith('https://'), 'must be an https URL');
+
 export interface ConfigParams {
     build: Build;
     version: string; // x.y.z
@@ -24,15 +26,15 @@ export const bootConfigSchema = z.looseObject({
     blockchains: z.looseObject({
         bitcoin: z.looseObject({
             mainnet: z.looseObject({
-                api_url: z.string(),
-                explorer_account_url: z.string(),
-                explorer_tx_url: z.string()
+                api_url: sHttpsUrl,
+                explorer_account_url: sHttpsUrl,
+                explorer_tx_url: sHttpsUrl
             }),
             testnet: z
                 .looseObject({
-                    api_url: z.string(),
-                    explorer_account_url: z.string(),
-                    explorer_tx_url: z.string()
+                    api_url: sHttpsUrl,
+                    explorer_account_url: sHttpsUrl,
+                    explorer_tx_url: sHttpsUrl
                 })
                 // Required for testnet wallets to work, but made optional for not to throw
                 // on the app bootstrap if server gives wrong config and user doesn't have any testent wallets
@@ -53,11 +55,11 @@ export const bootConfigSchema = z.looseObject({
                 type: z.enum(['default', 'warn', 'danger', 'transparent']).catch('default'),
                 text: z.string(),
                 icon: z.string().optional(),
-                banner_click_action_url: z.string().optional(),
+                banner_click_action_url: sHttpsUrl.optional(),
                 action_button: z
                     .looseObject({
                         text: z.string(),
-                        url: z.string()
+                        url: sHttpsUrl
                     })
                     .optional()
             })
@@ -65,7 +67,7 @@ export const bootConfigSchema = z.looseObject({
     }),
 
     currencies: z.looseObject({
-        prices_api_url: z.string(),
+        prices_api_url: sHttpsUrl,
         supported_currencies: z.array(
             z.looseObject({
                 description: z.string(),
@@ -81,10 +83,10 @@ export const bootConfigSchema = z.looseObject({
     }),
 
     references: z.looseObject({
-        sync_learn_more_url: z.string().optional(),
+        sync_learn_more_url: sHttpsUrl.optional(),
         legal: z.looseObject({
-            privacy_url: z.string(),
-            terms_url: z.string()
+            privacy_url: sHttpsUrl,
+            terms_url: sHttpsUrl
         }),
         support: z.looseObject({
             email: z.string(),
@@ -93,18 +95,18 @@ export const bootConfigSchema = z.looseObject({
     }),
 
     sync: z.looseObject({
-        api_url: z.string()
+        api_url: sHttpsUrl
     }),
 
     exchange: z.looseObject({
-        api_url: z.string()
+        api_url: sHttpsUrl
     }),
 
     notifications: z
         .looseObject({
             bitcoin: z.looseObject({
                 mainnet: z.looseObject({
-                    api_url: z.string()
+                    api_url: sHttpsUrl
                 })
             })
         })
@@ -112,7 +114,7 @@ export const bootConfigSchema = z.looseObject({
 
     telemetry: z.looseObject({
         analytics: z.looseObject({
-            url: z.string(),
+            url: sHttpsUrl,
             token: z.string()
         })
     })
@@ -148,6 +150,8 @@ export const aboutPostSchema = z.discriminatedUnion('type', [
 export const aboutSchema = z.object({
     posts: z.array(aboutPostSchema)
 });
+
+export type AboutOrder = 'asc' | 'desc';
 
 export type TaggedTextPost = z.infer<typeof taggedTextPostSchema>;
 export type ExternalLinkPost = z.infer<typeof externalLinkPostSchema>;

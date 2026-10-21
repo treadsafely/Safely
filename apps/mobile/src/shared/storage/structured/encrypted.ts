@@ -1,39 +1,21 @@
-import { useCallback } from 'react';
 import z from 'zod';
+
+import { createStructuredStorage, useStructuredStorage } from '@safely/ux';
 
 // eslint-disable-next-line boundaries/element-types
 import { ENCRYPTED_MOBILE_STORAGE_ONLY_APP_LEVEL_USE } from '@mobile/app/storage';
 
-const mobileLayerEncryptedStorageStructure = {
+const mobileLayerEncryptedStorageShape = {
     passcode: z.union([z.null(), z.string()])
 };
 
-type MobileLayerEncryptedStorageStructure = typeof mobileLayerEncryptedStorageStructure;
-
-const storage = ENCRYPTED_MOBILE_STORAGE_ONLY_APP_LEVEL_USE.storage.child('mobile');
+const storage = createStructuredStorage(
+    ENCRYPTED_MOBILE_STORAGE_ONLY_APP_LEVEL_USE.storage.child('mobile'),
+    mobileLayerEncryptedStorageShape
+);
 
 export function useMobileLayerEncryptedStorage<
-    K extends keyof MobileLayerEncryptedStorageStructure
+    K extends keyof typeof mobileLayerEncryptedStorageShape
 >(key: K) {
-    const set = useCallback<
-        (val: z.input<MobileLayerEncryptedStorageStructure[K]>) => Promise<void>
-    >(val => {
-        mobileLayerEncryptedStorageStructure[key].parse(val);
-        return storage.setItem(key, JSON.stringify(val));
-    }, []);
-
-    const remove = useCallback<() => Promise<void>>(() => {
-        return storage.removeItem(key);
-    }, []);
-
-    const get = useCallback<
-        () => Promise<z.output<MobileLayerEncryptedStorageStructure[K]>>
-    >(async () => {
-        const data = await storage.getItem(key);
-        const structData: unknown = data === null ? null : JSON.parse(data);
-
-        return mobileLayerEncryptedStorageStructure[key].parse(structData);
-    }, []);
-
-    return { get, set, remove };
+    return useStructuredStorage(storage, key);
 }

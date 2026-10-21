@@ -4,6 +4,7 @@ import type { ISyncAccount } from '../account/I-sync-account';
 
 export type OnboardedAccount<Latest extends StorageVersion> = {
     account: ISyncAccount<Latest>;
+    /* null on reconnection, and when the authorising device predates the payload field */
     inviterIkPub: Buffer | null;
 };
 

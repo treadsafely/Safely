@@ -1,6 +1,6 @@
 import type { Logger } from '@safely/sync';
 
-import type { About, BootConfig, ConfigParams } from './models';
+import type { About, AboutOrder, BootConfig, ConfigParams } from './models';
 import { aboutSchema, bootConfigSchema } from './models';
 import type { IIdentifiable } from '../../utils';
 import { ApiClient } from '../../utils/fetch';
@@ -38,7 +38,7 @@ export class ConfigApi extends ApiClient implements IIdentifiable {
         return this.getJson('/config', bootConfigSchema, this.searchParams);
     }
 
-    public async getAbout(): Promise<About> {
-        return this.getJson('/about', aboutSchema, this.searchParams);
+    public async getAbout(order: AboutOrder): Promise<About> {
+        return this.getJson('/about', aboutSchema, { ...this.searchParams, order });
     }
 }

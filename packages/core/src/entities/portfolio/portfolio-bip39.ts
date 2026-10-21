@@ -18,7 +18,7 @@ import type { PortfolioIdBip39 } from './portfolio-id-bip39';
 import { toPortfolioIdBip39 } from './portfolio-id-bip39';
 import type { PortfolioMeta } from './portfolio-meta';
 import { PortfolioNetworkType } from './portfolio-network-type';
-import type { ISecretEncryptor } from '../../di';
+import { isFlameSdkInstalled, type ISecretEncryptor } from '../../di';
 import type { Id } from '../../utils';
 import { BtcWalletType, flameNetworkByPortfolioNetworkType } from '../blockchain';
 import { InvalidMnemonicError, PortfolioGenerationFailedError } from '../errors';
@@ -65,7 +65,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
                 derivationIndex
             });
             const flame =
-                id.network === FLAME_NETWORK_TYPE
+                id.network === FLAME_NETWORK_TYPE && isFlameSdkInstalled()
                     ? await DerivationChainItemFlame.createSChainItem(
                           seedProducer,
                           flameNetworkByPortfolioNetworkType(id.network)

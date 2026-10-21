@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native-unistyles';
 
-import { darkTheme } from './themes';
+import { darkTheme } from '@safely/ux/theme';
 
 type Themes = {
     dark: typeof darkTheme;

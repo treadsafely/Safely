@@ -10,6 +10,12 @@ export function ellipsisMiddle(string: string | undefined, sideChars = 4) {
     return string.slice(0, sideChars) + '…' + string.slice(-sideChars);
 }
 
+export function splitInHalf(string: string): [string, string] {
+    const half = Math.ceil(string.length / 2);
+
+    return [string.slice(0, half), string.slice(half)];
+}
+
 export enum SPACE {
     /** Non-Breaking Space — regular-width space that prevents a line break at this position. */
     NBSP = '\u00A0',

@@ -5,6 +5,7 @@ import type { Logger } from '@safely/sync';
 import { BtcAddress } from './btc-address';
 import { BtcPsbtBuilder } from './btc-psbt-builder';
 import { BtcTransactionTemplate } from './btc-transaction-template';
+import { BtcInsufficientFundsForFeeError } from './errors';
 import type { BtcTransferRequest, BtcTransferRequestMax, BtcTransferRequestNotMax } from './types';
 import { BtcFeeType } from './types';
 import { getUtxoTotal } from './utils';
@@ -12,6 +13,7 @@ import type { BtcApi, BtcApiEstimatedFee, BtcApiUtxo } from '../../api/btc';
 import type { BtcAsset, CryptoAssetAmount, SignableBtcWallet } from '../../entities';
 import { BtcAssetAmount } from '../../entities/asset';
 import { btcNetworkConfig } from '../../entities/blockchain';
+import { OutputsAreSpendingMoreThanInputsError } from '../../entities/errors/outputs-are-spending-more-than-inputs.error';
 import type { IIdentifiable } from '../../utils';
 import { abs, assertUnreachable, toBig } from '../../utils';
 
@@ -83,7 +85,10 @@ export class BtcEstimator implements IIdentifiable {
         request: BtcTransferRequest,
         utxo: BtcApiUtxo[]
     ): Promise<BtcTransactionTemplate> {
-        this.logger?.info('estimating transaction', { request, utxo });
+        this.logger?.info('estimating transaction', {
+            type: request.type,
+            utxoCount: utxo.length
+        });
         let result: BtcTransactionTemplate;
 
         switch (request.type) {
@@ -97,7 +102,14 @@ export class BtcEstimator implements IIdentifiable {
                 assertUnreachable(request);
         }
 
-        this.logger?.info('transaction estimated', result);
+        this.logger?.info('transaction estimated', {
+            blockchain: result.blockchain,
+            feeType: result.estimation.feeType,
+            feeSat: result.estimation.fee.amount.weiAmount.toString(),
+            targetBlock: result.estimation.txTargetBlock,
+            inputs: result.inputs.length,
+            hasChange: result.request.hasChange
+        });
         return result;
     }
 
@@ -109,13 +121,17 @@ export class BtcEstimator implements IIdentifiable {
             throw new Error('Amount must be greater than zero');
         }
 
-        const { feeSatVb, targetBlock } = await this.getFeeValue(request.feeType);
-
         if (!utxos.length) {
             throw new Error('No UTXOs available');
         }
 
         const totalBalance = getUtxoTotal(utxos);
+
+        if (totalBalance.lt(request.amount)) {
+            throw new OutputsAreSpendingMoreThanInputsError('Not enough funds');
+        }
+
+        const { feeSatVb, targetBlock } = await this.getFeeValue(request.feeType);
 
         const vSizeNoChange = this.psbtBuilder.calculateTransactionVSize({
             inputs: utxos,
@@ -126,7 +142,7 @@ export class BtcEstimator implements IIdentifiable {
         );
 
         if (totalBalance.lt(request.amount.add(feeNoChange))) {
-            throw new Error('Not enough funds');
+            throw new BtcInsufficientFundsForFeeError('Not enough funds to cover the fee');
         }
 
         const vSizeWithChange = this.psbtBuilder.calculateTransactionVSize({
@@ -191,7 +207,9 @@ export class BtcEstimator implements IIdentifiable {
         const fee = BtcAssetAmount.fromWeiAmount(feeSat);
 
         if (totalBalance.lt(fee)) {
-            throw new Error('Total balance is not enough to cover transaction fee');
+            throw new BtcInsufficientFundsForFeeError(
+                'Total balance is not enough to cover transaction fee'
+            );
         }
 
         return { fee, targetBlock, utxos };
@@ -210,7 +228,7 @@ export class BtcEstimator implements IIdentifiable {
 
         const amount = totalBalance.sub(fee);
         if (amount.weiAmount <= 0n) {
-            throw new Error('Amount must be greater than zero');
+            throw new BtcInsufficientFundsForFeeError('Nothing left to send after the fee');
         }
 
         if (

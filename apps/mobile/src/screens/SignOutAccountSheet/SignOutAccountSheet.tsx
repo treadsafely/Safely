@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { useHasActivePeer } from '@safely/ux';
+import { resolveSignOutCopy, useHasActivePeer } from '@safely/ux';
 
 import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
@@ -24,8 +24,7 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
     const { t } = useTranslation();
     const { close } = useBottomSheet();
     const hasActivePeer = useHasActivePeer();
-    const [hasLinkedPeers] = useState(() => hasActivePeer);
-    const stateKey = hasLinkedPeers ? 'fullCopy' : 'noDevices';
+    const [copy] = useState(() => resolveSignOutCopy(hasActivePeer));
 
     const [isLoading, setIsLoading] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
@@ -48,13 +47,13 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
                     {t('settings.signOutAccount.sheet.title', { name: accountName })}
                 </Text>
                 <Text textAlign="center" variant="bodyL" color="secondary" style={styles.subtitle}>
-                    {t(`settings.signOutAccount.sheet.${stateKey}.subtitle`)}
+                    {t(copy.subtitleKey)}
                 </Text>
             </View>
 
-            {!hasLinkedPeers && (
+            {copy.checkboxKey !== undefined && (
                 <ConfirmCheckbox
-                    text={t('settings.signOutAccount.sheet.noDevices.checkbox')}
+                    text={t(copy.checkboxKey)}
                     isChecked={isConfirmed}
                     onToggle={() => setIsConfirmed(prev => !prev)}
                 />
@@ -64,7 +63,7 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
                 <Button
                     type="destructive"
                     size="large"
-                    disabled={!hasLinkedPeers && !isConfirmed}
+                    disabled={copy.checkboxKey !== undefined && !isConfirmed}
                     isLoading={isLoading}
                     onPress={handleSignOut}
                 >
