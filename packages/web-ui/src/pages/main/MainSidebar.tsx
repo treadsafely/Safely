@@ -82,6 +82,8 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
         .map(id => byId.get(id))
         .filter(portfolio => portfolio !== undefined);
 
+    const isWalletView = !isUpdatesOpen && !isSafetyOpen && !isSettingsOpen;
+
     return (
         <AppLayout.Sidebar className={sidebarStyles}>
             <List>
@@ -102,6 +104,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                                 <WalletCell
                                     portfolio={portfolio}
                                     isActive={
+                                        isWalletView &&
                                         activePortfolioId !== undefined &&
                                         portfolio.id.isEq(activePortfolioId)
                                     }
