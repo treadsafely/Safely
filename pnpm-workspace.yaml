@@ -20,7 +20,7 @@ catalog:
   '@xstate/react': '^6.1.0'
   zustand: '^5.0.0'
   typescript: '~6.0.3'
-  vite: '^8.3.2'
+  vite: '^8.3.3'
   vitest: '^4.1.11'
   eslint: '^9.39.2'
   '@eslint/js': '^9.39.5'
