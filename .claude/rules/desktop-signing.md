@@ -176,12 +176,13 @@ key, each on its own runner.
 - upload: `ASC_API_KEY_P8`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`.
 
 **A push to `release/*` builds and uploads with no approval.** What decides what gets signed is
-therefore what can reach a release branch, and that is the repository ruleset "master & release"
-on `master` and `release/*`, not the environment. It requires a pull request with one approving
-review and forbids deletion and force pushes, admins bypassing; it also has to **restrict
-creations**, or anyone with write access creates `release/x` from any commit — a changed workflow
-included — and CI signs it. That rule covers the mobile `release/<version>` branches as well, so
-those are cut by an admin too. The workflow's trigger is `release/*` and not `release/**` for the
+therefore what can reach a release branch, and that is two repository rulesets, not the
+environment. "master & release" (`master`, `release/*`) requires a pull request with one approving
+review and forbids deletion and force pushes, admins bypassing. "Release" (`release/*`)
+**restricts creations**, bypassed only by the people who cut release branches — without it anyone
+with write access creates `release/x` from any commit, a changed workflow included, and CI signs it.
+That rule covers the mobile `release/<version>` branches as well, so whoever cuts those needs to be
+on its bypass list. The workflow's trigger is `release/*` and not `release/**` for the
 same reason: `*` stops at `/`, and a nested branch would build without the ruleset. The environment itself
 carries a deployment-branch rule of `release/*` and no reviewer. Approval per run was the
 alternative and was dropped: with the ruleset in place it would ask the same question twice. A
