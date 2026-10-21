@@ -144,11 +144,12 @@ packaging step can meet a relocked keychain halfway through.
 ## The TestFlight pipeline
 
 `.github/workflows/desktop-testflight.yml` runs on a push to `release/*` — a merge into a release
-branch is one — and by hand: Actions → Desktop TestFlight → Run workflow. Four jobs, split by what
+branch is one — and by hand: Actions → Desktop TestFlight → Run workflow. Five jobs, split by what
 each may hold:
 
 | Job | Runner | Holds | Does |
 | --- | ------ | ----- | ---- |
+| `allocate-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | reads the counter through the API and hands `n + 1` to `build` |
 | `build` | `macos-15` | the certificates and the profile | `make:mas`, `verify-signature.sh`, `pkgutil --check-signature`, hands the `.pkg` on as an artifact kept 3 days |
 | `upload` | `macos-15` | the App Store Connect API key | `xcrun altool --validate-app`, then `--upload-app` |
 | `record-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | advances the counter, only after `upload` succeeded |
@@ -220,12 +221,26 @@ gh variable set DESKTOP_ASC_APP_ID --body <id>    # optional: links the Slack re
 ```
 
 The build number is the repository variable `DESKTOP_BUILD_NUMBER_MACOS`, which is where GitHub
-keeps it rather than a commit, a tag or a cache: `build` reads it, names the artifact after `n + 1`,
-and `record-build-number` writes the value back — only once `upload` succeeded, because App Store
+keeps it rather than a commit, a tag or a cache: `allocate-build-number` reads it and derives
+`n + 1` and the artifact name from it, `build` signs that number into the bundle, and
+`record-build-number` writes the value back — only once `upload` succeeded, because App Store
 Connect refuses a `CFBundleVersion` it has seen, so a number is spent exactly when Apple saw it. The
-workflow's `concurrency` group is what stops two runs reading the same value; GitHub keeps one
-pending run per group, so a burst of merges builds the running commit and the newest one, and the
-commits in between get no run and no report.
+workflow's `concurrency` group serialises the runs; GitHub keeps one pending run per group, so a
+burst of merges builds the running commit and the newest one, and the commits in between get no run
+and no report.
+
+**The counter is read through the API, never as `${{ vars.DESKTOP_BUILD_NUMBER_MACOS }}`.** The
+`vars` context is fixed when a run is created, not when its job starts, so a run that waited in the
+group behind another one read the number from before the other recorded its own — both built the
+same `CFBundleVersion` and the second failed validation as a duplicate (run 39602358456). Reading
+it needs the token, which is why it is a job of its own and not a step of `build`. Any failure to
+read it fails the run, a 404 included: a PAT that lost access to the repository answers 404 too,
+and treating that as "unset" would restart the counter at 1 and cost a full build before Apple
+refuses it.
+
+**Retry a failed run with "Re-run all jobs", not "Re-run failed jobs".** The latter keeps the
+successful `allocate-build-number` and its number, which a newer run may have uploaded and recorded
+in the meantime; the Slack report for a failed build or upload says so.
 
 Two outcomes leave the counter behind a number Apple already holds, and the next run then fails
 validation as a duplicate build: `upload` failing after App Store Connect took the package (an
@@ -234,10 +249,11 @@ both and the value to set the variable to; the counter is not read back from App
 because that would put the API key into `build`, next to the certificates. The same number is
 handed to the build as `SAFELY_BUILD_NUMBER`, so the app's About panel reads `Version <version>
 (<build>)` and a tester can name the build they are looking at — both halves of that are in
-`desktop-app.md`. Editing the variable by hand is how the counter is reset or moved on; an absent one
-starts at 1. `BUILD_NUMBER_TOKEN` is a fine-grained PAT with *Variables: read and write* on this
-repository and nothing else, because `GITHUB_TOKEN` cannot write a variable; it is a repository
-secret so that neither of the jobs holding keys has a token that can write to the repository.
+`desktop-app.md`. Editing the variable by hand is how the counter is reset or moved on; an absent
+one fails the run, so a fresh repository creates it with `0` first. `BUILD_NUMBER_TOKEN` is a
+fine-grained PAT with *Variables: read and write* on this repository and nothing else, because
+`GITHUB_TOKEN` cannot write a variable; it is a repository secret so that neither of the jobs
+holding keys has a token that can write to the repository.
 
 Testers are the internal group of the App Store Connect record, with automatic distribution on: a
 build reaches them once Apple has processed it, through the TestFlight app on their Mac. The sandbox
@@ -245,11 +261,11 @@ keeps `userData` in `~/Library/Containers/com.safely.wallet-desktop/`.
 
 ## The Slack report
 
-The `report` job runs `if: always()` after the three others, so a crashed build is reported as
-loudly as a green one and a counter left behind is reported before the next run trips on it. It is
-a job on `ubuntu-latest` of its own for the same reason `record-build-number` is: the webhook is a
-**repository** secret, `SLACK_WEBHOOK_URL`, and it has no business next to the certificates or the
-API key.
+The `report` job runs `if: always()` after `build`, `upload` and `record-build-number`, so a
+crashed build is reported as loudly as a green one and a counter left behind is reported before the
+next run trips on it. It is a job on `ubuntu-latest` of its own for the same reason
+`record-build-number` is: the webhook is a **repository** secret, `SLACK_WEBHOOK_URL`, and it has no
+business next to the certificates or the API key.
 
 `SLACK_WEBHOOK_URL` is a Slack Workflow Builder trigger (`https://hooks.slack.com/triggers/…`), the
 same kind the mobile pipeline posts to. It consumes a **flat** JSON whose keys are the variables that
@@ -259,7 +275,7 @@ the call:
 | Key | Value |
 | --- | ----- |
 | `header` | `<branch> <- <commit subject>` — the mobile report's headline, same shape |
-| `status_string` | `✅ Uploaded to TestFlight <version> (<build number>)`; `⚠️ Uploaded …, but DESKTOP_BUILD_NUMBER_MACOS was not advanced …`; `❌ Desktop upload failed — …`; or `❌ Desktop build failed` |
+| `status_string` | `✅ Uploaded to TestFlight <version> (<build number>)`; `⚠️ Uploaded …, but DESKTOP_BUILD_NUMBER_MACOS was not advanced …`; `❌ Desktop upload failed — …`; `❌ Desktop build number could not be read …`; or `❌ Desktop build failed …` |
 | `artifact_url` | the record's TestFlight page when `DESKTOP_ASC_APP_ID` is set and the upload succeeded, the run's page otherwise |
 
 The version is `apps/desktop/package.json`'s `version`, read in the report job rather than passed
