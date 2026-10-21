@@ -13,7 +13,7 @@ paths:
   - 'apps/desktop/vite.main.config.ts'
   - 'apps/desktop/forge.config.ts'
   - 'apps/desktop/signing/**'
-  - '.github/workflows/desktop-preview.yml'
+  - '.github/workflows/desktop-testflight.yml'
 ---
 
 # The desktop secret store (macOS)
@@ -121,10 +121,32 @@ build refuses to start rather than degrade to it.
   `UnlockableSecuredEncryptedStorage`, and against a person at the keyboard that is real. Against
   code running as the user it is not: the item carries no access control, so anything with our
   signature reads it without a prompt. Only `SecAccessControl` moves that check into the SEP.
-- **A compromised renderer** can ask main for values — the domain crypto runs there. Closing that
-  needs the signer in main plus a main-owned confirmation window, not a flag in the store. The same
-  applies to Touch ID: main raises the prompt, but the renderer decides whether to ask, so a
-  compromised renderer skips it.
+- **Code running inside the renderer gets everything, and that is accepted.** All domain code — the
+  keys, the signer, the sync engine — runs in the renderer by design (`desktop-app.md`), so code
+  that runs there reads every secret in memory once the user unlocks, calls the preload bridge
+  like the app does (both keychain scopes included: the passcode and Touch ID gate is the
+  renderer's own, and it skips it), signs, sends and drives the UI. Two ways in:
+    - **our own bundle** — a malicious dependency, an XSS in our UI, a V8 bug. It needs no
+      permission and leaves no trace, which makes it the realistic one. The defence is dependency
+      control (`dependency-security.md`, `minimumReleaseAge`), not the platform;
+    - **root, or anyone with the admin password** — in the MAS build the helpers run without the
+      hardened runtime (`desktop-signing.md`), so a debugger an administrator authorised can attach
+      to the renderer, and a task port is full control, not a read-only view. The main binary keeps
+      the runtime and refuses the attach, but whatever main hands the renderer is reached anyway.
+      Code of the same user without admin rights can attach to neither process.
+
+  **Moving the keys into main alone would not close this**, and neither would a gate on the item
+  alone. A confirmation main raises — a native dialog, a password prompt — is answered by synthetic
+  input from anything holding the Accessibility permission, with a keylogged password. A
+  `SecAccessControl` gate on an item the renderer still receives releases the key into the renderer
+  at the first honest unlock, which is all code already waiting there needs. Only the pair would
+  hold: the wallet keys never leave main, and every signature is released by the SEP on a
+  **biometric** check (`kSecAccessControlBiometryCurrentSet`), whose reason main composes from the
+  PSBT it parsed itself — a fingerprint cannot be synthesised. Its price: Macs without Touch ID
+  cannot sign at all, a change of enrolled fingers locks the key until recovery from the mnemonic,
+  and the signer moves behind an interface in `@safely/core` so the browser extension, which has no
+  privileged process, keeps working on the same code. Not scheduled. It would leave the sync keys
+  and the decrypted state in the renderer either way: it protects funds, not privacy.
 - **Availability.** A process running as the user can delete `regular.json`, the app, or the whole
   `userData` directory; it can also destroy the user's entire keychain database, which is loud and
   indiscriminate but possible. What it cannot do is remove *our* items selectively. Local state is
@@ -142,6 +164,11 @@ and a patched or repackaged bundle.
 the SEP. `UserPresence` rather than `BiometryCurrentSet` is deliberate: it accepts the login
 password, which is the only way a Mac without Touch ID can use the store at all.
 
+What it buys is narrow, and worth stating before building it: it stops reads of the items while
+nobody unlocks — a stolen session, code of the same user calling the store — not code inside the
+renderer, which receives the values at the next honest unlock, and not synthetic input, which can
+type a keylogged login password. "What it deliberately does not protect" has the design that would.
+
 Two things that come with it, and both are easy to miss:
 
 - an item's access control is **immutable**. Adding the gate means writing new items and moving the
@@ -156,7 +183,8 @@ Two things that come with it, and both are easy to miss:
 ```
 userData/store/regular.json               plaintext: CRDT snapshots, query cache
 userData/store/dev-keychain-*.json        development stub only, plaintext, never in a packaged build
-~/Library/Logs/Safely/safely-<day>.ndjson sanitized warnings and errors with context, 7 days, 2 MB
+Library/Logs/Safely/safely-<day>.ndjson   sanitized warnings and errors with context, 7 days, 2 MB
+                                          (under the sandbox container in a packaged build)
 ```
 
 `regular.json` is written temp file → `fsync` → `rename` → `fsync` of the directory
@@ -224,7 +252,7 @@ instead of keeping the weaker class it was created with. The class itself is wri
 the addon; the port cannot pass another.
 
 Packaging: an N-API addon in Objective-C++ at `apps/desktop/native/keychain`, built by the app's
-`build:native` script, which `package` and `make` run first — deliberately not by `pnpm install`, see
+`build:native` script, which `package:mas` and `make:mas` run first — deliberately not by `pnpm install`, see
 `desktop-app.md`. Two things about shipping it were found the hard way:
 
 - the forge vite plugin makes the packager ignore everything but `.vite`, so `node_modules` never
@@ -256,17 +284,26 @@ that ships in the same bundle would only make development data look protected.
 Every guarantee above is a property of the signature, so the store does not exist without these — how
 the profiles and certificates are obtained is in `desktop-signing.md`:
 
-- explicit App ID and an embedded provisioning profile (**Developer ID** for a release, **Mac
-  Development** for a QA build); `com.apple.application-identifier` is not a string you may simply
-  declare — `amfid` validates it against the profile, and without one the data protection keychain
-  does not exist for the app, whatever the entitlements say;
+- explicit App ID and an embedded provisioning profile (**Mac App Store** for an upload, **Mac
+  Development** for a build a developer runs by hand); `com.apple.application-identifier` is not a
+  string you may simply declare — `amfid` validates it against the profile, and without one the data
+  protection keychain does not exist for the app, whatever the entitlements say;
 - entitlements `com.apple.application-identifier`, `com.apple.developer.team-identifier` and
   `keychain-access-groups` on the **main binary only**: helpers must not get them, so the renderer
-  process cannot reach the keychain group even when compromised. Only
-  `com.apple.security.cs.allow-jit`, which V8 needs, is on both plists;
-- signature, hardened runtime, notarisation; no
-  `com.apple.security.cs.disable-library-validation` and no `get-task-allow`, or memory protection
-  reopens quietly;
+  process cannot reach the keychain group even when compromised. Helpers carry exactly
+  `app-sandbox` and `inherit` and get everything else from the main binary's sandbox
+  (`desktop-signing.md`, "Sandbox entitlements");
+- the App Sandbox, which the Mac App Store requires — it does not change the keychain: an app's own
+  access group is available inside it;
+- signature, and the hardened runtime on the main binary. The helpers run without it, because an
+  inheriting helper cannot JIT under it (`desktop-signing.md`) — and the renderer, which holds the
+  domain secrets in memory, is one of them. A process of the same user still cannot attach to it —
+  `task_for_pid` needs root or a debugger an administrator authorised — but under the runtime even
+  those are refused unless the target has `get-task-allow`, and that refusal is given up for the
+  renderer in the MAS build, along with library validation and ignoring `DYLD_*`. An attacker with
+  root or the admin password can therefore read the renderer's memory. No
+  `com.apple.security.cs.disable-library-validation` and no `get-task-allow` anywhere, or memory
+  protection reopens quietly;
 - the existing fuses (`RunAsNode`, inspector, `NODE_OPTIONS` off; asar integrity on).
 
 Signing is env-driven and forge refuses an identity without a profile, because a signature whose
@@ -274,10 +311,12 @@ entitlements nothing validates produces an app that reaches no access group.
 
 ## Verifying a build
 
-`apps/desktop/signing/verify-signature.sh <app>` checks the **signature**: that it verifies, that
-the hardened runtime is on, that a profile is embedded and unexpired, that `application-identifier`
-is on the main binary and **not** on a helper, that `get-task-allow` is nowhere. CI runs it as a gate
-on every QA build (`.github/workflows/desktop-preview.yml`).
+`apps/desktop/signing/verify-signature.sh <app>` checks the **signature**: that it verifies, the
+keychain addon included, that the hardened runtime is on, that a non–Developer ID profile is
+embedded and unexpired, that the main binary carries `application-identifier`, the keychain group,
+the sandbox and an application group matching `ElectronTeamID`, that every helper carries exactly
+`app-sandbox` and `inherit`, and that `get-task-allow` is nowhere. CI runs it as a gate before every
+upload (`.github/workflows/desktop-testflight.yml`).
 
 It cannot check that securityd honours any of it — a profile can be present, unexpired and still name
 the wrong App ID or omit this machine. That half is exercised by **launching the app** and writing
@@ -298,9 +337,9 @@ it must get `errSecItemNotFound` with no dialog. That check is manual — it can
 
 | Event | Behaviour |
 | ----- | --------- |
-| Developer ID certificate rotated within the same team | no effect: access follows the access group, not the certificate |
+| signing certificate rotated within the same team | no effect: access follows the access group, not the certificate |
 | bundle id or Team ID changed | permanent loss — a different access group |
-| provisioning profile expired | the entitlement stops being honoured for already-installed copies. A Developer ID profile is issued for **6570 days — 18 years**; development profiles get 365, which is why a test build stops working within the year |
+| provisioning profile expired | the entitlement stops being honoured for copies signed with it; development profiles get 365 days, which is why a test build stops working within the year |
 | keychain reset, new Mac, logic board replaced | permanent loss — `ThisDeviceOnly` items are not portable, by design |
 | the user's keychain database is destroyed | the store comes up empty: an honest first-run state, not a corrupt one |
 | `regular.json` deleted | non-secret state is lost and re-synced; the keychain items are untouched |
@@ -361,16 +400,18 @@ installer has to be per-machine, and why an elevated helper service is not worth
 ## Implementation status
 
 Done: `native/keychain`, `src/main/plugins/keychain/`, `src/main/store/keychain-store.ts`, the third
-IPC channel group, and `createSecureEncrypted()` returning a real storage. The addon compiles and
-behaves correctly on an unsigned host (see the `isAvailable()` note above).
+IPC channel group, and `createSecureEncrypted()` returning a real storage. The addon behaves
+correctly on an unsigned host (see the `isAvailable()` note above) and works against securityd in a
+development-signed, sandboxed MAS build on macOS 26 — writes through the dev tools, onboarding and
+Touch ID were exercised there.
 
 Not done, in order:
 
-1. **run it on a signed build** — nothing here has been exercised against securityd with the
-   entitlement in place, only against the fake and an unsigned host;
-2. **`SecAccessControl` on the `secureEncrypted` items** — the renderer half is done (`securityGate`
+1. **`SecAccessControl` on the `secureEncrypted` items** — the renderer half is done (`securityGate`
    in `src/renderer/app/AppProviders.tsx`: passcode plus Touch ID through
    `systemPreferences.promptTouchID`), so accounts can be created and restored. What is missing is
-   the SEP enforcing it on the item itself, which is the part a compromised renderer cannot skip;
-3. the isolation claim itself — a second signed bundle with a different bundle id reading our
+   the SEP enforcing it on the item itself — which a reader of the store cannot skip, though code
+   inside the renderer still gets the values at the next unlock (see "Adding the presence factor
+   later");
+2. the isolation claim itself — a second signed bundle with a different bundle id reading our
    service, which must answer `errSecItemNotFound` without a dialog.

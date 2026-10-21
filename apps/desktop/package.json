@@ -8,8 +8,8 @@
   "scripts": {
     "start": "electron-forge start",
     "build:native": "node-gyp rebuild -C native/keychain",
-    "package": "pnpm run build:native && electron-forge package",
-    "make": "pnpm run build:native && electron-forge make",
+    "package:mas": "pnpm run build:native && electron-forge package --platform=mas",
+    "make:mas": "pnpm run build:native && electron-forge make --platform=mas",
     "compile": "tsc --noEmit",
     "lint": "eslint ./src",
     "test": "vitest run"
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
-    "@electron-forge/maker-zip": "7.11.2",
+    "@electron-forge/maker-pkg": "7.11.2",
     "@electron-forge/plugin-fuses": "7.11.2",
     "@electron-forge/plugin-vite": "7.11.2",
     "@electron-forge/shared-types": "7.11.2",
