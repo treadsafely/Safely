@@ -17,9 +17,9 @@ export class NotificationsApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { baseUrl: string; logger?: Logger }) {
         const baseUrl = options.baseUrl.replace(/\/$/, '');
-        super(baseUrl, {}, options.logger);
+        super('NotificationsApi', baseUrl, {}, options.logger);
 
-        this.id = `${this.constructor.name}:${baseUrl}`;
+        this.id = `${this.apiName}:${baseUrl}`;
     }
 
     public async replaceGeneral(

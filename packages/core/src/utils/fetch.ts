@@ -42,18 +42,19 @@ export class ApiClient {
     protected readonly signer?: RequestSigner;
 
     constructor(
+        protected readonly apiName: string,
         protected readonly baseUrl: string,
         headers: Record<string, string> = {},
         logger?: Logger,
         signer?: RequestSigner
     ) {
         this.headers = { ...headers };
-        this.logger = logger?.child(this.constructor.name);
+        this.logger = logger?.child(apiName);
         this.signer = signer;
     }
 
     public toJSON(): string {
-        return `[${this.constructor.name}]`;
+        return `[${this.apiName}]`;
     }
 
     protected async getJson<T extends z.ZodTypeAny, Q extends object>(
