@@ -3,15 +3,13 @@ import type { FC, ReactNode } from 'react';
 import { useAppContext } from '@safely/ux';
 import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 
-import { buildStyles, contentStyles } from './DevToolsSettings.styles';
-import { KeychainSection } from './KeychainSection';
+import { buildStyles } from './DevToolsSettings.styles';
 import { listStyles } from './SettingsSection.styles';
 import type { DevTool } from './types';
 import { DEV_TOOLS } from './types';
 import { Button, Cell, Icon, List, PageHeader, Text } from '../../../shared';
 
 const TOOL_TITLES: Record<DevTool, string> = {
-    keychain: 'Keychain',
     logs: 'Logs'
 };
 
@@ -69,13 +67,7 @@ export const DevToolsSettings: FC<DevToolsSettingsProps> = props => {
                 }
             />
 
-            {tool === 'keychain' ? (
-                <div className={contentStyles}>
-                    <KeychainSection />
-                </div>
-            ) : (
-                logs
-            )}
+            {logs}
         </>
     );
 };

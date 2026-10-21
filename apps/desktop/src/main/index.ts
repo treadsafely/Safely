@@ -1,5 +1,5 @@
 import type { BrowserWindow } from 'electron';
-import { app } from 'electron';
+import { app, powerMonitor } from 'electron';
 import path from 'node:path';
 
 import { configureAboutPanel } from './about-panel';
@@ -7,6 +7,7 @@ import { readAppInfo } from './app-info';
 import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
 import { registerIpcHandlers } from './ipc';
 import { logStore, mainLogger } from './logger';
+import { installApplicationMenu } from './menu';
 import { useSeparateDevUserData } from './paths';
 import { hardenSession, hardenWebContents } from './security';
 import { createStores } from './store';
@@ -69,6 +70,12 @@ function attachMainWindow(): BrowserWindow {
     return window;
 }
 
+const DEBUG_SWITCHES = ['remote-debugging-port', 'remote-debugging-pipe', 'inspect', 'inspect-brk'];
+
+if (app.isPackaged && DEBUG_SWITCHES.some(flag => app.commandLine.hasSwitch(flag))) {
+    app.exit(1);
+}
+
 /* Both must happen before the app is ready. */
 useSeparateDevUserData();
 registerPrivilegedSchemes();
@@ -88,6 +95,7 @@ if (!app.requestSingleInstanceLock()) {
         .whenReady()
         .then(() => {
             configureAboutPanel();
+            installApplicationMenu();
 
             if (!devServerUrl) {
                 registerAppProtocol(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`));
@@ -100,6 +108,9 @@ if (!app.requestSingleInstanceLock()) {
             registerIpcHandlers(() => mainWindow);
 
             app.on('did-resign-active', () => notifyAppState('background'));
+
+            powerMonitor.on('lock-screen', () => notifyAppState('background'));
+            powerMonitor.on('suspend', () => notifyAppState('background'));
 
             mainWindow = attachMainWindow();
         })
