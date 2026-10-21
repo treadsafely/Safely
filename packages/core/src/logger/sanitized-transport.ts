@@ -1,9 +1,14 @@
 import type { ILoggerTransport, LogEntry } from '@safely/sync';
+import { safeStringify } from '@safely/sync';
 
 import { filterSensitiveData } from './sensitive-filter';
 
 export class SanitizedTransport implements ILoggerTransport {
     constructor(private readonly inner: ILoggerTransport) {}
+
+    public toJSON(): string {
+        return '[SanitizedTransport]';
+    }
 
     public log(entry: LogEntry): void {
         this.inner.log({
@@ -28,7 +33,7 @@ function filterSensitiveValue(value: unknown): unknown {
 
     if (typeof value === 'object' && value !== null) {
         try {
-            const json = JSON.stringify(value);
+            const json = safeStringify(value);
             const sanitized = filterSensitiveData(json);
 
             return JSON.parse(sanitized);

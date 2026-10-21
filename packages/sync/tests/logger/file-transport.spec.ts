@@ -7,6 +7,7 @@ const META = { appVersion: '1.0.0', build: 'macos', device: 'MacBook, 15.0' };
 
 const entry = (level: LogLevel, ...message: unknown[]): LogEntry => ({
     timestamp: new Date('2026-10-05T12:00:00.000Z'),
+    seq: 0,
     level,
     path: ['main', 'test'],
     message
@@ -68,6 +69,7 @@ describe('FileTransport', () => {
 
         expect(FileTransport.parse(sink.writes[0][0])).toEqual({
             timestamp: '2026-10-05T12:00:00.000Z',
+            seq: 0,
             level: LogLevel.WARN,
             path: ['main', 'test'],
             message: '{"nested":1}',

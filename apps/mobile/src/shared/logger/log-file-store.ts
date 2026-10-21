@@ -4,7 +4,7 @@ import { shareAsync } from 'expo-sharing';
 
 import { compareStrings } from '@safely/core';
 import type { ILogFileStore, LogRecord } from '@safely/sync';
-import { FileTransport } from '@safely/sync';
+import { FileTransport, compareLogRecords } from '@safely/sync';
 
 const FILE_EXTENSION = '.ndjson';
 const FILE_PREFIX = 'safely-';
@@ -51,7 +51,20 @@ export class LogFileStore implements ILogFileStore {
 
         let snapshot: File;
         try {
-            const content = (await Promise.all(files.map(file => file.text()))).join('');
+            const texts = await Promise.all(files.map(file => file.text()));
+            const content =
+                texts
+                    .flatMap(text => text.split('\n'))
+                    .filter(line => line.length > 0)
+                    .map(line => ({ line, record: FileTransport.parse(line) }))
+                    .sort((a, b) => {
+                        if (!a.record || !b.record) {
+                            return a.record ? -1 : b.record ? 1 : 0;
+                        }
+                        return compareLogRecords(a.record, b.record);
+                    })
+                    .map(entry => entry.line)
+                    .join('\n') + '\n';
 
             snapshot = new File(
                 Paths.cache,
@@ -87,7 +100,7 @@ export class LogFileStore implements ILogFileStore {
             }
         }
 
-        return records;
+        return records.sort(compareLogRecords);
     }
 
     /** Drops logs older than the retention window, plus leftover share copies. */

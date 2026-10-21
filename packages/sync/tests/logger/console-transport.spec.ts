@@ -6,6 +6,7 @@ import { ConsoleTransport, LogLevel } from '../../src';
 function makeEntry(overrides: Partial<LogEntry> = {}): LogEntry {
     return {
         timestamp: new Date('2026-04-07T12:00:00.000Z'),
+        seq: 0,
         level: LogLevel.INFO,
         path: [],
         message: ['test message'],

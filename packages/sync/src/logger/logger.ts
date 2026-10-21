@@ -6,10 +6,16 @@ import type { LogsFilter } from './logs-filter';
 import { logsFilterMinSeverityLevel } from './logs-filter';
 
 export class Logger {
+    private static nextSeq = 0;
+
     private readonly path: string[] = [];
     private logsFilter: LogsFilter = logsFilterMinSeverityLevel(LogLevel.INFO);
 
     constructor(private readonly transport: ILoggerTransport = new ConsoleTransport()) {}
+
+    public toJSON(): string {
+        return '[Logger]';
+    }
 
     public setLogsFilter(filter: LogsFilter): void {
         this.logsFilter = filter;
@@ -50,6 +56,7 @@ export class Logger {
     private dispatch(level: LogLevel, args: unknown[]): void {
         const entry: LogEntry = {
             timestamp: new Date(),
+            seq: Logger.nextSeq++,
             level,
             path: [...this.path],
             message: args

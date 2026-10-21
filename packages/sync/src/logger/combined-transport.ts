@@ -4,6 +4,10 @@ import type { LogEntry } from './log-entry';
 export class CombinedTransport implements ILoggerTransport {
     constructor(private readonly transports: ILoggerTransport[]) {}
 
+    public toJSON(): string {
+        return '[CombinedTransport]';
+    }
+
     public log(entry: LogEntry): void {
         for (const transport of this.transports) {
             try {

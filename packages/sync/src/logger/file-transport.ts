@@ -5,11 +5,13 @@ import type { ILoggerTransport } from './I-logger-transport';
 import type { LogEntry } from './log-entry';
 import { LogLevel } from './log-level';
 import type { LogMeta, LogRecord } from './log-record';
+import { safeStringify } from './safe-stringify';
 
 const CONTEXT_BUFFER_SIZE = 1000;
 
 const sStoredLog = z.object({
     t: z.string(),
+    s: z.number().optional(),
     l: z.enum(LogLevel),
     p: z.array(z.string()),
     m: z.string(),
@@ -28,6 +30,10 @@ export class FileTransport implements ILoggerTransport {
         private readonly meta: LogMeta
     ) {}
 
+    public toJSON(): string {
+        return '[FileTransport]';
+    }
+
     public static parse(line: string): LogRecord | null {
         if (!line) return null;
 
@@ -45,6 +51,7 @@ export class FileTransport implements ILoggerTransport {
 
         return {
             timestamp: stored.t,
+            seq: stored.s,
             level: stored.l,
             path: stored.p,
             message: stored.m,
@@ -84,6 +91,7 @@ export class FileTransport implements ILoggerTransport {
     private serialize(entry: LogEntry): string {
         const stored: StoredLog = {
             t: entry.timestamp.toISOString(),
+            s: entry.seq,
             l: entry.level,
             p: entry.path,
             m: entry.message.map(message => this.serializeMessage(message)).join(' '),
@@ -99,10 +107,6 @@ export class FileTransport implements ILoggerTransport {
         if (typeof message === 'string') return message;
         if (message instanceof Error) return message.stack ?? message.message;
 
-        try {
-            return JSON.stringify(message);
-        } catch {
-            return String(message);
-        }
+        return safeStringify(message);
     }
 }
