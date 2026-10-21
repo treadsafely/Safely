@@ -50,10 +50,10 @@ export function usePasscodeVerification(
     }, []);
 
     const handleComplete = useCallback(async () => {
-        if (isSuccess.value || processingRef.current) return;
+        if (isSuccess.value || processingRef.current || !passcode.isSet) return;
         processingRef.current = true;
 
-        const isValid = passcode.isSet ? await passcode.validate(inputValue) : false;
+        const isValid = await passcode.validate(inputValue);
         if (isValid) {
             await resetAttempts();
             await notificationAsync(NotificationFeedbackType.Success);
