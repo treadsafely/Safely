@@ -17,6 +17,8 @@ export const APP_SCHEME = 'safely';
 
 export const APP_ORIGIN = `${APP_SCHEME}://app`;
 
+const APP_HOST = new URL(APP_ORIGIN).host;
+
 export const appUrl = (pathname: string): string => `${APP_ORIGIN}${pathname}`;
 
 /** Must run before the app is ready, otherwise the privileges are ignored. */
@@ -41,8 +43,19 @@ export function registerAppProtocol(rendererDir: string): void {
     const policy = contentSecurityPolicy(undefined);
 
     protocol.handle(APP_SCHEME, async request => {
-        const { pathname } = new URL(request.url);
-        const requested = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.slice(1));
+        const { host, pathname } = new URL(request.url);
+
+        if (host !== APP_HOST) {
+            return new Response(null, { status: 403 });
+        }
+
+        let requested: string;
+        try {
+            requested = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.slice(1));
+        } catch {
+            return new Response(null, { status: 400 });
+        }
+
         const filePath = path.resolve(rendererDir, requested);
 
         /* the URL is reachable by anything the renderer fetches, so never serve outside the bundle */

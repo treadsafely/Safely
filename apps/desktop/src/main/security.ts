@@ -167,9 +167,13 @@ export function hardenWebContents(contents: WebContents, allowedOrigins: string[
         event.preventDefault();
     });
 
-    contents.on('will-navigate', (event, url) => {
+    const denyForeignNavigation = (event: { preventDefault: () => void }, url: string): void => {
         if (!isAllowedOrigin(url, allowedOrigins)) {
             event.preventDefault();
         }
-    });
+    };
+
+    contents.on('will-navigate', (event, url) => denyForeignNavigation(event, url));
+    contents.on('will-redirect', (event, url) => denyForeignNavigation(event, url));
+    contents.on('will-frame-navigate', event => denyForeignNavigation(event, event.url));
 }
