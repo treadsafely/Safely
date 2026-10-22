@@ -13,7 +13,7 @@ const getKey = (post: AboutPost): string => post.id;
 const getTimestamp = (post: AboutPost): number => post.timestamp * 1000;
 
 export const UpdatesFeed: FC = () => {
-    const { data, isLoading } = useAboutQuery();
+    const { data, isLoading } = useAboutQuery('desc');
     const rows = useGroupedRows(data?.posts ?? [], getTimestamp, getKey);
 
     const scroll = useRef<HTMLDivElement>(null);
