@@ -1,21 +1,20 @@
 export * from '../../v6/schemas';
 
 export {
-    sDerivation,
-    sDerivationChains,
+    sPortfolioType,
     sFlameAccountChainItem,
-    type SDerivation,
-    type SFlameAccountChainItem
-} from './derivation.schema';
-
-export {
-    sPortfolioBip39,
+    sPortfolioFlameDevnetId,
+    sPortfolioFlameDevnet,
     sPortfolio,
     sPortfolios,
+    portfolioFlameDevnetIdToString,
     isDerivableSPortfolio,
     isBip39SPortfolio,
     isLedgerSPortfolio,
-    type SPortfolioBip39,
+    isFlameDevnetSPortfolio,
+    type SFlameAccountChainItem,
+    type SPortfolioFlameDevnetId,
+    type SPortfolioFlameDevnet,
     type SPortfolio,
     type SPortfolios
 } from './portfolio.schema';

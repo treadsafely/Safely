@@ -15,17 +15,17 @@ import {
 } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
-    useActiveBtcWallet,
     useActiveFiat,
-    useActiveFlameSource,
     useActivePortfolio,
     useActivePortfolioLedgerIndex,
+    useActivePortfolioNetworkBadge,
     useActiveWalletMeta,
     useAnalytics,
     useAppContext,
     useEstimateAssetTransfer,
     useNumberFormatter,
-    useSendAssetTransfer
+    useSendAssetTransfer,
+    useSendChains
 } from '@safely/ux';
 
 import { FlameLogo } from '@mobile/entities/flame';
@@ -46,35 +46,35 @@ export type SendConfirmationParams = {
 export type ConfirmationScreenProps = StaticScreenProps<SendConfirmationParams>;
 
 export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
-    const { route } = props;
-    const { confirmationResult, onSuccess } = route.params;
+    const { confirmationResult, onSuccess } = props.route.params;
+    const isFlame = confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME;
+
+    const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
+    const chains = useSendChains();
+    const fromAddress = (isFlame ? chains.flame?.wallet.address : chains.btc?.wallet.address) ?? '';
+
+    const { data: txTemplate, error: estimateQueryError } = useEstimateAssetTransfer(
+        confirmationResult,
+        {
+            // a Flame send marks its inputs as spent, so a re-estimate after it would see too little balance
+            enabled: isFlame
+                ? confirmationState.type === 'idle'
+                : confirmationState.type !== 'success'
+        }
+    );
+    const estimateError = confirmationState.type === 'idle' ? estimateQueryError : null;
+    const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
 
     const { t } = useTranslation();
     const analytics = useAnalytics();
     const fiat = useActiveFiat();
     const navigation = useNavigation();
     const getBleManager = useBleManager();
-    const btcWallet = useActiveBtcWallet();
-    const flameSource = useActiveFlameSource();
-    const fromAddress =
-        confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME
-            ? (flameSource?.chain.wallet.address ?? '')
-            : btcWallet.address;
     const activePortfolio = useActivePortfolio();
     const activeWalletMeta = useActiveWalletMeta();
+    const networkBadge = useActivePortfolioNetworkBadge();
     const activeLedgerIndex = useActivePortfolioLedgerIndex();
     const { logger } = useAppContext();
-
-    const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
-
-    const { data: txTemplate, error: txTemplateError } = useEstimateAssetTransfer(
-        confirmationResult,
-        {
-            // Sending marks the inputs as spent, so a re-estimate from here would see too little balance
-            enabled: confirmationState.type === 'idle'
-        }
-    );
-    const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
     const formatter = useNumberFormatter();
 
     const onSend = useCallback(async () => {
@@ -137,12 +137,12 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     }, [navigation, onSend, getBleManager]);
 
     const displayState = useMemo(() => {
-        if (txTemplateError && confirmationState.type === 'idle') {
-            return { type: 'estimateError' as const, error: txTemplateError };
+        if (estimateError) {
+            return { type: 'estimateError' as const, error: estimateError };
         }
 
         return confirmationState;
-    }, [confirmationState, txTemplateError]);
+    }, [confirmationState, estimateError]);
 
     const onGoBack = useCallback(() => {
         navigation.getParent()?.goBack();
@@ -220,7 +220,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                                 ? activeLedgerIndex + 1
                                                 : undefined
                                     }}
-                                    networkType={activePortfolio.networkType}
+                                    networkBadge={networkBadge}
                                 />
                             }
                         />
@@ -230,7 +230,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 <Wallet
                                     address={confirmationResult.recipient.address}
                                     meta={confirmationResult.recipientMeta}
-                                    networkType={activePortfolio.networkType}
+                                    networkBadge={networkBadge}
                                 />
                             }
                         />

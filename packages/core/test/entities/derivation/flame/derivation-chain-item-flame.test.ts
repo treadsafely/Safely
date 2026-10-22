@@ -5,9 +5,9 @@ import type { ILedgerSessionPort, ISeedProducer, SafelyFlame } from '../../../..
 import {
     DerivationChainItemFlame,
     FLAME_RECEIVING_KEY_PATH,
-    PortfolioBip39,
+    PortfolioFlameDevnet,
     PortfolioFactory,
-    PortfolioIdBip39Imported,
+    PortfolioIdFlameDevnet,
     PortfolioNetworkType
 } from '../../../../src';
 import { ClosableMnemonicAccessorVault, MockSecretEncryptor } from '../../../utils/mocks';
@@ -69,25 +69,23 @@ function mockSafelyFlame() {
     return { flame, seeds };
 }
 
-async function createSerialized(network: PortfolioNetworkType = PortfolioNetworkType.TESTNET) {
+async function createSerialized() {
     const encryptor = new MockSecretEncryptor();
     const accessor = new ClosableMnemonicAccessorVault(MNEMONIC);
-    const id = await PortfolioIdBip39Imported.create(accessor, network);
-    const serialized = await PortfolioBip39.createSerializedPortfolio({
-        id,
+    const serialized = await PortfolioFlameDevnet.createSerializedPortfolio({
         encryptor,
         mnemonicAccessor: accessor,
-        meta: { name: 'Portfolio', icon: { type: 'emoji', value: '🙂' } }
+        meta: { name: 'Devnet', icon: { type: 'emoji', value: '🙂' } }
     });
     return { serialized, encryptor };
 }
 
-async function createPortfolio(network: PortfolioNetworkType = PortfolioNetworkType.TESTNET) {
-    const { serialized, encryptor } = await createSerialized(network);
+async function createPortfolio() {
+    const { serialized, encryptor } = await createSerialized();
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
+        encryptor,
         ledgerSessionPort
-    }) as PortfolioBip39;
+    }) as PortfolioFlameDevnet;
 }
 
 describe('DerivationChainItemFlame', () => {
@@ -104,14 +102,15 @@ describe('DerivationChainItemFlame', () => {
         globalThis.flameSdk = previous;
     });
 
-    it('stores the view key of the BIP-39 seed in a new testnet portfolio', async () => {
+    it('stores the view key of the BIP-39 seed in a new devnet portfolio', async () => {
         const { serialized } = await createSerialized();
 
-        expect(serialized.derivations[0].chains.flame).toEqual({
+        expect(serialized.flame).toEqual({
             viewKey: VIEW_KEY,
             address: 'tf1example',
             predicate: 'ab'.repeat(32)
         });
+        expect(serialized.id).toEqual(PortfolioIdFlameDevnet.create({ value: MNEMONIC }).toJSON());
         expect(mocked.flame.viewKey).toHaveBeenCalledWith(expect.any(Uint8Array), 'testnet');
         expect(mocked.flame.address).toHaveBeenCalledWith(
             VIEW_KEY,
@@ -121,63 +120,27 @@ describe('DerivationChainItemFlame', () => {
         expect(mocked.seeds[0]).toEqual(new Uint8Array(await mnemonicToSeed(MNEMONIC.join(' '))));
     });
 
-    it('is not created for a mainnet portfolio', async () => {
-        const { serialized } = await createSerialized(PortfolioNetworkType.MAINNET);
-        const portfolio = await createPortfolio(PortfolioNetworkType.MAINNET);
-
-        expect(serialized.derivations[0].chains.flame).toBeNull();
-        expect(portfolio.derivations[0].chains.flame).toBeUndefined();
-        expect(mocked.flame.viewKey).not.toHaveBeenCalled();
-    });
-
-    it('is not added to a portfolio stored without a view key', async () => {
-        const { serialized, encryptor } = await createSerialized();
-        const [derivation] = serialized.derivations;
-        const existing = {
-            ...serialized,
-            derivations: [{ ...derivation, chains: { ...derivation.chains, flame: null } }]
-        };
-
-        const portfolio = PortfolioBip39.restore(encryptor, existing);
-
-        expect(portfolio.derivations[0].chains.flame).toBeUndefined();
-        expect(portfolio.toJSON().derivations[0].chains.flame).toBeNull();
-    });
-
-    it('is not added to derivations added later', async () => {
-        const portfolio = await createPortfolio();
-        const extended = await portfolio.withAddedDerivation(1);
-
-        expect(extended.derivations.map(d => d.chains.flame !== undefined)).toEqual([true, false]);
-        expect(extended.toJSON().derivations.map(d => d.chains.flame)).toEqual([
-            { viewKey: VIEW_KEY, address: 'tf1example', predicate: 'ab'.repeat(32) },
-            null
-        ]);
-    });
-
     it('restores the wallet from the stored address without calling native', async () => {
         const { serialized, encryptor } = await createSerialized();
         mocked.flame.address.mockClear();
 
-        const portfolio = PortfolioBip39.restore(encryptor, serialized);
-        const chain = portfolio.derivations[0].chains.flame!;
+        const portfolio = PortfolioFlameDevnet.restore(encryptor, serialized);
+        const [wallet] = portfolio.flame.wallets;
 
-        expect(chain.wallet).toEqual({
-            id: chain.id,
+        expect(wallet).toMatchObject({
             network: 'testnet',
             address: 'tf1example',
             predicate: 'ab'.repeat(32)
         });
+        expect(portfolio.networkType).toBe(PortfolioNetworkType.TESTNET);
         expect(mocked.flame.address).not.toHaveBeenCalled();
-        expect(portfolio.toJSON().derivations[0].chains.flame).toEqual(
-            serialized.derivations[0].chains.flame
-        );
+        expect(portfolio.toJSON()).toEqual(serialized);
     });
 
     it('reads clear amounts natively and opens confidential notes with the view key', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
 
-        const clearOnly = await chain.readAmounts([
+        const clearOnly = await wallet.readAmounts([
             { id: 'clear', contract: bytes(1), note: null },
             { id: 'other', contract: bytes(3), note: null }
         ]);
@@ -190,7 +153,7 @@ describe('DerivationChainItemFlame', () => {
         });
         expect(clearOnly.get('other')).toEqual({ status: 'notToken' });
 
-        const amounts = await chain.readAmounts([
+        const amounts = await wallet.readAmounts([
             { id: 'clear', contract: bytes(1), note: null },
             { id: 'opened', contract: bytes(2), note: bytes(4) },
             { id: 'missing', contract: bytes(2), note: null }
@@ -212,20 +175,20 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('does not reopen outputs it has already read', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         const outputs = [{ id: 'opened', contract: bytes(2), note: bytes(4) }];
 
-        await chain.readAmounts(outputs);
-        await chain.readAmounts(outputs);
+        await wallet.readAmounts(outputs);
+        await wallet.readAmounts(outputs);
 
         expect(mocked.flame.openNotes).toHaveBeenCalledTimes(1);
     });
 
     it('rereads an output once a later scan serves the note it lacked', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
 
-        const first = await chain.readAmounts([{ id: 'late', contract: bytes(2), note: null }]);
-        const second = await chain.readAmounts([
+        const first = await wallet.readAmounts([{ id: 'late', contract: bytes(2), note: null }]);
+        const second = await wallet.readAmounts([
             { id: 'late', contract: bytes(2), note: bytes(4) }
         ]);
 
@@ -235,14 +198,14 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('reopens an output whose note hit a native error', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         const outputs = [{ id: 'retried', contract: bytes(2), note: bytes(4) }];
         mocked.flame.openNotes.mockResolvedValueOnce([
             { opened: false, failure: 'error', reason: 'internal: transient' }
         ]);
 
-        const first = await chain.readAmounts(outputs);
-        const second = await chain.readAmounts(outputs);
+        const first = await wallet.readAmounts(outputs);
+        const second = await wallet.readAmounts(outputs);
 
         expect(first.get('retried')).toEqual({ status: 'unreadable' });
         expect(second.get('retried')).toEqual({
@@ -253,12 +216,12 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('flags an output whose note misstates it', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         mocked.flame.openNotes.mockResolvedValueOnce([
             { opened: false, failure: 'openingMismatch' }
         ]);
 
-        const amounts = await chain.readAmounts([
+        const amounts = await wallet.readAmounts([
             { id: 'lying', contract: bytes(2), note: bytes(4) }
         ]);
 
@@ -266,7 +229,7 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('marks only the failing outputs unreadable when the library rejects some of them', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         mocked.flame.decodeContracts.mockResolvedValueOnce([
             { decoded: false, reason: 'invalidBytes: contract' },
             {
@@ -283,7 +246,7 @@ describe('DerivationChainItemFlame', () => {
             { opened: true, qty: 5n, flavor: bytes(0xf), memo: bytes(0, 0) }
         ]);
 
-        const amounts = await chain.readAmounts([
+        const amounts = await wallet.readAmounts([
             { id: 'broken', contract: bytes(2), note: bytes(4) },
             { id: 'rejected', contract: bytes(2), note: bytes(4) },
             { id: 'opened', contract: bytes(2), note: bytes(4) }
@@ -299,7 +262,7 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('reads the memo of an opened note as UTF-8', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         mocked.flame.openNotes.mockResolvedValueOnce([
             {
                 opened: true,
@@ -309,7 +272,7 @@ describe('DerivationChainItemFlame', () => {
             }
         ]);
 
-        const amounts = await chain.readAmounts([
+        const amounts = await wallet.readAmounts([
             { id: 'opened', contract: bytes(2), note: bytes(4) }
         ]);
 
@@ -322,14 +285,14 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('decodes a contract again after a failed decode', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         const outputs = [{ id: 'flaky', contract: bytes(1), note: null }];
         mocked.flame.decodeContracts.mockResolvedValueOnce([
             { decoded: false, reason: 'internal: transient' }
         ]);
 
-        const first = await chain.readAmounts(outputs);
-        const second = await chain.readAmounts(outputs);
+        const first = await wallet.readAmounts(outputs);
+        const second = await wallet.readAmounts(outputs);
 
         expect(first.get('flaky')).toEqual({ status: 'unreadable' });
         expect(second.get('flaky')).toEqual({
@@ -352,7 +315,7 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('builds a transfer with the portfolio seed on the receiving path', async () => {
-        const chain = (await createPortfolio()).derivations[0].chains.flame!;
+        const [wallet] = (await createPortfolio()).flame.wallets;
         const request = {
             inputs: [{ contract: bytes(1), note: null, proof: bytes(3) }],
             outputs: [{ address: 'tf1recipient', qty: 5n }],
@@ -360,7 +323,7 @@ describe('DerivationChainItemFlame', () => {
             gas: 1_000_000n
         };
 
-        await expect(chain.buildTransfer(request)).resolves.toEqual({
+        await expect(wallet.buildTransfer(request)).resolves.toEqual({
             txid: bytes(0x11),
             blockTx: bytes(0x22, 4)
         });
@@ -376,17 +339,17 @@ describe('DerivationChainItemFlame', () => {
 
     it('wipes the seed once the transfer is built, even on failure', async () => {
         const portfolio = await createPortfolio();
-        const derivation = portfolio.derivations[0];
         const seed = Buffer.alloc(64, 9);
-        const chain = new DerivationChainItemFlame({
-            derivationRef: derivation,
-            sChainItem: derivation.chains.flame!.toJSON(),
+        const [wallet] = new DerivationChainItemFlame({
+            ownerId: portfolio.id,
+            network: 'testnet',
+            sChainItem: portfolio.flame.toJSON(),
             seedProducer: { getSeed: () => Promise.resolve(seed) }
-        });
+        }).wallets;
         mocked.flame.buildTransfer.mockRejectedValueOnce(new Error('native failure'));
 
         await expect(
-            chain.buildTransfer({ inputs: [], outputs: [], fee: 0n, gas: 0n })
+            wallet.buildTransfer({ inputs: [], outputs: [], fee: 0n, gas: 0n })
         ).rejects.toThrow('native failure');
 
         expect(seed.every(byte => byte === 0)).toBe(true);

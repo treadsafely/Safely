@@ -5,6 +5,8 @@ import { Buffer } from 'buffer';
 import type { IsomorphicEventSource, SafelyCrypto } from '@safely/sync';
 import { XHREventSource } from '@safely/xhr-event-source';
 
+import { unsupportedFlameSdk } from './platform/unsupported';
+
 const pbkdf2Sha512: SafelyCrypto['pbkdf2Sha512'] = (password, salt, iterations, keyLength) =>
     pbkdf2Async(sha512, password, salt, { c: iterations, dkLen: keyLength });
 
@@ -36,6 +38,8 @@ bufferPrototype.toString = function toStringWithBase64Url(encoding, start, end) 
 globalThis.Buffer ??= Buffer as unknown as typeof globalThis.Buffer;
 
 globalThis.safelyCrypto ??= { pbkdf2Sha512 };
+
+globalThis.flameSdk ??= unsupportedFlameSdk;
 
 /* The SSE stream sends an Authorization header, which the native `EventSource` cannot do. The XHR
    implementation shared with mobile needs `XMLHttpRequest` — present in every renderer and extension

@@ -79,6 +79,10 @@ export const darkTheme = {
             warningFilled: {
                 background: 'rgba(255, 179, 71, 1)',
                 foreground: 'rgba(0, 0, 0, 1)'
+            },
+            purple: {
+                background: 'rgba(146, 92, 255, 0.16)',
+                foreground: 'rgba(146, 92, 255, 1)'
             }
         },
         cell: {

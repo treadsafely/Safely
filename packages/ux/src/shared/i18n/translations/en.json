@@ -17,7 +17,8 @@
         "watchOnly": "Watch only",
         "testnet": "Testnet",
         "ledger": "Ledger",
-        "ledgerWallet": "Ledger Wallet {{number}}"
+        "ledgerWallet": "Ledger Wallet {{number}}",
+        "flameDevnet": "Devnet"
     },
     "ledgerSign": {
         "retry": "Retry",
@@ -1096,5 +1097,9 @@
         "wallets": {
             "title": "Selected wallets"
         }
+    },
+    "importFlameDevnetWallet": {
+        "imported": "Flame Devnet wallet imported",
+        "noAccount": "Create or sign in to an account to import a Flame Devnet wallet"
     }
 }

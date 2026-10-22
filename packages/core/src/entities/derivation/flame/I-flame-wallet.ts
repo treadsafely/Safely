@@ -1,11 +1,19 @@
 import type { FlameWalletId } from './flame-wallet-id';
-import type { FlameNetwork } from '../../../di/safely-flame';
+import type {
+    FlameBuiltTransfer,
+    FlameNetwork,
+    FlameTransferRequest
+} from '../../../di/safely-flame';
 
 export interface FlameWallet {
     id: FlameWalletId;
     network: FlameNetwork;
     address: string;
     predicate: string;
+
+    readAmounts(outputs: FlameOutputBytes[]): Promise<Map<string, FlameOutputAmount>>;
+
+    buildTransfer(request: FlameTransferRequest): Promise<FlameBuiltTransfer>;
 }
 
 export type FlameOutputAmount =

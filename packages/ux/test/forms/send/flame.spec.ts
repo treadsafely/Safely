@@ -30,17 +30,28 @@ function makeFlameAsset(): RatedCryptoAssetAmount {
     };
 }
 
+const BTC_TESTNET_ADDRESS = 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx';
+
 function makeFlameInput(opts: Parameters<typeof makeMockInput>[0] = {}) {
     return makeMockInput({
         networkType: PortfolioNetworkType.TESTNET,
-        flameWalletAddress: OWN_FLAME_ADDRESS,
-        ratedAssets: [makeMockAsset(), makeFlameAsset()],
+        ownAddresses: { [BLOCKCHAIN_NAME.FLAME]: OWN_FLAME_ADDRESS },
+        ratedAssets: [makeFlameAsset()],
         initialAmountInputType: 'fiat',
         ...opts
     });
 }
 
-describe('sendFormMachine — Flame recipient', () => {
+function makeBtcTestnetInput(opts: Parameters<typeof makeMockInput>[0] = {}) {
+    return makeMockInput({
+        networkType: PortfolioNetworkType.TESTNET,
+        ratedAssets: [makeMockAsset()],
+        initialAmountInputType: 'fiat',
+        ...opts
+    });
+}
+
+describe('sendFormMachine — devnet wallet', () => {
     it('picks FLM on the amount step for a Flame address and switches to crypto input', () => {
         const actor = startActor(makeFlameInput());
         actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
@@ -113,25 +124,9 @@ describe('sendFormMachine — Flame recipient', () => {
         expect(actor.getSnapshot().context.values.memo).toHaveLength(FLAME_MEMO_MAX_BYTES);
     });
 
-    it('drops the memo for a BTC recipient and when the recipient changes', () => {
+    it('rejects a BTC address', () => {
         const actor = startActor(makeFlameInput());
-        actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
-        actor.send({ type: 'NEXT' });
-        actor.send({ type: 'SET_MEMO', value: 'hello' });
-        actor.send({ type: 'PREV' });
-        actor.send({ type: 'SET_RECIPIENT', value: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx' });
-        actor.send({ type: 'NEXT' });
-
-        expect(actor.getSnapshot().context.values.memo).toBe('');
-
-        actor.send({ type: 'SET_MEMO', value: 'hello' });
-
-        expect(actor.getSnapshot().context.values.memo).toBe('');
-    });
-
-    it('rejects a Flame address when the wallet has no Flame chain', () => {
-        const actor = startActor(makeFlameInput({ flameWalletAddress: null }));
-        actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
+        actor.send({ type: 'SET_RECIPIENT', value: BTC_TESTNET_ADDRESS });
 
         expect(actor.getSnapshot().context.errors.recipient).toBe(
             SendFormError.UNSUPPORTED_BLOCKCHAIN
@@ -139,19 +134,65 @@ describe('sendFormMachine — Flame recipient', () => {
     });
 
     it('flags a transfer to the own Flame address', () => {
-        const actor = startActor(makeFlameInput({ flameWalletAddress: FLAME_ADDRESS }));
+        const actor = startActor(
+            makeFlameInput({ ownAddresses: { [BLOCKCHAIN_NAME.FLAME]: FLAME_ADDRESS } })
+        );
         actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
 
         expect(actor.getSnapshot().matches({ editing: { recipient: 'selfTransfer' } })).toBe(true);
     });
+});
 
-    it('keeps the remembered input type for a BTC recipient', () => {
-        const actor = startActor(makeFlameInput());
-        actor.send({ type: 'SET_RECIPIENT', value: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx' });
+describe('sendFormMachine — BTC wallet on testnet', () => {
+    it('rejects a Flame address', () => {
+        const actor = startActor(makeBtcTestnetInput());
+        actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
+
+        expect(actor.getSnapshot().context.errors.recipient).toBe(
+            SendFormError.UNSUPPORTED_BLOCKCHAIN
+        );
+    });
+
+    it('ignores a memo and keeps the remembered input type for a BTC recipient', () => {
+        const actor = startActor(makeBtcTestnetInput());
+        actor.send({ type: 'SET_RECIPIENT', value: BTC_TESTNET_ADDRESS });
         actor.send({ type: 'NEXT' });
+        actor.send({ type: 'SET_MEMO', value: 'hello' });
         const { context } = actor.getSnapshot();
 
         expect(context.parsed.asset?.amount.asset.id.isEq(BTC_ASSET.id)).toBe(true);
         expect(context.values.amountInputType).toBe('fiat');
+        expect(context.values.memo).toBe('');
+    });
+});
+
+describe('sendFormMachine — wallet with both chains', () => {
+    function makeBothChainsInput() {
+        return makeMockInput({
+            networkType: PortfolioNetworkType.TESTNET,
+            ownAddresses: {
+                [BLOCKCHAIN_NAME.BTC]: 'tb1qown',
+                [BLOCKCHAIN_NAME.FLAME]: OWN_FLAME_ADDRESS
+            },
+            ratedAssets: [makeMockAsset(), makeFlameAsset()]
+        });
+    }
+
+    it('sends FLM to a Flame address and BTC to a BTC address', () => {
+        const flameActor = startActor(makeBothChainsInput());
+        flameActor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
+        flameActor.send({ type: 'NEXT' });
+
+        expect(
+            flameActor.getSnapshot().context.parsed.asset?.amount.asset.id.isEq(FLAME_ASSET.id)
+        ).toBe(true);
+
+        const btcActor = startActor(makeBothChainsInput());
+        btcActor.send({ type: 'SET_RECIPIENT', value: BTC_TESTNET_ADDRESS });
+        btcActor.send({ type: 'NEXT' });
+
+        expect(
+            btcActor.getSnapshot().context.parsed.asset?.amount.asset.id.isEq(BTC_ASSET.id)
+        ).toBe(true);
     });
 });

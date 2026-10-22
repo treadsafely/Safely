@@ -5,11 +5,12 @@ import { View, type ViewStyle } from 'react-native';
 import type { CryptoAssetAmount, CryptoFiatRate } from '@safely/core';
 import {
     useHomeScreenAmountOrder,
-    useIsActivePortfolioTestnet,
+    useActivePortfolioNetworkBadge,
     useNumberFormatter
 } from '@safely/ux';
 
-import { Badge, Cell, ChevronRight12, Icon } from '@mobile/shared/ui';
+import { NetworkBadge } from '@mobile/entities/portfolio';
+import { Cell, ChevronRight12, Icon } from '@mobile/shared/ui';
 
 import { styles } from './AssetCell.styles';
 
@@ -41,7 +42,7 @@ export const AssetCell = (props: AssetCellProps) => {
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
     const amountOrder = useHomeScreenAmountOrder();
-    const isTestnet = useIsActivePortfolioTestnet();
+    const networkBadge = useActivePortfolioNetworkBadge();
 
     const fiatAmount = price ? cryptoAssetAmount.convert(price).format(formatter) : '–';
     const cryptoAmount = cryptoAssetAmount.format(formatter, { fullPrecision: true });
@@ -61,7 +62,7 @@ export const AssetCell = (props: AssetCellProps) => {
                 <Cell.Row style={styles.titleRow}>
                     <View style={styles.title}>
                         <Cell.Title color="primary">{cryptoAssetAmount.asset.name}</Cell.Title>
-                        {isTestnet && <Badge isUppercase>{t('portfolio.testnet')}</Badge>}
+                        {networkBadge && <NetworkBadge badge={networkBadge} />}
                     </View>
                     <Cell.Value color="primary">{primaryAmount}</Cell.Value>
                 </Cell.Row>

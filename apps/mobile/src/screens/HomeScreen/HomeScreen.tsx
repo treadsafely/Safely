@@ -2,7 +2,7 @@ import { useScrollToTop } from '@react-navigation/native';
 import { useRef } from 'react';
 import type { ScrollView } from 'react-native';
 
-import { useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
+import { useActivePortfolioWallets, useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
 
 import { Chart } from '@mobile/features/chart';
 import { AssetsList, HomeActions, HomeHeader, TotalBalance } from '@mobile/features/home';
@@ -24,6 +24,7 @@ export const HomeScreen = () => {
 
 function HomeContent() {
     const scrollRef = useRef<ScrollView>(null);
+    const wallets = useActivePortfolioWallets();
 
     useScrollToTop(scrollRef);
     useTrackWalletOpen();
@@ -34,7 +35,7 @@ function HomeContent() {
             <TotalBalance />
             <HomeActions />
             <AssetsList />
-            <Chart />
+            {wallets.btc && <Chart />}
         </Screen.Scrollable>
     );
 }

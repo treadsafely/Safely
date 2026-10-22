@@ -6,32 +6,24 @@ import { useUnistyles } from 'react-native-unistyles';
 import type { FlameActivityItem } from '@safely/core';
 import { FLAME_ASSET } from '@safely/core';
 import {
-    useActiveFlameSource,
-    useFlameRatedAmount,
-    useHasPortfolio,
-    useIsActivePortfolioTestnet,
+    useActiveFlameRatedAmount,
+    useActiveFlameWallet,
+    useActivePortfolioWalletsOrNull,
+    useActivePortfolioNetworkBadge,
     useNumberFormatter
 } from '@safely/ux';
 
-import { FlameActions } from '@mobile/features/flame';
 import { AssetHistoryHeader, FlameHistoryList } from '@mobile/features/history';
+import { HomeActions } from '@mobile/features/home';
 import { Screen } from '@mobile/shared/ui';
 
 const FlameContent = () => {
     const navigation = useNavigation();
     const { theme } = useUnistyles();
     const formatter = useNumberFormatter();
-    const isTestnet = useIsActivePortfolioTestnet();
-    const source = useActiveFlameSource();
-    const { data: ratedAmount } = useFlameRatedAmount(source);
-
-    const hasFlame = source !== null;
-
-    useEffect(() => {
-        if (!hasFlame) {
-            navigation.dispatch(StackActions.popToTop());
-        }
-    }, [hasFlame, navigation]);
+    const networkBadge = useActivePortfolioNetworkBadge();
+    const { address } = useActiveFlameWallet();
+    const { data: ratedAmount } = useActiveFlameRatedAmount();
 
     const onNavigateToActivityItem = useCallback(
         (activity: FlameActivityItem) => {
@@ -48,11 +40,11 @@ const FlameContent = () => {
             <AssetHistoryHeader
                 gradientColor={theme.colors.brand.flame}
                 symbol={FLAME_ASSET.symbol}
-                isTestnet={isTestnet}
-                address={source?.chain.wallet.address}
+                networkBadge={networkBadge}
+                address={address}
                 amount={ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' })}
                 fiatAmount={fiatAmount}
-                actions={<FlameActions />}
+                actions={<HomeActions />}
             />
             <FlameHistoryList onNavigateToActivityItem={onNavigateToActivityItem} />
         </>
@@ -60,7 +52,14 @@ const FlameContent = () => {
 };
 
 export const FlameScreen = () => {
-    const hasPortfolio = useHasPortfolio();
+    const navigation = useNavigation();
+    const hasFlame = Boolean(useActivePortfolioWalletsOrNull()?.flame);
 
-    return <Screen>{hasPortfolio && <FlameContent />}</Screen>;
+    useEffect(() => {
+        if (!hasFlame) {
+            navigation.dispatch(StackActions.popToTop());
+        }
+    }, [hasFlame, navigation]);
+
+    return <Screen>{hasFlame && <FlameContent />}</Screen>;
 };

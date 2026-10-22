@@ -15,6 +15,9 @@ export function flameNetworkByPortfolioNetworkType(
     }
 }
 
+// the devnet node runs with Flame's testnet address and key formats
+export const FLAME_DEVNET_NETWORK: FlameNetwork = 'testnet';
+
 export const FLAME_RECEIVING_KEY_PATH: FlameKeyPath = { branch: 0, index: 0 };
 
 // Scalar::ONE in its 32-byte little-endian encoding

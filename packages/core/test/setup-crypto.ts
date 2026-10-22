@@ -9,7 +9,7 @@ globalThis.safelyCrypto = {
         pbkdf2Async(sha512, password, salt, { c: iterations, dkLen: keyLength })
 };
 
-// Testnet portfolios derive a Flame view key on creation; the native SDK is not on the host.
+// Devnet portfolios derive a Flame view key on creation; the native SDK is not on the host.
 globalThis.flameSdk = {
     viewKey: (seed, network) => Promise.resolve(`${network}view1${bytesToHex(seed.slice(0, 8))}`),
     address: (viewKey, network, path) =>

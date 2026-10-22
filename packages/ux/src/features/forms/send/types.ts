@@ -15,6 +15,8 @@ export type RecipientMeta =
     | { kind: 'portfolio'; meta: PortfolioMeta; tag?: number }
     | { kind: 'contact'; meta: ContactMeta };
 
+export type OwnAddresses = Partial<Record<Recipient['blockchain'], string>>;
+
 export interface PortfolioSuggestion {
     id: string;
     address: string;

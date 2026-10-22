@@ -1,78 +1,93 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken } from '@tanstack/react-query';
 
-import type { RatedCryptoAssetAmount } from '@safely/core';
+import type {
+    FlameApiScanEntry,
+    FlameOutputAmount,
+    FlameWallet,
+    RatedCryptoAssetAmount
+} from '@safely/core';
 import { FLAME_ASSET, FlameOutputs, Rate, toBig, toFlameOutputBytes } from '@safely/core';
 
 import type { DerivedQueryResult } from '../../shared';
-import { QUERIES_REFETCH_INTERVAL, useDerivedQuery, useFlameApi } from '../../shared';
+import {
+    QUERIES_REFETCH_INTERVAL,
+    useDerivedQuery,
+    useFlameApi,
+    usePersistQuery
+} from '../../shared';
 import { useActiveFiat } from '../fiat';
+import { useActiveFlameWallet } from '../portfolio';
 import { flameBlockchain } from './keys';
 import { releaseSettledFlameSpends } from './pending-spends';
-import { useFlameSentMemos } from './sent-memos';
-import type { FlameSource } from './source';
-import { useActiveFlameSource } from './source';
 
-export function useFlameWalletOutputs(source: FlameSource | null) {
-    const api = useFlameApi(source?.chain.network);
-    const enabled = !!source && !!api;
+type FlameWalletScan = {
+    entries: FlameApiScanEntry[];
+    amounts: Record<string, FlameOutputAmount>;
+};
 
-    return useQuery({
+const toFlameOutputs = (scan: FlameWalletScan | null): FlameOutputs | null =>
+    scan && FlameOutputs.fromScan(scan.entries, new Map(Object.entries(scan.amounts)));
+
+export function useFlameWalletOutputs(flameWallet: FlameWallet | null) {
+    const api = useFlameApi(flameWallet?.network);
+
+    return usePersistQuery<FlameWalletScan | null, unknown, FlameOutputs | null>({
         queryKey: flameBlockchain
-            .outputs({ walletId: source?.chain.id.toString() ?? null, apiId: api?.id ?? null })
+            .outputs({ walletId: flameWallet?.id.toString() ?? null, apiId: api?.id ?? null })
             .toKey(),
-        queryFn: async () => {
-            if (!source || !api) return null;
+        queryFn:
+            flameWallet && api
+                ? async () => {
+                      const { outputs } = await api.scan([flameWallet.predicate]);
+                      const amounts = await flameWallet.readAmounts(
+                          outputs.map(toFlameOutputBytes)
+                      );
+                      releaseSettledFlameSpends(
+                          flameWallet.id.toString(),
+                          new Set(outputs.filter(entry => !entry.spent).map(entry => entry.id))
+                      );
 
-            const { wallet } = source.chain;
-            const { outputs } = await api.scan([wallet.predicate]);
-            const amounts = await source.chain.readAmounts(outputs.map(toFlameOutputBytes));
-            const flameOutputs = FlameOutputs.fromScan(outputs, amounts);
-            releaseSettledFlameSpends(source.chain.id.toString(), flameOutputs);
-
-            return { wallet, outputs: flameOutputs };
-        },
-        enabled,
-        // Without a source or a node there is nothing to scan: settle as `null`, not as pending
-        initialData: enabled ? undefined : null,
+                      return { entries: outputs, amounts: Object.fromEntries(amounts) };
+                  }
+                : skipToken,
+        // Without a wallet or a node there is nothing to scan: settle as `null`, not as pending
+        initialData: flameWallet && api ? undefined : null,
+        select: toFlameOutputs,
+        schemaKey: 'sFlameWalletScan',
         refetchInterval: QUERIES_REFETCH_INTERVAL.UTXO
     });
 }
 
-export function useFlameBalance(source: FlameSource | null) {
-    const outputsQuery = useFlameWalletOutputs(source);
+export function useFlameBalance(flameWallet: FlameWallet | null) {
+    const outputsQuery = useFlameWalletOutputs(flameWallet);
 
     return useDerivedQuery({
         queries: [outputsQuery],
-        queryFn: ([data]) => data?.outputs.balance ?? null
+        queryFn: ([data]) => data?.balance ?? null
     });
 }
 
 export function useActiveFlameBalance() {
-    return useFlameBalance(useActiveFlameSource());
+    return useFlameBalance(useActiveFlameWallet());
 }
 
-export function useFlameHistory(source: FlameSource | null) {
-    const outputsQuery = useFlameWalletOutputs(source);
-    const sentMemosQuery = useFlameSentMemos();
+export function useFlameHistory(flameWallet: FlameWallet | null) {
+    const outputsQuery = useFlameWalletOutputs(flameWallet);
 
     return useDerivedQuery({
-        queries: [outputsQuery, sentMemosQuery],
-        queryFn: ([data, sentMemos]) =>
-            (data?.outputs.history ?? []).map(item => ({
-                ...item,
-                memo: item.memo ?? sentMemos[item.txid] ?? null
-            }))
+        queries: [outputsQuery],
+        queryFn: ([data]) => data?.history ?? []
     });
 }
 
 export function useActiveFlameHistory() {
-    return useFlameHistory(useActiveFlameSource());
+    return useFlameHistory(useActiveFlameWallet());
 }
 
 export function useFlameRatedAmount(
-    source: FlameSource | null
+    flameWallet: FlameWallet | null
 ): DerivedQueryResult<RatedCryptoAssetAmount | null> {
-    const outputsQuery = useFlameWalletOutputs(source);
+    const outputsQuery = useFlameWalletOutputs(flameWallet);
     const fiat = useActiveFiat();
 
     return useDerivedQuery({
@@ -80,12 +95,12 @@ export function useFlameRatedAmount(
         queryFn: ([data]): RatedCryptoAssetAmount | null =>
             data && {
                 // TODO: expose `outputs.hasUnreadableUnspent` — unreadable unspent outputs are silently left out of the balance
-                amount: data.outputs.balance,
+                amount: data.balance,
                 price: new Rate(FLAME_ASSET, fiat, toBig(0))
             }
     });
 }
 
 export function useActiveFlameRatedAmount() {
-    return useFlameRatedAmount(useActiveFlameSource());
+    return useFlameRatedAmount(useActiveFlameWallet());
 }

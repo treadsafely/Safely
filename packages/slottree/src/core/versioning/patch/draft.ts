@@ -20,6 +20,8 @@ type RenameArgs = [path: readonly string[], from: string, to: string] | [from: s
 type UpdateArgs = [path: readonly string[], map: PatchMap] | [map: PatchMap];
 type DeleteFieldArgs = [path: readonly string[], field: string] | [field: string];
 type UpdateEachArgs = [path: readonly string[], map: ItemPatch] | [map: ItemPatch];
+type ItemMatcher = (value: unknown) => boolean;
+type DeleteEachArgs = [path: readonly string[], match: ItemMatcher] | [match: ItemMatcher];
 type WhenArgs =
     | [path: readonly string[], value: PatchMatcher, map: ItemPatch]
     | [value: PatchMatcher, map: ItemPatch];
@@ -131,6 +133,42 @@ class PatchDraftNode {
         }
 
         throw new Error('updateEach target must be an ordered array or record slot');
+    }
+
+    public deleteEach(...args: DeleteEachArgs): PatchDraftNode {
+        const { path, match } = normalizeDeleteEachArgs(args);
+        const cursor = this.cursorAt(path);
+        const slot = cursor.readSlot();
+
+        if (slot === undefined || isTombstoneSlot(slot)) {
+            return this;
+        }
+
+        if (isOrderedArraySlot(slot)) {
+            for (const id of orderedArrayLiveIds(slot)) {
+                const item = cursor.orderedArrayValue(id);
+                if (match(item.readValue())) {
+                    item.deleteSlot();
+                }
+            }
+            return this;
+        }
+
+        if (isContainerSlot(slot)) {
+            for (const key of Object.keys(slot.v)) {
+                const child = slot.v[key];
+                if (
+                    child !== undefined &&
+                    !isTombstoneSlot(child) &&
+                    match(cursor.field(key).readValue())
+                ) {
+                    delete slot.v[key];
+                }
+            }
+            return this;
+        }
+
+        throw new Error('deleteEach target must be an ordered array or record slot');
     }
 
     public when(...args: WhenArgs): PatchDraftNode {
@@ -249,6 +287,25 @@ function normalizeUpdateEachArgs(args: UpdateEachArgs): {
     return {
         path: [],
         map
+    };
+}
+
+function normalizeDeleteEachArgs(args: DeleteEachArgs): {
+    path: readonly string[];
+    match: ItemMatcher;
+} {
+    if (args.length === 2) {
+        const [path, match] = args;
+        return {
+            path,
+            match
+        };
+    }
+
+    const [match] = args;
+    return {
+        path: [],
+        match
     };
 }
 

@@ -19,7 +19,10 @@ const entry = (
     ...(spent && { spent: { height: spent.height, txid: hex(spent.txid) } })
 });
 
-const counted = (qty: bigint, flavor = FLAME_NATIVE_FLAVOR): FlameOutputAmount => ({
+const counted = (
+    qty: bigint,
+    flavor = FLAME_NATIVE_FLAVOR
+): Extract<FlameOutputAmount, { status: 'counted' }> => ({
     status: 'counted',
     qty,
     flavor

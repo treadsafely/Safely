@@ -14,6 +14,7 @@ import { DeviceSupportWizardModal } from '@mobile/screens/DeviceSupportWizardMod
 import { DeviceUnarchivedSheet } from '@mobile/screens/DeviceUnarchivedSheet';
 import { ExchangeModal } from '@mobile/screens/ExchangeModal';
 import { FlameTransactionScreen } from '@mobile/screens/FlameTransactionScreen';
+import { ImportFlameDevnetWalletSheet } from '@mobile/screens/ImportFlameDevnetWalletSheet';
 import { LinkDeviceWarningModal } from '@mobile/screens/LinkDeviceWarningModal';
 import { MoreOptionsSheet } from '@mobile/screens/MoreOptionsSheet';
 import { NewContactModal } from '@mobile/screens/NewContactModal';
@@ -134,7 +135,13 @@ export const RootStack = createNativeStackNavigator({
                 ConfirmDeleteContactSheet: ConfirmDeleteContactSheet,
                 ConnectToSignSheet: ConnectToSignSheet,
                 ConfirmXpubImportSheet: ConfirmXpubImportSheet,
-                ProviderSheet: ProviderSheet
+                ProviderSheet: ProviderSheet,
+                ImportFlameDevnetWalletSheet: {
+                    screen: ImportFlameDevnetWalletSheet,
+                    linking: {
+                        path: 'import-flame-devnet-wallet'
+                    }
+                }
             },
             screenOptions: {
                 animationDuration: 0,

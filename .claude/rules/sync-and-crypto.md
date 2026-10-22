@@ -47,6 +47,11 @@ change the spec and the code together, never the code alone.
 - A value the older schema cannot express is mapped onto the nearest one it can, not dropped: v5
   projects the free-form `platform` of `devicesMeta` onto v4's `ios`/`android` enum, because an app
   on the older version must still see the device in its list and be able to revoke it.
+- An item the older schema cannot express at all (v7's `FLAME_DEVNET` portfolio for v6) is hidden
+  with `deleteEach`, never with `update(['portfolios'], list => list.filter(…))` (v2 did that for
+  `LEDGER`; don't copy it). `update` re-stamps the whole array with its old stamp and loses its
+  tombstones, so the older clients stop receiving *every* later edit and deletion of the items they
+  do support. `deleteEach` drops only the matched items and leaves the rest as they are.
 - `packages/sync/src/api/generated/**` is the generated OpenAPI client (`apis/`, `models/`,
   `runtime.ts`). Hand edits get overwritten — change the API spec/generation instead, and keep
   wrappers and domain logic outside `generated/`.

@@ -170,6 +170,26 @@ const projectUp = patch(v1Schema, v2Schema, draft =>
 
 For record-like object slots, `updateEach` iterates over live child slots and passes each child value draft to the callback.
 
+## Delete Collection Items
+
+```ts
+const isFlameDevnet = (
+    portfolio: DeepReadonly<SPortfolio>
+): portfolio is DeepReadonly<SPortfolioFlameDevnet> => portfolio.type === 'FLAME_DEVNET';
+
+const projectDown = patch(v2Schema, v1Schema, draft =>
+    draft.deleteEach(['portfolios'], isFlameDevnet)
+);
+```
+
+`deleteEach` physically removes every live item of an ordered array (or child of a record) that the
+type guard matches, and the result type drops that union branch. Like `deleteField`, it creates no
+tombstone: the older version simply never learns the key, so when the projection is merged into it
+the remaining items keep their own slots, stamps and tombstones, and merging the older version back
+up leaves the removed items untouched in the newer one. This is the way to hide a union branch the
+older schema cannot express — never `update(['portfolios'], list => list.filter(...))`, which
+rebuilds the whole array subtree. Tombstone items are kept and never passed to the guard.
+
 ## Patch Nested Collections
 
 ```ts

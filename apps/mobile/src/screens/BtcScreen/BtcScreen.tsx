@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/core';
-import { useCallback } from 'react';
+import { StackActions } from '@react-navigation/native';
+import { useCallback, useEffect } from 'react';
 import { useUnistyles } from 'react-native-unistyles';
 
 import { assertUnreachable, BTC_ASSET } from '@safely/core';
@@ -7,8 +8,8 @@ import type { ActivityItem } from '@safely/ux';
 import {
     useActiveBtcRatedAmount,
     useActivePortfolio,
-    useHasPortfolio,
-    useIsActivePortfolioTestnet,
+    useActivePortfolioWalletsOrNull,
+    useActivePortfolioNetworkBadge,
     useNumberFormatter,
     useReceiveInfo
 } from '@safely/ux';
@@ -22,7 +23,7 @@ const HistoryContent = () => {
     const portfolio = useActivePortfolio();
     const { theme } = useUnistyles();
     const formatter = useNumberFormatter();
-    const isTestnet = useIsActivePortfolioTestnet();
+    const networkBadge = useActivePortfolioNetworkBadge();
     const { displayAddress } = useReceiveInfo();
     const { data: btc } = useActiveBtcRatedAmount();
 
@@ -47,7 +48,7 @@ const HistoryContent = () => {
             <AssetHistoryHeader
                 gradientColor={theme.colors.brand.bitcoin}
                 symbol={BTC_ASSET.symbol}
-                isTestnet={isTestnet}
+                networkBadge={networkBadge}
                 address={displayAddress}
                 amount={btc?.amount.format(formatter, { currencyDisplay: 'none' })}
                 fiatAmount={
@@ -64,7 +65,14 @@ const HistoryContent = () => {
 };
 
 export const BtcScreen = () => {
-    const hasPortfolio = useHasPortfolio();
+    const navigation = useNavigation();
+    const hasBtc = Boolean(useActivePortfolioWalletsOrNull()?.btc);
 
-    return <Screen>{hasPortfolio && <HistoryContent />}</Screen>;
+    useEffect(() => {
+        if (!hasBtc) {
+            navigation.dispatch(StackActions.popToTop());
+        }
+    }, [hasBtc, navigation]);
+
+    return <Screen>{hasBtc && <HistoryContent />}</Screen>;
 };

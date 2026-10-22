@@ -12,6 +12,7 @@ import type {
     AmountInputType,
     AmountWithInputType,
     ContactSuggestion,
+    OwnAddresses,
     PortfolioSuggestion,
     SendFormErrors,
     SendFormInitialValues,
@@ -31,6 +32,8 @@ export interface CreateContactInput {
 
 export type FetchMaxValue = (recipient: Recipient) => Promise<CryptoAssetAmount | undefined>;
 
+export type ActiveWallet = Pick<PortfolioSuggestion, 'id' | 'meta'>;
+
 export interface SendFormMachineInput {
     resolvedInitialValues: SendFormInitialValues | undefined;
     formatter: NumberFormatter;
@@ -38,8 +41,8 @@ export interface SendFormMachineInput {
     portfolioSuggestions: PortfolioSuggestion[];
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
-    activeWallet: PortfolioSuggestion;
-    flameWalletAddress: string | null;
+    activeWallet: ActiveWallet;
+    ownAddresses: OwnAddresses;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: () => boolean;
@@ -66,8 +69,8 @@ export interface SendFormMachineContext {
     portfolioSuggestions: PortfolioSuggestion[];
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
-    activeWallet: PortfolioSuggestion;
-    flameWalletAddress: string | null;
+    activeWallet: ActiveWallet;
+    ownAddresses: OwnAddresses;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: SendFormMachineInput['shouldResetForm'];

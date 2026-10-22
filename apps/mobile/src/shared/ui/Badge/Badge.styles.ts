@@ -25,6 +25,9 @@ export const styles = StyleSheet.create(theme => ({
                 },
                 translucent: {
                     backgroundColor: Color(theme.colors.other.constant.white).alpha(0.16).toString()
+                },
+                purple: {
+                    backgroundColor: theme.colors.badge.purple.background
                 }
             }
         }
@@ -49,6 +52,9 @@ export const styles = StyleSheet.create(theme => ({
                 },
                 translucent: {
                     color: theme.colors.other.constant.white
+                },
+                purple: {
+                    color: theme.colors.badge.purple.foreground
                 }
             }
         }

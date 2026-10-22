@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 import { createActor } from 'xstate';
 
 import {
+    BLOCKCHAIN_NAME,
     BTC_ASSET,
     BtcAssetAmount,
     type Contact,
@@ -136,8 +137,10 @@ export function makeMockInput(opts: MockInputOptions = {}): SendFormMachineInput
     const formatter = opts.formatter ?? makeMockFormatter();
     const activeWallet = opts.activeWallet ?? {
         id: 'active-wallet',
-        address: opts.activeWalletAddress ?? SELF_ADDRESS,
         meta: { name: 'My Wallet', icon: { type: 'emoji', value: '🙂' } }
+    };
+    const ownAddresses = opts.ownAddresses ?? {
+        [BLOCKCHAIN_NAME.BTC]: opts.activeWalletAddress ?? SELF_ADDRESS
     };
     const portfolioSuggestions = opts.portfolioSuggestions ?? [];
     const contactSuggestions = opts.contactSuggestions ?? [];
@@ -153,7 +156,7 @@ export function makeMockInput(opts: MockInputOptions = {}): SendFormMachineInput
         contactSuggestions,
         ratedAssets,
         activeWallet,
-        flameWalletAddress: opts.flameWalletAddress ?? null,
+        ownAddresses,
         networkType: opts.networkType ?? PortfolioNetworkType.MAINNET,
         shouldResetForm: () => shouldResetFormValue,
         onSubmit,

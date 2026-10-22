@@ -8,3 +8,4 @@ export * from './receive';
 export * from './blockchain-send';
 export * from './portfolio-flow';
 export * from './account-flow';
+export * from './portfolio-assets';

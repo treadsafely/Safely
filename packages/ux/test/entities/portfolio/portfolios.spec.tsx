@@ -113,7 +113,7 @@ async function makeImportedPortfolio(
         meta: { name, icon: PortfolioIdBip39Imported.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
+        encryptor,
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -137,7 +137,7 @@ async function makeDerivedPortfolio(
         meta: { name, icon: PortfolioIdBip39MasterKeyDerived.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: new SecretEncryptor(account.secretEncryptor, storage),
+        encryptor: new SecretEncryptor(account.secretEncryptor, storage),
         ledgerSessionPort
     }) as PortfolioBip39;
 }

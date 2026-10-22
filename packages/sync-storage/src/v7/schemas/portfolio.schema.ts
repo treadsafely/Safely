@@ -2,49 +2,69 @@ import z from 'zod';
 
 import { zIndexedArray, zIndexedObject } from '@safely/slottree';
 
-import { sDerivation } from './derivation.schema';
 import {
-    portfolioBip39IdToString,
-    sPortfolioBip39Id,
+    sPortfolioBip39,
     sPortfolioLedger,
-    type SPortfolioLedger,
     sPortfolioMeta,
-    sPortfolioSecretRevealedStatus,
-    sPortfolioType,
-    sPortfolioWatchOnly
+    sPortfolioType as sPortfolioTypeV6,
+    sPortfolioWatchOnly,
+    type SPortfolioBip39,
+    type SPortfolioLedger
 } from '../../v6';
 
-export const sPortfolioBip39 = zIndexedObject(
+export const sPortfolioType = z.enum([...sPortfolioTypeV6.options, 'FLAME_DEVNET']);
+
+export const sFlameAccountChainItem = z.object({
+    viewKey: z.string(),
+    address: z.string(),
+    predicate: z.string()
+});
+
+export const sPortfolioFlameDevnetId = z.object({
+    mnemonicHash: z.string()
+});
+
+export function portfolioFlameDevnetIdToString(id: SPortfolioFlameDevnetId): string {
+    return ['portfolio', sPortfolioType.enum.FLAME_DEVNET, id.mnemonicHash].join(':');
+}
+
+export const sPortfolioFlameDevnet = zIndexedObject(
     {
-        type: z.literal(sPortfolioType.enum.BIP39),
-        id: sPortfolioBip39Id,
+        type: z.literal(sPortfolioType.enum.FLAME_DEVNET),
+        id: sPortfolioFlameDevnetId,
         meta: sPortfolioMeta,
-        secretRevealedStatus: sPortfolioSecretRevealedStatus,
         encryptedSecret: z.string(),
-        derivations: z.array(sDerivation)
+        flame: sFlameAccountChainItem
     },
-    value => portfolioBip39IdToString(value.id)
+    value => portfolioFlameDevnetIdToString(value.id)
 );
 
 export const sPortfolio = z.discriminatedUnion('type', [
     sPortfolioBip39,
     sPortfolioLedger,
-    sPortfolioWatchOnly
+    sPortfolioWatchOnly,
+    sPortfolioFlameDevnet
 ]);
 
 export const sPortfolios = zIndexedArray(sPortfolio);
 
-export type SPortfolioBip39 = z.infer<typeof sPortfolioBip39>;
+export type SFlameAccountChainItem = z.infer<typeof sFlameAccountChainItem>;
+export type SPortfolioFlameDevnetId = z.infer<typeof sPortfolioFlameDevnetId>;
+export type SPortfolioFlameDevnet = z.infer<typeof sPortfolioFlameDevnet>;
 export type SPortfolio = z.infer<typeof sPortfolio>;
 export type SPortfolios = z.infer<typeof sPortfolios>;
 
 export const isDerivableSPortfolio = (
     portfolio: SPortfolio
 ): portfolio is SPortfolioBip39 | SPortfolioLedger =>
-    portfolio.type !== sPortfolioType.enum.WATCH_ONLY;
+    portfolio.type === sPortfolioType.enum.BIP39 || portfolio.type === sPortfolioType.enum.LEDGER;
 
 export const isBip39SPortfolio = (portfolio: SPortfolio): portfolio is SPortfolioBip39 =>
     portfolio.type === sPortfolioType.enum.BIP39;
 
 export const isLedgerSPortfolio = (portfolio: SPortfolio): portfolio is SPortfolioLedger =>
     portfolio.type === sPortfolioType.enum.LEDGER;
+
+export const isFlameDevnetSPortfolio = (
+    portfolio: SPortfolio
+): portfolio is SPortfolioFlameDevnet => portfolio.type === sPortfolioType.enum.FLAME_DEVNET;

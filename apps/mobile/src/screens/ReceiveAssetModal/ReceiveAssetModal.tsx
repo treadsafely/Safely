@@ -1,13 +1,16 @@
-import type { StaticScreenProps } from '@react-navigation/native';
+import type { ComponentType } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
 
-import { BTC_ASSET, FLAME_ASSET, FlameAddress } from '@safely/core';
+import type { CryptoAsset, Recipient } from '@safely/core';
+import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET, FlameAddress } from '@safely/core';
+import type { PortfolioWallets } from '@safely/ux';
 import {
-    useActiveFlameSource,
-    useIsActivePortfolioTestnet,
+    useActiveFlameWallet,
+    useActivePortfolioWallets,
+    useActivePortfolioNetworkBadge,
     useIsActivePortfolioWatchOnly,
     useReceiveInfo
 } from '@safely/ux';
@@ -20,48 +23,101 @@ import { ReceiveActions } from './components/ReceiveActions';
 import { ReceiveCopyToastProvider } from './components/ReceiveCopyToastProvider';
 import { styles } from './ReceiveAssetModal.styles';
 
-type ReceiveTab = 'btc' | 'flm';
-
 const GRADIENT_HEIGHT = 600;
 
-const TABS = [
-    { value: 'btc', title: BTC_ASSET.symbol },
-    { value: 'flm', title: FLAME_ASSET.symbol }
-] as const satisfies readonly { value: ReceiveTab; title: string }[];
+const BtcReceive = () => {
+    const { displayAddress } = useReceiveInfo();
+    const isWatchOnly = useIsActivePortfolioWatchOnly();
+    const networkBadge = useActivePortfolioNetworkBadge();
 
-type ReceiveAssetModalProps = StaticScreenProps<{ initialTab?: ReceiveTab } | undefined>;
+    return (
+        <>
+            <QRCodeBlock
+                address={displayAddress}
+                logo={<Image source={BTC_ASSET.image} style={styles.logo} />}
+                isWatchOnly={isWatchOnly}
+                networkBadge={networkBadge}
+            />
+            <ReceiveActions address={displayAddress} />
+        </>
+    );
+};
 
-export const ReceiveAssetModal = (props: ReceiveAssetModalProps) => {
-    const { route } = props;
-    const flameSource = useActiveFlameSource();
-    const hasFlame = flameSource !== null;
-    const [selectedTab, setTab] = useState<ReceiveTab>(route.params?.initialTab ?? 'btc');
-    const tab = hasFlame ? selectedTab : 'btc';
+const FlameReceive = () => {
+    const wallet = useActiveFlameWallet();
+    const networkBadge = useActivePortfolioNetworkBadge();
+    const tracking = FlameAddress.toTracking(wallet.predicate, wallet.network);
+
+    return (
+        <>
+            <QRCodeBlock
+                address={wallet.address}
+                logo={<FlameLogo background="black" size="large" />}
+                isWatchOnly={false}
+                networkBadge={networkBadge}
+                addressParts={
+                    tracking ? FlameAddress.splitByTracking(wallet.address, tracking) : undefined
+                }
+            />
+            <ReceiveActions address={wallet.address} />
+        </>
+    );
+};
+
+type ChainReceive = {
+    asset: CryptoAsset;
+    brand: 'bitcoin' | 'flame';
+    hasChain: (wallets: PortfolioWallets) => boolean;
+    Content: ComponentType;
+};
+
+const RECEIVE_BY_CHAIN: Record<Recipient['blockchain'], ChainReceive> = {
+    [BLOCKCHAIN_NAME.BTC]: {
+        asset: BTC_ASSET,
+        brand: 'bitcoin',
+        hasChain: wallets => wallets.btc !== null,
+        Content: BtcReceive
+    },
+    [BLOCKCHAIN_NAME.FLAME]: {
+        asset: FLAME_ASSET,
+        brand: 'flame',
+        hasChain: wallets => wallets.flame !== null,
+        Content: FlameReceive
+    }
+};
+
+const CHAIN_ORDER: readonly Recipient['blockchain'][] = [
+    BLOCKCHAIN_NAME.BTC,
+    BLOCKCHAIN_NAME.FLAME
+];
+
+export const ReceiveAssetModal = () => {
     const { t } = useTranslation();
     const { theme } = useUnistyles();
+    const portfolioWallets = useActivePortfolioWallets();
+    const chains = CHAIN_ORDER.filter(chain => RECEIVE_BY_CHAIN[chain].hasChain(portfolioWallets));
+    const [selected, setSelected] = useState(chains[0]);
+    const chain = selected !== undefined && chains.includes(selected) ? selected : chains[0];
 
-    const receiveInfo = useReceiveInfo();
-    const isWatchOnly = useIsActivePortfolioWatchOnly();
-    const isPortfolioTestnet = useIsActivePortfolioTestnet();
+    if (chain === undefined) {
+        return null;
+    }
 
-    const isBtc = tab === 'btc';
-    const symbol = isBtc ? BTC_ASSET.symbol : FLAME_ASSET.symbol;
-    const name = isBtc ? BTC_ASSET.name : FLAME_ASSET.name;
-    const address = isBtc ? receiveInfo.displayAddress : flameSource?.chain.wallet.address;
-    const flameWallet = isBtc ? undefined : flameSource?.chain.wallet;
-    const flameTracking =
-        flameWallet && FlameAddress.toTracking(flameWallet.predicate, flameWallet.network);
+    const { asset, brand, Content } = RECEIVE_BY_CHAIN[chain];
+    const tabs = chains.map(value => ({ value, title: RECEIVE_BY_CHAIN[value].asset.symbol }));
 
     return (
         <Screen>
             <GradientBackground
-                color={isBtc ? theme.colors.brand.bitcoin : theme.colors.brand.flame}
+                color={theme.colors.brand[brand]}
                 position="bottom"
                 height={GRADIENT_HEIGHT}
             />
             <Screen.Header>
                 <Screen.Header.Title>
-                    {hasFlame && <SegmentedControl segments={TABS} value={tab} onChange={setTab} />}
+                    {tabs.length > 1 && (
+                        <SegmentedControl segments={tabs} value={chain} onChange={setSelected} />
+                    )}
                 </Screen.Header.Title>
                 <Screen.Header.CloseButton />
             </Screen.Header>
@@ -69,34 +125,13 @@ export const ReceiveAssetModal = (props: ReceiveAssetModalProps) => {
                 <ReceiveCopyToastProvider>
                     <View style={styles.textContainer}>
                         <Text textAlign="center" variant="titleM">
-                            {t('receiveAsset.title', { symbol })}
+                            {t('receiveAsset.title', { symbol: asset.symbol })}
                         </Text>
                         <Text textAlign="center" variant="bodyL" color="secondary">
-                            {t('receiveAsset.description', { name })}
+                            {t('receiveAsset.description', { name: asset.name })}
                         </Text>
                     </View>
-                    {address !== undefined && (
-                        <>
-                            <QRCodeBlock
-                                address={address}
-                                logo={
-                                    isBtc ? (
-                                        <Image source={BTC_ASSET.image} style={styles.logo} />
-                                    ) : (
-                                        <FlameLogo background="black" size="large" />
-                                    )
-                                }
-                                isWatchOnly={isBtc && isWatchOnly}
-                                isTestnet={isPortfolioTestnet}
-                                addressParts={
-                                    flameTracking
-                                        ? FlameAddress.splitByTracking(address, flameTracking)
-                                        : undefined
-                                }
-                            />
-                            <ReceiveActions address={address} />
-                        </>
-                    )}
+                    <Content />
                 </ReceiveCopyToastProvider>
             </Screen.Content>
         </Screen>

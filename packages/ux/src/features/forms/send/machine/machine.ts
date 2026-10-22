@@ -89,8 +89,7 @@ export const createSendFormMachine = () =>
                         : context.values.addressBookName;
 
                     const result = validateRecipientInput(event.value, {
-                        activeWalletAddress: context.activeWallet.address,
-                        flameWalletAddress: context.flameWalletAddress,
+                        ownAddresses: context.ownAddresses,
                         networkType: context.networkType,
                         portfolioSuggestions: context.portfolioSuggestions,
                         contactSuggestions: context.contactSuggestions,
@@ -126,8 +125,7 @@ export const createSendFormMachine = () =>
                     if (!picked) return {};
 
                     const result = validateRecipientInput(picked.address, {
-                        activeWalletAddress: context.activeWallet.address,
-                        flameWalletAddress: context.flameWalletAddress,
+                        ownAddresses: context.ownAddresses,
                         networkType: context.networkType,
                         portfolioSuggestions: context.portfolioSuggestions,
                         contactSuggestions: context.contactSuggestions,

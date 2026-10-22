@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { Badge, GradientBackground, Screen, Text } from '@mobile/shared/ui';
+import type { PortfolioNetworkBadge } from '@safely/ux';
+
+import { NetworkBadge } from '@mobile/entities/portfolio';
+import { GradientBackground, Screen, Text } from '@mobile/shared/ui';
 
 import { styles } from './AssetHistoryHeader.styles';
 
@@ -11,7 +13,7 @@ const GRADIENT_HEIGHT = 390;
 type AssetHistoryHeaderProps = {
     gradientColor: string;
     symbol: string;
-    isTestnet: boolean;
+    networkBadge: PortfolioNetworkBadge | null;
     address: string | undefined;
     amount: string | undefined;
     fiatAmount: string | undefined;
@@ -19,8 +21,7 @@ type AssetHistoryHeaderProps = {
 };
 
 export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
-    const { gradientColor, symbol, isTestnet, address, amount, fiatAmount, actions } = props;
-    const { t } = useTranslation();
+    const { gradientColor, symbol, networkBadge, address, amount, fiatAmount, actions } = props;
 
     return (
         <>
@@ -33,10 +34,8 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
                             <Text variant="titleS" color="constantWhite" numberOfLines={1}>
                                 {symbol}
                             </Text>
-                            {isTestnet && (
-                                <Badge type="translucent" isUppercase>
-                                    {t('portfolio.testnet')}
-                                </Badge>
+                            {networkBadge && (
+                                <NetworkBadge badge={networkBadge} neutralType="translucent" />
                             )}
                         </View>
                         <Text

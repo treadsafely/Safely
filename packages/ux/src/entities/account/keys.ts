@@ -6,8 +6,7 @@ export const accountKey = defineQueryKeys('account', {
     },
     accountId: (_id: string | undefined) => {
         return {
-            activePortfolio: finalKey,
-            flameSentMemos: finalKey
+            activePortfolio: finalKey
         };
     }
 });

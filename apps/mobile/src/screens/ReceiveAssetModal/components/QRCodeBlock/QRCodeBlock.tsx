@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text as RNText, View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
+import type { PortfolioNetworkBadge } from '@safely/ux';
+
+import { NetworkBadge } from '@mobile/entities/portfolio';
 import { TEST_ID } from '@mobile/shared/constants';
 import { Badge, Text, TouchableOpacity } from '@mobile/shared/ui';
 
@@ -14,12 +17,12 @@ type QRCodeBlockProps = {
     address: string;
     logo: ReactNode;
     isWatchOnly: boolean;
-    isTestnet: boolean;
+    networkBadge: PortfolioNetworkBadge | null;
     addressParts?: { head: string; shared: string; rest: string };
 };
 
 export const QRCodeBlock = (props: QRCodeBlockProps) => {
-    const { address, logo, isWatchOnly, isTestnet, addressParts } = props;
+    const { address, logo, isWatchOnly, networkBadge, addressParts } = props;
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -73,11 +76,9 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     </Badge>
                 </Pressable>
             )}
-            {isTestnet && (
+            {networkBadge && (
                 <View style={styles.badgeContainer}>
-                    <Badge type="warningFilled" isUppercase>
-                        {t('portfolio.testnet')}
-                    </Badge>
+                    <NetworkBadge badge={networkBadge} neutralType="warningFilled" />
                 </View>
             )}
         </View>

@@ -7,7 +7,7 @@ import type { FlameEstimation } from './types';
 import type { FlameApi } from '../../api/flame';
 import { FLAME_RPC_ERROR_CODE, FlameApiError } from '../../api/flame';
 import type { FlameTransferOutput } from '../../di/safely-flame';
-import type { FlameAssetAmount, IDerivationChainItemFlame } from '../../entities';
+import type { FlameAssetAmount, FlameWallet } from '../../entities';
 import { BLOCKCHAIN_NAME } from '../../entities/blockchain';
 import { ellipsisMiddle } from '../../utils';
 
@@ -34,7 +34,7 @@ export class FlameTransactionTemplate {
         if (this.request.change <= 0n) {
             return [recipient];
         }
-        return [recipient, { address: this.chain.wallet.address, qty: this.request.change }];
+        return [recipient, { address: this.wallet.address, qty: this.request.change }];
     }
 
     public get spentOutputIds(): string[] {
@@ -43,7 +43,7 @@ export class FlameTransactionTemplate {
 
     constructor(
         private readonly api: FlameApi,
-        private readonly chain: IDerivationChainItemFlame,
+        private readonly wallet: FlameWallet,
         public readonly request: {
             recipientAddress: string;
             amount: FlameAssetAmount;
@@ -115,7 +115,7 @@ export class FlameTransactionTemplate {
             };
         });
 
-        const built = await this.chain.buildTransfer({
+        const built = await this.wallet.buildTransfer({
             inputs,
             outputs: this.outputs,
             fee: this.estimation.fee.amount.weiAmount,

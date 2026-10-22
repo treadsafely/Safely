@@ -5,7 +5,7 @@ import type {
     FlameApiProof,
     FlameApiScanEntry,
     FlameOutputAmount,
-    IDerivationChainItemFlame
+    FlameWallet
 } from '../../../src';
 import {
     FLAME_NATIVE_FLAVOR,
@@ -60,18 +60,18 @@ function setup(proofs?: (ids: string[]) => FlameApiProof[]) {
         ),
         submitTx: vi.fn((_: string) => Promise.resolve(TXID))
     };
-    const chain = {
+    const wallet = {
         id: { toString: () => 'wallet' },
-        wallet: { address: SELF },
-        buildTransfer: vi.fn<IDerivationChainItemFlame['buildTransfer']>(() =>
+        address: SELF,
+        buildTransfer: vi.fn<FlameWallet['buildTransfer']>(() =>
             Promise.resolve({ txid: new Uint8Array(32), blockTx: Uint8Array.of(1, 2, 3) })
         )
     };
     const estimator = new FlameEstimator(
         api as unknown as FlameApi,
-        chain as unknown as IDerivationChainItemFlame
+        wallet as unknown as FlameWallet
     );
-    return { outputs, api, chain, estimator };
+    return { outputs, api, wallet, estimator };
 }
 
 describe('FlameEstimator', () => {
@@ -146,7 +146,7 @@ describe('FlameTransactionTemplate', () => {
 
         expect(result.txId).toBe(TXID);
         expect(ctx.api.proofs).toHaveBeenCalledWith([hex('2')]);
-        expect(ctx.chain.buildTransfer).toHaveBeenCalledWith({
+        expect(ctx.wallet.buildTransfer).toHaveBeenCalledWith({
             inputs: [
                 {
                     contract: Uint8Array.of(1, 2, 3),
@@ -176,7 +176,7 @@ describe('FlameTransactionTemplate', () => {
 
         await expect(estimate(ctx).send()).resolves.toMatchObject({ txId: TXID });
         expect(ctx.api.proofs).toHaveBeenCalledTimes(2);
-        expect(ctx.chain.buildTransfer).toHaveBeenCalledTimes(2);
+        expect(ctx.wallet.buildTransfer).toHaveBeenCalledTimes(2);
     });
 
     it('gives up after the second mempool rejection', async () => {
@@ -197,6 +197,6 @@ describe('FlameTransactionTemplate', () => {
         const ctx = setup(ids => ids.map(() => ({ status: 'spent', height: 3, txid: hex('d') })));
 
         await expect(estimate(ctx).send()).rejects.toBeInstanceOf(FlameInputsSpentError);
-        expect(ctx.chain.buildTransfer).not.toHaveBeenCalled();
+        expect(ctx.wallet.buildTransfer).not.toHaveBeenCalled();
     });
 });

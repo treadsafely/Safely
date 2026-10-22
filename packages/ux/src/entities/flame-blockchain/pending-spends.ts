@@ -1,8 +1,6 @@
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 
-import type { FlameOutputs } from '@safely/core';
-
 const EMPTY: ReadonlySet<string> = new Set();
 
 // A submitted transfer's inputs stay unspent in the scan until it confirms, so they are held back here
@@ -19,11 +17,10 @@ export function addFlamePendingSpends(walletId: string, outputIds: string[]): vo
     }));
 }
 
-export function releaseSettledFlameSpends(walletId: string, outputs: FlameOutputs): void {
+export function releaseSettledFlameSpends(walletId: string, unspentIds: ReadonlySet<string>): void {
     const pending = pendingSpendsStore.getState()[walletId];
     if (!pending) return;
 
-    const unspentIds = new Set(outputs.unspent.map(output => output.id));
     const stillPending = [...pending].filter(id => unspentIds.has(id));
     if (stillPending.length === pending.size) return;
 

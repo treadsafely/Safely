@@ -91,8 +91,3 @@ export interface SafelyFlame {
 declare global {
     var flameSdk: SafelyFlame;
 }
-
-// only apps that ship the native module install it; desktop and the extension do not
-export function isFlameSdkInstalled(): boolean {
-    return 'flameSdk' in globalThis;
-}

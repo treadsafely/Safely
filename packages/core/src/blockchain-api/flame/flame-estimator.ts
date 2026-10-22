@@ -6,7 +6,7 @@ import { FlameTransactionTemplate } from './flame-transaction-template';
 import type { FlameEstimation, FlameSendRequest } from './types';
 import type { FlameApi } from '../../api/flame';
 import { FlameAssetAmount } from '../../entities/asset/exact-crypto-assets-amounts';
-import type { IDerivationChainItemFlame } from '../../entities/derivation';
+import type { FlameWallet } from '../../entities/derivation';
 import type { IIdentifiable } from '../../utils';
 
 // Flame has no fee market yet: the node's default floor is 0, and its own tests pay 1000 sparks
@@ -15,6 +15,12 @@ export const FLAME_TRANSFER_FEE = 1_000n;
 const qtyOf = (output: FlameOutput): bigint =>
     output.amount.status === 'counted' ? output.amount.qty : 0n;
 
+function byQtyDescending(a: FlameOutput, b: FlameOutput): number {
+    const diff = qtyOf(b) - qtyOf(a);
+
+    return Number(diff > 0n) - Number(diff < 0n);
+}
+
 export class FlameEstimator implements IIdentifiable {
     public readonly id: string;
 
@@ -22,10 +28,10 @@ export class FlameEstimator implements IIdentifiable {
 
     constructor(
         private readonly api: FlameApi,
-        private readonly chain: IDerivationChainItemFlame,
+        private readonly wallet: FlameWallet,
         logger?: Logger
     ) {
-        this.id = `${this.constructor.name}:${this.api.id}:${this.chain.id.toString()}`;
+        this.id = `${this.constructor.name}:${this.api.id}:${this.wallet.id.toString()}`;
         this.logger = logger?.child('FlameEstimator');
     }
 
@@ -63,7 +69,7 @@ export class FlameEstimator implements IIdentifiable {
 
         return new FlameTransactionTemplate(
             this.api,
-            this.chain,
+            this.wallet,
             {
                 recipientAddress: request.recipientAddress,
                 amount: FlameAssetAmount.fromWeiAmount(amount),
@@ -79,7 +85,7 @@ export class FlameEstimator implements IIdentifiable {
     private spendable(outputs: FlameOutputs, excludedIds: ReadonlySet<string>): FlameOutput[] {
         return outputs.spendable
             .filter(output => !excludedIds.has(output.id))
-            .sort((a, b) => (qtyOf(b) > qtyOf(a) ? 1 : qtyOf(b) < qtyOf(a) ? -1 : 0));
+            .sort(byQtyDescending);
     }
 
     private selectInputs(spendable: FlameOutput[], amount: bigint): FlameOutput[] {
