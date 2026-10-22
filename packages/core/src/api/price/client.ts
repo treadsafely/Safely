@@ -15,9 +15,9 @@ export class PriceApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { baseUrl: string; logger?: Logger }) {
         const baseUrl = options.baseUrl.replace(/\/$/, '');
-        super(baseUrl, {}, options.logger);
+        super('PriceApi', baseUrl, {}, options.logger);
 
-        this.id = `${this.constructor.name}:${baseUrl}`;
+        this.id = `${this.apiName}:${baseUrl}`;
     }
 
     public async getCurrentPrice(params: GetCurrentPriceParams): Promise<CurrentPrice> {

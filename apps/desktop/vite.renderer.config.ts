@@ -17,6 +17,7 @@ const WORKSPACE_SOURCE_PACKAGES = [
 /* Panda is not wired here: it runs as a PostCSS plugin from `postcss.config.cjs`. */
 export default defineConfig({
     plugins: [react(), svgr({ include: '**/*.svg?react' })],
+    esbuild: { keepNames: true },
     resolve: {
         /* a second React instance would break hooks in the shared packages */
         dedupe: ['react', 'react-dom'],

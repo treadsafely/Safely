@@ -10,13 +10,13 @@ export class ConfigApi extends ApiClient implements IIdentifiable {
         private readonly params: ConfigParams,
         logger?: Logger
     ) {
-        super('https://config.safely.app/v1', {}, logger);
+        super('ConfigApi', 'https://config.safely.app/v1', {}, logger);
     }
 
     public get id() {
         const { storeCode, deviceCode } = this.params.userCountryInfo;
 
-        return `${this.constructor.name}:${this.params.build}:${this.params.version}:${this.params.lang}:${storeCode ?? ''}:${deviceCode ?? ''}:${this.params.devToken ?? ''}`;
+        return `${this.apiName}:${this.params.build}:${this.params.version}:${this.params.lang}:${storeCode ?? ''}:${deviceCode ?? ''}:${this.params.devToken ?? ''}`;
     }
 
     private get searchParams() {

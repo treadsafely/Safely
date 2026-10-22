@@ -21,9 +21,9 @@ export class ExchangeApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { baseUrl: string; signer?: RequestSigner }) {
         const baseUrl = options.baseUrl.replace(/\/$/, '');
-        super(baseUrl, {}, undefined, options.signer);
+        super('ExchangeApi', baseUrl, {}, undefined, options.signer);
 
-        this.id = `${this.constructor.name}:${baseUrl}`;
+        this.id = `${this.apiName}:${baseUrl}`;
     }
 
     public async getProviders(params: GetProvidersParams): Promise<Providers> {

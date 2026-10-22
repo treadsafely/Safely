@@ -9,10 +9,8 @@ import { biometryKeys } from './keys';
 async function authenticateWithBlurFreeze(): Promise<LocalAuthentication.LocalAuthenticationResult> {
     blurFreeze.freeze();
     try {
-        /* the device passcode would unlock every gate in the app, so only ours may serve as fallback;
-           `strong` keeps Android off Class 2 factors like a photo-spoofable 2D face unlock */
+        /* `strong` keeps Android off Class 2 factors like a photo-spoofable 2D face unlock */
         return await LocalAuthentication.authenticateAsync({
-            disableDeviceFallback: true,
             biometricsSecurityLevel: 'strong'
         });
     } finally {
