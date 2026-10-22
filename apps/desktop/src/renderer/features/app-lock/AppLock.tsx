@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import {
     SecurityCheckCancelledError,
@@ -43,11 +43,17 @@ export const AppLock: FC<AppLockProps> = ({ children }) => {
         return <AppLockScreen onUnlocked={() => setIsLocked(false)} />;
     }
 
-    if (!passcode.isSet) {
-        return children;
-    }
+    return (
+        <>
+            {children}
 
-    return <PasscodePromptOverlay>{children}</PasscodePromptOverlay>;
+            {passcode.isSet && (
+                <Suspense fallback={null}>
+                    <PasscodePromptLayer />
+                </Suspense>
+            )}
+        </>
+    );
 };
 
 type AppLockScreenProps = {
@@ -113,46 +119,38 @@ function useSettledActiveAppState(): boolean {
 
 const noop = (): void => undefined;
 
-type PasscodePromptOverlayProps = {
-    children: ReactNode;
-};
-
-const PasscodePromptOverlay: FC<PasscodePromptOverlayProps> = ({ children }) => {
+const PasscodePromptLayer: FC = () => {
     const request = usePasscodePromptStore(state => state.request);
     const close = usePasscodePromptStore(state => state.close);
     const { hasLockedOut } = usePasscodeLockout();
     const isAppSettled = useSettledActiveAppState();
 
-    return (
-        <>
-            {children}
+    if (request !== null) {
+        return (
+            <PasscodePromptScreen
+                key="request"
+                title={request.title}
+                subtitle={request.subtitle}
+                onVerified={() => {
+                    request.resolve();
+                    close(request);
+                }}
+                onCancel={() => {
+                    request.reject(new SecurityCheckCancelledError());
+                    close(request);
+                }}
+            />
+        );
+    }
 
-            {request !== null ? (
-                <PasscodePromptScreen
-                    key="request"
-                    title={request.title}
-                    subtitle={request.subtitle}
-                    onVerified={() => {
-                        request.resolve();
-                        close(request);
-                    }}
-                    onCancel={() => {
-                        request.reject(new SecurityCheckCancelledError());
-                        close(request);
-                    }}
-                />
-            ) : (
-                hasLockedOut && (
-                    <PasscodePromptScreen
-                        key="lockout"
-                        hasBiometryAutoPrompt={isAppSettled}
-                        onVerified={noop}
-                        onCancel={noop}
-                    />
-                )
-            )}
-        </>
-    );
+    return hasLockedOut ? (
+        <PasscodePromptScreen
+            key="lockout"
+            hasBiometryAutoPrompt={isAppSettled}
+            onVerified={noop}
+            onCancel={noop}
+        />
+    ) : null;
 };
 
 type PasscodePromptScreenProps = {
