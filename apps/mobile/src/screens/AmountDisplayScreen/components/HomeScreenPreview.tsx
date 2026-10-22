@@ -1,11 +1,15 @@
 import { BTC_ASSET, CryptoAssetAmount } from '@safely/core';
-import { useActivePortfolioRate, useActiveWalletBtcBalance } from '@safely/ux';
+import {
+    useActivePortfolioRate,
+    useActiveWalletBtcBalance,
+    useActivePortfolioWallets
+} from '@safely/ux';
 
-import { BtcAssetCell } from '@mobile/entities/asset';
+import { AssetCell, BtcAssetCell } from '@mobile/entities/asset';
 
 const DEMO_BALANCE = new CryptoAssetAmount({ relativeAmount: 0.25, asset: BTC_ASSET });
 
-export const HomeScreenPreview = () => {
+const BtcPreview = () => {
     const balance = useActiveWalletBtcBalance();
     const rate = useActivePortfolioRate(BTC_ASSET);
 
@@ -20,4 +24,24 @@ export const HomeScreenPreview = () => {
             background="tertiary"
         />
     );
+};
+
+const DemoPreview = () => {
+    const rate = useActivePortfolioRate(BTC_ASSET);
+
+    return (
+        <AssetCell
+            cryptoAssetAmount={DEMO_BALANCE}
+            price={rate.data ?? null}
+            image={{ type: 'image', image: BTC_ASSET.image }}
+            showDivider={false}
+            background="tertiary"
+        />
+    );
+};
+
+export const HomeScreenPreview = () => {
+    const hasBtc = useActivePortfolioWallets().btc !== null;
+
+    return hasBtc ? <BtcPreview /> : <DemoPreview />;
 };

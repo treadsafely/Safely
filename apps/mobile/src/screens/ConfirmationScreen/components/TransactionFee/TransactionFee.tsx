@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { Estimation } from '@safely/core';
-import { btcBlockWaitingTimeMinutes } from '@safely/core';
+import { BLOCKCHAIN_NAME, btcBlockWaitingTimeMinutes } from '@safely/core';
 import { useFiatEquivalent, useNumberFormatter } from '@safely/ux';
 
 import { TransactionCell } from '@mobile/screens/ConfirmationScreen/components';
@@ -12,13 +12,17 @@ import { Text } from '@mobile/shared/ui';
 
 import { styles } from './TransactionFee.styles';
 
-export const TransactionFee: FC<{ estimation: Estimation | undefined; showDivider?: boolean }> = ({
-    estimation,
-    showDivider = true
-}) => {
+export const TransactionFee: FC<{
+    estimation: Estimation | undefined;
+    blockchain?: BLOCKCHAIN_NAME;
+    showDivider?: boolean;
+}> = ({ estimation, blockchain = BLOCKCHAIN_NAME.BTC, showDivider = true }) => {
     const { t } = useTranslation();
 
-    const targetBlock = estimation ? Math.max(estimation.txTargetBlock, 1) : undefined;
+    const targetBlock =
+        estimation && 'txTargetBlock' in estimation
+            ? Math.max(estimation.txTargetBlock, 1)
+            : undefined;
 
     return (
         <TransactionCell
@@ -31,13 +35,18 @@ export const TransactionFee: FC<{ estimation: Estimation | undefined; showDivide
                 )
             }
             subvalue={
-                <TransactionCell.Subvalue skeletonVariant="transparentElement" skeletonWidth={40}>
-                    {targetBlock !== undefined
-                        ? t('confirmation.networkFee.timeMinutes', {
-                              count: targetBlock * btcBlockWaitingTimeMinutes
-                          })
-                        : undefined}
-                </TransactionCell.Subvalue>
+                blockchain === BLOCKCHAIN_NAME.BTC && (
+                    <TransactionCell.Subvalue
+                        skeletonVariant="transparentElement"
+                        skeletonWidth={40}
+                    >
+                        {targetBlock !== undefined
+                            ? t('confirmation.networkFee.timeMinutes', {
+                                  count: targetBlock * btcBlockWaitingTimeMinutes
+                              })
+                            : undefined}
+                    </TransactionCell.Subvalue>
+                )
             }
             showDivider={showDivider}
         />

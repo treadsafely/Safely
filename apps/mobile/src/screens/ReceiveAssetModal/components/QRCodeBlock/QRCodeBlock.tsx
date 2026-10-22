@@ -1,30 +1,31 @@
 import { useNavigation } from '@react-navigation/core';
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text as RNText, View } from 'react-native';
 import QRCode from 'react-native-qrcode-skia';
 
-import type { CryptoAsset } from '@safely/core';
-import { useIsActivePortfolioTestnet, useIsActivePortfolioWatchOnly } from '@safely/ux';
+import type { PortfolioNetworkBadge } from '@safely/ux';
 
+import { NetworkBadge } from '@mobile/entities/portfolio';
 import { TEST_ID } from '@mobile/shared/constants';
-import { Badge, Text, Image, TouchableOpacity } from '@mobile/shared/ui';
+import { Badge, Text, TouchableOpacity } from '@mobile/shared/ui';
 
 import { ReceiveCopyToast, useReceiveCopy } from '../ReceiveCopyToastProvider';
 import { styles } from './QRCodeBlock.styles';
 
 type QRCodeBlockProps = {
     address: string;
-    asset: CryptoAsset;
+    logo: ReactNode;
+    isWatchOnly: boolean;
+    networkBadge: PortfolioNetworkBadge | null;
+    addressParts?: { head: string; shared: string; rest: string };
 };
 
 export const QRCodeBlock = (props: QRCodeBlockProps) => {
-    const { address, asset } = props;
+    const { address, logo, isWatchOnly, networkBadge, addressParts } = props;
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const isWatchOnly = useIsActivePortfolioWatchOnly();
-    const isTestnet = useIsActivePortfolioTestnet();
 
     const handleCopyAddress = useCallback(() => {
         copy(address);
@@ -43,7 +44,7 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                         eyePatternShape: 'square'
                     }}
                     logoAreaSize={66}
-                    logo={<Image source={asset.image} style={styles.logo} />}
+                    logo={logo}
                     value={address}
                     size={198}
                 />
@@ -57,7 +58,15 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     variant="bodyLMono"
                     color="constantBlack"
                 >
-                    {address}
+                    {addressParts ? (
+                        <>
+                            {addressParts.head}
+                            <RNText style={styles.addressShared}>{addressParts.shared}</RNText>
+                            <RNText style={styles.addressRest}>{addressParts.rest}</RNText>
+                        </>
+                    ) : (
+                        address
+                    )}
                 </Text>
             </TouchableOpacity>
             {isWatchOnly && (
@@ -67,11 +76,9 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     </Badge>
                 </Pressable>
             )}
-            {isTestnet && (
+            {networkBadge && (
                 <View style={styles.badgeContainer}>
-                    <Badge type="warningFilled" isUppercase>
-                        {t('portfolio.testnet')}
-                    </Badge>
+                    <NetworkBadge badge={networkBadge} neutralType="warningFilled" />
                 </View>
             )}
         </View>

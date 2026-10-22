@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import type { DeepReadonly } from '../../../src/core/json';
 import { zIndexedArray, zIndexedObject } from '../../../src/core/schemas';
 import {
     isContainerSlot,
@@ -570,6 +571,68 @@ describe('versioning patch examples', () => {
         });
     });
 
+    it('deletes the ordered array items of one union branch on downgrade', () => {
+        const bip39 = zIndexedObject(
+            {
+                type: z.literal('BIP39'),
+                id: z.string()
+            },
+            value => value.id
+        );
+        const devnet = zIndexedObject(
+            {
+                type: z.literal('DEVNET'),
+                id: z.string(),
+                address: z.string()
+            },
+            value => value.id
+        );
+        const portfolioV2 = z.discriminatedUnion('type', [bip39, devnet]);
+        const v1Schema = z.object({
+            portfolios: zIndexedArray(bip39)
+        });
+        const v2Schema = z.object({
+            portfolios: zIndexedArray(portfolioV2)
+        });
+        type PortfolioV2 = z.infer<typeof portfolioV2>;
+        type DevnetV2 = z.infer<typeof devnet>;
+        const isDevnet = (
+            portfolio: DeepReadonly<PortfolioV2>
+        ): portfolio is DeepReadonly<DevnetV2> => portfolio.type === 'DEVNET';
+
+        const projectDown = patch(v2Schema, v1Schema, draft =>
+            draft.deleteEach(['portfolios'], isDevnet)
+        );
+
+        const source = slotFromJson(
+            {
+                portfolios: [
+                    bip39.toJson({ type: 'BIP39', id: 'main' }),
+                    devnet.toJson({ type: 'DEVNET', id: 'dev', address: 'tf1' })
+                ]
+            },
+            7,
+            'device-1'
+        ) as ContainerSlot;
+        const migrated = projectDown(source);
+
+        expect(stripSlot(migrated)).toEqual({
+            portfolios: [
+                {
+                    __setId: 'main',
+                    type: 'BIP39',
+                    id: 'main'
+                }
+            ]
+        });
+
+        const sourcePortfolios = expectOrderedArray(source.v.portfolios, 'source portfolios');
+        const portfolios = expectOrderedArray(migrated.v.portfolios, 'portfolios');
+        expect(portfolios.v.dev).toBeUndefined();
+        expect(portfolios.v.main).toEqual(sourcePortfolios.v.main);
+        expect(portfolios).toMatchObject({ t: 7, a: 'device-1' });
+    });
+
     it('combines multiple operations', () => {
         const accountV1 = zIndexedObject(
             {
@@ -780,6 +843,14 @@ describe('versioning patch examples', () => {
 function expectContainer(slot: Slot | undefined, label: string): ContainerSlot {
     if (!isContainerSlot(slot)) {
         throw new Error(`Expected ${label} to be a container`);
+    }
+
+    return slot;
+}
+
+function expectOrderedArray(slot: Slot | undefined, label: string) {
+    if (!isOrderedArraySlot(slot)) {
+        throw new Error(`Expected ${label} to be an ordered array`);
     }
 
     return slot;

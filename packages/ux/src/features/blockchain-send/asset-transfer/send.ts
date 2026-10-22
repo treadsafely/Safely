@@ -1,13 +1,20 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { TransactionTemplate } from '@safely/core';
-import { BtcTransactionTemplate } from '@safely/core';
+import { BtcTransactionTemplate, FlameTransactionTemplate } from '@safely/core';
 
-import { BroadcastedBtcTx, useBtcSendLocked, useSetLastBroadcastedBtcTx } from '../../../entities';
+import {
+    addFlamePendingSpends,
+    BroadcastedBtcTx,
+    flameBlockchain,
+    useSetLastBroadcastedBtcTx
+} from '../../../entities';
+import { useSendChains } from '../send-chains';
 
 export function useSendAssetTransfer() {
+    const { btc, flame } = useSendChains();
     const { mutateAsync: setLastBroadcastedBtcTx } = useSetLastBroadcastedBtcTx();
-    const isLocked = useBtcSendLocked();
+    const queryClient = useQueryClient();
 
     return useMutation({
         async mutationFn(transactionTemplate: TransactionTemplate | undefined) {
@@ -15,7 +22,7 @@ export function useSendAssetTransfer() {
                 throw new Error('Estimation not found');
             }
 
-            if (isLocked) {
+            if (transactionTemplate instanceof BtcTransactionTemplate && btc?.isLocked) {
                 throw new Error('Cannot send while broadcasted transaction cache exists');
             }
 
@@ -26,6 +33,14 @@ export function useSendAssetTransfer() {
                 await setLastBroadcastedBtcTx(
                     BroadcastedBtcTx.fromTransactionTemplate(transactionTemplate)
                 );
+            }
+
+            if (transactionTemplate instanceof FlameTransactionTemplate && flame) {
+                addFlamePendingSpends(
+                    flame.wallet.id.toString(),
+                    transactionTemplate.spentOutputIds
+                );
+                void queryClient.invalidateQueries({ queryKey: flameBlockchain.toKey() });
             }
         }
     });

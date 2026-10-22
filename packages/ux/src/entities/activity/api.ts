@@ -4,7 +4,6 @@ import type {
     BtcApiTxWithBtcRate,
     BtcAsset,
     BtcWalletReadOnly,
-    CryptoFiatRate,
     ExchangeApi,
     FiatAsset,
     RampOrder,
@@ -58,7 +57,7 @@ function btcTxNetAmount(tx: BtcApiTx) {
 
 export function btcTxToActivityItem(
     tx: BtcApiTx,
-    rate: CryptoFiatRate | null
+    rate: Rate<BtcAsset, FiatAsset> | null
 ): BtcActivityItem | null {
     const { isInitiator, weiAmount } = btcTxNetAmount(tx);
 
@@ -128,7 +127,10 @@ export function isRampOrderActive(order: Pick<RampOrder, 'status'>): boolean {
     return ACTIVE_ORDER_STATUSES.has(order.status);
 }
 
-function historicalRate(tx: BtcApiTxWithBtcRate, fiat: FiatAsset): CryptoFiatRate | null {
+function historicalRate(
+    tx: BtcApiTxWithBtcRate,
+    fiat: FiatAsset
+): Rate<BtcAsset, FiatAsset> | null {
     return tx.btcRate === undefined ? null : new Rate(BTC_ASSET, fiat, toBig(tx.btcRate));
 }
 

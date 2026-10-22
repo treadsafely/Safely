@@ -4,6 +4,7 @@ import LedgerNanoGen5 from './images/ledger/ledger-nano-gen-5-cover.png';
 import LedgerPreview from './images/ledger/ledger-preview.png';
 import LedgerStax from './images/ledger/ledger-stax-cover.png';
 import LedgerXNano from './images/ledger/ledger-x-nano.png';
+import Noise from './images/noise.png';
 import SafelyLogoWithBg from './images/safely-logo-with-bg.png';
 import SafelyLogo from './images/safely-logo.svg';
 import SlidersBoxed from './images/sliders-boxed.png';
@@ -29,5 +30,6 @@ export const resources = {
         flex: LedgerFlex,
         xNano: LedgerXNano
     },
-    welcomeScreenBg: WelcomeScreenBg
+    welcomeScreenBg: WelcomeScreenBg,
+    noise: Noise
 } as const;

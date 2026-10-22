@@ -3,11 +3,12 @@ import type { InfiniteData } from '@tanstack/react-query';
 import type {
     BtcApiTx,
     BtcAsset,
-    CryptoFiatRate,
     DateGroupMeta,
     DatedGroup,
+    FiatAsset,
     PendingGroupMeta,
     RampOrder,
+    Rate,
     TransactionFeeCrypto
 } from '@safely/core';
 import type { CryptoAssetAmount } from '@safely/core';
@@ -26,7 +27,7 @@ export interface BtcActivityItem {
         toAddress: string;
         value: CryptoAssetAmount;
         fee: TransactionFeeCrypto<BtcAsset> | undefined;
-        rate: CryptoFiatRate | null;
+        rate: Rate<BtcAsset, FiatAsset> | null;
         raw: BtcApiTx;
     };
 }

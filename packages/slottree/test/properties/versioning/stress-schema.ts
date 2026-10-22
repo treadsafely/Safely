@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { zIndexedArray, zIndexedObject } from '../../../src';
+import { zIndexedArray, zIndexedObject, type DeepReadonly } from '../../../src';
 import { patch } from '../../../src/core/versioning/patch';
 import { defineVersionHList, hCons, hNil } from '../../../src/core/versioning/version';
 
@@ -53,6 +53,17 @@ export const unionWatchOnly = zIndexedObject(
     value => value.id
 );
 
+export const unionDevnet = zIndexedObject(
+    {
+        id: Scalar,
+        type: z.literal('DEVNET'),
+        address: Scalar
+    },
+    value => value.id
+);
+
+const unionItemV3 = z.discriminatedUnion('type', [unionBip39V2, unionWatchOnly, unionDevnet]);
+
 const recordItemV1 = z.object({
     itemName: Scalar,
     count: z.number()
@@ -100,7 +111,7 @@ export const versioningSchemaV3 = z.object({
     }),
     arrayItems: zIndexedArray(arrayItemV2),
     recordItems: z.record(z.string(), recordItemV2),
-    unionItems: zIndexedArray(z.discriminatedUnion('type', [unionBip39V2, unionWatchOnly]))
+    unionItems: zIndexedArray(unionItemV3)
 });
 
 export type VersioningStateV1 = z.output<typeof versioningSchemaV1>;
@@ -205,8 +216,13 @@ const projectV2ToV3 = patch(versioningSchemaV2, versioningSchemaV3, draft =>
         .update(['updateNumber'], value => value + 1)
 );
 
+const isUnionDevnet = (
+    item: DeepReadonly<z.output<typeof unionItemV3>>
+): item is DeepReadonly<z.output<typeof unionDevnet>> => item.type === 'DEVNET';
+
 const projectV3ToV2 = patch(versioningSchemaV3, versioningSchemaV2, draft =>
     draft
+        .deleteEach(['unionItems'], isUnionDevnet)
         .rename([], 'stableV3', 'stable')
         .rename([], 'renamedC', 'renamedB')
         .deleteField([], 'deleteMe')

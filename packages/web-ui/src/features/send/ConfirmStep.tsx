@@ -71,7 +71,11 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     });
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
 
-    const targetBlock = transaction ? Math.max(transaction.estimation.txTargetBlock, 1) : undefined;
+    const targetBlock =
+        transaction && 'txTargetBlock' in transaction.estimation
+            ? Math.max(transaction.estimation.txTargetBlock, 1)
+            : undefined;
+    const explorerUrl = sendResult?.toExplorerUrl(explorerFactory) ?? null;
 
     const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter);
     const fiatAmount = result.amount.fiatAssetAmount.format(formatter);
@@ -248,18 +252,16 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                             </TableCell.Value>
                                         </TableCell.Column>
                                         <TableCell.Actions>
-                                            <TableCell.Action
-                                                aria-label={t(
-                                                    'history.transactionInfo.openInExplorer'
-                                                )}
-                                                onClick={() =>
-                                                    openURL(
-                                                        sendResult.toExplorerUrl(explorerFactory)
-                                                    )
-                                                }
-                                            >
-                                                <Icon asset={Globe16} tone="inherit" />
-                                            </TableCell.Action>
+                                            {explorerUrl && (
+                                                <TableCell.Action
+                                                    aria-label={t(
+                                                        'history.transactionInfo.openInExplorer'
+                                                    )}
+                                                    onClick={() => openURL(explorerUrl)}
+                                                >
+                                                    <Icon asset={Globe16} tone="inherit" />
+                                                </TableCell.Action>
+                                            )}
                                             <TableCell.Action
                                                 aria-label={t('actions.copy')}
                                                 onClick={copy}

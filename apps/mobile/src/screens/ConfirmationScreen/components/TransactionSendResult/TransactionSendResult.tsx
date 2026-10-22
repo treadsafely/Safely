@@ -18,10 +18,10 @@ export const TransactionSendResult: FC<{ sendResult: SendResult }> = ({ sendResu
 
     const handleCopy = useCopy();
     const { openURL } = useLinking();
+    const explorerUrl = sendResult.toExplorerUrl(explorerFactory);
     const handleOpen = useCallback(() => {
-        const url = sendResult.toExplorerUrl(explorerFactory);
-        openURL(url);
-    }, [sendResult, explorerFactory, openURL]);
+        if (explorerUrl) openURL(explorerUrl);
+    }, [explorerUrl, openURL]);
 
     return (
         <>
@@ -39,9 +39,11 @@ export const TransactionSendResult: FC<{ sendResult: SendResult }> = ({ sendResu
                             {sendResult.toString()}
                         </Text>
                         <View style={styles.iconsContainer}>
-                            <TouchableOpacity hitSlop={12} onPress={handleOpen}>
-                                <Icon icon={Globe16} color="secondary" />
-                            </TouchableOpacity>
+                            {explorerUrl && (
+                                <TouchableOpacity hitSlop={12} onPress={handleOpen}>
+                                    <Icon icon={Globe16} color="secondary" />
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity
                                 onPress={() => handleCopy(sendResult.txId)}
                                 hitSlop={12}

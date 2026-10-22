@@ -9,6 +9,7 @@ import {
     PortfolioNetworkType,
     PortfolioWatchOnlyBtc
 } from '@safely/core';
+import { sPortfolioFlameDevnet } from '@safely/sync-storage';
 
 import { resolveRemoveWalletCopy } from '../../../src/features/portfolio-flow/remove-wallet-copy';
 import {
@@ -118,6 +119,27 @@ describe('resolveRemoveWalletCopy', () => {
             checkboxKey: 'removeWallet.revealed.checkbox',
             buttonKey: 'removeWallet.removeButton',
             hasBackUpLink: true
+        });
+    });
+
+    it('keeps the acknowledgement but drops the back-up link for a devnet wallet', () => {
+        const devnet = PortfolioFactory.restorePortfolio(
+            sPortfolioFlameDevnet.toJson({
+                type: 'FLAME_DEVNET',
+                id: { mnemonicHash: 'devnet-hash' },
+                meta: { name: 'Devnet', icon: ICON },
+                encryptedSecret: 'encrypted-devnet-mnemonic',
+                flame: { viewKey: 'view', address: 'tf1example', predicate: 'ab'.repeat(32) }
+            }),
+            { encryptor: new MockSecretEncryptor(), ledgerSessionPort }
+        );
+
+        expect(resolveRemoveWalletCopy(devnet)).toEqual({
+            titleKey: 'removeWallet.title',
+            subtitleKey: 'removeWallet.revealed.subtitle',
+            checkboxKey: 'removeWallet.revealed.checkbox',
+            buttonKey: 'removeWallet.removeButton',
+            hasBackUpLink: false
         });
     });
 });

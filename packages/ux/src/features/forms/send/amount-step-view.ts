@@ -4,7 +4,7 @@ import type { NumberFormatter } from '@safely/core';
 
 import { SendFormError } from './errors';
 import type { AmountInputType } from './types';
-import { resolveAmountDecimals } from './validators';
+import { hasFiatPrice, resolveAmountDecimals } from './validators';
 import type { AmountView } from './view';
 
 export interface AmountStepView {
@@ -72,7 +72,7 @@ export function useAmountStepView(params: UseAmountStepViewParams): AmountStepVi
 
     return {
         decimals: resolveAmountDecimals(inputType, asset),
-        hasPrice: !!asset?.price,
+        hasPrice: hasFiatPrice(asset),
         amountError:
             rawError === SendFormError.INSUFFICIENT_BALANCE ||
             rawError === SendFormError.UNRECOGNIZED_AMOUNT

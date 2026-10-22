@@ -2,8 +2,13 @@ import { useNavigation } from '@react-navigation/core';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { BTC_ASSET } from '@safely/core';
-import { useAnalytics, useFlag, useIsActivePortfolioWatchOnly, useScanQrScheme } from '@safely/ux';
+import {
+    useActivePortfolioWallets,
+    useAnalytics,
+    useFlag,
+    useIsActivePortfolioWatchOnly,
+    useScanQrScheme
+} from '@safely/ux';
 
 import { TEST_ID } from '@mobile/shared/constants';
 import { Actions } from '@mobile/shared/ui';
@@ -19,6 +24,8 @@ export const HomeActions = () => {
     const navigation = useNavigation();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
     const isOnrampsEnabled = useFlag('enable_onramps');
+    const hasBtc = useActivePortfolioWallets().btc !== null;
+    const canBuy = isOnrampsEnabled && hasBtc;
 
     const handleQRScan = useScanQrScheme({
         onResult: useCallback(
@@ -40,9 +47,7 @@ export const HomeActions = () => {
     });
 
     const handleNavigateToReceiveAsset = useCallback(() => {
-        navigation.navigate('ReceiveAssetModal', {
-            asset: BTC_ASSET
-        });
+        navigation.navigate('ReceiveAssetModal');
     }, [navigation]);
 
     const handleNavigateToSendAsset = useCallback(() => {
@@ -73,7 +78,7 @@ export const HomeActions = () => {
                 icon={ArrowDown28}
                 onPress={handleNavigateToReceiveAsset}
             />
-            {isOnrampsEnabled && (
+            {canBuy && (
                 <Actions.Button
                     title={t('home.actions.buy')}
                     icon={Plus28}

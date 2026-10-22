@@ -80,6 +80,21 @@ sweep, and never together with a behaviour change, where the diff hides the move
 schema — zod is available in every package through `catalog:`. The ban is a lint error; reaching for
 zod rather than a cast is not.
 
+## No chained ternaries
+
+A ternary carries one `?`. When a value depends on more than one condition, don't chain them
+(`a ? x : b ? y : z`) — that reads as a puzzle and the next case gets bolted on as a third `?`.
+Use instead:
+
+- **a config structure** when the choice is a lookup — a `Record`/object keyed by the discriminant
+  (`TYPE_BADGES[portfolio.type]`, `NETWORK_BADGES` behind `resolvePortfolioNetworkBadge`), so adding
+  a case is adding an entry;
+- **a named variable or a small function with early returns** when the conditions are not a single
+  key (`byQtyDescending` in `flame-estimator.ts`, `resolvePortfolioNetworkBadge`).
+
+In JSX the same applies: a chain of `cond ? <A/> : other ? <B/> : <C/>` becomes a lookup or a child
+component that returns early. Existing chains are not swept; don't add new ones.
+
 ## Equality
 
 `eqeqeq: smart` plus the local rule `iseq/no-strict-eq-when-isEq` (`eslint-rules/isEqPlugin.js`):

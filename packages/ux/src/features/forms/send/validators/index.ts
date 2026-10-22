@@ -1,6 +1,7 @@
 export {
     formatAmount,
     formatAmountForDisplay,
+    hasFiatPrice,
     validateAmount,
     calculateMaxAmount,
     reformatForInputType,

@@ -1,14 +1,15 @@
 import type { PortfolioNetworkType, Recipient } from '@safely/core';
-import { BLOCKCHAIN_NAME, BtcRecipient } from '@safely/core';
+import { BLOCKCHAIN_NAME, BtcRecipient, FlameRecipient } from '@safely/core';
 
 import { detectAddressType } from '../../../../shared/address';
 import { SendFormError } from '../errors';
-import type { ContactSuggestion, PortfolioSuggestion } from '../types';
+import type { ContactSuggestion, OwnAddresses, PortfolioSuggestion } from '../types';
 import { MIN_RECIPIENT_ADDRESS_LENGTH, createRecipientSchema } from '../utils';
 
 function parseRecipient(
     input: string,
-    networkType: PortfolioNetworkType
+    networkType: PortfolioNetworkType,
+    ownAddresses: OwnAddresses
 ): Recipient | SendFormError {
     const detected = detectAddressType(input, networkType);
 
@@ -16,9 +17,15 @@ function parseRecipient(
         return SendFormError.INVALID_WALLET_ADDRESS;
     }
 
+    if (ownAddresses[detected.blockchain] === undefined) {
+        return SendFormError.UNSUPPORTED_BLOCKCHAIN;
+    }
+
     switch (detected.blockchain) {
         case BLOCKCHAIN_NAME.BTC:
             return new BtcRecipient(detected.address);
+        case BLOCKCHAIN_NAME.FLAME:
+            return new FlameRecipient(detected.address);
         default:
             return SendFormError.UNSUPPORTED_BLOCKCHAIN;
     }
@@ -39,7 +46,7 @@ export interface RecipientValidationResult {
 export function validateRecipientInput(
     value: string,
     context: {
-        activeWalletAddress: string;
+        ownAddresses: OwnAddresses;
         networkType: PortfolioNetworkType;
         portfolioSuggestions: PortfolioSuggestion[];
         contactSuggestions: ContactSuggestion[];
@@ -58,7 +65,11 @@ export function validateRecipientInput(
         };
     }
 
-    const parsedRecipient = parseRecipient(zodResult.data, context.networkType);
+    const parsedRecipient = parseRecipient(
+        zodResult.data,
+        context.networkType,
+        context.ownAddresses
+    );
     if (typeof parsedRecipient === 'string') {
         return { recipient: undefined, error: parsedRecipient };
     }
@@ -87,7 +98,7 @@ export function validateRecipientInput(
           }
         : undefined;
 
-    if (parsedRecipient.address === context.activeWalletAddress) {
+    if (parsedRecipient.address === context.ownAddresses[parsedRecipient.blockchain]) {
         return { recipient: undefined, error: SendFormError.SELF_TRANSFER, suggestion };
     }
 

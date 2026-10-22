@@ -1,11 +1,13 @@
 import { View } from 'react-native';
 
-import { BTC_ASSET } from '@safely/core';
+import type { CryptoAsset, Recipient } from '@safely/core';
+import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET } from '@safely/core';
 import {
-    useActiveWalletBtcBalance,
+    useActivePortfolioWallets,
     useMainBalanceUnit,
     useNumberFormatter,
-    useTotalBalance
+    usePortfolioAssets,
+    usePortfolioTotalBalance
 } from '@safely/ux';
 
 import { Text } from '@mobile/shared/ui';
@@ -13,21 +15,29 @@ import { Text } from '@mobile/shared/ui';
 import { Subtitle } from './components';
 import { styles } from './TotalBalance.styles';
 
+const ASSET_BY_CHAIN: Record<Recipient['blockchain'], CryptoAsset> = {
+    [BLOCKCHAIN_NAME.BTC]: BTC_ASSET,
+    [BLOCKCHAIN_NAME.FLAME]: FLAME_ASSET
+};
+
 export const TotalBalance = () => {
-    const totalBalance = useTotalBalance();
+    const wallets = useActivePortfolioWallets();
+    const totalBalance = usePortfolioTotalBalance(wallets);
     const formatter = useNumberFormatter();
     const mainBalanceUnit = useMainBalanceUnit();
-    const btcBalance = useActiveWalletBtcBalance();
+    const primaryAsset = usePortfolioAssets(wallets)[0];
 
     return (
         <View style={styles.container}>
             {mainBalanceUnit === 'crypto' ? (
                 <View style={styles.cryptoAmount}>
                     <Text variant="displayL" skeleton>
-                        {btcBalance.data?.display.format(formatter, { currencyDisplay: 'none' })}
+                        {primaryAsset?.rated?.amount.format(formatter, {
+                            currencyDisplay: 'none'
+                        })}
                     </Text>
                     <Text variant="bodyL" color="tertiary">
-                        {BTC_ASSET.symbol}
+                        {primaryAsset && ASSET_BY_CHAIN[primaryAsset.blockchain].symbol}
                     </Text>
                 </View>
             ) : (

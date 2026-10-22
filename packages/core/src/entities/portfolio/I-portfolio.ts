@@ -8,7 +8,12 @@ import {
 
 import type { Id } from '../../utils/id';
 import type { VM_TYPE } from '../blockchain';
-import type { IDerivation, ILedgerDerivation, WalletReadOnly } from '../derivation';
+import type {
+    IDerivation,
+    IDerivationChainItemFlame,
+    ILedgerDerivation,
+    WalletReadOnly
+} from '../derivation';
 import type { PortfolioMeta } from './portfolio-meta';
 import type { PortfolioNetworkType } from './portfolio-network-type';
 
@@ -64,6 +69,11 @@ export interface IPortfolioLedger extends IPortfolioDerivable {
 
     derivations: ILedgerDerivation[];
     getDerivations(): ILedgerDerivation[];
+}
+
+export interface IPortfolioFlameDevnet extends IPortfolioBase {
+    type: typeof PortfolioType.FLAME_DEVNET;
+    flame: IDerivationChainItemFlame;
 }
 
 export type PortfolioSecretRevealedStatus = {

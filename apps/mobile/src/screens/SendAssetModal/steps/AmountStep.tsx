@@ -10,7 +10,7 @@ import { useAmountStepView, type AmountView } from '@safely/ux';
 import { Text } from '@mobile/shared/ui/Text';
 
 import type { MaskedInputRef } from '../../../../modules/safely-masked-input/src';
-import { AmountInput, AmountStatus, AssetSelector } from '../components';
+import { AmountInput, AmountStatus, AssetSelector, MemoInput } from '../components';
 import { styles } from './AmountStep.styles';
 
 interface AmountStepProps {
@@ -91,6 +91,7 @@ export const AmountStep = (props: AmountStepProps) => {
                     </Animated.View>
                 )}
             </View>
+            {view.setMemo && <MemoInput value={view.values.memo} onChangeText={view.setMemo} />}
         </View>
     );
 };

@@ -24,7 +24,8 @@ export const ConfirmationFooter = (props: Props) => {
 
     const parseSendError = useParseError(
         {
-            BtcSendDustError: 'confirmation.sendError.btc.dust'
+            BtcSendDustError: 'confirmation.sendError.btc.dust',
+            FlameInputsSpentError: 'confirmation.sendError.flame.inputsSpent'
         },
         { fallback: 'confirmation.sendError.default' }
     );
@@ -34,7 +35,8 @@ export const ConfirmationFooter = (props: Props) => {
             OutputsAreSpendingMoreThanInputsError:
                 'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs',
             BtcInsufficientFundsForFeeError:
-                'confirmation.estimateError.btc.insufficientFundsForFee'
+                'confirmation.estimateError.btc.insufficientFundsForFee',
+            FlameInsufficientBalanceError: 'confirmation.estimateError.flame.insufficientBalance'
         },
         { fallback: 'confirmation.estimateError.default' }
     );

@@ -17,6 +17,7 @@
     "@safely/sync": "workspace:*",
     "@safely/sync-storage": "workspace:*",
     "@noble/curves": "catalog:",
+    "@scure/base": "2.2.0",
     "@scure/bip32": "2.2.0",
     "@scure/bip39": "2.2.0",
     "@scure/btc-signer": "2.2.0",
@@ -34,6 +35,7 @@
     ".": "./src/index.ts",
     "./api/config": "./src/api/config/index.ts",
     "./api/btc": "./src/api/btc/index.ts",
+    "./api/flame": "./src/api/flame/index.ts",
     "./api/price": "./src/api/price/index.ts",
     "./api/exchange": "./src/api/exchange/index.ts"
   }

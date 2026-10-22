@@ -13,6 +13,14 @@ export const styles = StyleSheet.create(theme => ({
         borderWidth: theme.border.hairline,
         borderColor: theme.colors.other.transparentElement,
         borderRadius: theme.radius.full,
-        padding: theme.spacing[12]
+        padding: theme.spacing[12],
+        variants: {
+            variant: {
+                tertiary: {},
+                transparent: {
+                    backgroundColor: theme.colors.button.transparent.background
+                }
+            }
+        }
     }
 }));
