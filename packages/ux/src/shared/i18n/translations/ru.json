@@ -14,7 +14,7 @@
         "noRecoveryPhrase": "Нет фразы восстановления"
     },
     "portfolio": {
-        "watchOnly": "Только просмотр",
+        "watchOnly": "Просмотр",
         "testnet": "Testnet",
         "ledger": "Ledger",
         "ledgerWallet": "Кошелёк Ledger {{number}}"
