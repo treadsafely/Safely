@@ -28,6 +28,7 @@ export const SecurityScreen = () => {
 
     const handleBiometryToggle = async () => {
         if (biometry) {
+            await check();
             await setBiometryEnabled(!biometry.isEnabled);
         }
     };

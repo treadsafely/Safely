@@ -2,34 +2,22 @@ import { memo } from 'react';
 import { View } from 'react-native';
 
 import { SPACE } from '@safely/core';
-import type { ContactMeta, PortfolioMeta } from '@safely/core';
+import type { ActivityCounterparty, ActivityRowView } from '@safely/ux';
 import { useTransactionHistoryAmountOrder } from '@safely/ux';
 
 import { ContactName } from '@mobile/entities/contact';
 import { PortfolioName } from '@mobile/entities/portfolio';
+import type { CellContainerProps } from '@mobile/shared/ui';
 import { Cell, Text } from '@mobile/shared/ui';
 
 import { styles } from './ActivityItem.styles';
 
-export type ActivityItemCounterparty =
-    | { kind: 'contact'; meta: ContactMeta }
-    | { kind: 'portfolio'; meta: PortfolioMeta }
-    | { kind: 'address'; label: string }
-    | { kind: 'provider'; label: string };
-
-export type ActivityItemProps = {
-    title: string;
-    amountSign: '+' | '−' | null;
-    formattedValue: string;
-    valueColor: 'primary' | 'accentGreen' | 'tertiary';
-    formattedFiat: string | null;
-    timestampLabel: string | null;
-    background: 'tertiary' | 'secondary';
-    counterparty: ActivityItemCounterparty;
+export type ActivityItemProps = Omit<ActivityRowView, 'key' | 'activity'> & {
+    background?: CellContainerProps['background'];
     onPress?: () => void;
 };
 
-const Counterparty = ({ counterparty }: { counterparty: ActivityItemCounterparty }) => {
+const Counterparty = ({ counterparty }: { counterparty: ActivityCounterparty }) => {
     switch (counterparty.kind) {
         case 'contact':
             return (
@@ -67,10 +55,11 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
         title,
         amountSign,
         formattedValue,
-        valueColor,
+        valueTone,
         formattedFiat,
         timestampLabel,
-        background,
+        isPending,
+        background = isPending ? 'tertiary' : 'secondary',
         counterparty,
         onPress
     } = props;
@@ -98,7 +87,7 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
                             </Text>
                         )}
                     </View>
-                    <Cell.Value color={valueColor}>
+                    <Cell.Value color={valueTone}>
                         {amountSign !== null && `${amountSign}${SPACE.THSP}`}
                         {primaryAmount}
                     </Cell.Value>

@@ -1,0 +1,149 @@
+import type { FC, KeyboardEvent, MouseEvent } from 'react';
+
+import type { AmountView } from '@safely/ux';
+import {
+    useActiveFiat,
+    useAppContext,
+    useAmountStepView,
+    useNumberFormatter,
+    useTranslate
+} from '@safely/ux';
+import SwapVertical20 from '@safely/ux/assets/icons/20/swap-vertical-20.svg?react';
+
+import { AmountStatus } from './AmountStatus';
+import {
+    alternativeStyles,
+    amountInputStyles,
+    amountRowStyles,
+    approximateStyles,
+    boxStyles,
+    fieldStyles,
+    labelStyles,
+    maxStyles,
+    statusRowStyles,
+    suffixStyles,
+    valuesStyles
+} from './AmountStep.styles';
+import { PendingFundsModal } from './PendingFundsModal';
+import { useAmountInput } from './useAmountInput';
+import { AssetIcon } from '../../entities';
+import { Icon, Text, useDisclosure } from '../../shared';
+
+const ASSET_ICON_SIZE = 32;
+
+export type AmountStepProps = {
+    view: AmountView;
+};
+
+export const AmountStep: FC<AmountStepProps> = ({ view }) => {
+    const t = useTranslate();
+    const fiat = useActiveFiat();
+    const { numberFormatLocale } = useAppContext();
+    const formatter = useNumberFormatter();
+
+    const {
+        amountError,
+        decimals,
+        inputType,
+        hasPrice,
+        isMax,
+        alternativeAmount,
+        remainingBalance
+    } = useAmountStepView({ view, formatter, fiatSymbol: fiat.id.symbol });
+
+    const input = useAmountInput({
+        amount: view.values.amount,
+        decimals,
+        locale: numberFormatLocale,
+        onChange: view.setAmount,
+        onPaste: view.pasteAmount
+    });
+
+    const handleBoxMouseDown = (event: MouseEvent<HTMLDivElement>): void => {
+        if (event.target instanceof HTMLElement && event.target.closest('button, input')) {
+            return;
+        }
+
+        event.preventDefault();
+        input.inputRef.current?.focus();
+    };
+
+    const pendingFunds = useDisclosure();
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+        if (event.key === 'Enter' && 'next' in view) {
+            view.next();
+        }
+    };
+
+    const enterMax = 'enterMax' in view ? view.enterMax : undefined;
+    const asset = view.parsed.asset?.amount.asset;
+    const symbol = inputType === 'fiat' ? fiat.id.symbol : (asset?.symbol ?? '');
+
+    return (
+        <div className={fieldStyles}>
+            <Text variant="bodyM" tone="tertiary" className={labelStyles}>
+                {t('send.amount')}
+            </Text>
+
+            <div
+                className={boxStyles}
+                data-invalid={amountError !== undefined ? '' : undefined}
+                onMouseDown={handleBoxMouseDown}
+            >
+                <div className={valuesStyles}>
+                    <div className={amountRowStyles}>
+                        {isMax && <span className={approximateStyles}>≈</span>}
+
+                        <input
+                            ref={input.inputRef}
+                            autoFocus
+                            className={amountInputStyles}
+                            value={input.value}
+                            placeholder="0"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            onChange={input.onChange}
+                            onPaste={input.onPaste}
+                            onFocus={() => 'exitMax' in view && view.exitMax()}
+                            onKeyDown={handleKeyDown}
+                        />
+
+                        <span className={suffixStyles}>{symbol}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        className={alternativeStyles}
+                        disabled={!hasPrice}
+                        onClick={() =>
+                            view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
+                        }
+                    >
+                        {alternativeAmount}
+                        {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
+                    </button>
+                </div>
+
+                {asset !== undefined && <AssetIcon image={asset.image} size={ASSET_ICON_SIZE} />}
+            </div>
+
+            <div className={statusRowStyles}>
+                <AmountStatus
+                    isMax={isMax}
+                    amountError={amountError}
+                    remainingBalance={remainingBalance}
+                    onShowPending={pendingFunds.onOpen}
+                />
+
+                {enterMax !== undefined && view.isMaxAvailable && (
+                    <button type="button" className={maxStyles} onClick={enterMax}>
+                        {t('send.max')}
+                    </button>
+                )}
+            </div>
+
+            {pendingFunds.isOpen && <PendingFundsModal onClose={pendingFunds.onClose} />}
+        </div>
+    );
+};

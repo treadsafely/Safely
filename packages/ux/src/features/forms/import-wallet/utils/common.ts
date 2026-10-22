@@ -14,3 +14,11 @@ export const normalizeInput = (str: string) =>
         .split(/\s+/)
         .filter(Boolean)
         .map(s => s.toLowerCase());
+
+export const sanitizeSeedPhraseInput = (str: string) =>
+    str
+        .toLowerCase()
+        .replace(/\./g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/[^a-z ]/g, '')
+        .replace(/ {2,}/g, ' ');

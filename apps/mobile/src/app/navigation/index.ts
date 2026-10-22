@@ -22,7 +22,6 @@ import { OnboardingNotificationsScreen } from '@mobile/screens/OnboardingNotific
 import { OnboardingPasscodeScreen } from '@mobile/screens/OnboardingPasscodeScreen';
 import { OnboardingWatchAccountScreen } from '@mobile/screens/OnboardingWatchAccountScreen';
 import { OrderScreen } from '@mobile/screens/OrderScreen';
-import { PasscodeVerificationScreen } from '@mobile/screens/PasscodeVerificationScreen';
 import { PendingFundsSheet } from '@mobile/screens/PendingFundsSheet';
 import { ProviderSheet } from '@mobile/screens/ProviderSheet';
 import { QRScanModal } from '@mobile/screens/QRScanModal';
@@ -85,14 +84,6 @@ export const RootStack = createNativeStackNavigator({
                 TransactionScreen: TransactionScreen,
                 OrderScreen: OrderScreen,
                 DeviceDetailsScreen: DeviceDetailsScreen,
-                PasscodeVerificationScreen: {
-                    screen: PasscodeVerificationScreen,
-                    options: {
-                        presentation: 'fullScreenModal',
-                        animation: 'fade',
-                        animationDuration: 50
-                    }
-                },
                 ChangePasscodeScreen: {
                     screen: ChangePasscodeScreen,
                     options: {

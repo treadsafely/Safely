@@ -9,7 +9,10 @@ import { biometryKeys } from './keys';
 async function authenticateWithBlurFreeze(): Promise<LocalAuthentication.LocalAuthenticationResult> {
     blurFreeze.freeze();
     try {
-        return await LocalAuthentication.authenticateAsync();
+        /* `strong` keeps Android off Class 2 factors like a photo-spoofable 2D face unlock */
+        return await LocalAuthentication.authenticateAsync({
+            biometricsSecurityLevel: 'strong'
+        });
     } finally {
         blurFreeze.unfreeze();
     }
@@ -31,14 +34,18 @@ function resolveType(types: LocalAuthentication.AuthenticationType[]): BiometryT
 }
 
 async function getAvailableBiometryType(): Promise<BiometryType | null> {
-    const [hasHardware, isEnrolled, supportedTypes] = await Promise.all([
+    const [hasHardware, enrolledLevel, supportedTypes] = await Promise.all([
         LocalAuthentication.hasHardwareAsync(),
-        LocalAuthentication.isEnrolledAsync(),
+        LocalAuthentication.getEnrolledLevelAsync(),
         LocalAuthentication.supportedAuthenticationTypesAsync()
     ]);
     const type = resolveType(supportedTypes);
 
-    if (type !== null && hasHardware && isEnrolled) {
+    if (
+        type !== null &&
+        hasHardware &&
+        enrolledLevel === LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG
+    ) {
         return type;
     } else {
         return null;
@@ -46,14 +53,21 @@ async function getAvailableBiometryType(): Promise<BiometryType | null> {
 }
 
 export function useBiometryQuery() {
-    const { get: storageGet } = useMobileLayerRegularStorage('biometryEnabled');
+    const { get: storageGet, set: storageSet } = useMobileLayerRegularStorage('biometryEnabled');
 
     return useQuery({
         queryKey: biometryKeys.state.toKey(),
         queryFn: async () => {
             const availableType = await getAvailableBiometryType();
-            const isEnabled = availableType !== null ? Boolean(await storageGet()) : false;
-            return { availableType, isEnabled };
+            const wasEnabled = Boolean(await storageGet());
+
+            if (availableType === null && wasEnabled) {
+                await storageSet(false);
+
+                return { availableType, isEnabled: false };
+            }
+
+            return { availableType, isEnabled: availableType !== null && wasEnabled };
         },
         staleTime: Infinity
     });
@@ -64,10 +78,13 @@ export function useSetBiometryEnabled() {
     const { set: storageSet } = useMobileLayerRegularStorage('biometryEnabled');
 
     return useMutation({
+        /* proving the factor works is part of turning it on; giving it up is authorized by the caller */
         mutationFn: async (enabled: boolean) => {
-            const result = await authenticateWithBlurFreeze();
-            if (!result.success) {
-                throw new Error('Authentication failed');
+            if (enabled) {
+                const result = await authenticateWithBlurFreeze();
+                if (!result.success) {
+                    throw new Error('Authentication failed');
+                }
             }
             await storageSet(enabled);
         },

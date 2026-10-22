@@ -4,3 +4,4 @@ export * from './constants';
 export * from './schemas';
 export * from './compute-recipient-meta';
 export * from './filter-suggestions-by-query';
+export * from './visible-suggestions';

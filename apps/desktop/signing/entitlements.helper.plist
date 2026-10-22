@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Exactly these two keys: a sandboxed helper that inherits may carry nothing else, or the
+         system kills it at launch. Everything it may do — the camera included — comes from the main
+         binary's sandbox, which keeps the keychain group out of the processes the renderer runs in. -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <key>com.apple.security.inherit</key>
+    <true/>
+</dict>
+</plist>

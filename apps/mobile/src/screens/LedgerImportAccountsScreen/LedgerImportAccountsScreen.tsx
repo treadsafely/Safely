@@ -10,7 +10,6 @@ import {
     useLedgerAccounts,
     useLedgerAccountSelection,
     useLedgerSession,
-    useLoader,
     usePortfolios,
     useSecurityCheck,
     useSetActivePortfolio,
@@ -27,7 +26,6 @@ export const LedgerImportAccountsScreen = () => {
     const toast = useToast();
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const { withLoader } = useLoader();
     const check = useSecurityCheck();
     const { mutateAsync: addLedgerPortfolio } = useAddLedgerPortfolio();
     const { mutateAsync: setActivePortfolio } = useSetActivePortfolio();
@@ -113,13 +111,11 @@ export const LedgerImportAccountsScreen = () => {
                     onSave: async (meta: PortfolioMeta) => {
                         await check();
 
-                        await withLoader(() =>
-                            updateLedgerDerivations({
-                                portfolio: targetPortfolio,
-                                accounts: selectedAccounts,
-                                meta
-                            })
-                        );
+                        await updateLedgerDerivations({
+                            portfolio: targetPortfolio,
+                            accounts: selectedAccounts,
+                            meta
+                        });
 
                         await setActivePortfolio({ id: targetPortfolio.id });
 
@@ -154,14 +150,12 @@ export const LedgerImportAccountsScreen = () => {
                     await check();
 
                     try {
-                        await withLoader(() =>
-                            addLedgerPortfolio({
-                                masterFingerprint,
-                                deviceModel: selectedDevice?.deviceModel.model ?? '',
-                                accounts: selectedAccounts,
-                                meta
-                            })
-                        );
+                        await addLedgerPortfolio({
+                            masterFingerprint,
+                            deviceModel: selectedDevice?.deviceModel.model ?? '',
+                            accounts: selectedAccounts,
+                            meta
+                        });
 
                         navigation.dispatch(
                             CommonActions.reset({
@@ -181,7 +175,6 @@ export const LedgerImportAccountsScreen = () => {
     }, [
         findMorePortfolio,
         targetPortfolio,
-        withLoader,
         check,
         masterFingerprint,
         navigation,

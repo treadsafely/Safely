@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { SendSuggestions } from '@safely/ux';
+import { resolveVisibleSuggestions } from '@safely/ux';
 
 interface UseSuggestionSelectionParams {
     suggestions: SendSuggestions;
@@ -14,8 +15,11 @@ export function useSuggestionSelection(params: UseSuggestionSelectionParams) {
     const { suggestions, restoredSuggestions, selectedId, onChangeText, onSelectSuggestion } =
         params;
 
-    const displaySuggestions =
-        selectedId && restoredSuggestions ? restoredSuggestions : suggestions;
+    const displaySuggestions = resolveVisibleSuggestions({
+        suggestions,
+        restoredSuggestions,
+        selectedSuggestionId: selectedId
+    });
 
     const handleSelect = useCallback(
         (id: string) => {

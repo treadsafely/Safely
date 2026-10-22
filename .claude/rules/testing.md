@@ -13,7 +13,7 @@ code.
 
 The extension follows the package's convention, not personal taste:
 
-- `packages/slottree`, `packages/ux` — `*.spec.ts` / `*.spec.tsx`
+- `packages/slottree`, `packages/ux`, `packages/sync-storage` — `*.spec.ts` / `*.spec.tsx`
 - `packages/core`, `apps/mobile` — `*.test.ts`
 
 ## Running
@@ -33,6 +33,9 @@ packages and their dependents, and for everything when root-level files change.
 - Merge, versioning and mutation invariants of slottree are property-based with `fast-check`
   (`packages/slottree/test/properties/**`). A new invariant of the state format belongs there, not in
   a single example case.
+- A new `packages/sync-storage` version gets an example test in `packages/sync-storage/test/<vN>/`:
+  two `createStorage` replicas, the newer one registering the older with `addAuthor`, exchanging
+  `export()`/`merge()` both ways — that is what proves a lossy `projectDown` loses nothing upstream.
 - React code in `packages/ux` uses `@testing-library/react` on `happy-dom`.
 - xstate machines are tested through machine transitions (`packages/ux/test/forms/**`), not through UI.
 - Mobile JS tests only have the `@mobile/shared` alias (`apps/mobile/vitest.config.mts`) — test shared

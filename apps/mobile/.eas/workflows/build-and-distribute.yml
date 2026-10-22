@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master
-      - release/**
+      # EAS branch globs ignore character classes: `release/[0-9]*...` silently matched nothing.
+      - release/*.*.*
   workflow_dispatch:
     inputs:
       release_notes:
