@@ -19,6 +19,7 @@ export const WatchAccountForm: FC<WatchAccountFormProps> = ({ form, onSubmit }) 
             <Input invalid={form.hasError}>
                 <Input.Field
                     autoFocus
+                    isMultiline
                     className={fieldStyles}
                     value={form.value}
                     placeholder={t('addWallet.watchAccount.placeholder')}
@@ -27,7 +28,12 @@ export const WatchAccountForm: FC<WatchAccountFormProps> = ({ form, onSubmit }) 
                     clearLabel={t('common.clear')}
                     onClear={() => form.setValue('')}
                     onChange={event => form.setValue(event.target.value)}
-                    onKeyDown={event => form.isValid && event.key === 'Enter' && onSubmit()}
+                    onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            if (form.isValid) onSubmit();
+                        }
+                    }}
                 />
             </Input>
 
