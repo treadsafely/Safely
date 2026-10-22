@@ -1,13 +1,13 @@
 import type { StaticScreenProps } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SPACE } from '@safely/core';
 import type { BtcActivityItem } from '@safely/ux';
-import { useLinking, useTransactionDetails } from '@safely/ux';
+import { useHistoryPolling, useLinking, useTransactionDetails } from '@safely/ux';
 
-import { TransactionConfirmationStatusBtc } from '@mobile/entities/activity';
 import {
     ArrowDown16,
     ArrowTop16,
@@ -37,6 +37,8 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
     const { t } = useTranslation();
     const { openURL } = useLinking();
     const details = useTransactionDetails(activity);
+
+    useHistoryPolling({ isEnabled: useIsFocused(), onNewActivity: () => undefined });
 
     const handleOpen = useCallback(
         () => openURL(details.explorerUrl),
@@ -95,7 +97,17 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                             </TableCell.Column>
                         </TableCell>
                         <TableCell>
-                            <TransactionConfirmationStatusBtc tx={activity.transaction.raw} />
+                            <TableCell.Column leading>
+                                <TableCell.Label>
+                                    {t('history.transactionInfo.status.title')}
+                                </TableCell.Label>
+                            </TableCell.Column>
+                            <TableCell.Column>
+                                <TableCell.Value>{details.status.title}</TableCell.Value>
+                                <TableCell.Value color={details.status.descriptionTone}>
+                                    {details.status.description}
+                                </TableCell.Value>
+                            </TableCell.Column>
                         </TableCell>
                     </List.Group>
                     <List.Group withoutBottomMargin>
