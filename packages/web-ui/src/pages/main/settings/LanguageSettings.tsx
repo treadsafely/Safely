@@ -1,20 +1,15 @@
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { LanguageCode } from '@safely/ux/translations';
+import { useLanguageSwitch } from '@safely/ux';
 import { availableLanguages } from '@safely/ux/translations';
 
 import { listStyles } from './SettingsSection.styles';
-import { Cell, List, PageHeader, Text } from '../../../shared';
+import { Cell, List, PageHeader, Spinner, Text } from '../../../shared';
 
 export const LanguageSettings: FC = () => {
     const { t, i18n } = useTranslation();
-
-    const select = (code: LanguageCode): void => {
-        if (i18n.language !== code) {
-            void i18n.changeLanguage(code);
-        }
-    };
+    const { pendingLanguage, select } = useLanguageSwitch();
 
     return (
         <>
@@ -22,21 +17,33 @@ export const LanguageSettings: FC = () => {
 
             <List className={listStyles}>
                 <List.Group variant="separated">
-                    {availableLanguages.map(language => (
-                        <Cell
-                            key={language.code}
-                            isSelected={i18n.language === language.code}
-                            onClick={() => select(language.code)}
-                        >
-                            <Cell.Content>
-                                <Cell.Title>{t(`language.languages.${language.code}`)}</Cell.Title>
-                                <Text variant="bodyM" tone="secondary">
-                                    {language.nativeName}
-                                </Text>
-                            </Cell.Content>
-                            {i18n.language === language.code && <Cell.Checkmark />}
-                        </Cell>
-                    ))}
+                    {availableLanguages.map(language => {
+                        const isSelected = i18n.language === language.code;
+                        const isPending = pendingLanguage === language.code;
+
+                        return (
+                            <Cell
+                                key={language.code}
+                                isSelected={isSelected}
+                                onClick={() => select(language.code)}
+                            >
+                                <Cell.Content>
+                                    <Cell.Title>
+                                        {t(`language.languages.${language.code}`)}
+                                    </Cell.Title>
+                                    <Text variant="bodyM" tone="secondary">
+                                        {language.nativeName}
+                                    </Text>
+                                </Cell.Content>
+                                {isPending && (
+                                    <Cell.Trailing>
+                                        <Spinner />
+                                    </Cell.Trailing>
+                                )}
+                                {!isPending && isSelected && <Cell.Checkmark />}
+                            </Cell>
+                        );
+                    })}
                 </List.Group>
             </List>
         </>

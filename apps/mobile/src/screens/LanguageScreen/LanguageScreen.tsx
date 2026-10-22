@@ -1,13 +1,11 @@
 import { useNavigation } from '@react-navigation/core';
-import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-// eslint-disable-next-line boundaries/element-types
-import { mobileLayerSynchronousLocale } from '@mobile/app/storage';
-import type { LanguageCode } from '@mobile/shared/i18n';
+import { useLanguageSwitch } from '@safely/ux';
+
 import { availableLanguages } from '@mobile/shared/i18n';
-import { Cell, List, Screen, Text } from '@mobile/shared/ui';
+import { Cell, CircularSpinner, List, Screen, Text } from '@mobile/shared/ui';
 import { ArrowLeft16, Checkmark28, Icon } from '@mobile/shared/ui/Icon';
 
 import { styles } from './LanguageScreen.styles';
@@ -15,16 +13,7 @@ import { styles } from './LanguageScreen.styles';
 export const LanguageScreen = () => {
     const { t, i18n } = useTranslation();
     const navigation = useNavigation();
-    const handlePress = useCallback(
-        (code: LanguageCode) => () => {
-            if (i18n.language === code) return;
-
-            void i18n
-                .changeLanguage(code)
-                .then(() => mobileLayerSynchronousLocale.storage.set(code));
-        },
-        [i18n]
-    );
+    const { pendingLanguage, select } = useLanguageSwitch();
 
     return (
         <Screen>
@@ -39,10 +28,11 @@ export const LanguageScreen = () => {
                 <List style={styles.container}>
                     <List.Group variant="divided">
                         {availableLanguages.map(language => {
+                            const isPending = pendingLanguage === language.code;
                             const isSelected = i18n.language === language.code;
 
                             return (
-                                <Cell key={language.code} onPress={handlePress(language.code)}>
+                                <Cell key={language.code} onPress={() => select(language.code)}>
                                     <Cell.Content style={styles.cellContent}>
                                         <Cell.Row>
                                             <Cell.Title>
@@ -53,7 +43,10 @@ export const LanguageScreen = () => {
                                             {language.nativeName}
                                         </Text>
                                     </Cell.Content>
-                                    {isSelected && <Icon icon={Checkmark28} color="accent" />}
+                                    {isPending && <CircularSpinner size={28} />}
+                                    {!isPending && isSelected && (
+                                        <Icon icon={Checkmark28} color="accent" />
+                                    )}
                                 </Cell>
                             );
                         })}

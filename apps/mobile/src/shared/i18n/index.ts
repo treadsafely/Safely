@@ -20,6 +20,8 @@ export const i18n = i18next.use(initReactI18next).init({
     react: { transSupportBasicHtmlNodes: false }
 });
 
+i18next.on('languageChanged', language => mobileLayerSynchronousLocale.storage.set(language));
+
 export { availableLanguages, type LanguageCode } from '@safely/ux/translations';
 
 export default i18n;

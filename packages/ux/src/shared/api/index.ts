@@ -2,6 +2,7 @@ export { apiKeys } from './keys';
 export { useConfigApi } from './useConfigApi';
 export { useUserCountryInfo } from './useUserCountryInfo';
 export { useBootConfigQuery, useBootConfig } from './useBootConfig';
+export { usePrefetchBootConfig } from './usePrefetchBootConfig';
 export { getLatestPostTimestamp, useAboutQuery } from './useAbout';
 export { useBtcApi, useGetBtcApi } from './useBtcApi';
 export { usePriceApi } from './usePriceApi';

@@ -249,7 +249,8 @@
         "languages": {
             "en": "English",
             "ru": "Russian"
-        }
+        },
+        "switchFailed": "Couldn't switch language. Check your connection and try again."
     },
     "security": {
         "title": "Security",

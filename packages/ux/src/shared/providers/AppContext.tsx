@@ -63,6 +63,7 @@ export interface IAppContext {
     i18n: {
         language: string;
         t: TranslateFn;
+        changeLanguage: (language: string) => Promise<void>;
     };
 
     clearAllData: () => Promise<void>;

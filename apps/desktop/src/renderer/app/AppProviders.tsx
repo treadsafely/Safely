@@ -76,10 +76,8 @@ const persister = createPersister(
 );
 
 export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader, children }) => {
-    const {
-        t,
-        i18n: { language }
-    } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { language } = i18n;
 
     const appContext = useMemo<IAppContext>(() => {
         const { appInfo, storage } = platform;
@@ -133,7 +131,13 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
             toast: toastService,
             loader: loaderService,
             linking: new WebLinking(logger, url => platform.openExternalUrl(url)),
-            i18n: { language, t },
+            i18n: {
+                language,
+                t,
+                changeLanguage: async (next: string) => {
+                    await i18n.changeLanguage(next);
+                }
+            },
             logger,
             ledgerTransport: platform.ledgerTransport ?? unsupportedLedgerTransport,
             pushNotifications: unsupportedPushNotifications,
@@ -145,7 +149,7 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
             reloadApp: () => platform.reloadApp(),
             subscribeAppStateChange: callback => platform.subscribeAppStateChange(callback)
         };
-    }, [language, t]);
+    }, [language, t, i18n]);
 
     return (
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>

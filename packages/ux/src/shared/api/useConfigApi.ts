@@ -1,26 +1,33 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ConfigApi } from '@safely/core';
 
 import { useUserCountryInfo } from './useUserCountryInfo';
 import { useAppContext } from '../providers';
 
-export function useConfigApi(): ConfigApi {
-    const { version, build, i18n, devToken, logger } = useAppContext();
+export function useConfigApiFactory(): (lang: string) => ConfigApi {
+    const { version, build, devToken, logger } = useAppContext();
     const userCountryInfo = useUserCountryInfo();
 
-    return useMemo(
-        () =>
+    return useCallback(
+        (lang: string) =>
             new ConfigApi(
                 {
                     build,
                     version,
-                    lang: i18n.language,
+                    lang,
                     userCountryInfo,
                     devToken
                 },
                 logger
             ),
-        [build, version, i18n.language, userCountryInfo, devToken, logger]
+        [build, version, userCountryInfo, devToken, logger]
     );
+}
+
+export function useConfigApi(): ConfigApi {
+    const { i18n } = useAppContext();
+    const createConfigApi = useConfigApiFactory();
+
+    return useMemo(() => createConfigApi(i18n.language), [createConfigApi, i18n.language]);
 }

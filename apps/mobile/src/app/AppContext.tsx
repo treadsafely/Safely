@@ -52,10 +52,8 @@ function resolveAppStateStatus(state: string): AppStateStatus {
 }
 
 export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
-    const {
-        t,
-        i18n: { language }
-    } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { language } = i18n;
     const { service: toastService } = useToastServiceContext();
     const { service: loaderService } = useLoaderServiceContext();
     const { value: devIsTestnetAllowed } =
@@ -66,7 +64,10 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
         () => ({
             i18n: {
                 language,
-                t
+                t,
+                changeLanguage: async (next: string) => {
+                    await i18n.changeLanguage(next);
+                }
             },
             version: packageJson.version,
             build,
@@ -144,7 +145,7 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
                 return () => subscription.remove();
             }
         }),
-        [t, toastService, loaderService, language, devIsTestnetAllowed, devToken]
+        [t, i18n, toastService, loaderService, language, devIsTestnetAllowed, devToken]
     );
 
     return <AppContext value={appContext}>{children}</AppContext>;
