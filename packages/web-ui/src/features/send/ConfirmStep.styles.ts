@@ -38,3 +38,13 @@ export const successIconStyles = css({
 export const listStyles = css({ display: 'flex', flexDirection: 'column', gap: '2', padding: '8' });
 
 export const actionsStyles = css({ padding: '8' });
+
+export const estimateErrorStyles = css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4',
+    paddingInline: '16',
+    paddingBlock: '12',
+    textAlign: 'center'
+});

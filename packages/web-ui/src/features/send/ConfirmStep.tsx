@@ -13,6 +13,7 @@ import {
     useFiatEquivalent,
     useLinking,
     useNumberFormatter,
+    useParseError,
     useSendAssetTransfer,
     useTranslate
 } from '@safely/ux';
@@ -23,6 +24,7 @@ import Checkmark96 from '@safely/ux/assets/icons/96/checkmark-96.svg?react';
 import {
     actionsStyles,
     bodyStyles,
+    estimateErrorStyles,
     heroStyles,
     iconSlotStyles,
     listStyles,
@@ -31,7 +33,7 @@ import {
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
 import { AssetIcon, WalletIcon } from '../../entities';
-import { Button, Icon, List, Modal, TableCell, Text } from '../../shared';
+import { Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
 
 export type ConfirmStepProps = {
     result: SendFormResult;
@@ -66,10 +68,20 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
 
     const [sendResult, setSendResult] = useState<SendResult | null>(null);
 
-    const { data: transaction } = useEstimateAssetTransfer(result, {
+    const { data: transaction, error: estimationError } = useEstimateAssetTransfer(result, {
         enabled: sendResult === null
     });
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
+
+    const parseEstimateError = useParseError(
+        {
+            OutputsAreSpendingMoreThanInputsError:
+                'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs',
+            BtcInsufficientFundsForFeeError:
+                'confirmation.estimateError.btc.insufficientFundsForFee'
+        },
+        { fallback: 'confirmation.estimateError.default' }
+    );
 
     const targetBlock = transaction ? Math.max(transaction.estimation.txTargetBlock, 1) : undefined;
 
@@ -202,7 +214,7 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                     {transaction ? (
                                         <FeeValue estimation={transaction.estimation} />
                                     ) : (
-                                        '—'
+                                        <Skeleton width={64} height={20} />
                                     )}
                                 </TableCell.Value>
                                 <TableCell.Label>
@@ -276,7 +288,20 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
             </div>
 
             <Modal.Actions className={actionsStyles}>
-                {sendResult === null ? (
+                {sendResult !== null ? (
+                    <Button variant="secondary" isFullWidth onClick={onClose}>
+                        {t('confirmation.slider.backToWallet')}
+                    </Button>
+                ) : estimationError ? (
+                    <div className={estimateErrorStyles}>
+                        <Text variant="labelL" tone="accentRed">
+                            {t('confirmation.estimateError.title')}
+                        </Text>
+                        <Text variant="bodyM" tone="accentRed">
+                            {parseEstimateError(estimationError)}
+                        </Text>
+                    </div>
+                ) : (
                     <Button
                         variant="primary"
                         isFullWidth
@@ -285,10 +310,6 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                         onClick={() => void handleSend()}
                     >
                         {t('confirmation.slider.send')}
-                    </Button>
-                ) : (
-                    <Button variant="secondary" isFullWidth onClick={onClose}>
-                        {t('confirmation.slider.backToWallet')}
                     </Button>
                 )}
             </Modal.Actions>
