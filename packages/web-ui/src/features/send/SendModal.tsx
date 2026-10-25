@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 
 import { ellipsisMiddle } from '@safely/core';
 import type { SendFormInitialValues, SendFormResult, SendFormView } from '@safely/ux';
-import { useActivePortfolio, useSendForm, useTranslate } from '@safely/ux';
+import { useActivePortfolio, useLastSeen, useSendForm, useTranslate } from '@safely/ux';
 
 import { AmountStep } from './AmountStep';
 import { ConfirmStep } from './ConfirmStep';
@@ -38,6 +38,9 @@ export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
             setResult(formResult);
         }
     });
+
+    const lastAmount = useLastSeen(view.state === 'amount' ? view : null);
+    const lastRecipient = useLastSeen(view.state === 'recipient' ? view : null);
 
     const backToEditing = (): void => {
         setResult(null);
@@ -76,8 +79,9 @@ export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
                         />
 
                         <div className={bodyStyles}>
-                            {view.state === 'recipient' && <RecipientStep view={view} />}
-                            {view.state === 'amount' && <AmountStep view={view} />}
+                            {view.state === 'amount'
+                                ? lastAmount && <AmountStep view={lastAmount} />
+                                : lastRecipient && <RecipientStep view={lastRecipient} />}
                         </div>
                     </>
                 ) : (
