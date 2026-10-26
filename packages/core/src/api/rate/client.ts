@@ -10,9 +10,9 @@ export class RateApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { baseUrl: string; logger?: Logger }) {
         const baseUrl = options.baseUrl.replace(/\/$/, '');
-        super(baseUrl, {}, options.logger);
+        super('RateApi', baseUrl, {}, options.logger);
 
-        this.id = `${this.constructor.name}:${baseUrl}`;
+        this.id = `${this.apiName}:${baseUrl}`;
     }
 
     public async getRate(params: GetRateParams): Promise<RateResponse> {

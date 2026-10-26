@@ -1,4 +1,3 @@
-import Color from 'color';
 import { StyleSheet } from 'react-native-unistyles';
 
 export const styles = StyleSheet.create(theme => ({
@@ -43,10 +42,10 @@ export const styles = StyleSheet.create(theme => ({
                     backgroundColor: theme.colors.button.tertiary.background
                 },
                 destructive: {
-                    backgroundColor: Color(theme.colors.accent.red).alpha(0.16).toString()
+                    backgroundColor: theme.colors.button.destructive.background
                 },
                 warning: {
-                    backgroundColor: Color(theme.colors.accent.orange).alpha(0.16).toString()
+                    backgroundColor: theme.colors.button.destructiveOrange.background
                 },
                 overlay: {
                     backgroundColor: theme.colors.other.constant.white

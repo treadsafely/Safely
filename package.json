@@ -19,6 +19,7 @@
     "@babel/generator": "^7.29.8",
     "@babel/types": "^7.29.8",
     "@eslint/js": "catalog:",
+    "@pandacss/eslint-plugin": "0.3.2",
     "@tanstack/eslint-plugin-query": "^5.104.1",
     "@types/node": "^25.0.3",
     "eslint": "catalog:",

@@ -3,13 +3,13 @@ import { CommonActions } from '@react-navigation/native';
 import { useCallback } from 'react';
 
 import type { PortfolioMeta } from '@safely/core';
+import { PortfolioAlreadyExistsError, PortfolioNetworkType } from '@safely/core';
 import {
-    PortfolioAlreadyExistsError,
-    PortfolioNetworkType,
-    PortfolioWatchOnlyBtc,
-    toPortfolioIdWatchOnly
-} from '@safely/core';
-import { useAddWatchOnlyPortfolio, useNewPortfolioFallbackName, usePortfolios } from '@safely/ux';
+    resolveWatchOnlyPortfolio,
+    useAddPortfolioFromSource,
+    useNewPortfolioFallbackName,
+    usePortfolios
+} from '@safely/ux';
 
 import { WatchOnlyAddressForm } from '@mobile/features/add-wallet';
 import { handleDuplicatePortfolio } from '@mobile/features/add-wallet/handleDuplicatePortfolio';
@@ -17,19 +17,20 @@ import { handleDuplicatePortfolio } from '@mobile/features/add-wallet/handleDupl
 export const AddWatchOnlyScreen = () => {
     const navigation = useNavigation();
     const portfolios = usePortfolios();
-    const { mutateAsync: addWatchOnlyPortfolio } = useAddWatchOnlyPortfolio();
+    const { mutateAsync: addPortfolioFromSource } = useAddPortfolioFromSource();
     const defaultPortfolioName = useNewPortfolioFallbackName();
 
     const handleSubmit = useCallback(
         (input: string) => {
-            const portfolioId = toPortfolioIdWatchOnly(
-                PortfolioWatchOnlyBtc.resolveUserInput(input, PortfolioNetworkType.MAINNET)
+            const resolution = resolveWatchOnlyPortfolio(
+                input,
+                PortfolioNetworkType.MAINNET,
+                portfolios
             );
 
-            const existingPortfolio = portfolios.find(p => p.id.isEq(portfolioId));
-            if (existingPortfolio) {
+            if (resolution.kind === 'duplicate') {
                 handleDuplicatePortfolio(
-                    new PortfolioAlreadyExistsError(existingPortfolio),
+                    new PortfolioAlreadyExistsError(resolution.portfolio),
                     navigation
                 );
 
@@ -39,11 +40,15 @@ export const AddWatchOnlyScreen = () => {
             navigation.navigate('CustomizeWalletModal', {
                 hasBackButton: true,
                 defaultName: defaultPortfolioName,
-                defaultIcon: portfolioId.getFallbackEmoji(),
+                defaultIcon: resolution.icon,
                 onSave: async (meta: PortfolioMeta) => {
                     try {
-                        await addWatchOnlyPortfolio({
-                            input,
+                        await addPortfolioFromSource({
+                            source: {
+                                kind: 'watchOnly',
+                                input,
+                                networkType: PortfolioNetworkType.MAINNET
+                            },
                             meta
                         });
 
@@ -59,7 +64,7 @@ export const AddWatchOnlyScreen = () => {
                 }
             });
         },
-        [portfolios, navigation, addWatchOnlyPortfolio, defaultPortfolioName]
+        [portfolios, navigation, addPortfolioFromSource, defaultPortfolioName]
     );
 
     return (

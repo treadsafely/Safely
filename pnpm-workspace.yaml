@@ -1,9 +1,10 @@
 packages:
   - 'packages/*'
-  - 'apps/mobile'
+  - 'apps/*'
 
 catalog:
-  zod: '4.4.1'
+  happy-dom: '^21.0.4'
+  zod: '4.6.6'
   big.js: '^7.0.1'
   cbor-x: "^1.6.4"
   '@noble/hashes': '2.2.0'
@@ -20,7 +21,7 @@ catalog:
   '@xstate/react': '^6.1.0'
   zustand: '^5.0.0'
   typescript: '~6.0.3'
-  vite: '^8.3.2'
+  vite: '^8.3.3'
   vitest: '^4.1.11'
   eslint: '^9.39.2'
   '@eslint/js': '^9.39.5'
@@ -30,18 +31,37 @@ catalog:
   '@ledgerhq/device-management-kit': '^1.5.1'
   '@ledgerhq/device-signer-kit-bitcoin': '^1.3.1'
   '@ledgerhq/signer-utils': '^1.2.0'
+  # i18n: the strings live in @safely/ux, each app creates its own i18next instance
+  i18next: '^26.3.0'
+  react-i18next: '^17.0.8'
+  # icons ship as .svg and are imported as components (`?react`) by every web target,
+  # and by packages/web-ui's own vitest run.
+  vite-plugin-svgr: '^5.2.0'
 
 minimumReleaseAge: 5760
+
+# Already pnpm's default — stated explicitly because electron-forge refuses to
+# package unless `hoist-pattern` or `public-hoist-pattern` is set (or node-linker is
+# "hoisted", which would change resolution for the whole workspace, mobile included).
+# The layout is therefore unchanged; only forge's preflight check is satisfied.
+hoistPattern:
+  - '*'
 
 strictPeerDependencies: false
 autoInstallPeers: true
 
+# `@electron/rebuild@3.7.x` (a transitive dependency of electron-forge 7) declares
+# `@electron/node-gyp` as a git URL, which `blockExoticSubdeps` rightly refuses. The
+# same fork is published to the registry, so pin it there instead of switching the
+# guard off for the whole workspace. `rebuildConfig` in `apps/desktop/forge.config.ts`
+# switches the rebuild step off, so this dependency only has to resolve.
 peerDependencyRules:
   allowedVersions:
     react-native-ble-plx: '>=3.4.0'
     typescript: '>=6.0.0'
 
 allowBuilds:
+  electron: true
   '@shopify/react-native-skia': true
   cbor-extract: false
   msgpackr-extract: false
@@ -60,6 +80,8 @@ patchedDependencies:
 # entry once the parent ships the fix on its own — the gate fails on leftovers as
 # STALE.
 overrides:
+  '@electron/rebuild>@electron/node-gyp': '10.2.0-electron.2'
+
   # dev / build tooling
   'handlebars@4': '^4.7.10' # GHSA-8r5x-fm3f-whwj, GHSA-p8wg-vrv2-v86f (critical) + 5 more, via eslint-plugin-boundaries
   'brace-expansion@1': '^1.1.21' # GHSA-3jxr-9vmj-r5cp, GHSA-mh99-v99m-4gvg, GHSA-rgw5-rvv9-x895, GHSA-6j4f-fj2g-mc7p, GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr
@@ -70,9 +92,18 @@ overrides:
   # vitest declares vite as `^6 || ^7 || ^8`, and a `vite@7` selector only matches a
   # parent range that is a subset of 7 — so this one has to be unscoped.
   vite: 'catalog:' # GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583, GHSA-fx2h-pf6j-xcff
+  'rollup@4': '^4.59.0' # GHSA-mw96-cpmx-2vgc
+  'source-map-js@1': '^1.2.2' # GHSA-68fv-2mgg-jv7q, via @pandacss/eslint-plugin
+  # electron-forge's packaging and rebuild chain — never in a shipped app
+  # cacache@16 declares tar ^6 and every fix is on the 7 line; the rebuild step that would
+  # run it is switched off in forge.config.ts, so this chain only has to resolve.
+  'tar@6': '^7.5.21' # GHSA-23hp-3jrh-7fpw (critical) + 11 more
+  'http-cache-semantics@4': '^4.3.0' # GHSA-ch52-4w7c-c8xp, via @electron/get
+  # scoped to inquirer's editor prompt: tmp 0.2 drops the 0.0 API that nothing else here uses
+  'external-editor>tmp': '^0.2.6' # GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6
 
   # production graph — Expo / React Native transitive deps
-  'shell-quote@1': '^1.11.0' # GHSA-w7jw-789q-3m8p, GHSA-pqg4-j6r4-53mv (critical), GHSA-395f-4hp3-45gv
+  'shell-quote@1': '^1.11.0' # GHSA-pqg4-j6r4-53mv (critical), GHSA-w7jw-789q-3m8p (critical), GHSA-395f-4hp3-45gv
   '@xmldom/xmldom@0.8': '^0.8.13' # GHSA-wh4c-j3r5-mjhp + 4 more
   'node-forge@1': '^1.4.0' # GHSA-2328-f5f3-gj25, GHSA-q67f-28xg-22rw, GHSA-5m6q-g25r-mvwx, GHSA-ppp5-5v6c-4jwp
   # GHSA-96hv-2xvq-fx4p. ws@7 has to be scoped per parent: selectors match by

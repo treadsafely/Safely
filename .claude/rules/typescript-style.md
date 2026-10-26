@@ -38,6 +38,42 @@ Existing examples to model on: `NumberFormatter`, `LedgerController`, `TreeStora
 A lone function stays a function — don't wrap a single operation in a class just to have one. Pure
 helpers without shared state stay functions too.
 
+## A class's runtime name is explicit, never `constructor.name`
+
+Any name a human or a log reads — a logger child tag, a `toJSON` id, an error label — is passed in
+as a string, never read from `this.constructor.name`. Production bundles are minified (esbuild on
+desktop, R8 on Android), so `constructor.name` comes out mangled (`t`, `e`) at runtime, and the log
+or id it feeds is then unreadable with nothing failing in dev. `ApiClient` is the pattern: the
+subclass hands its name to `super(apiName, …)` and the base uses `this.apiName` for `logger.child`
+and `toJSON`. Desktop's `keepNames` esbuild flag only keeps names in stack traces — it is not a
+licence to rely on `constructor.name` in logic.
+
+## File and directory names
+
+Nothing in lint or CI reads a filename, so the case is on review:
+
+- **PascalCase** for a component and for every file that exists only to serve it —
+  `TableCell.tsx`, `TableCell.styles.ts`, `Screen.context.ts`, `ConfirmationScreen.types.ts`. A
+  module whose single export is a class or a React context takes the same form
+  (`DmkLoggerAdapter.ts`, `BannerContext.ts`).
+- **camelCase** for a module named after the hook it exports: `useHistoryGroups.ts`,
+  `useTransactionDetails.ts`. One hook per file — once a second export appears the name no longer
+  describes the file, and it becomes kebab-case.
+- **kebab-case** for everything else: pure logic, builders, view models, schemas, constants
+  (`transaction-details-view.ts`, `btc-transaction-status.ts`, `date-groups.ts`,
+  `btc-derivation-path.ts`), the Panda recipes (`app-layout.recipe.ts`), and the fixed module names
+  `index.ts`, `keys.ts`, `types.ts`, `api.ts`.
+- Directories split the same way: a component owns a PascalCase directory (`shared/ui/TableCell/`,
+  `screens/TransactionScreen/`), a slice a kebab-case one (`features/transaction-details/`,
+  `features/add-wallet/`).
+
+`packages/core` prefixes an interface module with `I-` and keeps the rest kebab (`I-btc-wallet.ts`);
+that names the interface, it does not exempt the file from the rule.
+
+About two dozen files still carry a camelCase name that is not a hook (`sentAmount.ts`,
+`resolveSource.ts`, `fuzzySearch.ts`, …). Rename one when you are already editing it — not as a
+sweep, and never together with a behaviour change, where the diff hides the move.
+
 ## Types
 
 `any` is banned, and unknown input (API responses, storage contents) is `unknown` parsed by a zod

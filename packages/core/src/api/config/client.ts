@@ -1,6 +1,6 @@
 import type { Logger } from '@safely/sync';
 
-import type { About, BootConfig, ConfigParams } from './models';
+import type { About, AboutOrder, BootConfig, ConfigParams } from './models';
 import { aboutSchema, bootConfigSchema } from './models';
 import type { IIdentifiable } from '../../utils';
 import { ApiClient } from '../../utils/fetch';
@@ -10,13 +10,13 @@ export class ConfigApi extends ApiClient implements IIdentifiable {
         private readonly params: ConfigParams,
         logger?: Logger
     ) {
-        super('https://config.safely.app/v1', {}, logger);
+        super('ConfigApi', 'https://config.safely.app/v1', {}, logger);
     }
 
     public get id() {
         const { storeCode, deviceCode } = this.params.userCountryInfo;
 
-        return `${this.constructor.name}:${this.params.build}:${this.params.version}:${this.params.lang}:${storeCode ?? ''}:${deviceCode ?? ''}:${this.params.devToken ?? ''}`;
+        return `${this.apiName}:${this.params.build}:${this.params.version}:${this.params.lang}:${storeCode ?? ''}:${deviceCode ?? ''}:${this.params.devToken ?? ''}`;
     }
 
     private get searchParams() {
@@ -38,7 +38,7 @@ export class ConfigApi extends ApiClient implements IIdentifiable {
         return this.getJson('/config', bootConfigSchema, this.searchParams);
     }
 
-    public async getAbout(): Promise<About> {
-        return this.getJson('/about', aboutSchema, this.searchParams);
+    public async getAbout(order: AboutOrder): Promise<About> {
+        return this.getJson('/about', aboutSchema, { ...this.searchParams, order });
     }
 }

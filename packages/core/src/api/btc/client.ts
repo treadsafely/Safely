@@ -67,9 +67,9 @@ export class BtcApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { baseUrl: string; logger?: Logger }) {
         const baseUrl = options.baseUrl.replace(/\/$/, '');
-        super(baseUrl, {}, options.logger);
+        super('BtcApi', baseUrl, {}, options.logger);
 
-        this.id = `${this.constructor.name}:${baseUrl}`;
+        this.id = `${this.apiName}:${baseUrl}`;
     }
 
     public async getAddressInfo(descriptor: BtcDescriptor, params?: GetAddressParams) {

@@ -1,6 +1,17 @@
 import { Platform } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
+import type { commonTheme } from '@safely/ux/theme';
+
+type TypographyVariant =
+    (typeof commonTheme)['typography'][keyof (typeof commonTheme)['typography']];
+
+const nativeText = (variant: TypographyVariant) => ({
+    fontSize: variant.fontSize,
+    lineHeight: variant.lineHeight,
+    fontWeight: variant.fontWeight
+});
+
 export const styles = StyleSheet.create(theme => ({
     text: {
         includeFontPadding: false,
@@ -37,62 +48,20 @@ export const styles = StyleSheet.create(theme => ({
                 }
             },
             variant: {
-                displayL: {
-                    fontSize: 44,
-                    lineHeight: 56,
-                    fontWeight: '600'
-                },
-                titleL: {
-                    fontSize: 32,
-                    lineHeight: 40,
-                    fontWeight: '600'
-                },
-                titleM: {
-                    fontSize: 24,
-                    lineHeight: 32,
-                    fontWeight: '600'
-                },
-                titleS: {
-                    fontSize: 20,
-                    lineHeight: 28,
-                    fontWeight: '600'
-                },
-                labelL: {
-                    fontSize: 17,
-                    lineHeight: 24,
-                    fontWeight: '600'
-                },
-                labelM: {
-                    fontSize: 14,
-                    lineHeight: 20,
-                    fontWeight: '600'
-                },
-                labelS: {
-                    fontSize: 11,
-                    lineHeight: 16,
-                    fontWeight: '600'
-                },
-                bodyL: {
-                    fontSize: 17,
-                    lineHeight: 24,
-                    fontWeight: '400'
-                },
+                displayL: nativeText(theme.typography.displayL),
+                titleL: nativeText(theme.typography.titleL),
+                titleM: nativeText(theme.typography.titleM),
+                titleS: nativeText(theme.typography.titleS),
+                labelL: nativeText(theme.typography.labelL),
+                labelM: nativeText(theme.typography.labelM),
+                labelS: nativeText(theme.typography.labelS),
+                bodyL: nativeText(theme.typography.bodyL),
                 bodyLMono: {
-                    fontSize: 17,
-                    lineHeight: 24,
-                    fontWeight: '400',
+                    ...nativeText(theme.typography.bodyLMono),
                     fontFamily: Platform.OS === 'ios' ? 'ui-monospace' : 'monospace'
                 },
-                bodyM: {
-                    fontSize: 14,
-                    lineHeight: 20,
-                    fontWeight: '400'
-                },
-                bodyS: {
-                    fontSize: 11,
-                    lineHeight: 16,
-                    fontWeight: '400'
-                }
+                bodyM: nativeText(theme.typography.bodyM),
+                bodyS: nativeText(theme.typography.bodyS)
             },
             textAlign: {
                 center: {

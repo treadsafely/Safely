@@ -22,20 +22,43 @@
             "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
         },
         {
-            "id": "GHSA-vfj7-8cjw-p6xm",
-            "package": "braces",
+            "id": "GHSA-7pqw-9j4j-h8q3",
+            "package": "extract-zip",
+            "severity": "high",
+            "context": "build",
+            "paths": [
+                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > extract-zip"
+            ],
+            "rationale": "extract-zip is the unpacker @electron/packager runs once per `electron-forge package`/`make` to unzip the Electron binary it downloaded from GitHub releases into the bundle; it executes on a developer machine or the CI packaging job only and ships in no app. The archive it opens is the official Electron release zip for the pinned version, not user input. The advisory names `>=2.0.2` as patched and npm has no such version — `latest` is 2.0.1 — so no `overrides` entry can close this.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2027-01-04",
+            "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3"
+        },
+        {
+            "id": "GHSA-jmr9-qjv8-65gv",
+            "package": "extract-zip",
+            "severity": "high",
+            "context": "build",
+            "paths": [
+                "apps/desktop > @electron-forge/cli > @electron-forge/core > @electron-forge/core-utils > @electron-forge/shared-types > @electron/packager > extract-zip"
+            ],
+            "rationale": "Same package and same reachability as GHSA-7pqw-9j4j-h8q3: @electron/packager's one-shot unpacker for the official Electron release zip at packaging time, never in a shipped app. No patched version exists on npm (`latest` is 2.0.1), so an override cannot close it.",
+            "owner": "liulekin@andreevco.com",
+            "expires": "2027-01-04",
+            "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
+        },
+        {
+            "id": "GHSA-mrhx-c7xc-m3w5",
+            "package": "zod",
             "severity": "high",
             "context": "rn-dev",
             "paths": [
-                ". > eslint-plugin-boundaries > micromatch > braces",
-                ". > eslint-plugin-boundaries > @boundaries/elements > micromatch > braces",
-                "apps/mobile > react-native > @react-native/community-cli-plugin > metro > metro-file-map > micromatch > braces",
-                "apps/mobile > @expo/metro-runtime > @expo/metro > @expo/metro-file-map > micromatch > braces"
+                "apps/mobile > expo > @expo/cli > zod"
             ],
-            "rationale": "braces is micromatch's brace-expansion step, reached in two places: eslint-plugin-boundaries at the repository root (lint only) and Metro's file map (`metro-file-map`, `@expo/metro-file-map`), which crawls the project tree while the bundler runs. It is in the production graph only because Metro is a transitive dependency of react-native and expo — no Metro or micromatch code is in a release bundle. The advisory is a stack-exhaustion DoS on deeply nested brace patterns, and every pattern braces sees here is written in this repository (eslint and Metro config globs), not supplied by a user or a network. micromatch declares `braces: ^3.0.3` and resolves 3.0.3, the newest release; the advisory names `>=3.0.4` as patched and npm has no such version — `latest` is 3.0.3 — so no `overrides` entry can close this. Drop this entry once 3.0.4 is published.",
+            "rationale": "The only copy the advisory still matches is zod 3.25.76 throughout @expo/cli (Expo's dev/build CLI, in the production graph because `expo` is a transitive dependency of apps/mobile but never bundled into a release). There is no fix on the 3.x line (latest 3.x is 3.25.76; patched 4.6.6 is a major bump) and even the newest @expo/cli (SDK 58) still requires zod ^3.25.76, so neither an Expo upgrade nor a zod-4 override can close it without breaking the CLI. Our own runtime zod is pinned to 4.6.6 through the workspace `catalog:` and is unaffected. The advisory is a memory-exhaustion DoS while validating oversized constrained collections; @expo/cli only validates its own CLI arguments at dev/build time, not attacker-controlled data in the wallet. Drop this entry once @expo/cli ships a patched zod.",
             "owner": "liulekin@andreevco.com",
-            "expires": "2026-12-31",
-            "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+            "expires": "2027-01-24",
+            "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
         }
     ]
 }

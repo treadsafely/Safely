@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { IMnemonicAccessor, IMnemonicVault, ITreeStorage } from '@safely/core';
 import { deriveAnalyticsAccountUuid, MnemonicResource } from '@safely/core';
@@ -210,7 +210,11 @@ async function announceOwnDisconnect(
 }
 
 async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promise<void> {
-    const archiving = accounts.map(async account => {
+    const synced = accounts.filter(
+        account => account.syncProvider.syncStatusManager.getStatus() !== SyncStatus.OFFLINE
+    );
+
+    const archiving = synced.map(async account => {
         const ikPubHex = account.getMyDeviceIkPub().toString('hex');
 
         await account.syncProvider.transaction(draft => {
@@ -229,7 +233,7 @@ async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promi
     const failed = results.filter(result => result.status === 'rejected').length;
 
     if (failed > 0) {
-        logger.warn('erase_all_data.archive_failed', { failed, total: accounts.length });
+        logger.warn('erase_all_data.archive_failed', { failed, total: synced.length });
     }
 }
 
@@ -313,10 +317,23 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
 function useConnectorMutation<TVars>(
     createConnector: (vars: TVars) => Promise<RawOnboardingConnector<SyncedStorageStructure>>
 ) {
+    const logger = useLogger('account-connect');
+
+    /* a connector nobody is waiting for any more has to be aborted, or it keeps polling */
+    const generationRef = useRef(0);
+
     const mutation = useMutation<OnboardingConnector, Error, TVars>({
         async mutationFn(vars) {
+            const generation = ++generationRef.current;
+
             await delay();
             const connector = await createConnector(vars);
+
+            if (generationRef.current !== generation) {
+                logger.info('device onboarding aborted while connecting');
+                connector.abort();
+                throw new OnboardingAbortedError();
+            }
 
             return {
                 connectionString: connector.data.toString('base64url'),
@@ -333,10 +350,17 @@ function useConnectorMutation<TVars>(
 
     const originalReset = mutation.reset;
 
+    const connectorRef = useRef(mutation.data);
+
+    useEffect(() => {
+        connectorRef.current = mutation.data;
+    });
+
     const reset = useCallback(() => {
-        mutation.data?.abort();
+        generationRef.current++;
+        connectorRef.current?.abort();
         originalReset();
-    }, [mutation.data, originalReset]);
+    }, [originalReset]);
 
     return {
         ...mutation,

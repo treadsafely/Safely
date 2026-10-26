@@ -1,4 +1,5 @@
 import type { ILoggerTransport } from '@safely/core';
+import { SanitizedTransport } from '@safely/core';
 import {
     CombinedTransport,
     ConsoleTransport,
@@ -7,10 +8,7 @@ import {
     logsFilterMinSeverityLevel
 } from '@safely/sync';
 
-import type { FileTransport } from './file-transport';
-import { SanitizedTransport } from './sanitized-transport';
-
-export function buildLogger(fileTransport: FileTransport, isDev: boolean): Logger {
+export function buildLogger(fileTransport: ILoggerTransport, isDev: boolean): Logger {
     let filter;
     let transport: ILoggerTransport;
 

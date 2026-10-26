@@ -220,4 +220,18 @@ describe('Logger', () => {
             expect(transport.entries[0].level).toBe(LogLevel.ERROR);
         });
     });
+
+    describe('sequence', () => {
+        it('stamps a strictly increasing seq across calls and child loggers', () => {
+            const child = logger.child('child');
+
+            logger.info('a');
+            child.info('b');
+            logger.info('c');
+
+            const [first, second, third] = transport.entries.map(entry => entry.seq);
+            expect(second).toBeGreaterThan(first);
+            expect(third).toBeGreaterThan(second);
+        });
+    });
 });

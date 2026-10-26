@@ -4,38 +4,27 @@ import { useEffect, useImperativeHandle, useRef } from 'react';
 import { View } from 'react-native';
 
 import type { AboutPost } from '@safely/core';
-import { useAboutQuery } from '@safely/ux';
+import { getGroupedRowType, type GroupedRow, useAboutFeedRows } from '@safely/ux';
 
 import { Screen, Text } from '@mobile/shared/ui';
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
-import { useGroupedRows, getGroupedRowType, type GroupedRow } from '@mobile/shared/utils';
 
 import { styles } from './AboutFeed.styles';
 import { PostCard, AboutFeedSkeleton } from './components';
-
-const DESC_ORDER = { order: 'desc' } as const;
 
 export interface AboutFeedRef {
     scrollToTop: (latestTimestamp: number) => void;
 }
 
 export const AboutFeed = ({ ref }: { ref?: Ref<AboutFeedRef> }) => {
-    const { data, isLoading } = useAboutQuery();
-    const posts = data?.posts;
-    const rows = useGroupedRows(
-        posts ?? [],
-        p => p.timestamp * 1000,
-        p => p.id,
-        DESC_ORDER
-    );
+    const { rows, isLoading, latestTimestamp } = useAboutFeedRows();
     const listRef = useRef<ListRef<GroupedRow<AboutPost>>>(null);
 
     const pendingScrollTimestamp = useRef<number | null>(null);
-    const latestTimestamp = posts?.at(-1)?.timestamp;
 
     const flushScrollToTop = () => {
         const pending = pendingScrollTimestamp.current;
-        if (pending === null || latestTimestamp === undefined || latestTimestamp < pending) return;
+        if (pending === null || latestTimestamp === null || latestTimestamp < pending) return;
 
         pendingScrollTimestamp.current = null;
         listRef.current?.scrollToOffset({ offset: 0, animated: true });

@@ -2,11 +2,10 @@ import type { RefObject } from 'react';
 import type { TextInput } from 'react-native';
 import { View } from 'react-native';
 
-import type { SendFormView } from '@safely/ux';
+import { useLastSeen, type SendFormView } from '@safely/ux';
 
 import { styles } from './SendAssetModal.styles';
 import { RecipientStep } from './steps';
-import { useLastSeen } from './useLastSeen';
 
 interface RecipientPagerPageProps {
     view: SendFormView;

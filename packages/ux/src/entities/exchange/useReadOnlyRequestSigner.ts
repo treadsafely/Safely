@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import type { RequestSigner } from '@safely/core';
 import { PortfolioType, ReadOnlyRequestSigner } from '@safely/core';
 
-import { useAppContext, SecretEncryptor } from '../../shared';
+import { useAppContext, SecretEncryptor, useFlag } from '../../shared';
 import { useActiveAccount } from '../account';
 import { useActivePortfolio } from '../portfolio';
 import { useReadOnlyCredentialCache } from './useReadOnlyCredentialCache';
@@ -13,10 +13,12 @@ export function useReadOnlyRequestSigner(): RequestSigner | undefined {
     const portfolio = useActivePortfolio();
     const { storage } = useAppContext();
     const cache = useReadOnlyCredentialCache();
+    const isOnrampsEnabled = useFlag('enable_onramps');
 
     const portfolioKey = portfolio.id.toString();
 
     return useMemo(() => {
+        if (!isOnrampsEnabled) return undefined;
         if (portfolio.type !== PortfolioType.BIP39) return undefined;
 
         return new ReadOnlyRequestSigner(async () => {
@@ -33,5 +35,5 @@ export function useReadOnlyRequestSigner(): RequestSigner | undefined {
 
             return credential;
         });
-    }, [portfolioKey, account.secretEncryptor, storage, cache]);
+    }, [isOnrampsEnabled, portfolioKey, account.secretEncryptor, storage, cache]);
 }

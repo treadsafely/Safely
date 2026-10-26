@@ -2,17 +2,15 @@ import { useNavigation } from '@react-navigation/core';
 import { CommonActions } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-import type { PortfolioMeta, PortfolioMetaIcon } from '@safely/core';
-import { PortfolioIdBip39Imported } from '@safely/core';
-import { PortfolioIdBip39MasterKeyDerived } from '@safely/core';
+import type { PortfolioMeta } from '@safely/core';
 import { MnemonicResource, PortfolioNetworkType } from '@safely/core';
 import {
+    resolveGeneratedPortfolioIcon,
+    resolveImportedPortfolio,
     useActiveAccountStoreSlot,
-    useAppContext,
-    useGeneratePortfolio,
-    useImportPortfolio,
+    useAddPortfolioFromSource,
     useNewPortfolioFallbackName,
-    useUnlockableSecretEncryptorFactory
+    usePortfolios
 } from '@safely/ux';
 
 import { handleDuplicatePortfolio } from './handleDuplicatePortfolio';
@@ -26,55 +24,34 @@ const routes = {
 
 export function useAddWalletFlow() {
     const navigation = useNavigation();
-    const { mutateAsync: importPortfolio } = useImportPortfolio();
-    const { mutateAsync: generatePortfolio } = useGeneratePortfolio();
+    const portfolios = usePortfolios();
+    const { mutateAsync: addPortfolioFromSource } = useAddPortfolioFromSource();
     const nextGeneratingPortfolioInfo = useActiveAccountStoreSlot('nextDerivingPortfolioInfo');
-    const createEncryptor = useUnlockableSecretEncryptorFactory();
-    const {
-        storage: {
-            sync: { getSecureEncrypted }
-        }
-    } = useAppContext();
     const defaultName = useNewPortfolioFallbackName();
 
-    const startCreateFlow = useCallback(() => {
-        let defaultIcon: PortfolioMetaIcon;
-        if (nextGeneratingPortfolioInfo?.emoji) {
-            defaultIcon = { type: 'emoji', value: nextGeneratingPortfolioInfo.emoji };
-        } else {
-            defaultIcon = PortfolioIdBip39MasterKeyDerived.getFallbackEmoji(
-                nextGeneratingPortfolioInfo?.index ?? 0
-            );
-        }
+    const resetToTabs = useCallback(() => {
+        navigation.dispatch(
+            CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'TabsNavigator' }]
+            })
+        );
+    }, [navigation]);
 
+    const startCreateFlow = useCallback(() => {
         navigation.navigate(routes.customize, {
-            defaultIcon,
+            defaultIcon: resolveGeneratedPortfolioIcon(nextGeneratingPortfolioInfo),
             defaultName,
             onSave: async (meta: PortfolioMeta) => {
-                using secureEncryptedStorage = getSecureEncrypted();
-                await secureEncryptedStorage.unlock();
+                await addPortfolioFromSource({ source: { kind: 'generated' }, meta });
 
-                await generatePortfolio({ meta, secureEncryptedStorage });
-
-                navigation.dispatch(
-                    CommonActions.reset({
-                        index: 0,
-                        routes: [{ name: 'TabsNavigator' }]
-                    })
-                );
+                resetToTabs();
             },
             onClose: () => {
                 navigation.goBack();
             }
         });
-    }, [
-        navigation,
-        generatePortfolio,
-
-        getSecureEncrypted,
-        nextGeneratingPortfolioInfo,
-        defaultName
-    ]);
+    }, [navigation, addPortfolioFromSource, resetToTabs, nextGeneratingPortfolioInfo, defaultName]);
 
     const startImportFlow = useCallback(() => {
         navigation.dispatch(
@@ -101,32 +78,34 @@ export function useAddWalletFlow() {
     }, [navigation]);
 
     const onMnemonicReady = useCallback(
-        (mnemonic: string[], networkType: PortfolioNetworkType) => {
+        async (mnemonic: string[], networkType: PortfolioNetworkType) => {
             using accessor = new MnemonicResource(mnemonic);
-            const defaultIcon = PortfolioIdBip39Imported.getFallbackEmoji(accessor);
+
+            const resolution = await resolveImportedPortfolio(accessor, networkType, portfolios);
+
+            if (resolution.kind === 'duplicate') {
+                navigation.dispatch(
+                    CommonActions.navigate('WalletAlreadyAddedModal', {
+                        portfolio: resolution.portfolio
+                    })
+                );
+
+                return;
+            }
 
             navigation.navigate(routes.customize, {
-                defaultIcon,
+                defaultIcon: resolution.icon,
                 defaultName,
                 onSave: async (meta: PortfolioMeta) => {
                     try {
-                        using secretEncryptor = createEncryptor();
-                        await secretEncryptor.unlockEncryption();
-
                         using mnemonicAccessor = new MnemonicResource(mnemonic);
-                        await importPortfolio({
-                            mnemonicAccessor,
-                            secretEncryptor,
-                            meta,
-                            networkType
+
+                        await addPortfolioFromSource({
+                            source: { kind: 'imported', mnemonicAccessor, networkType },
+                            meta
                         });
 
-                        navigation.dispatch(
-                            CommonActions.reset({
-                                index: 0,
-                                routes: [{ name: 'TabsNavigator' }]
-                            })
-                        );
+                        resetToTabs();
                     } catch (error) {
                         handleDuplicatePortfolio(error, navigation);
                     }
@@ -136,7 +115,7 @@ export function useAddWalletFlow() {
                 }
             });
         },
-        [navigation, importPortfolio, createEncryptor, defaultName]
+        [navigation, addPortfolioFromSource, resetToTabs, defaultName, portfolios]
     );
 
     return {
