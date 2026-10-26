@@ -100,7 +100,7 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
                     storeCode: null,
                     deviceCode: appInfo.deviceCountryCode
                 }),
-            /* read once: no dev-tools UI to change them at runtime yet */
+            /* read once at boot; the dev-tools config section writes devToken then reloads */
             devToken: storage.synchronous.get('devToken') ?? undefined,
             devIsTestnetAllowed: storage.synchronous.get('devIsTestnetAllowed') === 'true',
             numberFormatLocale: new WebNumberFormatLocale(appInfo.locale),

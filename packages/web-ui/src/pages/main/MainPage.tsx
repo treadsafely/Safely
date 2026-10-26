@@ -42,10 +42,11 @@ export type MainPageProps = {
     isFullScreen?: boolean;
     security: ReactNode;
     logs: ReactNode;
+    config: ReactNode;
 };
 
 export const MainPage: FC<MainPageProps> = props => {
-    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs } = props;
+    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs, config } = props;
     const { view, modal } = location;
 
     const hasPortfolio = useHasPortfolio();
@@ -168,6 +169,7 @@ export const MainPage: FC<MainPageProps> = props => {
                         account={account}
                         security={security}
                         logs={logs}
+                        config={config}
                         onSelectTool={selectTool}
                     />
                 )}

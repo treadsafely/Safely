@@ -33,22 +33,32 @@ export async function isBiometryUnlockEnabled(): Promise<boolean> {
         desktopLayerEncryptedStorage.get('biometryEnabled')
     ]);
 
+    if (!isAvailable && isEnabled === true) {
+        await desktopLayerEncryptedStorage.set('biometryEnabled', false);
+
+        return false;
+    }
+
     return isAvailable && isEnabled === true;
 }
 
 /* deliberately not suspending: an availability round-trip must not blank the app it renders inside */
 export function useBiometryQuery() {
-    const { get: storageGet } = useDesktopLayerEncryptedStorage('biometryEnabled');
+    const { get: storageGet, set: storageSet } = useDesktopLayerEncryptedStorage('biometryEnabled');
 
     return useQuery({
         queryKey: biometryKeys.state.toKey(),
         queryFn: async () => {
             const isAvailable = await platform.biometry.isAvailable();
+            const wasEnabled = (await storageGet()) === true;
 
-            return {
-                isAvailable,
-                isEnabled: isAvailable && (await storageGet()) === true
-            };
+            if (!isAvailable && wasEnabled) {
+                await storageSet(false);
+
+                return { isAvailable, isEnabled: false };
+            }
+
+            return { isAvailable, isEnabled: isAvailable && wasEnabled };
         },
         staleTime: Infinity
     });
