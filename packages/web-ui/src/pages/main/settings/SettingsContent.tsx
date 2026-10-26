@@ -16,11 +16,12 @@ export type SettingsContentProps = {
     account: ReturnType<typeof useAccountFlow>;
     security: ReactNode;
     logs: ReactNode;
+    config: ReactNode;
     onSelectTool: (tool: DevTool | null) => void;
 };
 
 export const SettingsContent: FC<SettingsContentProps> = props => {
-    const { section, tool, account, security, logs, onSelectTool } = props;
+    const { section, tool, account, security, logs, config, onSelectTool } = props;
 
     switch (section) {
         case 'wallet':
@@ -38,6 +39,13 @@ export const SettingsContent: FC<SettingsContentProps> = props => {
         case 'legal':
             return <LegalSettings />;
         case 'devTools':
-            return <DevToolsSettings tool={tool} logs={logs} onSelectTool={onSelectTool} />;
+            return (
+                <DevToolsSettings
+                    tool={tool}
+                    logs={logs}
+                    config={config}
+                    onSelectTool={onSelectTool}
+                />
+            );
     }
 };
