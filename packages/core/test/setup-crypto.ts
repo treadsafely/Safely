@@ -14,9 +14,12 @@ globalThis.flameSdk = {
     viewKey: (seed, network) => Promise.resolve(`${network}view1${bytesToHex(seed.slice(0, 8))}`),
     address: (viewKey, network, path) =>
         Promise.resolve({
-            address: `${viewKey}/${network}/${path.branch}/${path.index}`,
+            receivingAddress: `${viewKey}/${network}/${path.branch}/${path.index}/receiving`,
+            trackingAddress: `${viewKey}/${network}/${path.branch}/${path.index}`,
             predicate: new Uint8Array(32)
         }),
+    validateReceivingAddress: () => false,
+    memoMaxBytes: () => 8102,
     decodeContracts: () =>
         Promise.reject(new Error('flameSdk.decodeContracts is not available in tests')),
     openNotes: () => Promise.reject(new Error('flameSdk.openNotes is not available in tests')),

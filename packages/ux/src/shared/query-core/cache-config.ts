@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { aboutSchema, bootConfigSchema, sCryptoAssetAmount, sCryptoFiatRate } from '@safely/core';
 import { UtxoSchema, UtxoWithOptionalTxSchema } from '@safely/core/api/btc';
 import { providersSchema, rampOrderSchema } from '@safely/core/api/exchange';
-import { FlameScanEntrySchema } from '@safely/core/api/flame';
+import { FlameUnspentEntrySchema } from '@safely/core/api/flame';
 import { HistoricalPriceSchema } from '@safely/core/api/price';
 
 const sBtcActivityItem = z.object({
@@ -52,6 +52,7 @@ const sFlameOutputAmount = z.discriminatedUnion('status', [
         status: z.literal('counted'),
         qty: z.bigint(),
         flavor: z.string(),
+        isNative: z.boolean(),
         memo: z.string().optional()
     }),
     z.object({ status: z.literal('unreadable') }),
@@ -75,8 +76,8 @@ export const cacheSchemas = {
         }),
         hasLocalNotBroadcastedCache: z.boolean()
     }),
-    sFlameWalletScan: z.object({
-        entries: z.array(FlameScanEntrySchema),
+    sFlameWalletUnspent: z.object({
+        entries: z.array(FlameUnspentEntrySchema),
         amounts: z.record(z.string(), sFlameOutputAmount)
     }),
     bootConfig: bootConfigSchema,
@@ -91,10 +92,10 @@ export type CacheSchemaKey = keyof typeof cacheSchemas;
 
 // a memo is sealed to the wallet's view key, so its plaintext stays in memory and never reaches disk
 function withoutFlameMemos(data: unknown): unknown {
-    const scan = cacheSchemas.sFlameWalletScan.safeParse(data);
-    if (!scan.success) return undefined;
+    const unspent = cacheSchemas.sFlameWalletUnspent.safeParse(data);
+    if (!unspent.success) return undefined;
 
-    const amounts = Object.entries(scan.data.amounts).map(
+    const amounts = Object.entries(unspent.data.amounts).map(
         ([id, amount]): [string, z.output<typeof sFlameOutputAmount>] => {
             if (amount.status !== 'counted') return [id, amount];
 
@@ -103,12 +104,12 @@ function withoutFlameMemos(data: unknown): unknown {
         }
     );
 
-    return { ...scan.data, amounts: Object.fromEntries(amounts) };
+    return { ...unspent.data, amounts: Object.fromEntries(amounts) };
 }
 
 // a sanitizer returns `undefined` for data it cannot clean, and the query is then not persisted
 export const persistSanitizers: Partial<Record<CacheSchemaKey, (data: unknown) => unknown>> = {
-    sFlameWalletScan: withoutFlameMemos
+    sFlameWalletUnspent: withoutFlameMemos
 };
 
 export function isValidSchemaKey(key: string): key is CacheSchemaKey {

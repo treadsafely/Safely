@@ -888,6 +888,10 @@ export function findPortfolioMetaByAddress(
         }
 
         if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+            if (resolveFlameWallet(portfolio)?.trackingAddress === address) {
+                return portfolio.meta;
+            }
+
             continue;
         }
 

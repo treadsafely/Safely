@@ -1,79 +1,31 @@
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { useRef } from 'react';
 
 import type { FlameActivityItem } from '@safely/core';
-import { useActiveFlameHistory, useNumberFormatter } from '@safely/ux';
+import { useFlameHistoryGroups, useFlameHistoryPolling } from '@safely/ux';
 
-import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
-import { List, Screen } from '@mobile/shared/ui';
+import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
 
-import { HistoryEmptyPlaceholder } from '../HistoryEmptyPlaceholder';
-import { styles } from './FlameHistoryList.styles';
+import { type HistoryRowItem, HistoryListView, useNewTransactionsBubble } from '../HistoryList';
 
 type FlameHistoryListProps = {
     onNavigateToActivityItem: (activity: FlameActivityItem) => void;
 };
 
 export const FlameHistoryList = (props: FlameHistoryListProps) => {
-    const { onNavigateToActivityItem } = props;
-    const { t } = useTranslation();
-    const formatter = useNumberFormatter();
-    const { data: history } = useActiveFlameHistory();
+    const listRef = useRef<ListRef<HistoryRowItem>>(null);
+    const { groups, fetchNextPage } = useFlameHistoryGroups();
+    const bubble = useNewTransactionsBubble({ listRef, topThreshold: 44 });
 
-    const renderSeparator = useCallback(() => <View style={styles.separator} />, []);
-
-    const renderItem = useCallback(
-        ({ item }: { item: FlameActivityItem }) => (
-            <ActivityItem
-                title={
-                    item.isInitiator
-                        ? t('history.transactionInfo.sent')
-                        : t('history.transactionInfo.received')
-                }
-                amountSign={item.isInitiator ? '−' : '+'}
-                formattedValue={item.hasUnreadableOutputs ? '–' : item.value.format(formatter)}
-                valueTone={item.isInitiator ? 'primary' : 'accentGreen'}
-                formattedFiat={null}
-                timestampLabel={null}
-                isPending={false}
-                background="secondary"
-                counterparty={{
-                    kind: 'address',
-                    label: item.isInitiator
-                        ? t('history.transactionInfo.unknownRecipient')
-                        : t('history.transactionInfo.unknownSender')
-                }}
-                note={item.memo}
-                onPress={() => onNavigateToActivityItem(item)}
-            />
-        ),
-        [t, formatter, onNavigateToActivityItem]
-    );
-
-    if (!history) {
-        return (
-            <List>
-                <List.Group style={styles.contentContainer} variant="separated">
-                    <ActivityItemSkeleton />
-                    <ActivityItemSkeleton />
-                    <ActivityItemSkeleton />
-                </List.Group>
-            </List>
-        );
-    }
-
-    if (history.length === 0) {
-        return <HistoryEmptyPlaceholder />;
-    }
+    useFlameHistoryPolling({ isEnabled: useIsFocused(), onNewActivity: bubble.show });
 
     return (
-        <Screen.List
-            contentContainerStyle={styles.contentContainer}
-            data={history}
-            keyExtractor={item => item.txid}
-            ItemSeparatorComponent={renderSeparator}
-            renderItem={renderItem}
+        <HistoryListView
+            listRef={listRef}
+            bubble={bubble}
+            groups={groups}
+            fetchNextPage={fetchNextPage}
+            onNavigateToActivityItem={props.onNavigateToActivityItem}
         />
     );
 };

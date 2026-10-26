@@ -11,17 +11,13 @@ import {
     useNumberFormatter,
     usePortfolios
 } from '../../entities';
-import { useDateFormatter, useTranslate } from '../../shared';
+import { useTranslate } from '../../shared';
 import { useShowFullSentAmount } from '../amount-display';
-
-const TIME_FORMAT_OPTIONS = { hour: 'numeric', minute: 'numeric' } as const;
-const DAY_MONTH_FORMAT_OPTIONS = { day: 'numeric', month: 'short' } as const;
+import { useHistoryDateFormatters } from './useHistoryDateFormatters';
 
 export function useHistoryGroups() {
     const t = useTranslate();
-    const groupFormatter = useDateFormatter();
-    const timeFormatter = useDateFormatter(TIME_FORMAT_OPTIONS);
-    const dayMonthFormatter = useDateFormatter(DAY_MONTH_FORMAT_OPTIONS);
+    const { groupFormatter, timeFormatter, dayMonthFormatter } = useHistoryDateFormatters();
     const numberFormatter = useNumberFormatter();
     const portfolios = usePortfolios();
     const contacts = useContacts();

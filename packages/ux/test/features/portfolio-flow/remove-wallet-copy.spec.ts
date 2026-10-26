@@ -129,7 +129,12 @@ describe('resolveRemoveWalletCopy', () => {
                 id: { mnemonicHash: 'devnet-hash' },
                 meta: { name: 'Devnet', icon: ICON },
                 encryptedSecret: 'encrypted-devnet-mnemonic',
-                flame: { viewKey: 'view', address: 'tf1example', predicate: 'ab'.repeat(32) }
+                flame: {
+                    viewKey: 'view',
+                    receivingAddress: 't1examplei1key',
+                    trackingAddress: 't1example',
+                    predicate: 'ab'.repeat(32)
+                }
             }),
             { encryptor: new MockSecretEncryptor(), ledgerSessionPort }
         );

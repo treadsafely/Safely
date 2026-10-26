@@ -44,12 +44,8 @@ export const flameEstimationKey = defineQueryKeys('flameEstimation', {
     form(__: SendFormResult) {
         return {
             params: mappedParams(
-                (_: {
-                    estimatorId: string | null;
-                    outputIds: string[] | undefined;
-                    pendingIds: ReadonlySet<string>;
-                }) => finalKey,
-                p => [p.estimatorId, JSON.stringify(p.outputIds), JSON.stringify([...p.pendingIds])]
+                (_: { estimatorId: string | null; outputIds: string[] | undefined }) => finalKey,
+                p => [p.estimatorId, JSON.stringify(p.outputIds)]
             )
         };
     }
@@ -72,13 +68,10 @@ export const maxSendKey = defineQueryKeys('maxSendKey', {
 
 export const flameMaxSendKey = defineQueryKeys('flameMaxSend', {
     params: mappedParams(
-        (_: { estimatorId: string; outputIds: string[]; pendingIds: ReadonlySet<string> }) =>
-            finalKey,
-        p => [p.estimatorId, JSON.stringify(p.outputIds), JSON.stringify([...p.pendingIds])]
+        (_: { estimatorId: string; outputIds: string[] }) => finalKey,
+        p => [p.estimatorId, JSON.stringify(p.outputIds)]
     )
 });
-
-const NO_PENDING_IDS: ReadonlySet<string> = new Set();
 
 export function useEstimateAssetTransfer(form: SendFormResult, options?: { enabled?: boolean }) {
     const { btc, flame } = useSendChains();
@@ -150,8 +143,7 @@ function useEstimateFlameTransfer(
             .form(form)
             .params({
                 estimatorId: flameEstimator?.id ?? null,
-                outputIds: flameOutputs?.spendable.map(output => output.id),
-                pendingIds: flame?.pendingIds ?? NO_PENDING_IDS
+                outputIds: flameOutputs?.spendable.map(output => output.id)
             })
             .toKey(),
         queryFn:
@@ -168,8 +160,7 @@ function useEstimateFlameTransfer(
                               isMax: form.isMax,
                               memo: form.memo
                           },
-                          flameOutputs,
-                          flame.pendingIds
+                          flameOutputs
                       )
                 : skipToken,
         refetchOnMount: 'always',
@@ -229,17 +220,14 @@ export function useFetchMaxValue(): (
                     const outputs = flame?.outputs;
                     if (!flameEstimator || !outputs) return undefined;
 
-                    const { pendingIds } = flame;
-
                     return queryClient.fetchQuery({
                         queryKey: flameMaxSendKey
                             .params({
                                 estimatorId: flameEstimator.id,
-                                outputIds: outputs.spendable.map(output => output.id),
-                                pendingIds
+                                outputIds: outputs.spendable.map(output => output.id)
                             })
                             .toKey(),
-                        queryFn: () => flameEstimator.getMaxSendValue(outputs, pendingIds),
+                        queryFn: () => flameEstimator.getMaxSendValue(outputs),
                         staleTime: QUERIES_STALE_TIME.MAX_SEND
                     });
                 }

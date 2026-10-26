@@ -29,14 +29,20 @@ export const unsupportedPushNotifications: IPushNotifications = {
     setWalletNames: () => Promise.resolve()
 };
 
-/* TODO(flame): desktop Flame support lands before the release; until then every call rejects */
-const flameUnsupported = (): Promise<never> =>
-    Promise.reject(new Error('Flame is not available on the desktop app'));
+/* TODO(flame): desktop Flame support lands before the release; until then every call rejects, and no
+   address validates as Flame, so address detection keeps working for BTC */
+const flameUnsupportedError = () => new Error('Flame is not available on the desktop app');
+const flameUnsupported = (): Promise<never> => Promise.reject(flameUnsupportedError());
+const flameUnsupportedSync = (): never => {
+    throw flameUnsupportedError();
+};
 
 export const unsupportedFlameSdk: SafelyFlame = {
     viewKey: flameUnsupported,
     address: flameUnsupported,
     decodeContracts: flameUnsupported,
     openNotes: flameUnsupported,
-    buildTransfer: flameUnsupported
+    buildTransfer: flameUnsupported,
+    validateReceivingAddress: () => false,
+    memoMaxBytes: flameUnsupportedSync
 };

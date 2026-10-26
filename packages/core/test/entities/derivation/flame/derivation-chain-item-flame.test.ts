@@ -33,7 +33,11 @@ function mockSafelyFlame() {
             return Promise.resolve(VIEW_KEY);
         }),
         address: vi.fn<SafelyFlame['address']>(() =>
-            Promise.resolve({ address: 'tf1example', predicate: bytes(0xab) })
+            Promise.resolve({
+                receivingAddress: 't1examplei1key',
+                trackingAddress: 't1example',
+                predicate: bytes(0xab)
+            })
         ),
         decodeContracts: vi.fn<SafelyFlame['decodeContracts']>(contracts =>
             Promise.resolve(
@@ -44,7 +48,12 @@ function mockSafelyFlame() {
                         predicate: bytes(0xab),
                         value:
                             contract[0] === 1
-                                ? { type: 'clear' as const, qty: 7n, flavor: bytes(0xf) }
+                                ? {
+                                      type: 'clear' as const,
+                                      qty: 7n,
+                                      flavor: bytes(0xf),
+                                      isNative: true
+                                  }
                                 : contract[0] === 2
                                   ? { type: 'confidential' as const }
                                   : { type: 'other' as const }
@@ -56,7 +65,13 @@ function mockSafelyFlame() {
             Promise.resolve(
                 notes.map(({ note }) =>
                     note
-                        ? { opened: true as const, qty: 5n, flavor: bytes(0xf), memo: bytes(0, 0) }
+                        ? {
+                              opened: true as const,
+                              qty: 5n,
+                              flavor: bytes(0xf),
+                              isNative: true,
+                              memo: bytes(0, 0)
+                          }
                         : { opened: false as const, failure: 'missing' as const }
                 )
             )
@@ -64,7 +79,9 @@ function mockSafelyFlame() {
         buildTransfer: vi.fn<SafelyFlame['buildTransfer']>(seed => {
             seeds.push(new Uint8Array(seed));
             return Promise.resolve({ txid: bytes(0x11), blockTx: bytes(0x22, 4) });
-        })
+        }),
+        validateReceivingAddress: vi.fn<SafelyFlame['validateReceivingAddress']>(() => true),
+        memoMaxBytes: vi.fn<SafelyFlame['memoMaxBytes']>(() => 8102)
     };
     return { flame, seeds };
 }
@@ -107,7 +124,8 @@ describe('DerivationChainItemFlame', () => {
 
         expect(serialized.flame).toEqual({
             viewKey: VIEW_KEY,
-            address: 'tf1example',
+            receivingAddress: 't1examplei1key',
+            trackingAddress: 't1example',
             predicate: 'ab'.repeat(32)
         });
         expect(serialized.id).toEqual(PortfolioIdFlameDevnet.create({ value: MNEMONIC }).toJSON());
@@ -129,7 +147,8 @@ describe('DerivationChainItemFlame', () => {
 
         expect(wallet).toMatchObject({
             network: 'testnet',
-            address: 'tf1example',
+            receivingAddress: 't1examplei1key',
+            trackingAddress: 't1example',
             predicate: 'ab'.repeat(32)
         });
         expect(portfolio.networkType).toBe(PortfolioNetworkType.TESTNET);
@@ -149,7 +168,8 @@ describe('DerivationChainItemFlame', () => {
         expect(clearOnly.get('clear')).toEqual({
             status: 'counted',
             qty: 7n,
-            flavor: '0f'.repeat(32)
+            flavor: '0f'.repeat(32),
+            isNative: true
         });
         expect(clearOnly.get('other')).toEqual({ status: 'notToken' });
 
@@ -169,7 +189,8 @@ describe('DerivationChainItemFlame', () => {
         expect(amounts.get('opened')).toEqual({
             status: 'counted',
             qty: 5n,
-            flavor: '0f'.repeat(32)
+            flavor: '0f'.repeat(32),
+            isNative: true
         });
         expect(amounts.get('missing')).toEqual({ status: 'unreadable' });
     });
@@ -193,7 +214,12 @@ describe('DerivationChainItemFlame', () => {
         ]);
 
         expect(first.get('late')).toEqual({ status: 'unreadable' });
-        expect(second.get('late')).toEqual({ status: 'counted', qty: 5n, flavor: '0f'.repeat(32) });
+        expect(second.get('late')).toEqual({
+            status: 'counted',
+            qty: 5n,
+            flavor: '0f'.repeat(32),
+            isNative: true
+        });
         expect(mocked.flame.openNotes).toHaveBeenCalledTimes(2);
     });
 
@@ -211,7 +237,8 @@ describe('DerivationChainItemFlame', () => {
         expect(second.get('retried')).toEqual({
             status: 'counted',
             qty: 5n,
-            flavor: '0f'.repeat(32)
+            flavor: '0f'.repeat(32),
+            isNative: true
         });
     });
 
@@ -243,7 +270,7 @@ describe('DerivationChainItemFlame', () => {
         ]);
         mocked.flame.openNotes.mockResolvedValueOnce([
             { opened: false, failure: 'error', reason: 'keyMismatch: input 0' },
-            { opened: true, qty: 5n, flavor: bytes(0xf), memo: bytes(0, 0) }
+            { opened: true, qty: 5n, flavor: bytes(0xf), isNative: true, memo: bytes(0, 0) }
         ]);
 
         const amounts = await wallet.readAmounts([
@@ -257,7 +284,8 @@ describe('DerivationChainItemFlame', () => {
         expect(amounts.get('opened')).toEqual({
             status: 'counted',
             qty: 5n,
-            flavor: '0f'.repeat(32)
+            flavor: '0f'.repeat(32),
+            isNative: true
         });
     });
 
@@ -268,6 +296,7 @@ describe('DerivationChainItemFlame', () => {
                 opened: true,
                 qty: 5n,
                 flavor: bytes(0xf),
+                isNative: true,
                 memo: Uint8Array.from(Buffer.from('за кофе', 'utf8'))
             }
         ]);
@@ -280,6 +309,7 @@ describe('DerivationChainItemFlame', () => {
             status: 'counted',
             qty: 5n,
             flavor: '0f'.repeat(32),
+            isNative: true,
             memo: 'за кофе'
         });
     });
@@ -298,7 +328,8 @@ describe('DerivationChainItemFlame', () => {
         expect(second.get('flaky')).toEqual({
             status: 'counted',
             qty: 7n,
-            flavor: '0f'.repeat(32)
+            flavor: '0f'.repeat(32),
+            isNative: true
         });
     });
 

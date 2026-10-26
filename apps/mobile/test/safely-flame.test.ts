@@ -5,7 +5,9 @@ const native = {
     address: vi.fn(),
     decodeContracts: vi.fn(),
     openNotes: vi.fn(),
-    buildTransfer: vi.fn()
+    buildTransfer: vi.fn(),
+    validateReceivingAddress: vi.fn(),
+    memoMaxBytes: vi.fn()
 };
 
 vi.mock('expo-modules-core', () => ({ requireNativeModule: () => native }));
@@ -24,19 +26,19 @@ describe('safely-flame facade', () => {
         native.decodeContracts.mockReset();
         native.openNotes.mockReset();
         native.buildTransfer.mockReset();
+        native.validateReceivingAddress.mockReset();
     });
 
     it('returns the native value on success', async () => {
         const predicate = new Uint8Array(32);
-        native.address.mockResolvedValue({
-            ok: true,
-            value: { address: 'tf1example', predicate }
-        });
-
-        await expect(address(VIEW_KEY, 'testnet', 0, 3)).resolves.toEqual({
-            address: 'tf1example',
+        const issued = {
+            receivingAddress: 't1examplei1key',
+            trackingAddress: 't1example',
             predicate
-        });
+        };
+        native.address.mockResolvedValue({ ok: true, value: issued });
+
+        await expect(address(VIEW_KEY, 'testnet', 0, 3)).resolves.toEqual(issued);
         expect(native.address).toHaveBeenCalledWith(VIEW_KEY, 'testnet', 0, 3);
     });
 
@@ -112,7 +114,13 @@ describe('safely-flame facade', () => {
         native.openNotes.mockResolvedValue({
             ok: true,
             value: [
-                { opened: true, qty: '18446744073709551615', flavor, memo: new Uint8Array(0) },
+                {
+                    opened: true,
+                    qty: '18446744073709551615',
+                    flavor,
+                    isNative: false,
+                    memo: new Uint8Array(0)
+                },
                 { opened: false, failure: 'missing' }
             ]
         });
@@ -133,7 +141,13 @@ describe('safely-flame facade', () => {
             [note, new Uint8Array(0)]
         );
         expect(openings).toEqual([
-            { opened: true, qty: 18446744073709551615n, flavor, memo: new Uint8Array(0) },
+            {
+                opened: true,
+                qty: 18446744073709551615n,
+                flavor,
+                isNative: false,
+                memo: new Uint8Array(0)
+            },
             { opened: false, failure: 'missing' }
         ]);
     });
@@ -144,7 +158,12 @@ describe('safely-flame facade', () => {
         native.decodeContracts.mockResolvedValue({
             ok: true,
             value: [
-                { decoded: true, id, predicate: id, value: { type: 'clear', qty: '42', flavor } },
+                {
+                    decoded: true,
+                    id,
+                    predicate: id,
+                    value: { type: 'clear', qty: '42', flavor, isNative: true }
+                },
                 { decoded: true, id, predicate: id, value: { type: 'confidential' } }
             ]
         });
@@ -152,7 +171,11 @@ describe('safely-flame facade', () => {
         await expect(flameSdk.decodeContracts([id, id])).resolves.toEqual([
             {
                 decoded: true,
-                info: { id, predicate: id, value: { type: 'clear', qty: 42n, flavor } }
+                info: {
+                    id,
+                    predicate: id,
+                    value: { type: 'clear', qty: 42n, flavor, isNative: true }
+                }
             },
             { decoded: true, info: { id, predicate: id, value: { type: 'confidential' } } }
         ]);
@@ -185,7 +208,7 @@ describe('safely-flame facade', () => {
                     code: 'ERR_FLAME_KEY_MISMATCH',
                     reason: 'input 0'
                 },
-                { opened: true, qty: '1', flavor, memo: new Uint8Array(0) }
+                { opened: true, qty: '1', flavor, isNative: true, memo: new Uint8Array(0) }
             ]
         });
         const contract = new Uint8Array([1]);
@@ -197,8 +220,22 @@ describe('safely-flame facade', () => {
             ])
         ).resolves.toEqual([
             { opened: false, failure: 'error', reason: 'keyMismatch: input 0' },
-            { opened: true, qty: 1n, flavor, memo: new Uint8Array(0) }
+            { opened: true, qty: 1n, flavor, isNative: true, memo: new Uint8Array(0) }
         ]);
+    });
+
+    it('answers an address check synchronously and throws a native failure as a FlameError', () => {
+        native.validateReceivingAddress.mockReturnValueOnce({ ok: true, value: true });
+        native.validateReceivingAddress.mockReturnValueOnce({
+            ok: false,
+            code: 'ERR_FLAME_INVALID_ARGUMENT',
+            reason: 'unknown network'
+        });
+
+        expect(flameSdk.validateReceivingAddress('t1examplei1key', 'testnet')).toBe(true);
+        expect(() => flameSdk.validateReceivingAddress('t1examplei1key', 'testnet')).toThrow(
+            FlameError
+        );
     });
 
     describe('buildTransfer', () => {

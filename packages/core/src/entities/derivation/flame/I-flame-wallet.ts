@@ -8,7 +8,8 @@ import type {
 export interface FlameWallet {
     id: FlameWalletId;
     network: FlameNetwork;
-    address: string;
+    receivingAddress: string;
+    trackingAddress: string;
     predicate: string;
 
     readAmounts(outputs: FlameOutputBytes[]): Promise<Map<string, FlameOutputAmount>>;
@@ -17,7 +18,7 @@ export interface FlameWallet {
 }
 
 export type FlameOutputAmount =
-    | { status: 'counted'; qty: bigint; flavor: string; memo?: string }
+    | { status: 'counted'; qty: bigint; flavor: string; isNative: boolean; memo?: string }
     | { status: 'unreadable' }
     | { status: 'flagged' }
     | { status: 'notToken' };

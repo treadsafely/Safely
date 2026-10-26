@@ -6,12 +6,13 @@ export interface FlameKeyPath {
 }
 
 export interface FlameIssuedAddress {
-    address: string;
+    receivingAddress: string;
+    trackingAddress: string;
     predicate: Uint8Array;
 }
 
 export type FlameContractValue =
-    | { type: 'clear'; qty: bigint; flavor: Uint8Array }
+    | { type: 'clear'; qty: bigint; flavor: Uint8Array; isNative: boolean }
     | { type: 'confidential' }
     | { type: 'other' };
 
@@ -38,7 +39,7 @@ export type FlameNoteFailure =
     | 'notConfidential';
 
 export type FlameNoteOpening =
-    | { opened: true; qty: bigint; flavor: Uint8Array; memo: Uint8Array }
+    | { opened: true; qty: bigint; flavor: Uint8Array; isNative: boolean; memo: Uint8Array }
     | { opened: false; failure: FlameNoteFailure }
     | { opened: false; failure: 'error'; reason: string };
 
@@ -73,6 +74,8 @@ export interface SafelyFlame {
         network: FlameNetwork,
         path: FlameKeyPath
     ): Promise<FlameIssuedAddress>;
+    validateReceivingAddress(address: string, network: FlameNetwork): boolean;
+    memoMaxBytes(): number;
     decodeContracts(contracts: Uint8Array[]): Promise<FlameContractDecoding[]>;
     openNotes(
         viewKey: string,

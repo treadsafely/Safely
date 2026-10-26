@@ -23,6 +23,7 @@ function amountFromOpening(opening: FlameNoteOpening): FlameOutputAmount {
             status: 'counted',
             qty: opening.qty,
             flavor: bytesToHex(opening.flavor),
+            isNative: opening.isNative,
             ...(memo ? { memo } : {})
         };
     }
@@ -61,7 +62,12 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
             network,
             FLAME_RECEIVING_KEY_PATH
         );
-        return { viewKey, address: issued.address, predicate: bytesToHex(issued.predicate) };
+        return {
+            viewKey,
+            receivingAddress: issued.receivingAddress,
+            trackingAddress: issued.trackingAddress,
+            predicate: bytesToHex(issued.predicate)
+        };
     }
 
     public readonly network: FlameNetwork;
@@ -93,7 +99,8 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
             {
                 id: new FlameWalletId(ownerId),
                 network,
-                address: sChainItem.address,
+                receivingAddress: sChainItem.receivingAddress,
+                trackingAddress: sChainItem.trackingAddress,
                 predicate: sChainItem.predicate,
                 readAmounts: outputs => this.readAmounts(outputs),
                 buildTransfer: request => this.buildTransfer(request)
@@ -128,7 +135,8 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
                         fresh.set(output.id, {
                             status: 'counted',
                             qty: value.qty,
-                            flavor: bytesToHex(value.flavor)
+                            flavor: bytesToHex(value.flavor),
+                            isNative: value.isNative
                         });
                         break;
                     case 'other':
@@ -192,7 +200,8 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
     public toJSON(): SFlameAccountChainItem {
         return {
             viewKey: this.viewKey,
-            address: this.wallets[0].address,
+            receivingAddress: this.wallets[0].receivingAddress,
+            trackingAddress: this.wallets[0].trackingAddress,
             predicate: this.wallets[0].predicate
         };
     }

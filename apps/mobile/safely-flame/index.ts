@@ -5,13 +5,19 @@ import {
     buildTransfer,
     decodeContracts,
     deriveViewKey,
-    openNotes
+    memoMaxBytes,
+    openNotes,
+    validateReceivingAddress
 } from '../modules/safely-flame/src';
 
 export const flameSdk: SafelyFlame = {
     viewKey: deriveViewKey,
 
     address: (viewKey, network, path) => address(viewKey, network, path.branch, path.index),
+
+    validateReceivingAddress,
+
+    memoMaxBytes,
 
     async decodeContracts(contracts) {
         const decodings = await decodeContracts(contracts);

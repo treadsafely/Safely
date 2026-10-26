@@ -4,6 +4,7 @@ import type {
     BtcAsset,
     BtcApiTx,
     CryptoAssetAmount as CryptoAssetAmountType,
+    FlameActivityItem,
     RampOrder
 } from '@safely/core';
 import {
@@ -11,6 +12,7 @@ import {
     BTC_ASSET,
     Contact,
     CryptoAssetAmount,
+    FlameAssetAmount,
     GROUP_LABEL,
     NumberFormatter,
     WebNumberFormatLocale,
@@ -26,7 +28,10 @@ import type {
     OrderActivityItem
 } from '../../../src/entities';
 import type { ActivityRowContext } from '../../../src/features/history/activity-row-view';
-import { buildHistoryGroupViews } from '../../../src/features/history/activity-row-view';
+import {
+    buildFlameHistoryGroupViews,
+    buildHistoryGroupViews
+} from '../../../src/features/history/activity-row-view';
 import type { DateFormatter } from '../../../src/shared/format/date';
 import type { TranslateFn } from '../../../src/shared/i18n/types';
 
@@ -222,6 +227,63 @@ describe('buildHistoryGroupViews', () => {
     it('names an expired order cancelled', () => {
         expect(buildRow(orderActivity({ type: 'onramp', status: 'expired' })).title).toBe(
             'history.orderInfo.purchase.cancelled'
+        );
+    });
+});
+
+const flameActivity = (params: Partial<FlameActivityItem> = {}): FlameActivityItem => ({
+    txid: 'f'.repeat(64),
+    height: 12,
+    timestamp: TIMESTAMP,
+    isPending: false,
+    isInitiator: false,
+    value: FlameAssetAmount.fromWeiAmount(150_000_000n),
+    fee: null,
+    hasUnreadableOutputs: false,
+    memo: null,
+    counterpartyAddress: null,
+    ...params
+});
+
+const buildFlameRow = (activity: FlameActivityItem) =>
+    buildFlameHistoryGroupViews(
+        [{ key: 'group-1', meta: { label: GROUP_LABEL.TODAY }, items: [activity] }],
+        baseContext
+    )[0].rows[0];
+
+describe('buildFlameHistoryGroupViews', () => {
+    it('renders a confirmed receipt with its sender, memo and time', () => {
+        const row = buildFlameRow(flameActivity({ counterpartyAddress: 't1payer', memo: 'rent' }));
+
+        expect(row).toMatchObject({
+            key: `group-1-${'f'.repeat(64)}`,
+            title: 'history.transactionInfo.received',
+            amountSign: '+',
+            valueTone: 'accentGreen',
+            timestampLabel: TIME_LABEL,
+            isPending: false,
+            counterparty: { kind: 'address', label: ellipsisMiddle('t1payer', 6) },
+            note: 'rent'
+        });
+    });
+
+    it('renders a pending send without a time and with an unknown recipient', () => {
+        const row = buildFlameRow(
+            flameActivity({ isInitiator: true, isPending: true, height: null })
+        );
+
+        expect(row).toMatchObject({
+            title: 'history.transactionInfo.sending',
+            amountSign: '−',
+            timestampLabel: null,
+            isPending: true,
+            counterparty: { kind: 'address', label: 'history.transactionInfo.unknownRecipient' }
+        });
+    });
+
+    it('shows a dash for an amount it could not read', () => {
+        expect(buildFlameRow(flameActivity({ hasUnreadableOutputs: true })).formattedValue).toBe(
+            '–'
         );
     });
 });

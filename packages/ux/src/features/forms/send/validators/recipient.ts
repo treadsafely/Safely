@@ -18,7 +18,9 @@ function parseRecipient(
     }
 
     if (ownAddresses[detected.blockchain] === undefined) {
-        return SendFormError.UNSUPPORTED_BLOCKCHAIN;
+        return detected.blockchain === BLOCKCHAIN_NAME.FLAME
+            ? SendFormError.INVALID_WALLET_ADDRESS
+            : SendFormError.UNSUPPORTED_BLOCKCHAIN;
     }
 
     switch (detected.blockchain) {

@@ -64,7 +64,7 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   but the library decodes and opens one at a time: a library error on one item lands in that item
   (`{ decoded: false, code, reason }`, `{ opened: false, failure: 'error', code, reason }`), and only
   argument, key or network errors fail the call. Otherwise one undecodable output on the wallet's
-  predicate would fail the whole scan and hide the balance. Core turns a failed item into
+  predicate would fail the whole read and hide the balance. Core turns a failed item into
   `{ status: 'unreadable' }`.
 - The facade validates arguments (network, `uint32` path) before calling native.
   The native side still checks ranges, because Expo converts a JS number to a fixed-width integer
@@ -82,7 +82,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   each confidential input's note itself (the blindings never cross the bridge), then proves and signs;
   binary inputs travel as three parallel arrays and the rest as one `TransferPlan` record (outputs as
   parallel `addresses`/`qtys`/`memos`, an empty memo for none), because
-  Kotlin Expo functions take at most 8 arguments. Each call builds its `Wallet` and drops it before returning (Kotlin
+  Kotlin Expo functions take at most 8 arguments. `validateReceivingAddress` and `memoMaxBytes` need no
+  wallet and are synchronous (`Function`, not `AsyncFunction`), so the send form validates and
+  clamps without awaiting; the first still answers an `{ ok, … }` outcome, unwrapped in the facade.
+  Each async call builds its `Wallet` and drops it before returning (Kotlin
   also zeroes its seed copy). Never log the seed or the view key — the view key reads every amount
   and memo. The library's `reason` is passed through as is — log it only through
   `filterSensitiveData`.
@@ -97,9 +100,11 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   a BIP-39 phrase stored like a BIP-39 portfolio's, **no BTC chain**, and one Flame account
   (`DerivationChainItemFlame`) on the receiving path `{0,0}`. BIP-39 (testnet included), Ledger and
   watch-only portfolios have no Flame at all. The devnet node runs Flame's `testnet` network
-  (`FLAME_DEVNET_NETWORK`, `tf1…` addresses) and the portfolio reports `networkType: TESTNET`, so
+  (`FLAME_DEVNET_NETWORK`, `t1…i1…` addresses) and the portfolio reports `networkType: TESTNET`, so
   every testnet rule (zero rates, no contacts, no pushes) applies to it. Balance and history count
-  only the native flavor (`Scalar::ONE`, `FLAME_NATIVE_FLAVOR`); FLM has 8 decimals. The node URL is
+  only flames, the native flavor: the SDK says so per output (`isNative` on a decoded clear contract
+  and on an opened note, kept in `FlameOutputAmount`), so the app holds no flavor constant of its own;
+  FLM has 8 decimals. The node URL is
   `blockchains.flame.<network>.rpc_url` from the boot config; until the config serves it,
   `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet.
 - **No UI creates a devnet portfolio.** Mobile imports one from
@@ -110,9 +115,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   it active (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). With no account it
   only shows a toast; a link that cold-starts the app leaves nothing under the sheet, so it resets
   instead of going back.
-- `flame` holds `{ viewKey, address, predicate }`, all computed once at portfolio creation
+- `flame` holds `{ viewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
+  portfolio creation (`trackingAddress` is the receiving address's first half, as the SDK issues it)
   (the mnemonic is already in hand): the chain builds its `wallets` from them synchronously, so the
-  address needs no native call at startup, and scans with the view key, so the seed is never touched
+  address needs no native call at startup, and reads amounts with the view key, so the seed is never touched
   again for Flame. Like `SignableBtcWallet.sign`, a `FlameWallet` carries its own operations —
   `readAmounts` (opens the notes with the view key) and `buildTransfer` — so the estimator and the
   transaction template take the wallet alone, never the chain. **The view key is stored in plaintext.** It sits only inside the E2EE snapshot, but on every device it is
@@ -120,12 +126,31 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   separate change. The chain caches every read amount per output id, except an output read without
   its note (`missing`), whose contract failed to decode, or whose opening hit a native error (`error`):
   native code reports any per-item exception the same way, so a transient one would stick.
-- The outputs query is persisted like BTC's UTXO (`usePersistQuery`, schema `sFlameWalletScan`). It
-  stores the scan entries as the node served them (base64) plus the read amounts, and `select`
-  rebuilds `FlameOutputs` — `FlameOutputs` itself holds `Uint8Array`s that JSON cannot carry. Memos
-  never reach disk: `persistSanitizers` in `cache-config.ts` strips them from the scan as the
-  persister writes it, so a restored cache shows amounts without memos until the next scan opens
-  the notes again in memory.
+- **Balance is one set, pending or not.** `useFlameWalletOutputs` calls the node's
+  `unspent(address, true)`: the node applies its mempool on top (outputs a pending transaction
+  spends are left out, outputs it creates are added), and the app counts what comes back as one
+  set — no confirmed/pending split, no safe/unsafe sender, no pending balance. A pending output has
+  no membership proof yet, so a send that picks one fails on `proofs` and the user retries after the
+  next block; with frequent devnet blocks that is accepted. The query is persisted
+  (`usePersistQuery`, schema `sFlameWalletUnspent`): it stores the entries as the node served them
+  (base64) and the read amounts, and `select` rebuilds `FlameOutputs` — which holds `Uint8Array`s
+  that JSON cannot carry. Memos never reach disk: `persistSanitizers` in `cache-config.ts` strips
+  them as the persister writes, so a restored cache shows amounts without memos until the next read
+  opens the notes again in memory.
+- **Flame history is built layer by layer like BTC's activity.** `fetchFlameActivity` (the
+  counterpart of `fetchBtcActivity`) reads one page of the node's `history`: the first asks
+  `with_pending` and lists the mempool on top, newest first; later pages follow the `older` cursor.
+  `useFlameHistory` / `useGroupedFlameHistory` mirror `useHistory` / `useGroupedHistory` (an
+  infinite query with the activity stale time, not persisted — it holds memos; pending items in
+  their own group), `useFlameHistoryGroups` mirrors `useHistoryGroups` through
+  `buildFlameHistoryGroupViews`, and `useFlameHistoryPolling` mirrors `useHistoryPolling` — both
+  sit on `useNewActivityPolling` (3 s refetch while focused, a new first key raises the bubble and
+  invalidates the balance). Mobile's `FlameHistoryList` and `HistoryList` render the same
+  `HistoryListView` and differ only in these hooks. Each entry carries the wallet's created and spent
+  contracts with bytes and notes, so `toFlameActivityItem` prices a send without paging back to its
+  receipts: sent = spent − created − fee, with the fee apart, received = created. Timestamps are
+  the block time (the node's mock core indexer: the minting machine's clock), or `received_at`
+  while pending; either may be absent (genesis, a node restart).
 - **Screens follow the portfolio's chains, not its type**, because a portfolio is planned to hold
   BTC and Flame together. `resolvePortfolioWallets` / `useActivePortfolioWallets` (ux) answer
   `PortfolioWallets` — `{ btc, flame }` — today a devnet portfolio has only `flame` and every other only `btc` — and that is
@@ -143,48 +168,58 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   screens pop to the top when their chain disappears. The network badge is decided once in
   `resolvePortfolioNetworkBadge` (`testnet`, neutral; `Devnet`, purple, for a devnet portfolio) and
   drawn by `NetworkBadge`.
-- **Sending FLM.** A testnet address is bech32m with HRP `tf` and a 64-byte payload (112 characters,
-  past bech32's 90-character limit); `FlameAddress` validates it in JS, so the form stays synchronous.
-  The mainnet HRP is unknown, so no mainnet address validates. **The send flow is one, not one per
+- **Sending FLM.** A receiving address is a Bech32f tracking address (`t1…` / `f1…`, the spending key)
+  followed by the encryption key (`i1…` / `e1…`); `FlameAddress.validate` asks the SDK's synchronous
+  `validateReceivingAddress`, so the form stays synchronous and the app encodes no address itself.
+  **The send flow is one, not one per
   chain**, because a portfolio is planned to hold BTC and Flame together. `useSendChains()` (ux)
   returns a BTC part only when the portfolio has a signable BTC wallet and a Flame part only when it
   has a Flame wallet, built from the same wallet-or-`null` hooks, and `useSendForm`,
   `useEstimateAssetTransfer`, `useSendAssetTransfer` and `useFetchMaxValue` dispatch on the
   recipient's / form result's `blockchain`.
   The form allows exactly the chains with an own address (`ownAddresses`): a recipient on any other
-  chain is `UNSUPPORTED_BLOCKCHAIN`, the recipient's chain picks the asset, and suggestions are built
+  chain is `UNSUPPORTED_BLOCKCHAIN` — except a Flame address (mainnet or testnet) in a wallet with no
+  Flame, which is `INVALID_WALLET_ADDRESS`, since Flame is a devnet-only chain for now; the recipient's chain picks the asset, and suggestions are built
   per allowed chain (Flame ones are the other devnet portfolios). Today a devnet wallet therefore
   sends only FLM to a Flame address and any other wallet only BTC to a BTC address. A zero-rated
   asset (FLM, any testnet asset) is entered in crypto only.
   `FlameEstimator` spends the largest readable native-flavor outputs first, pays the fixed
   `FLAME_TRANSFER_FEE` (1000 sparks; the node has no fee market yet) with a `FLAME_TRANSFER_GAS`
-  limit of 1,000,000, and returns change to the wallet's own address `{0,0}`, the only predicate the
-  scan watches. A proof outlives its tip by one block, so `FlameTransactionTemplate.send` fetches
+  limit of 1,000,000, and returns change to the wallet's own address `{0,0}`, the only address the
+  wallet reads. A proof outlives its tip by one block, so `FlameTransactionTemplate.send` fetches
   `proofs`, builds and calls `submit_tx` back to back, and rebuilds once on `MEMPOOL_REJECTED`.
   The amount step shows an encrypted memo field for a Flame recipient only (`AmountView.setMemo`);
-  the form clamps it to `FLAME_MEMO_MAX_BYTES` (8102 UTF-8 bytes, the library's limit) and drops it
+  the form clamps it to the SDK's `memoMaxBytes()` (UTF-8 bytes that fit the note's cell) and drops it
   when the recipient changes. The template puts it on the recipient's output only, never on change;
   the library seals it into that output's note, so only the recipient's view key reads it.
   The sender therefore can't read its own memo back from the chain, and a sent memo is deliberately
   not stored anywhere: history shows only a received memo, from the opened note
   (`FlameOutputAmount.memo` → `FlameActivityItem.memo`); the confirmation screen shows the memo
   being sent.
-  Spent inputs stay unspent in the scan until the transfer confirms: `pending-spends.ts` holds them
-  back from the next estimate in memory, until the scan reports them spent. There is no explorer
+  The node admits a transfer synchronously, so `useSendAssetTransfer` awaits a refetch of the
+  balance and the next `unspent` already leaves the spent inputs out; there is no local broadcast
+  cache like `BroadcastedBtcTx`. There is no explorer
   link and no contact saving for a Flame recipient (contacts restore every address as BTC).
 - History marks a transaction as sent when it spends any of the wallet's outputs, even unreadable
   ones — not when the spent sum is positive.
-- **No counterparty in Flame history.** `scan` returns only outputs on the wallet's own predicate,
-  and the chain holds predicates, not addresses, so neither the sender of a receipt nor the
-  recipient of a send is known: the list and `FlameTransactionScreen` show an "Unknown
-  sender/recipient" placeholder. The predicate is the address's spending key `S`, and its tracking
-  address is `bech32m("tc", S)` (`FlameAddress.toTracking`, no native call). The receive modal
-  bolds the data the full address shares with it and dims the rest (`FlameAddress.splitByTracking`): 51 characters,
-  occasionally 52 when the view key's first bits happen to match.
-- Core tests run with a fake `flameSdk` installed by `packages/core/test/setup-crypto.ts` (creating a
-  devnet portfolio calls `viewKey` and `address`); Flame-specific tests swap in their own mock.
+- **Counterparties in Flame history.** Each `history` entry lists the other side as
+  `others_spent` (whose coins it spent) and `others_created` (whom it created coins for), each a
+  predicate with its tracking address (`t1…` / `f1…`; schema default `[]` for an older node).
+  `toFlameActivityItem` follows flame-lib's CLI wallet: a receipt's sender is the first of
+  `others_spent`; a send's recipient is the first of `others_created`, but only when no one
+  else's coins were spent — otherwise those outputs are the other payer's change, and no recipient
+  is shown. Only a tracking address is known, never the full receiving one (its encryption key is
+  not on chain). `findPortfolioMetaByAddress` matches it against a devnet portfolio's
+  `trackingAddress`, so the list (`resolveActivityCounterparty`) and `FlameTransactionScreen` name an
+  own wallet, and otherwise show the shortened address; with none, the "Unknown sender/recipient"
+  placeholder stays. The receive modal (`QRCodeBlock.trackingAddress`) bolds the tracking prefix of
+  the receiving address and dims the encryption key after it.
+- Core and ux tests run with a fake `flameSdk` installed by their `test/setup-crypto.ts` (creating a
+  devnet portfolio calls `viewKey` and `address`; ux's fake tells a receiving address apart by its
+  two HRP parts, for the send form); Flame-specific tests swap in their own mock.
 - **Desktop has no Flame yet** (planned before the release): it installs a rejecting `flameSdk` mock
-  (`unsupportedFlameSdk`) and nothing else — no flag, no filtering, so a synced devnet portfolio
+  (`unsupportedFlameSdk`, where `validateReceivingAddress` answers `false` so BTC address detection
+  keeps working) and nothing else — no flag, no filtering, so a synced devnet portfolio
   reaches the desktop UI as is.
 - Open: release builds with R8 have not been tried; JNA and the generated `com.flame.wallet` classes
   will need keep rules before the module is used outside a dev-client.

@@ -51,7 +51,8 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
 
     const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
     const chains = useSendChains();
-    const fromAddress = (isFlame ? chains.flame?.wallet.address : chains.btc?.wallet.address) ?? '';
+    const fromAddress =
+        (isFlame ? chains.flame?.wallet.receivingAddress : chains.btc?.wallet.address) ?? '';
 
     const { data: txTemplate, error: estimateQueryError } = useEstimateAssetTransfer(
         confirmationResult,

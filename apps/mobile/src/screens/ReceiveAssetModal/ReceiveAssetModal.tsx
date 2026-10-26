@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
 
 import type { CryptoAsset, Recipient } from '@safely/core';
-import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET, FlameAddress } from '@safely/core';
+import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET } from '@safely/core';
 import type { PortfolioWallets } from '@safely/ux';
 import {
     useActiveFlameWallet,
@@ -46,20 +46,17 @@ const BtcReceive = () => {
 const FlameReceive = () => {
     const wallet = useActiveFlameWallet();
     const networkBadge = useActivePortfolioNetworkBadge();
-    const tracking = FlameAddress.toTracking(wallet.predicate, wallet.network);
 
     return (
         <>
             <QRCodeBlock
-                address={wallet.address}
+                address={wallet.receivingAddress}
                 logo={<FlameLogo background="black" size="large" />}
                 isWatchOnly={false}
                 networkBadge={networkBadge}
-                addressParts={
-                    tracking ? FlameAddress.splitByTracking(wallet.address, tracking) : undefined
-                }
+                trackingAddress={wallet.trackingAddress}
             />
-            <ReceiveActions address={wallet.address} />
+            <ReceiveActions address={wallet.receivingAddress} />
         </>
     );
 };

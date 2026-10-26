@@ -21,7 +21,9 @@ export function mapPortfolioToSuggestions(
         const flame = resolveFlameWallet(portfolio);
         if (isActivePortfolio || !flame) return [];
 
-        return [{ id: portfolio.id.toString(), address: flame.address, meta: portfolio.meta }];
+        return [
+            { id: portfolio.id.toString(), address: flame.receivingAddress, meta: portfolio.meta }
+        ];
     }
 
     if (portfolio.type === PortfolioType.WATCH_ONLY) {

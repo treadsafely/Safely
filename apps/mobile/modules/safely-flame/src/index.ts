@@ -3,12 +3,13 @@ import { requireNativeModule } from 'expo-modules-core';
 export type FlameNetwork = 'mainnet' | 'testnet';
 
 export interface FlameAddress {
-    address: string;
+    receivingAddress: string;
+    trackingAddress: string;
     predicate: Uint8Array;
 }
 
 export type FlameContractValue =
-    | { type: 'clear'; qty: string; flavor: Uint8Array }
+    | { type: 'clear'; qty: string; flavor: Uint8Array; isNative: boolean }
     | { type: 'confidential' }
     | { type: 'other' };
 
@@ -27,7 +28,7 @@ export type FlameNoteFailure =
     | 'notConfidential';
 
 export type FlameNoteOpening =
-    | { opened: true; qty: string; flavor: Uint8Array; memo: Uint8Array }
+    | { opened: true; qty: string; flavor: Uint8Array; isNative: boolean; memo: Uint8Array }
     | { opened: false; failure: FlameNoteFailure }
     | { opened: false; failure: 'error'; error: FlameError };
 
@@ -105,6 +106,8 @@ interface SafelyFlameNativeModule {
         branch: number,
         index: number
     ): Promise<NativeOutcome<FlameAddress>>;
+    validateReceivingAddress(address: string, network: FlameNetwork): NativeOutcome<boolean>;
+    memoMaxBytes(): number;
     decodeContracts(contracts: Uint8Array[]): Promise<NativeOutcome<NativeContractDecoding[]>>;
     openNotes(
         viewKey: string,
@@ -164,13 +167,15 @@ const toPlainUint8Array = (bytes: Uint8Array): Uint8Array =>
 const toFlameError = ({ code, reason }: NativeFailure): FlameError =>
     new FlameError(kindByCode[code] ?? 'internal', reason);
 
-const unwrap = async <T>(outcome: Promise<NativeOutcome<T>>): Promise<T> => {
-    const result = await outcome;
+const unwrapSync = <T>(result: NativeOutcome<T>): T => {
     if (result.ok) {
         return result.value;
     }
     throw toFlameError(result);
 };
+
+const unwrap = async <T>(outcome: Promise<NativeOutcome<T>>): Promise<T> =>
+    unwrapSync(await outcome);
 
 export async function deriveViewKey(seed: Uint8Array, network: FlameNetwork): Promise<string> {
     assertNetwork(network);
@@ -192,6 +197,15 @@ export async function address(
     assertUint32('branch', branch);
     assertUint32('index', index);
     return unwrap(native.address(viewKey, network, branch, index));
+}
+
+export function validateReceivingAddress(receivingAddress: string, network: FlameNetwork): boolean {
+    assertNetwork(network);
+    return unwrapSync(native.validateReceivingAddress(receivingAddress, network));
+}
+
+export function memoMaxBytes(): number {
+    return native.memoMaxBytes();
 }
 
 export async function decodeContracts(contracts: Uint8Array[]): Promise<FlameContractDecoding[]> {

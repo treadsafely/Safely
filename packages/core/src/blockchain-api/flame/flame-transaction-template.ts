@@ -34,11 +34,7 @@ export class FlameTransactionTemplate {
         if (this.request.change <= 0n) {
             return [recipient];
         }
-        return [recipient, { address: this.wallet.address, qty: this.request.change }];
-    }
-
-    public get spentOutputIds(): string[] {
-        return this.inputs.map(input => input.id);
+        return [recipient, { address: this.wallet.receivingAddress, qty: this.request.change }];
     }
 
     constructor(

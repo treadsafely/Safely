@@ -98,7 +98,7 @@ private func noteFailure(_ failure: NoteFailure) -> String {
 // u64 amounts cross the bridge as decimal strings: a JS number loses precision above 2^53.
 private func contractValue(_ value: ContractValue) -> [String: Any] {
     switch value {
-    case .clear(let qty, let flavor): return ["type": "clear", "qty": String(qty), "flavor": flavor]
+    case .clear(let qty, let flavor, let isNative): return ["type": "clear", "qty": String(qty), "flavor": flavor, "isNative": isNative]
     case .confidential: return ["type": "confidential"]
     case .other: return ["type": "other"]
     }
@@ -131,8 +131,18 @@ public class SafelyFlameModule: Module {
             outcome {
                 let wallet = try Wallet.fromViewKey(viewKey: viewKey, network: network(networkName), nextIndex: 0)
                 let issued = try wallet.address(path: KeyPath(branch: uint32(branch), index: uint32(index)))
-                return ["address": issued.address, "predicate": issued.predicate]
+                return ["receivingAddress": issued.receivingAddress, "trackingAddress": issued.trackingAddress, "predicate": issued.predicate]
             }
+        }
+
+        Function("validateReceivingAddress") { (address: String, networkName: String) -> [String: Any] in
+            outcome {
+                try FlameWallet.validateReceivingAddress(address: address, network: network(networkName))
+            }
+        }
+
+        Function("memoMaxBytes") { () -> Int in
+            Int(FlameWallet.memoMaxBytes())
         }
 
         AsyncFunction("decodeContracts") { (contracts: [Data]) -> [String: Any] in
@@ -196,6 +206,7 @@ public class SafelyFlameModule: Module {
                             "opened": true,
                             "qty": String(received.opening.qty),
                             "flavor": received.opening.flavor,
+                            "isNative": received.isNative,
                             "memo": received.memo
                         ]
                     } catch FlameError.Note(let failure, _) {

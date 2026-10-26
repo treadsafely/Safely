@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { FLAME_MEMO_MAX_BYTES, clampFlameMemo } from '../../../src';
+import { clampFlameMemo } from '../../../src';
+
+const FLAME_MEMO_MAX_BYTES = globalThis.flameSdk.memoMaxBytes();
 
 describe('clampFlameMemo', () => {
     it('keeps a memo that fits', () => {

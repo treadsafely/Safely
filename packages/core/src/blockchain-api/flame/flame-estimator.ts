@@ -35,24 +35,15 @@ export class FlameEstimator implements IIdentifiable {
         this.logger = logger?.child('FlameEstimator');
     }
 
-    public getMaxSendValue(
-        outputs: FlameOutputs,
-        excludedIds: ReadonlySet<string>
-    ): FlameAssetAmount {
-        const total = this.spendable(outputs, excludedIds).reduce((acc, o) => acc + qtyOf(o), 0n);
+    public getMaxSendValue(outputs: FlameOutputs): FlameAssetAmount {
+        const total = this.spendable(outputs).reduce((acc, o) => acc + qtyOf(o), 0n);
         const max = total - FLAME_TRANSFER_FEE;
         return FlameAssetAmount.fromWeiAmount(max > 0n ? max : 0n);
     }
 
-    public estimate(
-        request: FlameSendRequest,
-        outputs: FlameOutputs,
-        excludedIds: ReadonlySet<string>
-    ): FlameTransactionTemplate {
-        const spendable = this.spendable(outputs, excludedIds);
-        const amount = request.isMax
-            ? this.getMaxSendValue(outputs, excludedIds).weiAmount
-            : request.amount;
+    public estimate(request: FlameSendRequest, outputs: FlameOutputs): FlameTransactionTemplate {
+        const spendable = this.spendable(outputs);
+        const amount = request.isMax ? this.getMaxSendValue(outputs).weiAmount : request.amount;
         if (amount <= 0n) {
             throw new FlameInsufficientBalanceError();
         }
@@ -82,10 +73,8 @@ export class FlameEstimator implements IIdentifiable {
         );
     }
 
-    private spendable(outputs: FlameOutputs, excludedIds: ReadonlySet<string>): FlameOutput[] {
-        return outputs.spendable
-            .filter(output => !excludedIds.has(output.id))
-            .sort(byQtyDescending);
+    private spendable(outputs: FlameOutputs): FlameOutput[] {
+        return [...outputs.spendable].sort(byQtyDescending);
     }
 
     private selectInputs(spendable: FlameOutput[], amount: bigint): FlameOutput[] {

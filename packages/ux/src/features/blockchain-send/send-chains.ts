@@ -17,7 +17,6 @@ import {
     useActivePortfolioEntities,
     useBtcRatedAmount,
     useBtcWalletUtxo,
-    useFlamePendingSpends,
     useFlameRatedAmount,
     useFlameWalletOutputs
 } from '../../entities';
@@ -37,7 +36,6 @@ export type FlameSendChain = {
     wallet: FlameWallet;
     estimator: FlameEstimator | null;
     outputs: FlameOutputs | undefined;
-    pendingIds: ReadonlySet<string>;
     ratedAsset: RatedCryptoAssetAmount | undefined;
 };
 
@@ -74,12 +72,11 @@ function useFlameSendChain(): FlameSendChain | null {
 
     const estimator = useFlameEstimator(wallet);
     const outputs = useFlameWalletOutputs(wallet).data ?? undefined;
-    const pendingIds = useFlamePendingSpends(wallet?.id.toString());
     const ratedAsset = useFlameRatedAmount(wallet).data ?? undefined;
 
     return useMemo(
-        () => wallet && { wallet, estimator, outputs, pendingIds, ratedAsset },
-        [wallet, estimator, outputs, pendingIds, ratedAsset]
+        () => wallet && { wallet, estimator, outputs, ratedAsset },
+        [wallet, estimator, outputs, ratedAsset]
     );
 }
 

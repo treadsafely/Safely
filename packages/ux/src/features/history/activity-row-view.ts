@@ -1,11 +1,19 @@
-import type { Contact, CryptoFiatRate, NumberFormatter, Portfolio } from '@safely/core';
+import type {
+    Contact,
+    CryptoFiatRate,
+    DatedGroup,
+    FlameActivityItem,
+    NumberFormatter,
+    Portfolio
+} from '@safely/core';
 import { GROUP_LABEL, assertUnreachable, ellipsisMiddle } from '@safely/core';
 
-import type { ActivityRowView, HistoryGroupView } from './types';
+import type { ActivityCounterparty, ActivityRowView, HistoryGroupView } from './types';
 import type {
     ActivityItem,
     ActivityItemsDatedGroup,
     BtcActivityItem,
+    FlameActivityItemsDatedGroup,
     OrderActivityItem
 } from '../../entities';
 import {
@@ -43,28 +51,28 @@ const timeFormatDetailsByGroupLabel: Record<GROUP_LABEL, TimeFormatDetails> = {
 const formatTimestampLabel = (
     timestamp: number,
     timeFormatDetails: TimeFormatDetails,
-    context: ActivityRowContext
+    context: Pick<ActivityRowContext, 'timeFormatter' | 'dayMonthFormatter'>
 ): string =>
     timeFormatDetails === 'time'
         ? context.timeFormatter.format(timestamp)
         : context.dayMonthFormatter.format(timestamp);
 
-const resolveCounterparty = (
+export function resolveActivityCounterparty(
     address: string,
-    context: ActivityRowContext
-): ActivityRowView['counterparty'] => {
-    const contactMeta = findContactMetaByAddress(context.contacts, address);
+    known: Pick<ActivityRowContext, 'contacts' | 'portfolios'>
+): ActivityCounterparty {
+    const contactMeta = findContactMetaByAddress(known.contacts, address);
     if (contactMeta) {
         return { kind: 'contact', meta: contactMeta };
     }
 
-    const portfolioMeta = findPortfolioMetaByAddress(context.portfolios, address);
+    const portfolioMeta = findPortfolioMetaByAddress(known.portfolios, address);
     if (portfolioMeta) {
         return { kind: 'portfolio', meta: portfolioMeta };
     }
 
     return { kind: 'address', label: ellipsisMiddle(address, 6) };
-};
+}
 
 const buildTransactionRow = (
     activity: BtcActivityItem,
@@ -111,7 +119,7 @@ const buildTransactionRow = (
             ? null
             : formatTimestampLabel(activity.timestamp, timeFormatDetails, context),
         isPending,
-        counterparty: resolveCounterparty(counterpartyAddress, context)
+        counterparty: resolveActivityCounterparty(counterpartyAddress, context)
     };
 };
 
@@ -191,10 +199,15 @@ function buildActivityRowView(
     }
 }
 
-export function buildHistoryGroupViews(
-    groups: ActivityItemsDatedGroup[],
-    context: ActivityRowContext
-): HistoryGroupView[] {
+function buildGroupViews<TActivity>(
+    groups: DatedGroup<TActivity, ActivityItemsDatedGroup['meta']>[],
+    context: Pick<ActivityRowContext, 't' | 'groupFormatter'>,
+    buildRow: (
+        activity: TActivity,
+        groupKey: string,
+        timeFormatDetails: TimeFormatDetails
+    ) => ActivityRowView<TActivity>
+): HistoryGroupView<TActivity>[] {
     return groups.map(group => {
         const { key, meta, items } = group;
         const timeFormatDetails = timeFormatDetailsByGroupLabel[meta.label];
@@ -202,9 +215,78 @@ export function buildHistoryGroupViews(
         return {
             key,
             title: getDateGroupTitle(meta, context.t, context.groupFormatter),
-            rows: items.map(activity =>
-                buildActivityRowView(activity, key, timeFormatDetails, context)
-            )
+            rows: items.map(activity => buildRow(activity, key, timeFormatDetails))
         };
     });
+}
+
+export function buildHistoryGroupViews(
+    groups: ActivityItemsDatedGroup[],
+    context: ActivityRowContext
+): HistoryGroupView[] {
+    return buildGroupViews(groups, context, (activity, groupKey, timeFormatDetails) =>
+        buildActivityRowView(activity, groupKey, timeFormatDetails, context)
+    );
+}
+
+export type FlameActivityRowContext = Omit<ActivityRowContext, 'rate' | 'showFullSentAmount'>;
+
+const flameTitleKeys = {
+    pending: {
+        sent: 'history.transactionInfo.sending',
+        received: 'history.transactionInfo.receiving'
+    },
+    confirmed: {
+        sent: 'history.transactionInfo.sent',
+        received: 'history.transactionInfo.received'
+    }
+} as const;
+
+const buildFlameRow = (
+    activity: FlameActivityItem,
+    groupKey: string,
+    timeFormatDetails: TimeFormatDetails,
+    context: FlameActivityRowContext
+): ActivityRowView<FlameActivityItem> => {
+    const { isInitiator, isPending, timestamp, counterpartyAddress } = activity;
+    const direction = isInitiator ? 'sent' : 'received';
+
+    const counterparty: ActivityCounterparty = counterpartyAddress
+        ? resolveActivityCounterparty(counterpartyAddress, context)
+        : {
+              kind: 'address',
+              label: context.t(
+                  isInitiator
+                      ? 'history.transactionInfo.unknownRecipient'
+                      : 'history.transactionInfo.unknownSender'
+              )
+          };
+
+    return {
+        key: `${groupKey}-${activity.txid}`,
+        activity,
+        title: context.t(flameTitleKeys[isPending ? 'pending' : 'confirmed'][direction]),
+        amountSign: isInitiator ? '−' : '+',
+        formattedValue: activity.hasUnreadableOutputs
+            ? '–'
+            : activity.value.format(context.numberFormatter),
+        valueTone: isInitiator ? 'primary' : 'accentGreen',
+        formattedFiat: null,
+        timestampLabel:
+            isPending || timestamp === null
+                ? null
+                : formatTimestampLabel(timestamp, timeFormatDetails, context),
+        isPending,
+        counterparty,
+        note: activity.memo
+    };
+};
+
+export function buildFlameHistoryGroupViews(
+    groups: FlameActivityItemsDatedGroup[],
+    context: FlameActivityRowContext
+): HistoryGroupView<FlameActivityItem>[] {
+    return buildGroupViews(groups, context, (activity, groupKey, timeFormatDetails) =>
+        buildFlameRow(activity, groupKey, timeFormatDetails, context)
+    );
 }

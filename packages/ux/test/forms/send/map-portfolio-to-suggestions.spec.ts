@@ -35,7 +35,7 @@ const devnet = {
     type: PortfolioType.FLAME_DEVNET,
     id: id('dev'),
     meta: { name: 'Devnet', icon: { type: 'emoji', value: '🔥' } },
-    flame: { wallets: [{ address: 'tf1-dev' }] }
+    flame: { wallets: [{ receivingAddress: 't1-dev' }] }
 } as unknown as Portfolio;
 
 const name = (n: number) => `Wallet ${n}`;
@@ -50,7 +50,7 @@ describe('mapPortfolioToSuggestions', () => {
 
     it('suggests only devnet wallets for Flame', () => {
         expect(mapPortfolioToSuggestions(devnet, undefined, name, BLOCKCHAIN_NAME.FLAME)).toEqual([
-            { id: 'dev', address: 'tf1-dev', meta: devnet.meta }
+            { id: 'dev', address: 't1-dev', meta: devnet.meta }
         ]);
         expect(mapPortfolioToSuggestions(bip39, undefined, name, BLOCKCHAIN_NAME.FLAME)).toEqual(
             []

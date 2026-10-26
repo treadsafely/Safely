@@ -10,6 +10,8 @@ import com.flame.wallet.TransferOutput
 import com.flame.wallet.TransferRequest
 import com.flame.wallet.Wallet
 import com.flame.wallet.decodeContract
+import com.flame.wallet.memoMaxBytes
+import com.flame.wallet.validateReceivingAddress
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
@@ -73,7 +75,7 @@ private fun noteFailure(failure: NoteFailure): String = when (failure) {
 
 // u64 amounts cross the bridge as decimal strings: a JS number loses precision above 2^53.
 private fun contractValue(value: ContractValue): Map<String, Any> = when (value) {
-    is ContractValue.Clear -> mapOf("type" to "clear", "qty" to value.qty.toString(), "flavor" to value.flavor)
+    is ContractValue.Clear -> mapOf("type" to "clear", "qty" to value.qty.toString(), "flavor" to value.flavor, "isNative" to value.isNative)
     is ContractValue.Confidential -> mapOf("type" to "confidential")
     is ContractValue.Other -> mapOf("type" to "other")
 }
@@ -107,9 +109,21 @@ class SafelyFlameModule : Module() {
             outcome {
                 Wallet.fromViewKey(viewKey, network(networkName), 0u).use { wallet ->
                     val issued = wallet.address(KeyPath(uint32(branch), uint32(index)))
-                    mapOf("address" to issued.address, "predicate" to issued.predicate)
+                    mapOf(
+                        "receivingAddress" to issued.receivingAddress,
+                        "trackingAddress" to issued.trackingAddress,
+                        "predicate" to issued.predicate
+                    )
                 }
             }
+        }
+
+        Function("validateReceivingAddress") { address: String, networkName: String ->
+            outcome { validateReceivingAddress(address, network(networkName)) }
+        }
+
+        Function("memoMaxBytes") {
+            memoMaxBytes().toLong()
         }
 
         AsyncFunction("decodeContracts") { contracts: List<ByteArray> ->
@@ -172,6 +186,7 @@ class SafelyFlameModule : Module() {
                                 "opened" to true,
                                 "qty" to received.opening.qty.toString(),
                                 "flavor" to received.opening.flavor,
+                                "isNative" to received.isNative,
                                 "memo" to received.memo
                             )
                         } catch (error: FlameException.Note) {

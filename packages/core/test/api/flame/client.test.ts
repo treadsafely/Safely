@@ -4,6 +4,7 @@ import { FLAME_RPC_ERROR_CODE, FlameApi, FlameApiError } from '../../../src';
 
 const RPC_URL = 'http://flame.test/';
 const PREDICATE = 'ab'.repeat(32);
+const ADDRESS = 'tf1address';
 
 const respond = (body: unknown) =>
     vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(body))));
@@ -13,22 +14,69 @@ describe('FlameApi', () => {
         vi.unstubAllGlobals();
     });
 
-    it('posts a positional JSON-RPC scan and returns the validated result', async () => {
-        const result = { tip_height: 42, outputs: [] };
+    it('posts a positional JSON-RPC unspent call and returns the validated result', async () => {
+        const result = {
+            tip: { hash: 'cd'.repeat(32), height: 42, contract_root: 'ef'.repeat(32) },
+            predicate: PREDICATE,
+            outputs: [
+                {
+                    id: '01'.repeat(32),
+                    txid: '02'.repeat(32),
+                    bytes: 'AQID',
+                    height: 40,
+                    time: 9,
+                    proof: 'BAU='
+                },
+                { id: '03'.repeat(32), txid: '04'.repeat(32), bytes: 'AQID', received_at: 10 }
+            ]
+        };
         const fetchMock = respond({ jsonrpc: '2.0', id: 1, result });
         vi.stubGlobal('fetch', fetchMock);
 
-        await expect(new FlameApi({ rpcUrl: RPC_URL }).scan([PREDICATE], 7)).resolves.toEqual(
-            result
-        );
+        await expect(new FlameApi({ rpcUrl: RPC_URL }).unspent(ADDRESS, true)).resolves.toEqual({
+            outputs: [
+                { id: '01'.repeat(32), bytes: 'AQID' },
+                { id: '03'.repeat(32), bytes: 'AQID' }
+            ]
+        });
 
         const [url, init] = fetchMock.mock.calls[0]!;
         expect(url).toBe('http://flame.test/');
         expect(JSON.parse(init!.body as string)).toEqual({
             jsonrpc: '2.0',
             id: 1,
-            method: 'scan',
-            params: [[PREDICATE], 7]
+            method: 'unspent',
+            params: [ADDRESS, true]
+        });
+    });
+
+    it('pages history by cursor and keeps the pending entries', async () => {
+        const pending = [
+            { txid: '05'.repeat(32), received_at: 11, fee_sparks: '1000', created: [], spent: [] }
+        ];
+        const result = {
+            tip: { hash: 'cd'.repeat(32), height: 42, contract_root: 'ef'.repeat(32) },
+            predicates: [PREDICATE],
+            entries: [],
+            older: null,
+            newer: 'newer:42',
+            has_newer: false,
+            pending
+        };
+        const fetchMock = respond({ jsonrpc: '2.0', id: 1, result });
+        vi.stubGlobal('fetch', fetchMock);
+
+        const page = await new FlameApi({ rpcUrl: RPC_URL }).history([ADDRESS], {
+            cursor: 'older:12:3',
+            limit: 25,
+            withPending: false
+        });
+
+        expect(page.pending).toEqual([{ ...pending[0], others_spent: [], others_created: [] }]);
+        expect(page.older).toBeNull();
+        expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).toMatchObject({
+            method: 'history',
+            params: [[ADDRESS], 'older:12:3', 25, false]
         });
     });
 
@@ -38,26 +86,30 @@ describe('FlameApi', () => {
             respond({
                 jsonrpc: '2.0',
                 id: 1,
-                error: { code: FLAME_RPC_ERROR_CODE.LIMIT_EXCEEDED, message: 'too many' }
+                error: { code: FLAME_RPC_ERROR_CODE.INVALID_ADDRESS, message: 'bad address' }
             })
         );
 
-        const scan = new FlameApi({ rpcUrl: RPC_URL }).scan([PREDICATE]);
+        const unspent = new FlameApi({ rpcUrl: RPC_URL }).unspent(ADDRESS);
 
-        await expect(scan).rejects.toBeInstanceOf(FlameApiError);
-        await expect(scan).rejects.toMatchObject({
-            message: 'too many',
-            rpcCode: FLAME_RPC_ERROR_CODE.LIMIT_EXCEEDED
+        await expect(unspent).rejects.toBeInstanceOf(FlameApiError);
+        await expect(unspent).rejects.toMatchObject({
+            message: 'bad address',
+            rpcCode: FLAME_RPC_ERROR_CODE.INVALID_ADDRESS
         });
     });
 
-    it('rejects a result that does not match the scan schema', async () => {
+    it('rejects a result that does not match the unspent schema', async () => {
         vi.stubGlobal(
             'fetch',
-            respond({ jsonrpc: '2.0', id: 1, result: { tip_height: -1, outputs: [] } })
+            respond({
+                jsonrpc: '2.0',
+                id: 1,
+                result: { outputs: [{ id: 'x', bytes: 'AQID' }] }
+            })
         );
 
-        await expect(new FlameApi({ rpcUrl: RPC_URL }).scan([PREDICATE])).rejects.toBeInstanceOf(
+        await expect(new FlameApi({ rpcUrl: RPC_URL }).unspent(ADDRESS)).rejects.toBeInstanceOf(
             FlameApiError
         );
     });

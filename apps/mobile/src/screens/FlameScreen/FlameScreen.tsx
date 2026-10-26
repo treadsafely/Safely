@@ -22,7 +22,7 @@ const FlameContent = () => {
     const { theme } = useUnistyles();
     const formatter = useNumberFormatter();
     const networkBadge = useActivePortfolioNetworkBadge();
-    const { address } = useActiveFlameWallet();
+    const { receivingAddress } = useActiveFlameWallet();
     const { data: ratedAmount } = useActiveFlameRatedAmount();
 
     const onNavigateToActivityItem = useCallback(
@@ -41,7 +41,7 @@ const FlameContent = () => {
                 gradientColor={theme.colors.brand.flame}
                 symbol={FLAME_ASSET.symbol}
                 networkBadge={networkBadge}
-                address={address}
+                address={receivingAddress}
                 amount={ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' })}
                 fiatAmount={fiatAmount}
                 actions={<HomeActions />}

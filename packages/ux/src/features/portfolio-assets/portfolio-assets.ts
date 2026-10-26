@@ -30,7 +30,10 @@ export function resolvePortfolioAddresses(wallets: PortfolioWallets): PortfolioA
     }
 
     if (wallets.flame) {
-        addresses.push({ blockchain: BLOCKCHAIN_NAME.FLAME, address: wallets.flame.address });
+        addresses.push({
+            blockchain: BLOCKCHAIN_NAME.FLAME,
+            address: wallets.flame.receivingAddress
+        });
     }
 
     return addresses;

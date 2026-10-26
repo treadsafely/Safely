@@ -26,7 +26,7 @@ export function useSendForm(props: UseSendFormOptions): SendFormView {
 
     const { btc, flame } = useSendChains();
     const btcAddress = btc?.wallet.address;
-    const flameAddress = flame?.wallet.address;
+    const flameAddress = flame?.wallet.receivingAddress;
 
     const ownAddresses = useMemo<OwnAddresses>(
         () => ({

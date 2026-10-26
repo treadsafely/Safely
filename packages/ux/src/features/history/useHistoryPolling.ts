@@ -1,56 +1,22 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import type { InfiniteData } from '@tanstack/react-query';
 
-import type { IActivityFilters } from '../../entities';
+import type { NewActivityPollingParams } from './useNewActivityPolling';
+import { useNewActivityPolling } from './useNewActivityPolling';
+import type { ActivityPage, IActivityFilters, IActivityPageParam } from '../../entities';
 import { assetKeys, useHistory } from '../../entities';
-import { useInterval } from '../../shared';
 
-const POLL_INTERVAL_MS = 3000;
-
-export type UseHistoryPollingParams = {
+export type UseHistoryPollingParams = NewActivityPollingParams & {
     filters?: IActivityFilters;
-    isEnabled?: boolean;
-    onNewActivity: () => void;
 };
 
+const firstActivityKey = (data: InfiniteData<ActivityPage, IActivityPageParam>) =>
+    data.pages[0]?.items[0]?.key;
+
 export function useHistoryPolling(params: UseHistoryPollingParams): void {
-    const { filters = {}, isEnabled = true, onNewActivity } = params;
+    const { filters = {}, ...polling } = params;
 
-    const client = useQueryClient();
-    const { data, refetch } = useHistory(filters);
-    const isLoaded = data !== undefined;
-    const firstActivityKey = data?.pages[0]?.items[0]?.key;
-
-    const isRefetching = useRef(false);
-    const latest = useRef({ isLoaded, firstActivityKey, onNewActivity });
-
-    useEffect(() => {
-        latest.current = { isLoaded, firstActivityKey, onNewActivity };
+    useNewActivityPolling(useHistory(filters), firstActivityKey, {
+        ...polling,
+        invalidateOnNew: assetKeys.all.toKey()
     });
-
-    useInterval(
-        () => {
-            if (isRefetching.current || !latest.current.isLoaded) {
-                return;
-            }
-
-            isRefetching.current = true;
-            const previousKey = latest.current.firstActivityKey;
-
-            void refetch()
-                .then(result => {
-                    const nextKey = result.data?.pages[0]?.items[0]?.key;
-
-                    if (nextKey !== undefined && nextKey !== previousKey) {
-                        void client.invalidateQueries({ queryKey: assetKeys.all.toKey() });
-                        latest.current.onNewActivity();
-                    }
-                })
-                .catch(() => undefined)
-                .finally(() => {
-                    isRefetching.current = false;
-                });
-        },
-        isEnabled ? POLL_INTERVAL_MS : null
-    );
 }

@@ -58,7 +58,12 @@ const devnet = sPortfolioFlameDevnet.toJson({
     id: { mnemonicHash: 'devnet-hash' },
     meta: { ...meta, name: 'Devnet' },
     encryptedSecret: 'encrypted-devnet-mnemonic',
-    flame: { viewKey: 'testview1example', address: 'tf1example', predicate: 'ab'.repeat(32) }
+    flame: {
+        viewKey: 'testview1example',
+        receivingAddress: 't1examplei1key',
+        trackingAddress: 't1example',
+        predicate: 'ab'.repeat(32)
+    }
 });
 
 function createReplicas() {

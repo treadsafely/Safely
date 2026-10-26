@@ -6,7 +6,6 @@ import {
     FLAME_ASSET,
     FiatAsset,
     FiatAssetId,
-    FLAME_MEMO_MAX_BYTES,
     FlameAssetAmount,
     PortfolioNetworkType,
     Rate,
@@ -18,8 +17,11 @@ import { makeMockAsset, makeMockInput, startActor } from './test-helpers';
 import { SendFormError } from '../../../src/features/forms/send/errors';
 
 const FLAME_ADDRESS =
-    'tf15gtu9mtvytf2w86z7ypdxx3c78fmt95elvx52hlzrlvfs7gw2dj0gqceswac8y9vqzxskedwllg8tf8jpc055vtshxdha59gvggpvasqpc3mr';
-const OWN_FLAME_ADDRESS = 'tf1own';
+    't1tz5t5l8fu7qvx2az3mxuzk2s3690ejm5t9kx720efmls2546gvmqdxl7qzi1ve6sv7gvjqs6elps95lx78g0vkz55psulpa5fdga8jy9mh38mfpq8pwqaf';
+const MAINNET_FLAME_ADDRESS =
+    'f1tz5t5l8fu7qvx2az3mxuzk2s3690ejm5t9kx720efmls2546gvmqxyvkxme1ve6sv7gvjqs6elps95lx78g0vkz55psulpa5fdga8jy9mh38mfpqww34vv';
+const OWN_FLAME_ADDRESS = 't1owni1own';
+const FLAME_MEMO_MAX_BYTES = globalThis.flameSdk.memoMaxBytes();
 
 const USD = new FiatAsset(new FiatAssetId('USD'), 'US Dollar');
 
@@ -144,12 +146,21 @@ describe('sendFormMachine — devnet wallet', () => {
 });
 
 describe('sendFormMachine — BTC wallet on testnet', () => {
-    it('rejects a Flame address', () => {
+    it('rejects a Flame address as an invalid one', () => {
         const actor = startActor(makeBtcTestnetInput());
         actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
 
         expect(actor.getSnapshot().context.errors.recipient).toBe(
-            SendFormError.UNSUPPORTED_BLOCKCHAIN
+            SendFormError.INVALID_WALLET_ADDRESS
+        );
+    });
+
+    it('rejects a mainnet Flame address on a mainnet BTC wallet as an invalid one', () => {
+        const actor = startActor(makeMockInput({ ratedAssets: [makeMockAsset()] }));
+        actor.send({ type: 'SET_RECIPIENT', value: MAINNET_FLAME_ADDRESS });
+
+        expect(actor.getSnapshot().context.errors.recipient).toBe(
+            SendFormError.INVALID_WALLET_ADDRESS
         );
     });
 

@@ -18,11 +18,11 @@ type QRCodeBlockProps = {
     logo: ReactNode;
     isWatchOnly: boolean;
     networkBadge: PortfolioNetworkBadge | null;
-    addressParts?: { head: string; shared: string; rest: string };
+    trackingAddress?: string;
 };
 
 export const QRCodeBlock = (props: QRCodeBlockProps) => {
-    const { address, logo, isWatchOnly, networkBadge, addressParts } = props;
+    const { address, logo, isWatchOnly, networkBadge, trackingAddress } = props;
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -58,11 +58,12 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                     variant="bodyLMono"
                     color="constantBlack"
                 >
-                    {addressParts ? (
+                    {trackingAddress && address.startsWith(trackingAddress) ? (
                         <>
-                            {addressParts.head}
-                            <RNText style={styles.addressShared}>{addressParts.shared}</RNText>
-                            <RNText style={styles.addressRest}>{addressParts.rest}</RNText>
+                            <RNText style={styles.addressShared}>{trackingAddress}</RNText>
+                            <RNText style={styles.addressRest}>
+                                {address.slice(trackingAddress.length)}
+                            </RNText>
                         </>
                     ) : (
                         address

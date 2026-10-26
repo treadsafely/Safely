@@ -3,16 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TransactionTemplate } from '@safely/core';
 import { BtcTransactionTemplate, FlameTransactionTemplate } from '@safely/core';
 
-import {
-    addFlamePendingSpends,
-    BroadcastedBtcTx,
-    flameBlockchain,
-    useSetLastBroadcastedBtcTx
-} from '../../../entities';
+import { BroadcastedBtcTx, flameBlockchain, useSetLastBroadcastedBtcTx } from '../../../entities';
 import { useSendChains } from '../send-chains';
 
 export function useSendAssetTransfer() {
-    const { btc, flame } = useSendChains();
+    const { btc } = useSendChains();
     const { mutateAsync: setLastBroadcastedBtcTx } = useSetLastBroadcastedBtcTx();
     const queryClient = useQueryClient();
 
@@ -35,12 +30,8 @@ export function useSendAssetTransfer() {
                 );
             }
 
-            if (transactionTemplate instanceof FlameTransactionTemplate && flame) {
-                addFlamePendingSpends(
-                    flame.wallet.id.toString(),
-                    transactionTemplate.spentOutputIds
-                );
-                void queryClient.invalidateQueries({ queryKey: flameBlockchain.toKey() });
+            if (transactionTemplate instanceof FlameTransactionTemplate) {
+                await queryClient.invalidateQueries({ queryKey: flameBlockchain.outputs.toKey() });
             }
         }
     });

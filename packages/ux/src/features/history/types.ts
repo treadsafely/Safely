@@ -8,9 +8,9 @@ export type ActivityCounterparty =
     | { kind: 'address'; label: string }
     | { kind: 'provider'; label: string };
 
-export type ActivityRowView = {
+export type ActivityRowView<TActivity = ActivityItem> = {
     key: string;
-    activity: ActivityItem;
+    activity: TActivity;
     title: string;
     amountSign: '+' | '−' | null;
     formattedValue: string;
@@ -19,10 +19,11 @@ export type ActivityRowView = {
     timestampLabel: string | null;
     isPending: boolean;
     counterparty: ActivityCounterparty;
+    note?: string | null;
 };
 
-export type HistoryGroupView = {
+export type HistoryGroupView<TActivity = ActivityItem> = {
     key: string;
     title: string;
-    rows: ActivityRowView[];
+    rows: ActivityRowView<TActivity>[];
 };

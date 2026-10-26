@@ -3,13 +3,19 @@ import type { z } from 'zod';
 import type { Logger } from '@safely/sync';
 
 import { FlameApiError } from './errors';
-import type { FlameApiProof, FlameApiScanResult, FlameApiTxStatus } from './models';
+import type {
+    FlameApiHistoryResult,
+    FlameApiProof,
+    FlameApiTxStatus,
+    FlameApiUnspentResult
+} from './models';
 import {
+    FlameHistoryResultSchema,
     FlameProofsResultSchema,
     FlameRpcResponseSchema,
-    FlameScanResultSchema,
     FlameSubmitTxResultSchema,
-    FlameTxStatusSchema
+    FlameTxStatusSchema,
+    FlameUnspentResultSchema
 } from './models';
 import { ApiClient } from '../../utils/fetch';
 import type { IIdentifiable } from '../../utils/types';
@@ -30,8 +36,19 @@ export class FlameApi extends ApiClient implements IIdentifiable {
         this.id = `${this.constructor.name}:${rpcUrl}`;
     }
 
-    public scan(predicates: string[], sinceHeight = 0): Promise<FlameApiScanResult> {
-        return this.call('scan', [predicates, sinceHeight], FlameScanResultSchema);
+    public unspent(address: string, withPending = false): Promise<FlameApiUnspentResult> {
+        return this.call('unspent', [address, withPending], FlameUnspentResultSchema);
+    }
+
+    public history(
+        addresses: string[],
+        page: { cursor: string | null; limit: number; withPending: boolean }
+    ): Promise<FlameApiHistoryResult> {
+        return this.call(
+            'history',
+            [addresses, page.cursor, page.limit, page.withPending],
+            FlameHistoryResultSchema
+        );
     }
 
     public async proofs(ids: string[]): Promise<FlameApiProof[]> {

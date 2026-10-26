@@ -19,6 +19,3 @@ export function flameNetworkByPortfolioNetworkType(
 export const FLAME_DEVNET_NETWORK: FlameNetwork = 'testnet';
 
 export const FLAME_RECEIVING_KEY_PATH: FlameKeyPath = { branch: 0, index: 0 };
-
-// Scalar::ONE in its 32-byte little-endian encoding
-export const FLAME_NATIVE_FLAVOR = '01' + '00'.repeat(31);

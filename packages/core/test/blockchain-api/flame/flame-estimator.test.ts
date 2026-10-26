@@ -3,12 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
     FlameApi,
     FlameApiProof,
-    FlameApiScanEntry,
+    FlameApiUnspentEntry,
     FlameOutputAmount,
     FlameWallet
 } from '../../../src';
 import {
-    FLAME_NATIVE_FLAVOR,
     FLAME_RPC_ERROR_CODE,
     FLAME_TRANSFER_FEE,
     FLAME_TRANSFER_GAS,
@@ -24,30 +23,22 @@ const SELF = 'tf1self';
 const RECIPIENT = 'tf1recipient';
 const TXID = hex('e');
 
-const entry = (id: string, spent = false): FlameApiScanEntry => ({
-    id: hex(id),
-    height: 1,
-    txid: hex('a'),
-    predicate: hex('b'),
-    bytes: 'AQID',
-    note: 'BAUG',
-    ...(spent && { spent: { height: 2, txid: hex('c') } })
-});
+const entry = (id: string): FlameApiUnspentEntry => ({ id: hex(id), bytes: 'AQID', note: 'BAUG' });
 
 const counted = (qty: bigint): FlameOutputAmount => ({
     status: 'counted',
     qty,
-    flavor: FLAME_NATIVE_FLAVOR
+    flavor: 'native',
+    isNative: true
 });
 
 function setup(proofs?: (ids: string[]) => FlameApiProof[]) {
-    const outputs = FlameOutputs.fromScan(
-        [entry('1'), entry('2'), entry('3'), entry('4', true), entry('5')],
+    const outputs = FlameOutputs.fromUnspent(
+        [entry('1'), entry('2'), entry('3'), entry('5')],
         new Map<string, FlameOutputAmount>([
             [hex('1'), counted(10_000n)],
             [hex('2'), counted(50_000n)],
             [hex('3'), counted(20_000n)],
-            [hex('4'), counted(90_000n)],
             [hex('5'), { status: 'unreadable' }]
         ])
     );
@@ -62,7 +53,7 @@ function setup(proofs?: (ids: string[]) => FlameApiProof[]) {
     };
     const wallet = {
         id: { toString: () => 'wallet' },
-        address: SELF,
+        receivingAddress: SELF,
         buildTransfer: vi.fn<FlameWallet['buildTransfer']>(() =>
             Promise.resolve({ txid: new Uint8Array(32), blockTx: Uint8Array.of(1, 2, 3) })
         )
@@ -78,12 +69,7 @@ describe('FlameEstimator', () => {
     it('spends every readable unspent output but the fee on max', () => {
         const { outputs, estimator } = setup();
 
-        expect(estimator.getMaxSendValue(outputs, new Set()).weiAmount).toBe(
-            80_000n - FLAME_TRANSFER_FEE
-        );
-        expect(estimator.getMaxSendValue(outputs, new Set([hex('2')])).weiAmount).toBe(
-            30_000n - FLAME_TRANSFER_FEE
-        );
+        expect(estimator.getMaxSendValue(outputs).weiAmount).toBe(80_000n - FLAME_TRANSFER_FEE);
     });
 
     it('picks the largest outputs first and returns the rest as change', () => {
@@ -91,11 +77,9 @@ describe('FlameEstimator', () => {
 
         const template = estimator.estimate(
             { recipientAddress: RECIPIENT, amount: 55_000n, isMax: false, memo: '' },
-            outputs,
-            new Set()
+            outputs
         );
 
-        expect(template.spentOutputIds).toEqual([hex('2'), hex('3')]);
         expect(template.outputs).toEqual([
             { address: RECIPIENT, qty: 55_000n, memo: new Uint8Array(0) },
             { address: SELF, qty: 70_000n - 55_000n - FLAME_TRANSFER_FEE }
@@ -108,8 +92,7 @@ describe('FlameEstimator', () => {
 
         const template = estimator.estimate(
             { recipientAddress: RECIPIENT, amount: 0n, isMax: true, memo: '' },
-            outputs,
-            new Set()
+            outputs
         );
 
         expect(template.request.amount.weiAmount).toBe(80_000n - FLAME_TRANSFER_FEE);
@@ -124,8 +107,7 @@ describe('FlameEstimator', () => {
         expect(() =>
             estimator.estimate(
                 { recipientAddress: RECIPIENT, amount: 80_000n, isMax: false, memo: '' },
-                outputs,
-                new Set()
+                outputs
             )
         ).toThrow(FlameInsufficientBalanceError);
     });
@@ -135,8 +117,7 @@ describe('FlameTransactionTemplate', () => {
     const estimate = (ctx: ReturnType<typeof setup>) =>
         ctx.estimator.estimate(
             { recipientAddress: RECIPIENT, amount: 5_000n, isMax: false, memo: 'gm ✓' },
-            ctx.outputs,
-            new Set()
+            ctx.outputs
         );
 
     it('proves, builds and submits the transfer', async () => {

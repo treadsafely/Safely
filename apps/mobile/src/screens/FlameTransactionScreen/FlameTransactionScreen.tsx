@@ -4,7 +4,13 @@ import { View } from 'react-native';
 
 import type { FlameActivityItem } from '@safely/core';
 import { SPACE, ellipsisMiddle } from '@safely/core';
-import { useNumberFormatter } from '@safely/ux';
+import type { ActivityCounterparty } from '@safely/ux';
+import {
+    resolveActivityCounterparty,
+    useContacts,
+    useNumberFormatter,
+    usePortfolios
+} from '@safely/ux';
 
 import { FlameLogo } from '@mobile/entities/flame';
 import {
@@ -21,6 +27,9 @@ import {
 
 import { styles } from './FlameTransactionScreen.styles';
 
+const labelOf = (counterparty: ActivityCounterparty): string =>
+    'meta' in counterparty ? counterparty.meta.name : counterparty.label;
+
 type FlameTransactionScreenProps = StaticScreenProps<{
     activity: FlameActivityItem;
 }>;
@@ -33,7 +42,12 @@ export const FlameTransactionScreen = (props: FlameTransactionScreenProps) => {
     } = props;
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
-    const { isInitiator } = activity;
+    const { isInitiator, counterpartyAddress } = activity;
+    const portfolios = usePortfolios();
+    const contacts = useContacts();
+    const counterpartyLabel = counterpartyAddress
+        ? labelOf(resolveActivityCounterparty(counterpartyAddress, { portfolios, contacts }))
+        : t('history.transactionInfo.unknown');
 
     return (
         <Screen>
@@ -69,7 +83,7 @@ export const FlameTransactionScreen = (props: FlameTransactionScreenProps) => {
                 </View>
                 <List style={styles.list}>
                     <List.Group withoutBottomMargin>
-                        <TableCell>
+                        <TableCell copyable={counterpartyAddress ?? undefined}>
                             <TableCell.Column leading>
                                 <TableCell.Label>
                                     {isInitiator
@@ -78,8 +92,10 @@ export const FlameTransactionScreen = (props: FlameTransactionScreenProps) => {
                                 </TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value color="secondary">
-                                    {t('history.transactionInfo.unknown')}
+                                <TableCell.Value
+                                    color={counterpartyAddress ? undefined : 'secondary'}
+                                >
+                                    {counterpartyLabel}
                                 </TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
@@ -106,9 +122,26 @@ export const FlameTransactionScreen = (props: FlameTransactionScreenProps) => {
                                 </TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value>{activity.height}</TableCell.Value>
+                                <TableCell.Value>
+                                    {activity.height ??
+                                        t('history.transactionInfo.status.pending.title')}
+                                </TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
+                        {activity.fee !== null && (
+                            <TableCell>
+                                <TableCell.Column leading>
+                                    <TableCell.Label>
+                                        {t('history.transactionInfo.fee')}
+                                    </TableCell.Label>
+                                </TableCell.Column>
+                                <TableCell.Column>
+                                    <TableCell.Value>
+                                        {activity.fee.format(formatter)}
+                                    </TableCell.Value>
+                                </TableCell.Column>
+                            </TableCell>
+                        )}
                         <TableCell copyable={activity.txid}>
                             {({ handleCopy }) => (
                                 <>
