@@ -108,6 +108,9 @@ export const darkTheme = {
             orange: 'rgba(255, 179, 71, 1)',
             blue: 'rgba(1, 120, 255, 1)'
         },
+        chart: {
+            line: 'rgba(247, 147, 26, 1)'
+        },
         wallet: {
             lightGray: 'rgba(110, 110, 115, 1)',
             red: 'rgba(255, 85, 85, 1)',
