@@ -1,30 +1,21 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
-import type { ISyncKeyValueStorage } from '@safely/core';
 import { useAppContext } from '@safely/ux';
 
+import { useDevConfig } from './DevConfigContext';
 import { rootStyles } from './DevConfigSection.styles';
 import { Button, Input } from '../../shared';
 
 const ALPHANUMERIC = /[^a-zA-Z0-9]/g;
-const DEV_TOKEN_KEY = 'devToken';
 
-export type DevConfigSectionProps = {
-    storage: ISyncKeyValueStorage;
-};
-
-export const DevConfigSection: FC<DevConfigSectionProps> = ({ storage }) => {
+export const DevConfigSection: FC = () => {
     const { reloadApp } = useAppContext();
-    const [token, setToken] = useState(() => storage.get(DEV_TOKEN_KEY) ?? '');
+    const { devToken, setDevToken } = useDevConfig();
+    const [token, setToken] = useState(() => devToken ?? '');
 
     const saveAndReload = (): void => {
-        if (token.length > 0) {
-            storage.set(DEV_TOKEN_KEY, token);
-        } else {
-            storage.remove(DEV_TOKEN_KEY);
-        }
-
+        setDevToken(token.length > 0 ? token : null);
         reloadApp();
     };
 

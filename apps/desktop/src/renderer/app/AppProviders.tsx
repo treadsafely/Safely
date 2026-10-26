@@ -38,7 +38,7 @@ import {
     unsupportedLedgerTransport,
     unsupportedPushNotifications
 } from '../platform/unsupported';
-import { desktopLayerEncryptedStorage } from '../shared';
+import { desktopLayerEncryptedStorage, desktopLayerSynchronousGlobalStorage } from '../shared';
 
 export interface AppProvidersProps {
     loader?: ReactNode;
@@ -101,8 +101,9 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
                     deviceCode: appInfo.deviceCountryCode
                 }),
             /* read once at boot; the dev-tools config section writes devToken then reloads */
-            devToken: storage.synchronous.get('devToken') ?? undefined,
-            devIsTestnetAllowed: storage.synchronous.get('devIsTestnetAllowed') === 'true',
+            devToken: desktopLayerSynchronousGlobalStorage.get('devToken') ?? undefined,
+            devIsTestnetAllowed:
+                desktopLayerSynchronousGlobalStorage.get('devIsTestnetAllowed') === true,
             numberFormatLocale: new WebNumberFormatLocale(appInfo.locale),
             storage: {
                 ux: {

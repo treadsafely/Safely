@@ -7,20 +7,30 @@ import {
     useSearch
 } from '@tanstack/react-router';
 import type { FC } from 'react';
+import { useMemo } from 'react';
 
 import { useHasPortfolio } from '@safely/ux';
-import type { MainLocation } from '@safely/web-ui';
-import { DevConfigSection, LogsSection, MainPage } from '@safely/web-ui';
+import type { DevConfig, MainLocation } from '@safely/web-ui';
+import { DevConfigProvider, LogsSection, MainPage } from '@safely/web-ui';
 
 import { toMainLocation, toMainRouteTarget } from './main-location';
 import { SecuritySection } from '../features';
 import { platform } from '../platform';
-import { ROUTE, sSettingsParams } from '../shared';
+import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
 
 export const MainScreen: FC = () => {
     const { hasWindowControls, isFullScreen } = useRouteContext({ from: '__root__' });
     const navigate = useNavigate();
     const hasPortfolio = useHasPortfolio();
+
+    const { value: devToken, set, remove } = useDesktopLayerSynchronousGlobalStorage('devToken');
+    const devConfig = useMemo<DevConfig>(
+        () => ({
+            devToken,
+            setDevToken: value => (value === null ? remove() : set(value))
+        }),
+        [devToken, set, remove]
+    );
 
     const search = useSearch({ from: '/main' });
     const child = useChildMatches({ select: matches => matches[0] });
@@ -46,14 +56,15 @@ export const MainScreen: FC = () => {
     }
 
     return (
-        <MainPage
-            location={location}
-            onNavigate={onNavigate}
-            hasWindowControls={hasWindowControls}
-            isFullScreen={isFullScreen}
-            security={<SecuritySection />}
-            logs={<LogsSection store={platform.logs} />}
-            config={<DevConfigSection storage={platform.storage.synchronous} />}
-        />
+        <DevConfigProvider value={devConfig}>
+            <MainPage
+                location={location}
+                onNavigate={onNavigate}
+                hasWindowControls={hasWindowControls}
+                isFullScreen={isFullScreen}
+                security={<SecuritySection />}
+                logs={<LogsSection store={platform.logs} />}
+            />
+        </DevConfigProvider>
     );
 };

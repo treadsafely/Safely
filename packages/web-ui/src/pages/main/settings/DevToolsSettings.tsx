@@ -7,6 +7,7 @@ import { buildStyles } from './DevToolsSettings.styles';
 import { listStyles } from './SettingsSection.styles';
 import type { DevTool } from './types';
 import { DEV_TOOLS } from './types';
+import { DevConfigSection } from '../../../features';
 import { Button, Cell, Icon, List, PageHeader, Text } from '../../../shared';
 
 const TOOL_TITLES: Record<DevTool, string> = {
@@ -17,12 +18,11 @@ const TOOL_TITLES: Record<DevTool, string> = {
 export type DevToolsSettingsProps = {
     tool: DevTool | null;
     logs: ReactNode;
-    config: ReactNode;
     onSelectTool: (tool: DevTool | null) => void;
 };
 
 export const DevToolsSettings: FC<DevToolsSettingsProps> = props => {
-    const { tool, logs, config, onSelectTool } = props;
+    const { tool, logs, onSelectTool } = props;
 
     const { version, build, environment, deviceInfo } = useAppContext();
 
@@ -69,7 +69,7 @@ export const DevToolsSettings: FC<DevToolsSettingsProps> = props => {
                 }
             />
 
-            {tool === 'config' ? config : logs}
+            {tool === 'config' ? <DevConfigSection /> : logs}
         </>
     );
 };
