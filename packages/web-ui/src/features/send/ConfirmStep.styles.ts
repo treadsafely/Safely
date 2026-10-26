@@ -39,7 +39,7 @@ export const listStyles = css({ display: 'flex', flexDirection: 'column', gap: '
 
 export const actionsStyles = css({ padding: '8' });
 
-export const estimateErrorStyles = css({
+export const errorBlockStyles = css({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

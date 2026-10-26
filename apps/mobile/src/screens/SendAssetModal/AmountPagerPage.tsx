@@ -2,11 +2,10 @@ import type { RefObject } from 'react';
 import { View } from 'react-native';
 
 import type { NumberFormatter } from '@safely/core';
-import type { SendFormView } from '@safely/ux';
+import { useLastSeen, type SendFormView } from '@safely/ux';
 
 import { styles } from './SendAssetModal.styles';
 import { AmountStep } from './steps';
-import { useLastSeen } from './useLastSeen';
 import type { MaskedInputRef } from '../../../modules/safely-masked-input/src';
 
 interface AmountPagerPageProps {

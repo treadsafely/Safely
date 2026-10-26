@@ -10,6 +10,7 @@ import { assertUnreachable } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
     useSendForm,
+    useLastSeen,
     useNumberFormatter,
     useActiveFiat,
     useAppContext,
@@ -24,7 +25,6 @@ import { AmountPagerPage } from './AmountPagerPage';
 import { AmountHeaderSubtitle, RecipientHeaderSubtitle } from './components';
 import { RecipientPagerPage } from './RecipientPagerPage';
 import { styles } from './SendAssetModal.styles';
-import { useLastSeen } from './useLastSeen';
 import { useResetSubmittedOnFocus } from './useResetSubmittedOnFocus';
 import type { MaskedInputRef } from '../../../modules/safely-masked-input/src';
 
