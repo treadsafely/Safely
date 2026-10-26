@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { Modal } from '../../../src';
@@ -25,11 +25,11 @@ describe('Modal', () => {
         expect(dialog.textContent).toContain('This cannot be undone.');
     });
 
-    it('closes through its own button', () => {
+    it('closes through its own button', async () => {
         renderModal();
 
         fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
-        expect(screen.queryByRole('dialog')).toBeNull();
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     });
 });

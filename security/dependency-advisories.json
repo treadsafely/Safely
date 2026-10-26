@@ -48,50 +48,14 @@
             "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
         },
         {
-            "id": "GHSA-xjj6-f33q-929c",
-            "package": "undici",
-            "severity": "high",
-            "context": "build",
-            "paths": [
-                "apps/desktop > electron > @electron/get > undici",
-                "apps/desktop > node-gyp > undici"
-            ],
-            "rationale": "undici is reached only at build time on a developer machine or the CI packaging job: @electron/get runs it to download the pinned Electron binary from GitHub releases, and node-gyp runs it while compiling the native keychain addon. Neither path is in a shipped app bundle — the desktop renderer installs its own XHR-based IsomorphicEventSource and never bundles undici. The advisory is a DoS via an unhandled error on excessive content-encodings from the servers the tool talks to (GitHub releases / the Node headers mirror), not attacker-controlled input. electron and node-gyp are devDependencies, so both paths are dev-graph. Patched is >=7.30.1 / >=6.29.1, reachable only through electron's and node-gyp's own transitive ranges; drop this entry once they resolve the patched undici.",
-            "owner": "liulekin@andreevco.com",
-            "expires": "2027-01-24",
-            "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c"
-        },
-        {
-            "id": "GHSA-834v-8h66-3h79",
-            "package": "happy-dom",
-            "severity": "high",
-            "context": "dev",
-            "paths": [
-                "packages/ux > vitest > happy-dom",
-                "packages/web-ui > vitest > happy-dom",
-                "apps/desktop > vitest > happy-dom",
-                "apps/mobile > vitest > happy-dom",
-                "packages/core > vitest > happy-dom",
-                "packages/slottree > vitest > happy-dom",
-                "packages/sync > vitest > happy-dom",
-                "packages/sync-storage > vitest > happy-dom"
-            ],
-            "rationale": "happy-dom is the DOM environment for vitest, used only by `pnpm test` (devDependency in @safely/ux and @safely/web-ui, transitive via vitest elsewhere). It runs on a developer machine and in the test CI job, never in a shipped bundle. The advisory is host code execution via an unsanitized import alias; the only code happy-dom evaluates here is this repository's own test suite, not untrusted input. Patched is >=21.0.4, a major bump from the 20.x line deferred to avoid a test-runtime major mid-release — upgrade happy-dom to >=21.0.4 and drop this entry.",
-            "owner": "liulekin@andreevco.com",
-            "expires": "2027-01-24",
-            "url": "https://github.com/advisories/GHSA-834v-8h66-3h79"
-        },
-        {
             "id": "GHSA-mrhx-c7xc-m3w5",
             "package": "zod",
             "severity": "high",
             "context": "rn-dev",
             "paths": [
-                "apps/mobile > expo > @expo/cli > zod",
-                ". > eslint-plugin-react-hooks > zod",
-                ". > eslint-plugin-react-hooks > zod-validation-error > zod"
+                "apps/mobile > expo > @expo/cli > zod"
             ],
-            "rationale": "Our own runtime zod is pinned to 4.6.6 through the workspace `catalog:`, so no shipped bundle carries the vulnerable version. The copies the advisory still matches are transitive tooling only: zod 3.25.76 throughout @expo/cli (Expo's dev/build CLI, in the production graph because `expo` is a transitive dependency of apps/mobile but never bundled into a release), and zod 4.4.1 under eslint-plugin-react-hooks / zod-validation-error (lint, dev only). The advisory is a memory-exhaustion DoS while validating oversized constrained collections; the only schemas these tools parse are their own CLI arguments and lint config at dev/build time, not attacker-controlled data in the wallet. Drop this entry once @expo/cli and the eslint plugins resolve zod >=4.6.6.",
+            "rationale": "The only copy the advisory still matches is zod 3.25.76 throughout @expo/cli (Expo's dev/build CLI, in the production graph because `expo` is a transitive dependency of apps/mobile but never bundled into a release). There is no fix on the 3.x line (latest 3.x is 3.25.76; patched 4.6.6 is a major bump) and even the newest @expo/cli (SDK 58) still requires zod ^3.25.76, so neither an Expo upgrade nor a zod-4 override can close it without breaking the CLI. Our own runtime zod is pinned to 4.6.6 through the workspace `catalog:` and is unaffected. The advisory is a memory-exhaustion DoS while validating oversized constrained collections; @expo/cli only validates its own CLI arguments at dev/build time, not attacker-controlled data in the wallet. Drop this entry once @expo/cli ships a patched zod.",
             "owner": "liulekin@andreevco.com",
             "expires": "2027-01-24",
             "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
