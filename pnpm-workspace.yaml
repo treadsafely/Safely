@@ -3,6 +3,7 @@ packages:
   - 'apps/*'
 
 catalog:
+  happy-dom: '^21.0.4'
   zod: '4.6.6'
   big.js: '^7.0.1'
   cbor-x: "^1.6.4"
