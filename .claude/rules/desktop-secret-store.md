@@ -79,9 +79,10 @@ file — so editing a file cannot reset the counter or enable biometry.
 
 **The accessibility is one constant, not a setting.** Both scopes are
 `WhenUnlockedThisDeviceOnly`: nothing in this app is worth reading while the Mac is locked, and a
-per-scope knob would only make it possible to pick the weaker class by accident. Mobile does split
-the two (`AfterFirstUnlock` for `encrypted`, so background work survives a lock), and desktop
-deliberately does not follow it there.
+per-scope knob would only make it possible to pick the weaker class by accident. Mobile uses the
+same constant for both scopes (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`, `apps/mobile/src/app/storage.ts`),
+so the two platforms match here — it ran `AfterFirstUnlock` on the `encrypted` scope before commit
+7ba87a11 tightened it.
 
 What "unlocked" means here is **not measured**, and the two readings differ: on iOS the class is
 evicted the moment the screen locks, while on macOS the data protection keychain follows the login
