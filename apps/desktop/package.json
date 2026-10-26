@@ -22,7 +22,7 @@
     "@safely/web-ui": "workspace:*",
     "@safely/xhr-event-source": "workspace:*",
     "@tanstack/react-query": "catalog:",
-    "@tanstack/react-router": "1.170.31",
+    "@tanstack/react-router": "1.170.45",
     "buffer": "6.0.3",
     "react": "catalog:",
     "react-dom": "catalog:",
