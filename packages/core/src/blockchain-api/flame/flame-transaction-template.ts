@@ -26,15 +26,20 @@ export class FlameTransactionTemplate {
     private readonly logger?: Logger;
 
     public get outputs(): FlameTransferOutput[] {
+        const memo = encodeFlameMemo(this.request.memo);
         const recipient = {
             address: this.request.recipientAddress,
             qty: this.request.amount.weiAmount,
-            memo: encodeFlameMemo(this.request.memo)
+            memo
         };
         if (this.request.change <= 0n) {
             return [recipient];
         }
-        return [recipient, { address: this.wallet.receivingAddress, qty: this.request.change }];
+        // the recipient's note is sealed to their view key, so the sender reads the memo back from the change
+        return [
+            recipient,
+            { address: this.wallet.receivingAddress, qty: this.request.change, memo }
+        ];
     }
 
     constructor(

@@ -82,7 +82,7 @@ describe('FlameEstimator', () => {
 
         expect(template.outputs).toEqual([
             { address: RECIPIENT, qty: 55_000n, memo: new Uint8Array(0) },
-            { address: SELF, qty: 70_000n - 55_000n - FLAME_TRANSFER_FEE }
+            { address: SELF, qty: 70_000n - 55_000n - FLAME_TRANSFER_FEE, memo: new Uint8Array(0) }
         ]);
         expect(template.estimation.fee.amount.weiAmount).toBe(FLAME_TRANSFER_FEE);
     });
@@ -141,7 +141,11 @@ describe('FlameTransactionTemplate', () => {
                     qty: 5_000n,
                     memo: Uint8Array.of(0x67, 0x6d, 0x20, 0xe2, 0x9c, 0x93)
                 },
-                { address: SELF, qty: 50_000n - 5_000n - FLAME_TRANSFER_FEE }
+                {
+                    address: SELF,
+                    qty: 50_000n - 5_000n - FLAME_TRANSFER_FEE,
+                    memo: Uint8Array.of(0x67, 0x6d, 0x20, 0xe2, 0x9c, 0x93)
+                }
             ],
             fee: FLAME_TRANSFER_FEE,
             gas: FLAME_TRANSFER_GAS

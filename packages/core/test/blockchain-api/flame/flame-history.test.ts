@@ -36,7 +36,8 @@ const amounts = new Map<string, FlameOutputAmount>([
     [hex('3'), counted(5_000n, 'rent')],
     [hex('4'), { status: 'unreadable' }],
     [hex('5'), { status: 'counted', qty: 9n, flavor: hex('f'), isNative: false }],
-    [hex('6'), { status: 'notToken' }]
+    [hex('6'), { status: 'notToken' }],
+    [hex('7'), counted(39_000n, 'rent')]
 ]);
 
 describe('toFlameHistoryItem', () => {
@@ -68,6 +69,14 @@ describe('toFlameHistoryItem', () => {
         expect(item?.isInitiator).toBe(false);
         expect(item?.value.weiAmount).toBe(5_000n);
         expect(item?.fee).toBeNull();
+        expect(item?.memo).toBe('rent');
+    });
+
+    it('carries the memo of a send from its change', () => {
+        const item = toFlameHistoryItem(entry('f', ['7'], ['1']), amounts);
+
+        expect(item?.isInitiator).toBe(true);
+        expect(item?.value.weiAmount).toBe(60_000n);
         expect(item?.memo).toBe('rent');
     });
 
