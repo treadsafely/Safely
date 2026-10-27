@@ -5,11 +5,6 @@ export const styles = StyleSheet.create(theme => ({
         flex: 1,
         paddingTop: theme.spacing[16]
     },
-    assetLogo: {
-        width: 72,
-        height: 72,
-        borderRadius: theme.radius.full
-    },
     title: {
         paddingVertical: theme.spacing[16],
         paddingHorizontal: theme.spacing[32]

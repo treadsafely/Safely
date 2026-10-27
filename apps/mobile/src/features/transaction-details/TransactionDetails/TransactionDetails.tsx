@@ -1,13 +1,12 @@
-import type { StaticScreenProps } from '@react-navigation/native';
-import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SPACE } from '@safely/core';
-import type { BtcActivityItem } from '@safely/ux';
-import { useLinking, useTransactionDetails } from '@safely/ux';
+import type { TransactionDetailsView } from '@safely/ux';
+import { useLinking } from '@safely/ux';
 
-import { TransactionConfirmationStatusBtc } from '@mobile/entities/activity';
+import { TransactionStatus } from '@mobile/entities/activity';
 import {
     ArrowDown16,
     ArrowTop16,
@@ -18,30 +17,23 @@ import {
     Screen,
     TableCell,
     Text,
-    TouchableOpacity,
-    Image
+    TouchableOpacity
 } from '@mobile/shared/ui';
 
-import { styles } from './TransactionScreen.styles';
+import { styles } from './TransactionDetails.styles';
 
-type TransactionScreenProps = StaticScreenProps<{
-    activity: BtcActivityItem;
-}>;
+const EMPTY_VALUE = '-';
 
-export const TransactionScreen = (props: TransactionScreenProps) => {
-    const {
-        route: {
-            params: { activity }
-        }
-    } = props;
+type TransactionDetailsProps = {
+    details: TransactionDetailsView;
+    logo: ReactNode;
+};
+
+export const TransactionDetails = (props: TransactionDetailsProps) => {
+    const { details, logo } = props;
     const { t } = useTranslation();
     const { openURL } = useLinking();
-    const details = useTransactionDetails(activity);
-
-    const handleOpen = useCallback(
-        () => openURL(details.explorerUrl),
-        [details.explorerUrl, openURL]
-    );
+    const { explorerUrl, memo } = details;
 
     return (
         <Screen>
@@ -61,7 +53,7 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
             <Screen.Scrollable>
                 <View style={styles.headerContainer}>
                     <View style={styles.assetImageContainer}>
-                        <Image source={details.assetImage} style={styles.assetImage} />
+                        {logo}
                         <View style={styles.assetBadge}>
                             <Icon
                                 icon={details.isInitiator ? ArrowTop16 : ArrowDown16}
@@ -71,8 +63,12 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                     </View>
                     <View style={styles.amountContainer}>
                         <Text variant="titleL" color="primary" textAlign="center">
-                            {details.amountSign}
-                            {SPACE.THSP}
+                            {details.amountSign !== null && (
+                                <>
+                                    {details.amountSign}
+                                    {SPACE.THSP}
+                                </>
+                            )}
                             {details.primaryAmount}
                         </Text>
                         {details.secondaryAmount && (
@@ -84,18 +80,36 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                 </View>
                 <List style={styles.list}>
                     <List.Group withoutBottomMargin>
-                        <TableCell copyable={details.counterpartyAddress}>
+                        <TableCell copyable={details.counterpartyAddress ?? undefined}>
                             <TableCell.Column leading>
                                 <TableCell.Label>{details.counterpartyLabel}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value>
-                                    {details.counterpartyAddressLabel}
+                                <TableCell.Value
+                                    color={
+                                        details.counterpartyAddress === null
+                                            ? 'secondary'
+                                            : undefined
+                                    }
+                                >
+                                    {details.counterpartyName}
                                 </TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
+                        {memo && (
+                            <TableCell copyable={memo}>
+                                <TableCell.Column leading>
+                                    <TableCell.Label>
+                                        {t('history.transactionInfo.memo')}
+                                    </TableCell.Label>
+                                </TableCell.Column>
+                                <TableCell.Column>
+                                    <TableCell.Value numberOfLines={0}>{memo}</TableCell.Value>
+                                </TableCell.Column>
+                            </TableCell>
+                        )}
                         <TableCell>
-                            <TransactionConfirmationStatusBtc tx={activity.transaction.raw} />
+                            <TransactionStatus status={details.status} />
                         </TableCell>
                     </List.Group>
                     <List.Group withoutBottomMargin>
@@ -108,7 +122,9 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                             <TableCell.Column>
                                 <TableCell.Value>
                                     {!details.fee ? (
-                                        '-'
+                                        EMPTY_VALUE
+                                    ) : details.fee.formattedFiat === null ? (
+                                        details.fee.formattedValue
                                     ) : (
                                         <>
                                             {details.fee.formattedFiat}{' '}
@@ -132,9 +148,14 @@ export const TransactionScreen = (props: TransactionScreenProps) => {
                                         <TableCell.Value>{details.txidLabel}</TableCell.Value>
                                     </TableCell.Column>
                                     <View style={styles.iconsContainer}>
-                                        <TouchableOpacity hitSlop={12} onPress={handleOpen}>
-                                            <Icon icon={Globe16} color="secondary" />
-                                        </TouchableOpacity>
+                                        {explorerUrl !== null && (
+                                            <TouchableOpacity
+                                                hitSlop={12}
+                                                onPress={() => openURL(explorerUrl)}
+                                            >
+                                                <Icon icon={Globe16} color="secondary" />
+                                            </TouchableOpacity>
+                                        )}
                                         <TouchableOpacity hitSlop={12} onPress={handleCopy}>
                                             <Icon icon={Copy16} color="secondary" />
                                         </TouchableOpacity>

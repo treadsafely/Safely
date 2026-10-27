@@ -7,8 +7,7 @@ import type { PortfolioAsset } from '@safely/ux';
 import { useActivePortfolioWallets, usePortfolioAssets } from '@safely/ux';
 
 import type { AssetCellProps } from '@mobile/entities/asset';
-import { AssetCellSkeleton, BtcAssetCell } from '@mobile/entities/asset';
-import { FlameAssetCell } from '@mobile/entities/flame';
+import { AssetCellSkeleton, BtcAssetCell, FlameAssetCell } from '@mobile/entities/asset';
 import { List } from '@mobile/shared/ui';
 
 import { styles } from './AssetsList.styles';

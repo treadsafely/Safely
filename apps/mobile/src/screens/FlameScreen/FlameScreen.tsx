@@ -1,65 +1,55 @@
 import { useNavigation } from '@react-navigation/core';
-import { StackActions } from '@react-navigation/native';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useUnistyles } from 'react-native-unistyles';
 
-import type { FlameActivityItem } from '@safely/core';
+import type { FlameHistoryItem } from '@safely/core';
 import { FLAME_ASSET } from '@safely/core';
 import {
     useActiveFlameRatedAmount,
-    useActiveFlameWallet,
+    useActivePortfolio,
     useActivePortfolioWalletsOrNull,
     useActivePortfolioNetworkBadge,
-    useNumberFormatter
+    useFlameReceiveInfo
 } from '@safely/ux';
 
-import { AssetHistoryHeader, FlameHistoryList } from '@mobile/features/history';
+import { AssetHistoryHeader, AssetHistoryScreen, FlameHistoryList } from '@mobile/features/history';
 import { HomeActions } from '@mobile/features/home';
-import { Screen } from '@mobile/shared/ui';
 
 const FlameContent = () => {
     const navigation = useNavigation();
+    const portfolio = useActivePortfolio();
     const { theme } = useUnistyles();
-    const formatter = useNumberFormatter();
     const networkBadge = useActivePortfolioNetworkBadge();
-    const { receivingAddress } = useActiveFlameWallet();
+    const { displayAddress } = useFlameReceiveInfo();
     const { data: ratedAmount } = useActiveFlameRatedAmount();
 
     const onNavigateToActivityItem = useCallback(
-        (activity: FlameActivityItem) => {
+        (activity: FlameHistoryItem) => {
             navigation.navigate('FlameTransactionScreen', { activity });
         },
         [navigation]
     );
 
-    const price = ratedAmount?.price;
-    const fiatAmount = price ? ratedAmount.amount.convert(price).format(formatter) : undefined;
-
     return (
         <>
             <AssetHistoryHeader
                 gradientColor={theme.colors.brand.flame}
-                symbol={FLAME_ASSET.symbol}
+                asset={FLAME_ASSET}
                 networkBadge={networkBadge}
-                address={receivingAddress}
-                amount={ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' })}
-                fiatAmount={fiatAmount}
+                address={displayAddress}
+                ratedAmount={ratedAmount}
                 actions={<HomeActions />}
             />
-            <FlameHistoryList onNavigateToActivityItem={onNavigateToActivityItem} />
+            <FlameHistoryList
+                key={portfolio?.id.toString()}
+                onNavigateToActivityItem={onNavigateToActivityItem}
+            />
         </>
     );
 };
 
-export const FlameScreen = () => {
-    const navigation = useNavigation();
-    const hasFlame = Boolean(useActivePortfolioWalletsOrNull()?.flame);
-
-    useEffect(() => {
-        if (!hasFlame) {
-            navigation.dispatch(StackActions.popToTop());
-        }
-    }, [hasFlame, navigation]);
-
-    return <Screen>{hasFlame && <FlameContent />}</Screen>;
-};
+export const FlameScreen = () => (
+    <AssetHistoryScreen hasChain={Boolean(useActivePortfolioWalletsOrNull()?.flame)}>
+        <FlameContent />
+    </AssetHistoryScreen>
+);

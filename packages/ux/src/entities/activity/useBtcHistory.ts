@@ -4,14 +4,19 @@ import { useCallback } from 'react';
 import { BTC_ASSET } from '@safely/core';
 
 import { fetchBtcActivity, fetchOrdersActivity } from './api';
-import { activityKeys } from './keys';
+import { btcActivityKeys } from './keys';
 import { dedupeOrderTxs, prependBroadcastedTx } from './merge';
 import {
-    INITIAL_ACTIVITY_PAGE_PARAM,
+    INITIAL_BTC_HISTORY_PAGE_PARAM,
     buildActivityPage,
     getNextActivityPageParam
 } from './pagination';
-import type { ActivityPage, IActivityFilters, IActivityPageParam, IHistoryOptions } from './types';
+import type {
+    BtcHistoryPage,
+    IBtcHistoryFilters,
+    IBtcHistoryPageParam,
+    IBtcHistoryOptions
+} from './types';
 import { applyActivityWaterline } from './waterline';
 import {
     QUERIES_STALE_TIME,
@@ -28,9 +33,9 @@ import { useReadOnlyRequestSigner } from '../exchange';
 import { useActiveFiat } from '../fiat/useActiveFiat';
 import { useActiveBtcWallet } from '../portfolio';
 
-export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam>>(
-    filters: IActivityFilters = {},
-    options?: IHistoryOptions<TData>
+export function useBtcHistory<TData = InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>>(
+    filters: IBtcHistoryFilters = {},
+    options?: IBtcHistoryOptions<TData>
 ) {
     const btcWallet = useActiveBtcWallet();
     const btcApi = useBtcApi(btcWallet.network);
@@ -55,8 +60,8 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
         return 'failed' as const;
     };
 
-    return useInfinitePersistQuery<ActivityPage, unknown, TData, QueryKey, IActivityPageParam>({
-        queryKey: activityKeys.all(btcWallet.id.toString(), fiat.id.toString(), filters).toKey(),
+    return useInfinitePersistQuery<BtcHistoryPage, unknown, TData, QueryKey, IBtcHistoryPageParam>({
+        queryKey: btcActivityKeys.all(btcWallet.id.toString(), fiat.id.toString(), filters).toKey(),
         staleTime: QUERIES_STALE_TIME.ACTIVITY,
         queryFn: async ({ pageParam }) => {
             const { fetch, btcPage, ordersCursor } = pageParam;
@@ -75,10 +80,10 @@ export function useHistory<TData = InfiniteData<ActivityPage, IActivityPageParam
             return buildActivityPage({ pageParam, btcResult, ordersResult });
         },
         getNextPageParam: getNextActivityPageParam,
-        initialPageParam: INITIAL_ACTIVITY_PAGE_PARAM,
+        initialPageParam: INITIAL_BTC_HISTORY_PAGE_PARAM,
         schemaKey: 'infiniteActivityData',
         select: useCallback(
-            (data: InfiniteData<ActivityPage, IActivityPageParam>) => {
+            (data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>) => {
                 const patched = prependBroadcastedTx(
                     data,
                     broadcastedTx?.toActivityItem(btcWallet.address, broadcastedTxRate) ?? null,

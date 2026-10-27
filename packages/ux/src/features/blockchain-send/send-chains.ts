@@ -8,8 +8,10 @@ import type {
     FlameOutputs,
     FlameWallet,
     RatedCryptoAssetAmount,
+    Recipient,
     SignableBtcWallet
 } from '@safely/core';
+import { BLOCKCHAIN_NAME, assertUnreachable } from '@safely/core';
 
 import {
     isDerivableEntities,
@@ -25,6 +27,7 @@ import { useFlameEstimator } from './flame/estimator';
 
 export type BtcSendChain = {
     wallet: SignableBtcWallet;
+    address: string;
     estimator: BtcEstimator;
     utxos: BtcApiUtxo[] | undefined;
     ratedAsset: RatedCryptoAssetAmount | undefined;
@@ -34,6 +37,7 @@ export type BtcSendChain = {
 
 export type FlameSendChain = {
     wallet: FlameWallet;
+    address: string;
     estimator: FlameEstimator | null;
     outputs: FlameOutputs | undefined;
     ratedAsset: RatedCryptoAssetAmount | undefined;
@@ -57,6 +61,7 @@ function useBtcSendChain(): BtcSendChain | null {
             wallet &&
             estimator && {
                 wallet,
+                address: wallet.address,
                 estimator,
                 utxos: walletUtxos?.confirmed.utxos.concat(walletUtxos.unconfirmedSafe.utxos),
                 ratedAsset,
@@ -75,9 +80,24 @@ function useFlameSendChain(): FlameSendChain | null {
     const ratedAsset = useFlameRatedAmount(wallet).data ?? undefined;
 
     return useMemo(
-        () => wallet && { wallet, estimator, outputs, ratedAsset },
+        () =>
+            wallet && { wallet, address: wallet.receivingAddress, estimator, outputs, ratedAsset },
         [wallet, estimator, outputs, ratedAsset]
     );
+}
+
+export function selectSendChain(
+    chains: SendChains,
+    blockchain: Recipient['blockchain']
+): BtcSendChain | FlameSendChain | null {
+    switch (blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            return chains.btc;
+        case BLOCKCHAIN_NAME.FLAME:
+            return chains.flame;
+        default:
+            return assertUnreachable(blockchain);
+    }
 }
 
 export function useSendChains(): SendChains {

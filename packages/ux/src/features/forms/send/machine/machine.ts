@@ -626,7 +626,7 @@ export const createSendFormMachine = () =>
                                     target: '.max'
                                 },
                                 SET_MEMO: {
-                                    guard: 'isFlameRecipient',
+                                    guard: 'recipientHasMemo',
                                     actions: 'handleSetMemo'
                                 }
                             },

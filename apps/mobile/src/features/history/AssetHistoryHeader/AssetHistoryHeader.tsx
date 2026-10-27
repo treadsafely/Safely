@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
+import type { CryptoAsset, RatedCryptoAssetAmount } from '@safely/core';
 import type { PortfolioNetworkBadge } from '@safely/ux';
+import { useNumberFormatter } from '@safely/ux';
 
 import { NetworkBadge } from '@mobile/entities/portfolio';
 import { GradientBackground, Screen, Text } from '@mobile/shared/ui';
@@ -12,16 +14,21 @@ const GRADIENT_HEIGHT = 390;
 
 type AssetHistoryHeaderProps = {
     gradientColor: string;
-    symbol: string;
+    asset: CryptoAsset;
     networkBadge: PortfolioNetworkBadge | null;
     address: string | undefined;
-    amount: string | undefined;
-    fiatAmount: string | undefined;
+    ratedAmount: RatedCryptoAssetAmount | null | undefined;
     actions: ReactNode;
 };
 
 export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
-    const { gradientColor, symbol, networkBadge, address, amount, fiatAmount, actions } = props;
+    const { gradientColor, asset, networkBadge, address, ratedAmount, actions } = props;
+    const formatter = useNumberFormatter();
+    const { symbol } = asset;
+    const amount = ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' });
+    const fiatAmount = ratedAmount?.price
+        ? ratedAmount.amount.convert(ratedAmount.price).format(formatter)
+        : undefined;
 
     return (
         <>

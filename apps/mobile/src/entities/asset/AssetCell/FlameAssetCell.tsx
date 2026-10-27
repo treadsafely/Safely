@@ -1,7 +1,7 @@
-import type { AssetCellProps } from '@mobile/entities/asset';
-import { AssetCell } from '@mobile/entities/asset';
 import { Flame32 } from '@mobile/shared/ui';
 
+import type { AssetCellProps } from './AssetCell';
+import { AssetCell } from './AssetCell';
 import { styles } from './FlameAssetCell.styles';
 
 type FlameAssetCellProps = Omit<AssetCellProps, 'image' | 'footer'>;

@@ -7,12 +7,7 @@ import { View } from 'react-native';
 import { State } from 'react-native-ble-plx';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import {
-    BLOCKCHAIN_NAME,
-    FLAME_ASSET,
-    LedgerSigningCancelledError,
-    PortfolioType
-} from '@safely/core';
+import { LedgerSigningCancelledError, PortfolioType } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
     useActiveFiat,
@@ -24,17 +19,27 @@ import {
     useAppContext,
     useEstimateAssetTransfer,
     useNumberFormatter,
+    selectSendChain,
     useSendAssetTransfer,
     useSendChains
 } from '@safely/ux';
 
-import { FlameLogo } from '@mobile/entities/flame';
+import { AssetLogo } from '@mobile/entities/asset';
 import { getBluetoothState, useBleManager } from '@mobile/features/ledger';
 import { TransactionFee } from '@mobile/screens/ConfirmationScreen/components/TransactionFee';
 import { TransactionSendResult } from '@mobile/screens/ConfirmationScreen/components/TransactionSendResult';
-import { Checkmark96, Icon, List, Screen, Text, Image } from '@mobile/shared/ui';
+import { Checkmark96, Icon, List, Screen, Text } from '@mobile/shared/ui';
 
-import { Amount, MaxAmount, ConfirmationFooter, Wallet, TransactionCell } from './components';
+import {
+    Amount,
+    ChainFeeSubvalue,
+    ChainRecipientCells,
+    MaxAmount,
+    ConfirmationFooter,
+    Wallet,
+    TransactionCell
+} from './components';
+import { IS_ESTIMATE_ENABLED_BY_CHAIN } from './ConfirmationScreen.chains';
 import { styles } from './ConfirmationScreen.styles';
 import type { ConfirmationState } from './ConfirmationScreen.types';
 
@@ -47,21 +52,14 @@ export type ConfirmationScreenProps = StaticScreenProps<SendConfirmationParams>;
 
 export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     const { confirmationResult, onSuccess } = props.route.params;
-    const isFlame = confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME;
+    const { blockchain } = confirmationResult;
 
     const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
-    const chains = useSendChains();
-    const fromAddress =
-        (isFlame ? chains.flame?.wallet.receivingAddress : chains.btc?.wallet.address) ?? '';
+    const fromAddress = selectSendChain(useSendChains(), blockchain)?.address ?? '';
 
     const { data: txTemplate, error: estimateQueryError } = useEstimateAssetTransfer(
         confirmationResult,
-        {
-            // a Flame send marks its inputs as spent, so a re-estimate after it would see too little balance
-            enabled: isFlame
-                ? confirmationState.type === 'idle'
-                : confirmationState.type !== 'success'
-        }
+        { enabled: IS_ESTIMATE_ENABLED_BY_CHAIN[blockchain](confirmationState.type) }
     );
     const estimateError = confirmationState.type === 'idle' ? estimateQueryError : null;
     const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
@@ -164,13 +162,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                         style={styles.titleWithLogoContainer}
                     >
                         <View style={styles.assetLogoContainer}>
-                            {asset.id.isEq(FLAME_ASSET.id) ? (
-                                <FlameLogo size="xlarge" />
-                            ) : (
-                                asset.image && (
-                                    <Image source={asset.image} style={styles.assetLogo} />
-                                )
-                            )}
+                            <AssetLogo asset={asset} size="xlarge" />
                         </View>
                         <Text style={styles.title} variant="titleM">
                             {t('confirmation.title', {
@@ -235,14 +227,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 />
                             }
                         />
-                        {confirmationResult.blockchain === BLOCKCHAIN_NAME.FLAME &&
-                            !!confirmationResult.memo && (
-                                <TransactionCell
-                                    title={t('confirmation.memo')}
-                                    value={confirmationResult.memo}
-                                    valueProps={{ numberOfLines: 4 }}
-                                />
-                            )}
+                        <ChainRecipientCells form={confirmationResult} />
                     </List.Group>
                     <List.Group style={styles.listGroup}>
                         {confirmationResult.isMax ? (
@@ -261,7 +246,12 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                         )}
                         <TransactionFee
                             estimation={txTemplate?.estimation}
-                            blockchain={confirmationResult.blockchain}
+                            subvalue={
+                                <ChainFeeSubvalue
+                                    form={confirmationResult}
+                                    estimation={txTemplate?.estimation}
+                                />
+                            }
                         />
                     </List.Group>
                     {!!sendResult && (

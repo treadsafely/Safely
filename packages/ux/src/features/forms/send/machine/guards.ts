@@ -1,6 +1,5 @@
-import { BLOCKCHAIN_NAME } from '@safely/core';
-
 import { SendFormError } from '../errors';
+import { SEND_FORM_FEATURES_BY_CHAIN } from '../utils';
 import type { SendFormEvent, SendFormMachineContext } from './types';
 import { hasFiatPrice } from '../validators/amount';
 
@@ -27,13 +26,13 @@ export const isAmountStepValid = ({ context }: GuardArg): boolean =>
     !context.errors.amount &&
     !context.errors.asset;
 
-export const isFlameRecipient = ({ context }: GuardArg): boolean =>
-    context.parsed.recipient?.blockchain === BLOCKCHAIN_NAME.FLAME;
+export const recipientHasMemo = ({ context }: GuardArg): boolean =>
+    !!context.parsed.recipient &&
+    SEND_FORM_FEATURES_BY_CHAIN[context.parsed.recipient.blockchain].hasMemo;
 
-// Contacts restore every address as BTC, so a Flame one would come back on the wrong chain
 export const shouldCreateContact = ({ context }: GuardArg): boolean =>
     !!context.parsed.recipient &&
-    context.parsed.recipient.blockchain === BLOCKCHAIN_NAME.BTC &&
+    SEND_FORM_FEATURES_BY_CHAIN[context.parsed.recipient.blockchain].canSaveContact &&
     context.values.addressBookName.trim().length > 0 &&
     !context.suggestion.selectedId;
 
@@ -71,7 +70,7 @@ export const guards = {
     hasRecipientError,
     isRecipientStepValid,
     isAmountStepValid,
-    isFlameRecipient,
+    recipientHasMemo,
     shouldCreateContact,
     canEnterMax,
     shouldRestoreMax,

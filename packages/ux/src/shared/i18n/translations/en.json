@@ -894,7 +894,6 @@
             "unknownRecipient": "Unknown recipient",
             "unknown": "Unknown",
             "memo": "Encrypted memo",
-            "block": "Block",
             "fee": "Network fee",
             "hash": "Transaction",
             "openInExplorer": "Open in explorer",
@@ -913,6 +912,11 @@
                 "confirmed-long-ago": {
                     "title": "Confirmed at {{date}}",
                     "description": "More than 6 confirmations"
+                },
+                "confirmed": {
+                    "title": "Confirmed at {{date}}",
+                    "titleUndated": "Confirmed",
+                    "block": "Block {{height}}"
                 }
             }
         },

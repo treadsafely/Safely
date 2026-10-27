@@ -140,17 +140,34 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
 - **Flame history is built layer by layer like BTC's activity.** `fetchFlameActivity` (the
   counterpart of `fetchBtcActivity`) reads one page of the node's `history`: the first asks
   `with_pending` and lists the mempool on top, newest first; later pages follow the `older` cursor.
-  `useFlameHistory` / `useGroupedFlameHistory` mirror `useHistory` / `useGroupedHistory` (an
+  `useFlameHistory` / `useGroupedFlameHistory` mirror `useBtcHistory` / `useGroupedBtcHistory` (an
   infinite query with the activity stale time, not persisted — it holds memos; pending items in
-  their own group), `useFlameHistoryGroups` mirrors `useHistoryGroups` through
-  `buildFlameHistoryGroupViews`, and `useFlameHistoryPolling` mirrors `useHistoryPolling` — both
-  sit on `useNewActivityPolling` (3 s refetch while focused, a new first key raises the bubble and
-  invalidates the balance). Mobile's `FlameHistoryList` and `HistoryList` render the same
-  `HistoryListView` and differ only in these hooks. Each entry carries the wallet's created and spent
-  contracts with bytes and notes, so `toFlameActivityItem` prices a send without paging back to its
+  their own group), `useFlameHistoryGroups` mirrors `useBtcHistoryGroups` through
+  `buildFlameHistoryGroupViews` (both start from `useActivityRowContext`), and
+  `useFlameHistoryPolling` mirrors `useBtcHistoryPolling` — both sit on `useNewActivityPolling` (3 s
+  refetch while focused, a new first key raises the bubble and invalidates the balance). Mobile's
+  `FlameHistoryList` and `BtcHistoryList` render the same `HistoryList` and differ only in these
+  hooks; `FlameTransactionScreen` and `BtcTransactionScreen` render the same `TransactionDetails`
+  (`features/transaction-details`) from `useFlameTransactionDetails` / `useBtcTransactionDetails`. Each entry carries the wallet's created and spent
+  contracts with bytes and notes, so `toFlameHistoryItem` prices a send without paging back to its
   receipts: sent = spent − created − fee, with the fee apart, received = created. Timestamps are
   the block time (the node's mock core indexer: the minting machine's clock), or `received_at`
   while pending; either may be absent (genesis, a node restart).
+- **A chain-specific symbol carries its chain, a shared one carries none.** `BtcHistoryList` /
+  `FlameHistoryList` over `HistoryList`, `useBtcReceiveInfo` / `useFlameReceiveInfo`,
+  `BtcAssetCell` / `FlameAssetCell` and `AssetLogo` (which picks `FlameLogo` or the asset image) in
+  `entities/asset`. A new Flame part starts by finding its BTC counterpart and either sharing it or
+  mirroring its name, layer and shape — a Flame-only variant of something BTC already has is the
+  drift this rule prevents. Both lists scroll to the top on the user's own send through
+  `useScrollToTopOnNewTx`, fed by `useLastBroadcastedBtcTx` / `useLatestPendingSentFlameTxId`.
+- **Code that differs per chain dispatches on `blockchain`, never on a flag.** No
+  `isFlame ? … : …`: a non-rendering difference is a `Record<Recipient['blockchain'], …>`
+  (`SEND_FORM_FEATURES_BY_CHAIN`, `IS_ESTIMATE_ENABLED_BY_CHAIN`, `MISSING_CHAIN_ERROR`), a rendered one
+  a small component that `switch`es on the discriminated form (`ChainRecipientCells`,
+  `ChainFeeSubvalue` in `ConfirmationScreen`), a chain's own logic a function per chain behind a
+  `switch` (`mapPortfolioToSuggestions`, `selectSendChain`, `useSendAssetTransfer`). What both
+  chains do stays in one place and is composed in; no base classes or generic per-chain templates.
+  A few repeated JSX lines are fine.
 - **Screens follow the portfolio's chains, not its type**, because a portfolio is planned to hold
   BTC and Flame together. `resolvePortfolioWallets` / `useActivePortfolioWallets` (ux) answer
   `PortfolioWallets` — `{ btc, flame }` — today a devnet portfolio has only `flame` and every other only `btc` — and that is
@@ -194,25 +211,32 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   the library seals it into that output's note, so only the recipient's view key reads it.
   The sender therefore can't read its own memo back from the chain, and a sent memo is deliberately
   not stored anywhere: history shows only a received memo, from the opened note
-  (`FlameOutputAmount.memo` → `FlameActivityItem.memo`); the confirmation screen shows the memo
+  (`FlameOutputAmount.memo` → `FlameHistoryItem.memo`); the confirmation screen shows the memo
   being sent.
-  The node admits a transfer synchronously, so `useSendAssetTransfer` awaits a refetch of the
-  balance and the next `unspent` already leaves the spent inputs out; there is no local broadcast
-  cache like `BroadcastedBtcTx`. There is no explorer
+  The node admits a transfer synchronously, so `useSendAssetTransfer` invalidates the balance and
+  the history (`flameBlockchain`) and the next `unspent` already leaves the spent inputs out; there
+  is no local broadcast cache like `BroadcastedBtcTx` and no store of the sent txid. The history
+  scrolls to the top when its first item becomes a pending send of the wallet
+  (`useLatestPendingSentFlameTxId`, read from the history itself), so the scroll waits until the
+  refetched item is in the list; a send from another device of the same wallet scrolls it too, on
+  purpose. There is no explorer
   link and no contact saving for a Flame recipient (contacts restore every address as BTC).
 - History marks a transaction as sent when it spends any of the wallet's outputs, even unreadable
   ones — not when the spent sum is positive.
+  An amount it could not read is shown as a lone dash with no sign, in the row and on the details
+  screen alike (`buildFlameActivityAmountView`).
 - **Counterparties in Flame history.** Each `history` entry lists the other side as
   `others_spent` (whose coins it spent) and `others_created` (whom it created coins for), each a
   predicate with its tracking address (`t1…` / `f1…`; schema default `[]` for an older node).
-  `toFlameActivityItem` follows flame-lib's CLI wallet: a receipt's sender is the first of
+  `toFlameHistoryItem` follows flame-lib's CLI wallet: a receipt's sender is the first of
   `others_spent`; a send's recipient is the first of `others_created`, but only when no one
   else's coins were spent — otherwise those outputs are the other payer's change, and no recipient
   is shown. Only a tracking address is known, never the full receiving one (its encryption key is
   not on chain). `findPortfolioMetaByAddress` matches it against a devnet portfolio's
-  `trackingAddress`, so the list (`resolveActivityCounterparty`) and `FlameTransactionScreen` name an
-  own wallet, and otherwise show the shortened address; with none, the "Unknown sender/recipient"
-  placeholder stays. The receive modal (`QRCodeBlock.trackingAddress`) bolds the tracking prefix of
+  `trackingAddress`, so the history row and the details screen — both through
+  `resolveActivityCounterparty` in `features/activity-display`, for BTC as well — name a contact or
+  an own wallet, and otherwise show the shortened address; with none, the "Unknown
+  sender/recipient" placeholder stays. The receive modal (`QRCodeBlock.trackingAddress`) bolds the tracking prefix of
   the receiving address and dims the encryption key after it.
 - Core and ux tests run with a fake `flameSdk` installed by their `test/setup-crypto.ts` (creating a
   devnet portfolio calls `viewKey` and `address`; ux's fake tells a receiving address apart by its

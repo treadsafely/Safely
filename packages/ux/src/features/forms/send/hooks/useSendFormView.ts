@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 import type { SnapshotFrom } from 'xstate';
 
-import { assertUnreachable, BLOCKCHAIN_NAME } from '@safely/core';
+import { assertUnreachable } from '@safely/core';
 
 import type { createSendFormMachine } from '../machine/machine';
 import type { SendSuggestions } from '../types';
-import { computeRecipientMeta, filterSuggestionsByQuery } from '../utils';
+import {
+    SEND_FORM_FEATURES_BY_CHAIN,
+    computeRecipientMeta,
+    filterSuggestionsByQuery
+} from '../utils';
 import type { AmountView, RecipientView, SendFormView } from '../view';
 import type { SendFormDispatchers } from './useSendFormDispatchers';
 
@@ -118,7 +122,9 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
     const ctxParsedAmount = snapshot.context.parsed.amount;
     const ctxParsedAsset = snapshot.context.parsed.asset;
     const ctxParsedMaxValue = snapshot.context.parsed.maxValue;
-    const memoSetter = recipientBlockchain === BLOCKCHAIN_NAME.FLAME ? setMemo : undefined;
+    const recipientFeatures =
+        recipientBlockchain && SEND_FORM_FEATURES_BY_CHAIN[recipientBlockchain];
+    const memoSetter = recipientFeatures?.hasMemo ? setMemo : undefined;
 
     return useMemo<SendFormView>(() => {
         if (snapshot.matches('restoring')) return { state: 'restoring' };
@@ -141,7 +147,9 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
                 selectedSuggestionId,
                 selectedSuggestionSource,
                 fromMeta,
-                canSaveContact: ctxParsedRecipient?.blockchain === BLOCKCHAIN_NAME.BTC,
+                canSaveContact: ctxParsedRecipient
+                    ? SEND_FORM_FEATURES_BY_CHAIN[ctxParsedRecipient.blockchain].canSaveContact
+                    : false,
                 setRecipient,
                 setAddressBookName,
                 selectSuggestion

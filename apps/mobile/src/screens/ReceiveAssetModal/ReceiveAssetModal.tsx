@@ -8,15 +8,15 @@ import type { CryptoAsset, Recipient } from '@safely/core';
 import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET } from '@safely/core';
 import type { PortfolioWallets } from '@safely/ux';
 import {
-    useActiveFlameWallet,
     useActivePortfolioWallets,
     useActivePortfolioNetworkBadge,
-    useIsActivePortfolioWatchOnly,
-    useReceiveInfo
+    useBtcReceiveInfo,
+    useFlameReceiveInfo,
+    useIsActivePortfolioWatchOnly
 } from '@safely/ux';
 
-import { FlameLogo } from '@mobile/entities/flame';
-import { GradientBackground, Image, Screen, SegmentedControl, Text } from '@mobile/shared/ui';
+import { AssetLogo, FlameLogo } from '@mobile/entities/asset';
+import { GradientBackground, Screen, SegmentedControl, Text } from '@mobile/shared/ui';
 
 import { QRCodeBlock } from './components/QRCodeBlock/QRCodeBlock';
 import { ReceiveActions } from './components/ReceiveActions';
@@ -26,7 +26,7 @@ import { styles } from './ReceiveAssetModal.styles';
 const GRADIENT_HEIGHT = 600;
 
 const BtcReceive = () => {
-    const { displayAddress } = useReceiveInfo();
+    const { displayAddress } = useBtcReceiveInfo();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
     const networkBadge = useActivePortfolioNetworkBadge();
 
@@ -34,7 +34,7 @@ const BtcReceive = () => {
         <>
             <QRCodeBlock
                 address={displayAddress}
-                logo={<Image source={BTC_ASSET.image} style={styles.logo} />}
+                logo={<AssetLogo asset={BTC_ASSET} size="large" />}
                 isWatchOnly={isWatchOnly}
                 networkBadge={networkBadge}
             />
@@ -44,19 +44,19 @@ const BtcReceive = () => {
 };
 
 const FlameReceive = () => {
-    const wallet = useActiveFlameWallet();
+    const { displayAddress, trackingAddress } = useFlameReceiveInfo();
     const networkBadge = useActivePortfolioNetworkBadge();
 
     return (
         <>
             <QRCodeBlock
-                address={wallet.receivingAddress}
+                address={displayAddress}
                 logo={<FlameLogo background="black" size="large" />}
                 isWatchOnly={false}
                 networkBadge={networkBadge}
-                trackingAddress={wallet.trackingAddress}
+                trackingAddress={trackingAddress}
             />
-            <ReceiveActions address={wallet.receivingAddress} />
+            <ReceiveActions address={displayAddress} />
         </>
     );
 };

@@ -31,7 +31,7 @@ export const ReceivingBadges = ({
 
             const activity = btcTxToActivityItem(u.tx, currentRate ?? null);
             if (activity) {
-                navigation.navigate('TransactionScreen', { activity });
+                navigation.navigate('BtcTransactionScreen', { activity });
             }
         },
         [navigation, currentRate]

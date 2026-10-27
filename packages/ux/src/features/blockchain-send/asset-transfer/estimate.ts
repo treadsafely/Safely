@@ -29,7 +29,7 @@ import type { SendFormResult } from '../../forms/send/types';
 import type { BtcSendChain, FlameSendChain } from '../send-chains';
 import { useSendChains } from '../send-chains';
 
-export const estimationKey = defineQueryKeys('estimation', {
+export const btcEstimationKey = defineQueryKeys('btcEstimation', {
     form(__: SendFormResult) {
         return {
             params: mappedParams(
@@ -51,7 +51,7 @@ export const flameEstimationKey = defineQueryKeys('flameEstimation', {
     }
 });
 
-export const maxSendKey = defineQueryKeys('maxSendKey', {
+export const btcMaxSendKey = defineQueryKeys('btcMaxSend', {
     form(__: Pick<SendFormResult, 'blockchain' | 'recipient'> | undefined) {
         return {
             params: mappedParams(
@@ -78,15 +78,16 @@ export function useEstimateAssetTransfer(form: SendFormResult, options?: { enabl
     const enabled = options?.enabled !== false;
     const btcQuery = useEstimateBtcTransfer(form, btc, enabled);
     const flameQuery = useEstimateFlameTransfer(form, flame, enabled);
+    const queryByChain = { [BLOCKCHAIN_NAME.BTC]: btcQuery, [BLOCKCHAIN_NAME.FLAME]: flameQuery };
 
-    return form.blockchain === BLOCKCHAIN_NAME.FLAME ? flameQuery : btcQuery;
+    return queryByChain[form.blockchain];
 }
 
 function useEstimateBtcTransfer(form: SendFormResult, btc: BtcSendChain | null, enabled: boolean) {
     const utxos = btc?.utxos;
 
     return useQuery<BtcTransactionTemplate>({
-        queryKey: estimationKey
+        queryKey: btcEstimationKey
             .form(form)
             .params({ estimatorId: btc?.estimator.id ?? null, utxos })
             .toKey(),
@@ -169,7 +170,7 @@ function useEstimateFlameTransfer(
     });
 }
 
-async function computeMaxSendValue(params: {
+async function computeBtcMaxSendValue(params: {
     form: Pick<SendFormResult, 'blockchain' | 'recipient'>;
     btcEstimator: BtcEstimator;
     assets: RatedCryptoAssetAmount[];
@@ -207,11 +208,12 @@ export function useFetchMaxValue(): (
                     const { estimator: btcEstimator, utxos } = btc;
 
                     return queryClient.fetchQuery({
-                        queryKey: maxSendKey
+                        queryKey: btcMaxSendKey
                             .form(form)
                             .params({ btcEstimator, assets, utxos })
                             .toKey(),
-                        queryFn: () => computeMaxSendValue({ form, btcEstimator, assets, utxos }),
+                        queryFn: () =>
+                            computeBtcMaxSendValue({ form, btcEstimator, assets, utxos }),
                         staleTime: QUERIES_STALE_TIME.MAX_SEND
                     });
                 }

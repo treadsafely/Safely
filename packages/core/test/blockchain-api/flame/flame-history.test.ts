@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FlameApiHistoryEntry, FlameOutputAmount } from '../../../src';
-import { flameHistoryContracts, toFlameActivityItem } from '../../../src';
+import { flameHistoryContracts, toFlameHistoryItem } from '../../../src';
 
 const hex = (fill: string) => fill.repeat(64);
 
@@ -39,9 +39,9 @@ const amounts = new Map<string, FlameOutputAmount>([
     [hex('6'), { status: 'notToken' }]
 ]);
 
-describe('toFlameActivityItem', () => {
+describe('toFlameHistoryItem', () => {
     it('counts a send as spent minus change minus the fee, with the fee apart', () => {
-        const item = toFlameActivityItem(
+        const item = toFlameHistoryItem(
             entry('a', ['2'], ['1'], { height: 12, time: 1_760_000_000 }),
             amounts
         );
@@ -60,7 +60,7 @@ describe('toFlameActivityItem', () => {
     });
 
     it('counts a receipt as its created outputs and carries their memo', () => {
-        const item = toFlameActivityItem(
+        const item = toFlameHistoryItem(
             entry('b', ['3'], [], { height: 13, time: 1_760_000_100 }),
             amounts
         );
@@ -72,7 +72,7 @@ describe('toFlameActivityItem', () => {
     });
 
     it('marks a mempool entry pending and dates it by when the node admitted it', () => {
-        const item = toFlameActivityItem(entry('c', ['3'], []), amounts);
+        const item = toFlameHistoryItem(entry('c', ['3'], []), amounts);
 
         expect(item?.isPending).toBe(true);
         expect(item?.height).toBeNull();
@@ -80,7 +80,7 @@ describe('toFlameActivityItem', () => {
     });
 
     it('shows a transaction spending an unreadable own output as sent', () => {
-        const item = toFlameActivityItem(entry('d', [], ['4']), amounts);
+        const item = toFlameHistoryItem(entry('d', [], ['4']), amounts);
 
         expect(item?.isInitiator).toBe(true);
         expect(item?.hasUnreadableOutputs).toBe(true);
@@ -88,18 +88,18 @@ describe('toFlameActivityItem', () => {
     });
 
     it('drops an entry that only moves other tokens or non-token contracts', () => {
-        expect(toFlameActivityItem(entry('e', ['5', '6'], []), amounts)).toBeNull();
+        expect(toFlameHistoryItem(entry('e', ['5', '6'], []), amounts)).toBeNull();
     });
 });
 
-describe('toFlameActivityItem counterparty', () => {
+describe('toFlameHistoryItem counterparty', () => {
     const other = (fill: string, address?: string) => ({
         predicate: hex(fill),
         ...(address !== undefined && { address })
     });
 
     it('names whoever paid a receipt', () => {
-        const item = toFlameActivityItem(
+        const item = toFlameHistoryItem(
             {
                 ...entry('a', ['3'], []),
                 others_spent: [other('b'), other('c', 't1payer')],
@@ -112,7 +112,7 @@ describe('toFlameActivityItem counterparty', () => {
     });
 
     it('names whom a send paid when only the wallet’s coins were spent', () => {
-        const item = toFlameActivityItem(
+        const item = toFlameHistoryItem(
             { ...entry('b', ['2'], ['1']), others_created: [other('e', 't1recipient')] },
             amounts
         );
@@ -121,7 +121,7 @@ describe('toFlameActivityItem counterparty', () => {
     });
 
     it('names no recipient when someone else’s coins were spent too', () => {
-        const item = toFlameActivityItem(
+        const item = toFlameHistoryItem(
             {
                 ...entry('c', [], ['1']),
                 others_spent: [other('f', 't1cosigner')],

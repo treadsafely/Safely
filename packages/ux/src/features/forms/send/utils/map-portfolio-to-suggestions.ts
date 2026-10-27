@@ -1,5 +1,10 @@
 import type { IDerivation, IPortfolioId, Portfolio, Recipient } from '@safely/core';
-import { BLOCKCHAIN_NAME, isLedgerDerivation, PortfolioType } from '@safely/core';
+import {
+    assertUnreachable,
+    BLOCKCHAIN_NAME,
+    isLedgerDerivation,
+    PortfolioType
+} from '@safely/core';
 
 import { isDerivablePortfolio, resolveFlameWallet } from '../../../../entities';
 import type { PortfolioSuggestion } from '../types';
@@ -17,15 +22,37 @@ export function mapPortfolioToSuggestions(
 ): PortfolioSuggestion[] {
     const isActivePortfolio = !!active && portfolio.id.isEq(active.portfolioId);
 
-    if (blockchain === BLOCKCHAIN_NAME.FLAME) {
-        const flame = resolveFlameWallet(portfolio);
-        if (isActivePortfolio || !flame) return [];
-
-        return [
-            { id: portfolio.id.toString(), address: flame.receivingAddress, meta: portfolio.meta }
-        ];
+    switch (blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            return mapPortfolioToBtcSuggestions(
+                portfolio,
+                active,
+                isActivePortfolio,
+                derivationName
+            );
+        case BLOCKCHAIN_NAME.FLAME:
+            return mapPortfolioToFlameSuggestions(portfolio, isActivePortfolio);
+        default:
+            return assertUnreachable(blockchain);
     }
+}
 
+function mapPortfolioToFlameSuggestions(
+    portfolio: Portfolio,
+    isActivePortfolio: boolean
+): PortfolioSuggestion[] {
+    const flame = resolveFlameWallet(portfolio);
+    if (isActivePortfolio || !flame) return [];
+
+    return [{ id: portfolio.id.toString(), address: flame.receivingAddress, meta: portfolio.meta }];
+}
+
+function mapPortfolioToBtcSuggestions(
+    portfolio: Portfolio,
+    active: ActivePortfolioEntity | undefined,
+    isActivePortfolio: boolean,
+    derivationName: (index: number) => string
+): PortfolioSuggestion[] {
     if (portfolio.type === PortfolioType.WATCH_ONLY) {
         if (isActivePortfolio) return [];
 

@@ -4,7 +4,7 @@ import type {
     BtcAsset,
     BtcApiTx,
     CryptoAssetAmount as CryptoAssetAmountType,
-    FlameActivityItem,
+    FlameHistoryItem,
     RampOrder
 } from '@safely/core';
 import {
@@ -22,15 +22,15 @@ import {
 import { Logger } from '@safely/sync';
 
 import type {
-    ActivityItem,
-    ActivityItemsDatedGroup,
+    BtcHistoryItem,
+    BtcHistoryItemsDatedGroup,
     BtcActivityItem,
     OrderActivityItem
 } from '../../../src/entities';
-import type { ActivityRowContext } from '../../../src/features/history/activity-row-view';
+import type { BtcActivityRowContext } from '../../../src/features/history/activity-row-view';
 import {
     buildFlameHistoryGroupViews,
-    buildHistoryGroupViews
+    buildBtcHistoryGroupViews
 } from '../../../src/features/history/activity-row-view';
 import type { DateFormatter } from '../../../src/shared/format/date';
 import type { TranslateFn } from '../../../src/shared/i18n/types';
@@ -50,7 +50,7 @@ const stubFormatter = (label: string): DateFormatter =>
 
 const numberFormatter = new NumberFormatter(new WebNumberFormatLocale('en-US'), new Logger());
 
-const baseContext: ActivityRowContext = {
+const baseContext: BtcActivityRowContext = {
     t,
     groupFormatter: stubFormatter('group'),
     timeFormatter: stubFormatter(TIME_LABEL),
@@ -118,16 +118,16 @@ const orderActivity = (params: {
 });
 
 const singleGroup = (
-    activity: ActivityItem,
-    meta: ActivityItemsDatedGroup['meta'] = { label: GROUP_LABEL.TODAY }
-): ActivityItemsDatedGroup[] => [{ key: 'group-1', meta, items: [activity] }];
+    activity: BtcHistoryItem,
+    meta: BtcHistoryItemsDatedGroup['meta'] = { label: GROUP_LABEL.TODAY }
+): BtcHistoryItemsDatedGroup[] => [{ key: 'group-1', meta, items: [activity] }];
 
-const buildRow = (activity: ActivityItem, context: Partial<ActivityRowContext> = {}) =>
-    buildHistoryGroupViews(singleGroup(activity), { ...baseContext, ...context })[0].rows[0];
+const buildRow = (activity: BtcHistoryItem, context: Partial<BtcActivityRowContext> = {}) =>
+    buildBtcHistoryGroupViews(singleGroup(activity), { ...baseContext, ...context })[0].rows[0];
 
-describe('buildHistoryGroupViews', () => {
+describe('buildBtcHistoryGroupViews', () => {
     it('titles the group and keys rows by group and activity', () => {
-        const groups = buildHistoryGroupViews(
+        const groups = buildBtcHistoryGroupViews(
             singleGroup(btcActivity({ isInitiator: true })),
             baseContext
         );
@@ -160,7 +160,7 @@ describe('buildHistoryGroupViews', () => {
     });
 
     it('formats the timestamp with day and month outside the current month', () => {
-        const groups = buildHistoryGroupViews(
+        const groups = buildBtcHistoryGroupViews(
             singleGroup(btcActivity({ isInitiator: true }), {
                 label: GROUP_LABEL.THIS_YEAR,
                 year: 2023,
@@ -231,7 +231,7 @@ describe('buildHistoryGroupViews', () => {
     });
 });
 
-const flameActivity = (params: Partial<FlameActivityItem> = {}): FlameActivityItem => ({
+const flameActivity = (params: Partial<FlameHistoryItem> = {}): FlameHistoryItem => ({
     txid: 'f'.repeat(64),
     height: 12,
     timestamp: TIMESTAMP,
@@ -245,10 +245,10 @@ const flameActivity = (params: Partial<FlameActivityItem> = {}): FlameActivityIt
     ...params
 });
 
-const buildFlameRow = (activity: FlameActivityItem) =>
+const buildFlameRow = (activity: FlameHistoryItem, context: Partial<BtcActivityRowContext> = {}) =>
     buildFlameHistoryGroupViews(
         [{ key: 'group-1', meta: { label: GROUP_LABEL.TODAY }, items: [activity] }],
-        baseContext
+        { ...baseContext, ...context }
     )[0].rows[0];
 
 describe('buildFlameHistoryGroupViews', () => {
@@ -281,9 +281,22 @@ describe('buildFlameHistoryGroupViews', () => {
         });
     });
 
-    it('shows a dash for an amount it could not read', () => {
-        expect(buildFlameRow(flameActivity({ hasUnreadableOutputs: true })).formattedValue).toBe(
-            '–'
+    it('adds the fee to a sent amount when full precision is on', () => {
+        const activity = flameActivity({
+            isInitiator: true,
+            fee: FlameAssetAmount.fromWeiAmount(10_000n)
+        });
+
+        expect(buildFlameRow(activity, { showFullSentAmount: true }).formattedValue).toBe(
+            activity.value
+                .add(FlameAssetAmount.fromWeiAmount(10_000n))
+                .format(numberFormatter, { fullPrecision: true })
         );
+    });
+
+    it('drops the sign and shows a dash for an amount it could not read', () => {
+        expect(
+            buildFlameRow(flameActivity({ isInitiator: true, hasUnreadableOutputs: true }))
+        ).toMatchObject({ amountSign: null, formattedValue: '–' });
     });
 });

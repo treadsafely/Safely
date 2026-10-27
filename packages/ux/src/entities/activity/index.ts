@@ -1,8 +1,8 @@
-export { activityKeys } from './keys';
-export { useHistory } from './useHistory';
+export { btcActivityKeys } from './keys';
+export { useBtcHistory } from './useBtcHistory';
 export { useOnrampTxids } from './useOnrampTxids';
-export { useHasHistory } from './useHasHistory';
-export { useGroupedHistory } from './useGroupedHistory';
+export { useHasBtcHistory } from './useHasBtcHistory';
+export { useGroupedBtcHistory } from './useGroupedBtcHistory';
 export {
     fetchBtcActivity,
     fetchOrdersActivity,
@@ -14,21 +14,21 @@ export { isActivityItemPending } from './pending';
 export { dedupeOrderTxs } from './merge';
 export { applyActivityWaterline } from './waterline';
 export {
-    INITIAL_ACTIVITY_PAGE_PARAM,
+    INITIAL_BTC_HISTORY_PAGE_PARAM,
     buildActivityPage,
     getNextActivityPageParam
 } from './pagination';
 export type {
-    IActivityFilters,
+    IBtcHistoryFilters,
     BtcActivityItem,
     OrderActivityItem,
-    ActivityItemsDatedGroup,
-    IActivityPageParam,
-    ActivityPage,
+    BtcHistoryItemsDatedGroup,
+    IBtcHistoryPageParam,
+    BtcHistoryPage,
     BtcActivityPage,
     OrdersActivityPage,
-    IHistoryOptions,
-    ActivityItem
+    IBtcHistoryOptions,
+    BtcHistoryItem
 } from './types';
 export { isBtcActivityItem, isOrderActivityItem } from './types';
 export * from './blockchain-specific';

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import type { BtcApiTx, BtcAsset, CryptoAssetAmount as CryptoAssetAmountType } from '@safely/core';
 import {
+    BLOCKCHAIN_NAME,
     BTC_ASSET,
+    Contact,
     CryptoAssetAmount,
     FiatAsset,
     FiatAssetId,
@@ -11,14 +13,15 @@ import {
     SPACE,
     WebNumberFormatLocale,
     ellipsisMiddle,
-    toBig
+    toBig,
+    vmTypeByBlockchainName
 } from '@safely/core';
 import { Logger } from '@safely/sync';
 
 import type { BtcActivityItem, BtcTransactionDisplayStatus } from '../../../src/entities';
+import type { BtcTransactionDetailsContext } from '../../../src/features/transaction-details/btc-transaction-details-view';
+import { buildBtcTransactionDetailsView } from '../../../src/features/transaction-details/btc-transaction-details-view';
 import { buildBtcTransactionStatusView } from '../../../src/features/transaction-details/btc-transaction-status';
-import type { TransactionDetailsContext } from '../../../src/features/transaction-details/transaction-details-view';
-import { buildTransactionDetailsView } from '../../../src/features/transaction-details/transaction-details-view';
 import type { DateFormatter } from '../../../src/shared/format/date';
 import type { TranslateFn } from '../../../src/shared/i18n/types';
 
@@ -45,14 +48,16 @@ const rate = new Rate(
     toBig('50000')
 );
 
-const status: TransactionDetailsContext['status'] = {
+const status: BtcTransactionDetailsContext['status'] = {
     title: 'status.title',
     description: 'status.description',
     descriptionTone: 'secondary'
 };
 
-const baseContext: TransactionDetailsContext = {
+const baseContext: BtcTransactionDetailsContext = {
     t,
+    contacts: [],
+    portfolios: [],
     confirmedAtFormatter: stubFormatter(CONFIRMED_AT_LABEL),
     numberFormatter,
     showFullSentAmount: false,
@@ -93,10 +98,12 @@ const btcActivity = (params: {
     }
 });
 
-const buildView = (activity: BtcActivityItem, context: Partial<TransactionDetailsContext> = {}) =>
-    buildTransactionDetailsView(activity, { ...baseContext, ...context });
+const buildView = (
+    activity: BtcActivityItem,
+    context: Partial<BtcTransactionDetailsContext> = {}
+) => buildBtcTransactionDetailsView(activity, { ...baseContext, ...context });
 
-describe('buildTransactionDetailsView', () => {
+describe('buildBtcTransactionDetailsView', () => {
     it('renders a confirmed outgoing transaction', () => {
         const view = buildView(btcActivity({ isInitiator: true }));
 
@@ -105,10 +112,26 @@ describe('buildTransactionDetailsView', () => {
         expect(view.amountSign).toBe('−');
         expect(view.counterpartyLabel).toBe('history.transactionInfo.recipient');
         expect(view.counterpartyAddress).toBe(COUNTERPARTY_ADDRESS);
-        expect(view.counterpartyAddressLabel).toBe(ellipsisMiddle(COUNTERPARTY_ADDRESS, 6));
+        expect(view.counterpartyName).toBe(ellipsisMiddle(COUNTERPARTY_ADDRESS, 6));
         expect(view.txid).toBe(TXID);
         expect(view.txidLabel).toBe(ellipsisMiddle(TXID, 8));
         expect(view.explorerUrl).toBe(EXPLORER_URL);
+    });
+
+    it('names a known contact instead of the address', () => {
+        const contact = new Contact({
+            addresses: [
+                {
+                    blockchain: vmTypeByBlockchainName(BLOCKCHAIN_NAME.BTC),
+                    address: COUNTERPARTY_ADDRESS
+                }
+            ],
+            meta: { name: 'Alice', color: '#ffffff' }
+        });
+        const view = buildView(btcActivity({ isInitiator: true }), { contacts: [contact] });
+
+        expect(view.counterpartyName).toBe('Alice');
+        expect(view.counterpartyAddress).toBe(COUNTERPARTY_ADDRESS);
     });
 
     it('drops the date and names the direction as in flight while pending', () => {

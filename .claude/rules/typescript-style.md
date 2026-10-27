@@ -46,15 +46,15 @@ Nothing in lint or CI reads a filename, so the case is on review:
   `TableCell.tsx`, `TableCell.styles.ts`, `Screen.context.ts`, `ConfirmationScreen.types.ts`. A
   module whose single export is a class or a React context takes the same form
   (`DmkLoggerAdapter.ts`, `BannerContext.ts`).
-- **camelCase** for a module named after the hook it exports: `useHistoryGroups.ts`,
-  `useTransactionDetails.ts`. One hook per file — once a second export appears the name no longer
+- **camelCase** for a module named after the hook it exports: `useBtcHistoryGroups.ts`,
+  `useBtcTransactionDetails.ts`. One hook per file — once a second export appears the name no longer
   describes the file, and it becomes kebab-case.
 - **kebab-case** for everything else: pure logic, builders, view models, schemas, constants
   (`transaction-details-view.ts`, `btc-transaction-status.ts`, `date-groups.ts`,
   `btc-derivation-path.ts`), the Panda recipes (`app-layout.recipe.ts`), and the fixed module names
   `index.ts`, `keys.ts`, `types.ts`, `api.ts`.
 - Directories split the same way: a component owns a PascalCase directory (`shared/ui/TableCell/`,
-  `screens/TransactionScreen/`), a slice a kebab-case one (`features/transaction-details/`,
+  `screens/BtcTransactionScreen/`), a slice a kebab-case one (`features/transaction-details/`,
   `features/add-wallet/`).
 
 `packages/core` prefixes an interface module with `I-` and keeps the rest kebab (`I-btc-wallet.ts`);

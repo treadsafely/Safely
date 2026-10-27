@@ -6,6 +6,11 @@ import { SendFormError } from '../errors';
 import type { ContactSuggestion, OwnAddresses, PortfolioSuggestion } from '../types';
 import { MIN_RECIPIENT_ADDRESS_LENGTH, createRecipientSchema } from '../utils';
 
+const MISSING_CHAIN_ERROR: Record<Recipient['blockchain'], SendFormError> = {
+    [BLOCKCHAIN_NAME.BTC]: SendFormError.UNSUPPORTED_BLOCKCHAIN,
+    [BLOCKCHAIN_NAME.FLAME]: SendFormError.INVALID_WALLET_ADDRESS
+};
+
 function parseRecipient(
     input: string,
     networkType: PortfolioNetworkType,
@@ -18,9 +23,7 @@ function parseRecipient(
     }
 
     if (ownAddresses[detected.blockchain] === undefined) {
-        return detected.blockchain === BLOCKCHAIN_NAME.FLAME
-            ? SendFormError.INVALID_WALLET_ADDRESS
-            : SendFormError.UNSUPPORTED_BLOCKCHAIN;
+        return MISSING_CHAIN_ERROR[detected.blockchain];
     }
 
     switch (detected.blockchain) {

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AddAccountSheet } from '@mobile/screens/AddAccountSheet';
 import { BiometryScreen } from '@mobile/screens/BiometryScreen';
+import { BtcTransactionScreen } from '@mobile/screens/BtcTransactionScreen';
 import { ChangePasscodeScreen } from '@mobile/screens/ChangePasscodeScreen';
 import { ConfirmXpubImportSheet } from '@mobile/screens/ConfirmXpubImportSheet';
 import { ConnectToSignSheet } from '@mobile/screens/ConnectToSignSheet';
@@ -36,7 +37,6 @@ import { SelectAccountSelectorModal } from '@mobile/screens/SelectAccountSelecto
 import { SignInScreen } from '@mobile/screens/SignInScreen';
 import { SignInSuccessScreen } from '@mobile/screens/SignInSuccessScreen';
 import { SignOutAccountSheet } from '@mobile/screens/SignOutAccountSheet';
-import { TransactionScreen } from '@mobile/screens/TransactionScreen';
 import { WatchOnlySheet } from '@mobile/screens/WatchOnlySheet';
 import { WelcomeScreen } from '@mobile/screens/WelcomeScreen';
 
@@ -83,7 +83,7 @@ export const RootStack = createNativeStackNavigator({
                     }
                 },
                 RestrictedFlow: RestrictedStack,
-                TransactionScreen: TransactionScreen,
+                BtcTransactionScreen: BtcTransactionScreen,
                 FlameTransactionScreen: FlameTransactionScreen,
                 OrderScreen: OrderScreen,
                 DeviceDetailsScreen: DeviceDetailsScreen,

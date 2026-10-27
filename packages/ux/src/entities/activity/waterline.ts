@@ -2,11 +2,11 @@ import type { InfiniteData } from '@tanstack/react-query';
 
 import { getSourceFrontiers } from './pagination';
 import { isActivityItemPending } from './pending';
-import type { ActivityItem, ActivityPage, IActivityPageParam } from './types';
+import type { BtcHistoryItem, BtcHistoryPage, IBtcHistoryPageParam } from './types';
 
 export function applyActivityWaterline(
-    data: InfiniteData<ActivityPage, IActivityPageParam>
-): InfiniteData<ActivityPage, IActivityPageParam> {
+    data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>
+): InfiniteData<BtcHistoryPage, IBtcHistoryPageParam> {
     const lastPage = data.pages[data.pages.length - 1];
     if (!lastPage || (lastPage.btcNextPage === null && lastPage.ordersNextCursor === null)) {
         return data;
@@ -18,7 +18,7 @@ export function applyActivityWaterline(
         lastPage.ordersNextCursor !== null ? frontiers.orders : -Infinity
     );
 
-    const isVisible = (item: ActivityItem) =>
+    const isVisible = (item: BtcHistoryItem) =>
         isActivityItemPending(item) || item.timestamp >= waterline;
 
     const hasBuried = data.pages.some(page => page.items.some(item => !isVisible(item)));

@@ -151,10 +151,10 @@ and what moves into it is the part with no platform and no flow in it:
   *transition* into a full value rather than on the state, which is what lets mobile hold the entered
   code on screen for its 300 ms success animation without a second submit; clearing the value stays
   the caller's job.
-- **a screen's view model, when both platforms decide it identically** — `useHistoryGroups` plus the
-  pure `buildHistoryGroupViews` (`features/history`), the same shape as
+- **a screen's view model, when both platforms decide it identically** — `useBtcHistoryGroups` plus
+  the pure `buildBtcHistoryGroupViews` (`features/history`), the same shape as
   `features/home-screen/useHomeScreenList`: the hook composes the entity queries and the formatters,
-  the builder turns `ActivityItemsDatedGroup[]` into rows whose title, sign, tone, counterparty and
+  the builder turns `BtcHistoryItemsDatedGroup[]` into rows whose title, sign, tone, counterparty and
   timestamp are already decided. It renders nothing and navigates nowhere — every row carries its
   `activity`, and each app builds `onPress`/`onSelect` from that. Both apps then declare
   `ActivityItemProps = Omit<ActivityRowView, 'key' | 'activity'> & { onPress | onSelect }`, so the
@@ -162,10 +162,17 @@ and what moves into it is the part with no platform and no flow in it:
   This module takes a `TranslateFn` and returns display strings, the way `getDateGroupTitle` does,
   because a date heading needs a formatted date; the key-plus-count rule above still holds for copy
   a platform assembles itself. `features/transaction-details` is the second instance of the shape —
-  `useTransactionDetails` over the pure `buildTransactionDetailsView`, plus
-  `buildBtcTransactionStatusView` for the confirmation copy that the order screen reuses. Mobile
+  `useBtcTransactionDetails` over the pure `buildBtcTransactionDetailsView`, plus
+  `buildBtcTransactionStatusView` for the confirmation copy that the order screen reuses; the Flame
+  pair (`useFlameTransactionDetails`, `buildFlameTransactionDetailsView`) fills the same
+  `TransactionDetailsView`, so one component renders both. Every field a chain may lack is
+  in that base type as a required nullable (`memo`, `explorerUrl`, `hasFiatRateNote`), never an
+  optional added at the call site, so a renamed field breaks both builders and both renderers. What
+  a history row and the details screen must decide alike — the title key, the counterparty, the
+  Flame amount — sits in `features/activity-display`, which both slices import instead of each
+  other's barrel. Mobile
   renders it as a screen and the web as a side panel, and neither decides a title, a sign, an amount
-  order or an explorer URL of its own. `useHistoryPolling` sits next to them: the 3 s refetch, the
+  order or an explorer URL of its own. `useBtcHistoryPolling` sits next to them: the 3 s refetch, the
   first-key comparison and the asset invalidation are one policy, and each app only supplies
   `onNewActivity` — mobile raises its reanimated bubble, the web its `NewTransactionsBubble`.
 - **the mechanism of a typed key/value store** — `createStructuredStorage` / `useStructuredStorage`

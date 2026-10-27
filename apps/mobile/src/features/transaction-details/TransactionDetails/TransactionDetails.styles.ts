@@ -24,11 +24,6 @@ export const styles = StyleSheet.create(theme => ({
         justifyContent: 'center',
         alignSelf: 'center'
     },
-    assetImage: {
-        width: 72,
-        height: 72,
-        borderRadius: theme.radius.full
-    },
     assetBadge: {
         position: 'absolute',
         bottom: theme.spacing[4],

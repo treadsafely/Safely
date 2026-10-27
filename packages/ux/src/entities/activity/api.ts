@@ -21,7 +21,7 @@ import {
 import type {
     BtcActivityItem,
     BtcActivityPage,
-    IActivityFilters,
+    IBtcHistoryFilters,
     OrderActivityItem,
     OrdersActivityPage
 } from './types';
@@ -139,7 +139,7 @@ export async function fetchBtcActivity(
     wallet: Pick<BtcWalletReadOnly, 'type' | 'xpub' | 'address'>,
     fiat: FiatAsset,
     page: number,
-    filters: IActivityFilters
+    filters: IBtcHistoryFilters
 ): Promise<BtcActivityPage> {
     const pageNum = page >= 1 ? page : 1;
 
@@ -175,7 +175,7 @@ export async function fetchOrdersActivity(
     exchangeApi: ExchangeApi,
     request: { lang: string; storeCountryCode?: string | null; deviceCountryCode?: string | null },
     cursor: string | null,
-    filters: IActivityFilters
+    filters: IBtcHistoryFilters
 ): Promise<OrdersActivityPage> {
     const result = await exchangeApi.getRampOrders({
         ...request,

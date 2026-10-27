@@ -7,7 +7,7 @@ import type {
 import { FlameAssetAmount } from '../../entities/asset/exact-crypto-assets-amounts';
 import type { FlameOutputAmount } from '../../entities/derivation/flame/I-flame-wallet';
 
-export type FlameActivityItem = {
+export type FlameHistoryItem = {
     txid: string;
     height: number | null;
     timestamp: number | null;
@@ -34,10 +34,10 @@ function counterpartiesOf(
     return entry.others_spent.length === 0 ? entry.others_created : [];
 }
 
-export function toFlameActivityItem(
+export function toFlameHistoryItem(
     entry: FlameApiHistoryEntry,
     amounts: Map<string, FlameOutputAmount>
-): FlameActivityItem | null {
+): FlameHistoryItem | null {
     const native = (contracts: FlameApiHistoryContract[]) =>
         contracts
             .map(contract => amounts.get(contract.id) ?? { status: 'unreadable' as const })

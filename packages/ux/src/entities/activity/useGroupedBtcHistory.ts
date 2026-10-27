@@ -5,29 +5,29 @@ import { groupByDateWithPending } from '@safely/core';
 
 import { isActivityItemPending } from './pending';
 import type {
-    ActivityItem,
-    ActivityItemsDatedGroup,
-    ActivityPage,
-    IActivityFilters,
-    IActivityPageParam
+    BtcHistoryItem,
+    BtcHistoryItemsDatedGroup,
+    BtcHistoryPage,
+    IBtcHistoryFilters,
+    IBtcHistoryPageParam
 } from './types';
-import { useHistory } from './useHistory';
+import { useBtcHistory } from './useBtcHistory';
 
-export function useGroupedHistory(filters: IActivityFilters = {}) {
-    return useHistory<ActivityItemsDatedGroup[]>(filters, {
-        select: useCallback((data: InfiniteData<ActivityPage, IActivityPageParam>) => {
+export function useGroupedBtcHistory(filters: IBtcHistoryFilters = {}) {
+    return useBtcHistory<BtcHistoryItemsDatedGroup[]>(filters, {
+        select: useCallback((data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>) => {
             if (!data?.pages?.length) {
                 return [];
             }
 
             const allItems = data.pages.flatMap(page => page.items);
 
-            return groupActivityItems(allItems);
+            return groupBtcActivityItems(allItems);
         }, [])
     });
 }
 
-export function groupActivityItems(items: ActivityItem[]): ActivityItemsDatedGroup[] {
+export function groupBtcActivityItems(items: BtcHistoryItem[]): BtcHistoryItemsDatedGroup[] {
     return groupByDateWithPending(items, item => item.timestamp, {
         order: 'desc',
         getIsPending: isActivityItemPending

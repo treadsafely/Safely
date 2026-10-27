@@ -1,40 +1,36 @@
 import { useNavigation } from '@react-navigation/core';
-import { StackActions } from '@react-navigation/native';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useUnistyles } from 'react-native-unistyles';
 
 import { assertUnreachable, BTC_ASSET } from '@safely/core';
-import type { ActivityItem } from '@safely/ux';
+import type { BtcHistoryItem } from '@safely/ux';
 import {
     useActiveBtcRatedAmount,
     useActivePortfolio,
     useActivePortfolioWalletsOrNull,
     useActivePortfolioNetworkBadge,
-    useNumberFormatter,
-    useReceiveInfo
+    useBtcReceiveInfo
 } from '@safely/ux';
 
-import { AssetHistoryHeader, HistoryList } from '@mobile/features/history';
+import { AssetHistoryHeader, AssetHistoryScreen, BtcHistoryList } from '@mobile/features/history';
 import { HomeActions } from '@mobile/features/home';
-import { Screen } from '@mobile/shared/ui';
 
-const HistoryContent = () => {
+const BtcContent = () => {
     const navigation = useNavigation();
     const portfolio = useActivePortfolio();
     const { theme } = useUnistyles();
-    const formatter = useNumberFormatter();
     const networkBadge = useActivePortfolioNetworkBadge();
-    const { displayAddress } = useReceiveInfo();
-    const { data: btc } = useActiveBtcRatedAmount();
+    const { displayAddress } = useBtcReceiveInfo();
+    const { data: ratedAmount } = useActiveBtcRatedAmount();
 
     const onNavigateToActivityItem = useCallback(
-        (activity: ActivityItem) => {
+        (activity: BtcHistoryItem) => {
             switch (activity.type) {
                 case 'order':
                     navigation.navigate('OrderScreen', { order: activity });
                     break;
                 case 'transaction':
-                    navigation.navigate('TransactionScreen', { activity });
+                    navigation.navigate('BtcTransactionScreen', { activity });
                     break;
                 default:
                     assertUnreachable(activity);
@@ -47,16 +43,13 @@ const HistoryContent = () => {
         <>
             <AssetHistoryHeader
                 gradientColor={theme.colors.brand.bitcoin}
-                symbol={BTC_ASSET.symbol}
+                asset={BTC_ASSET}
                 networkBadge={networkBadge}
                 address={displayAddress}
-                amount={btc?.amount.format(formatter, { currencyDisplay: 'none' })}
-                fiatAmount={
-                    btc?.price ? btc.amount.convert(btc.price).format(formatter) : undefined
-                }
+                ratedAmount={ratedAmount}
                 actions={<HomeActions />}
             />
-            <HistoryList
+            <BtcHistoryList
                 key={portfolio?.id.toString()}
                 onNavigateToActivityItem={onNavigateToActivityItem}
             />
@@ -64,15 +57,8 @@ const HistoryContent = () => {
     );
 };
 
-export const BtcScreen = () => {
-    const navigation = useNavigation();
-    const hasBtc = Boolean(useActivePortfolioWalletsOrNull()?.btc);
-
-    useEffect(() => {
-        if (!hasBtc) {
-            navigation.dispatch(StackActions.popToTop());
-        }
-    }, [hasBtc, navigation]);
-
-    return <Screen>{hasBtc && <HistoryContent />}</Screen>;
-};
+export const BtcScreen = () => (
+    <AssetHistoryScreen hasChain={Boolean(useActivePortfolioWalletsOrNull()?.btc)}>
+        <BtcContent />
+    </AssetHistoryScreen>
+);

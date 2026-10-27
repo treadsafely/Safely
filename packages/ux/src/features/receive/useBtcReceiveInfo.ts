@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useActiveBtcWallet } from '../../entities';
 
-export function useReceiveInfo() {
+export function useBtcReceiveInfo() {
     const wallet = useActiveBtcWallet();
 
     return useMemo(
