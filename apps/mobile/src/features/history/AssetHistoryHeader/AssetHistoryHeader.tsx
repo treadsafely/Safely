@@ -26,9 +26,8 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
     const formatter = useNumberFormatter();
     const { symbol } = asset;
     const amount = ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' });
-    const fiatAmount = ratedAmount?.price
-        ? ratedAmount.amount.convert(ratedAmount.price).format(formatter)
-        : undefined;
+    const price = ratedAmount?.price;
+    const fiatAmount = price && ratedAmount.amount.convert(price).format(formatter);
 
     return (
         <>
@@ -67,15 +66,17 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
                         {symbol}
                     </Text>
                 </View>
-                <Text
-                    variant="bodyL"
-                    color="constantWhite"
-                    textAlign="center"
-                    style={styles.secondary}
-                    skeletonWidth={fiatAmount === undefined ? 64 : undefined}
-                >
-                    {fiatAmount}
-                </Text>
+                {price !== null && (
+                    <Text
+                        variant="bodyL"
+                        color="constantWhite"
+                        textAlign="center"
+                        style={styles.secondary}
+                        skeletonWidth={fiatAmount === undefined ? 64 : undefined}
+                    >
+                        {fiatAmount}
+                    </Text>
+                )}
             </View>
             {actions}
             <View style={styles.divider} />

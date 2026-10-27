@@ -25,10 +25,10 @@ const FLAME_MEMO_MAX_BYTES = globalThis.flameSdk.memoMaxBytes();
 
 const USD = new FiatAsset(new FiatAssetId('USD'), 'US Dollar');
 
-function makeFlameAsset(): RatedCryptoAssetAmount {
+function makeFlameAsset(price: RatedCryptoAssetAmount['price'] = null): RatedCryptoAssetAmount {
     return {
         amount: FlameAssetAmount.fromWeiAmount(5_000_000_000n),
-        price: new Rate(FLAME_ASSET, USD, toBig(0))
+        price
     };
 }
 
@@ -81,6 +81,18 @@ describe('sendFormMachine — devnet wallet', () => {
         expect(persistAmountInputType).not.toHaveBeenCalled();
     });
 
+    it('ignores a switch to fiat input for an asset priced at zero', () => {
+        const actor = startActor(
+            makeFlameInput({ ratedAssets: [makeFlameAsset(new Rate(FLAME_ASSET, USD, toBig(0)))] })
+        );
+        actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
+        actor.send({ type: 'NEXT' });
+
+        actor.send({ type: 'SET_AMOUNT_INPUT_TYPE', value: 'fiat' });
+
+        expect(actor.getSnapshot().context.values.amountInputType).toBe('crypto');
+    });
+
     it('submits a FLAME result', () => {
         const onSubmit = vi.fn();
         const actor = startActor(makeFlameInput({ onSubmit, shouldResetForm: false }));
@@ -93,6 +105,7 @@ describe('sendFormMachine — devnet wallet', () => {
         const result = onSubmit.mock.calls[0]?.[0];
         expect(result.blockchain).toBe(BLOCKCHAIN_NAME.FLAME);
         expect(result.amount.cryptoAssetAmount.weiAmount).toBe(150_000_000n);
+        expect(result.amount.fiatAssetAmount).toBeNull();
     });
 
     it('submits the memo with a FLAME result, even after entering max', async () => {
@@ -114,6 +127,7 @@ describe('sendFormMachine — devnet wallet', () => {
         actor.send({ type: 'NEXT' });
 
         expect(onSubmit.mock.calls[0]?.[0].memo).toBe('invoice #42');
+        expect(onSubmit.mock.calls[0]?.[0].amount.cryptoAssetAmount.weiAmount).toBe(4_000_000_000n);
     });
 
     it('clamps the memo to the byte limit', () => {

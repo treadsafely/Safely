@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { BTC_ASSET, CryptoAssetAmount } from '@safely/core';
-import { useActivePortfolioRate, useNumberFormatter } from '@safely/ux';
+import { useMainnetRate, useNumberFormatter } from '@safely/ux';
 
 import { ActivityItem } from '@mobile/entities/activity';
 
@@ -12,7 +12,7 @@ const DEMO_TIMESTAMP_LABEL = '23:45';
 export const TransactionHistoryPreview = () => {
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
-    const rate = useActivePortfolioRate(BTC_ASSET);
+    const rate = useMainnetRate(BTC_ASSET);
 
     return (
         <ActivityItem

@@ -41,7 +41,7 @@ export type AmountInputType = 'crypto' | 'fiat';
 export type AmountCryptoFirst<C extends CryptoAsset> = {
     inputType: 'crypto';
     cryptoAssetAmount: CryptoAssetAmount<C>;
-    fiatAssetAmount: FiatAssetAmount;
+    fiatAssetAmount: FiatAssetAmount | null;
 };
 
 export type AmountFiatFirst<C extends CryptoAsset> = {

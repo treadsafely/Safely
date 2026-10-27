@@ -5,13 +5,13 @@ import { toBig } from '@safely/core';
 export function calculateTotalBalance(
     assets: RatedCryptoAssetAmount[],
     fiat: FiatAsset
-): FiatAssetAmount {
-    const sum = assets.reduce((acc, { amount, price }) => {
-        if (price) {
-            return acc.plus(amount.convert(price).amount);
-        }
-        return acc;
-    }, toBig(0));
+): FiatAssetAmount | null {
+    const fiatAmounts = assets.flatMap(({ amount, price }) =>
+        price ? [amount.convert(price).amount] : []
+    );
+    if (fiatAmounts.length === 0) return null;
+
+    const sum = fiatAmounts.reduce((acc, value) => acc.plus(value), toBig(0));
 
     return new FiatAssetAmount({ asset: fiat, amount: sum });
 }

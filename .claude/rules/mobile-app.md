@@ -101,7 +101,7 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`DerivationChainItemFlame`) on the receiving path `{0,0}`. BIP-39 (testnet included), Ledger and
   watch-only portfolios have no Flame at all. The devnet node runs Flame's `testnet` network
   (`FLAME_DEVNET_NETWORK`, `t1…i1…` addresses) and the portfolio reports `networkType: TESTNET`, so
-  every testnet rule (zero rates, no contacts, no pushes) applies to it. Balance and history count
+  every testnet rule (no market price, no contacts, no pushes) applies to it. Balance and history count
   only flames, the native flavor: the SDK says so per output (`isNative` on a decoded clear contract
   and on an opened note, kept in `FlameOutputAmount`), so the app holds no flavor constant of its own;
   FLM has 8 decimals. The node URL is
@@ -198,8 +198,8 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   chain is `UNSUPPORTED_BLOCKCHAIN` — except a Flame address (mainnet or testnet) in a wallet with no
   Flame, which is `INVALID_WALLET_ADDRESS`, since Flame is a devnet-only chain for now; the recipient's chain picks the asset, and suggestions are built
   per allowed chain (Flame ones are the other devnet portfolios). Today a devnet wallet therefore
-  sends only FLM to a Flame address and any other wallet only BTC to a BTC address. A zero-rated
-  asset (FLM, any testnet asset) is entered in crypto only.
+  sends only FLM to a Flame address and any other wallet only BTC to a BTC address. An asset without
+  a non-zero price (FLM, any testnet asset) is entered in crypto only.
   `FlameEstimator` spends the largest readable native-flavor outputs first, pays the fixed
   `FLAME_TRANSFER_FEE` (1000 sparks; the node has no fee market yet) with a `FLAME_TRANSFER_GAS`
   limit of 1,000,000, and returns change to the wallet's own address `{0,0}`, the only address the

@@ -4,7 +4,7 @@ import { BTC_ASSET, CryptoAssetAmount } from '@safely/core';
 import type { AmountUnit } from '@safely/ux';
 import {
     resolveSentAmount,
-    useActivePortfolioRate,
+    useMainnetRate,
     useNumberFormatter,
     useSetShowFullSentAmount,
     useSetTransactionHistoryAmountOrder,
@@ -35,7 +35,7 @@ const Preview: FC<{ children: ReactNode }> = ({ children }) => (
 const TransactionHistoryPreview: FC = () => {
     const t = useTranslate();
     const formatter = useNumberFormatter();
-    const { data: rate } = useActivePortfolioRate(BTC_ASSET);
+    const { data: rate } = useMainnetRate(BTC_ASSET);
 
     return (
         <ActivityItem
@@ -55,7 +55,7 @@ const TransactionHistoryPreview: FC = () => {
 const SentAmountPreview: FC = () => {
     const t = useTranslate();
     const formatter = useNumberFormatter();
-    const { data: rate } = useActivePortfolioRate(BTC_ASSET);
+    const { data: rate } = useMainnetRate(BTC_ASSET);
     const showFullSentAmount = useShowFullSentAmount();
 
     const { amount, isFullPrecision } = resolveSentAmount({

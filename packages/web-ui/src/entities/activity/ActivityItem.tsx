@@ -3,7 +3,7 @@ import { memo } from 'react';
 
 import { SPACE } from '@safely/core';
 import type { ActivityCounterparty, ActivityRowView } from '@safely/ux';
-import { useTransactionHistoryAmountOrder } from '@safely/ux';
+import { orderAmounts, useTransactionHistoryAmountOrder } from '@safely/ux';
 import Human16 from '@safely/ux/assets/icons/16/human-16.svg?react';
 
 import {
@@ -84,10 +84,11 @@ export const ActivityItem: FC<ActivityItemProps> = memo(props => {
 
     const amountOrder = useTransactionHistoryAmountOrder();
 
-    const [primaryAmount, secondaryAmount] =
-        amountOrder === 'fiat' && formattedFiat !== null
-            ? [formattedFiat, formattedValue]
-            : [formattedValue, formattedFiat];
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        amountOrder,
+        formattedValue,
+        formattedFiat
+    );
 
     return (
         <Cell

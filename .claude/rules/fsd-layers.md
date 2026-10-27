@@ -103,6 +103,16 @@ for imports within a single module only.
   effect only subscribes to changes and re-reads the snapshot after subscribing.
 - Multi-step flows and forms (send, exchange, onboarding) are xstate machines; the machine lives next
   to its scenario (`packages/ux/src/features/forms/**`).
+- A price has three states, and they are not interchangeable: a rate query still loading or failed
+  is `undefined`, an asset with no market price (every testnet asset, FLM) is `null`, and a
+  `Rate` with value `0` is a real price of zero. `fetchMarketRate` (`entities/asset/rateQuery.ts`)
+  decides per chain which assets have one. `null` hides the fiat amount everywhere and overrides
+  the user's crypto/fiat display settings without changing them (`resolveAmountUnit`, the
+  `useDisplayed*` hooks and `orderAmounts` in `features/amount-display`, `usePortfolioBalanceUnit`
+  for the main balance — both platforms pick the unit through these, never inline); entering an amount in fiat needs a non-zero
+  price (`hasFiatPrice`), so a zero price blocks only that. A total balance with no priced asset is
+  `null` and is not shown at all. Market screens — the chart and the settings previews — read
+  `useMainnetRate`, not the active portfolio's rate.
 - Query-cache persistence goes through `query-core/persistence.ts` and the managers in
   `apps/mobile/src/app/tanstack-query-managers.ts` — don't hand-roll a cache.
 

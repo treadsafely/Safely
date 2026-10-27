@@ -13,7 +13,7 @@ export interface AmountStepView {
     amountError: SendFormError | undefined;
     isMax: boolean;
     inputType: AmountInputType;
-    alternativeAmount: string;
+    alternativeAmount: string | null;
     remainingBalance: string;
 }
 
@@ -33,6 +33,10 @@ export function useAmountStepView(params: UseAmountStepViewParams): AmountStepVi
     const alternativeAmount = useMemo(() => {
         const parsedAmount = view.parsed.amount;
         const cryptoSymbol = asset?.amount.asset.symbol ?? 'BTC';
+
+        if (inputType === 'crypto' && asset?.price === null) {
+            return null;
+        }
 
         if (!parsedAmount) {
             return inputType === 'crypto' ? `0 ${fiatSymbol}` : `0 ${cryptoSymbol}`;

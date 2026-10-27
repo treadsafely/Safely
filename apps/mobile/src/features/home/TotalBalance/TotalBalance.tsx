@@ -4,9 +4,9 @@ import type { CryptoAsset, Recipient } from '@safely/core';
 import { BLOCKCHAIN_NAME, BTC_ASSET, FLAME_ASSET } from '@safely/core';
 import {
     useActivePortfolioWallets,
-    useMainBalanceUnit,
     useNumberFormatter,
     usePortfolioAssets,
+    usePortfolioBalanceUnit,
     usePortfolioTotalBalance
 } from '@safely/ux';
 
@@ -24,8 +24,8 @@ export const TotalBalance = () => {
     const wallets = useActivePortfolioWallets();
     const totalBalance = usePortfolioTotalBalance(wallets);
     const formatter = useNumberFormatter();
-    const mainBalanceUnit = useMainBalanceUnit();
     const primaryAsset = usePortfolioAssets(wallets)[0];
+    const mainBalanceUnit = usePortfolioBalanceUnit(wallets);
 
     return (
         <View style={styles.container}>

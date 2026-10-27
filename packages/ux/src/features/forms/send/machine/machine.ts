@@ -259,6 +259,7 @@ export const createSendFormMachine = () =>
                         event.value,
                         context.formatter
                     );
+                    if (!result) return {};
 
                     return {
                         values: { ...baseValues, amount: result.formatted },
@@ -425,12 +426,7 @@ export const createSendFormMachine = () =>
                     );
 
                     const formatted = result.parsed
-                        ? formatAmountForDisplay(
-                              result.parsed.inputType,
-                              result.parsed.fiatAssetAmount,
-                              result.parsed.cryptoAssetAmount,
-                              context.formatter
-                          )
+                        ? formatAmountForDisplay(result.parsed, context.formatter)
                         : result.formatted;
 
                     return {

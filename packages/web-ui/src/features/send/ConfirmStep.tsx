@@ -5,6 +5,7 @@ import type { Estimation, SendResult } from '@safely/core';
 import { btcBlockWaitingTimeMinutes, ellipsisMiddle } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
+    orderAmounts,
     useActiveBtcWallet,
     useActiveWalletMeta,
     useErrorToast,
@@ -78,8 +79,13 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const explorerUrl = sendResult?.toExplorerUrl(explorerFactory) ?? null;
 
     const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter);
-    const fiatAmount = result.amount.fiatAssetAmount.format(formatter);
-    const isFiatPrimary = result.amount.inputType === 'fiat';
+    const fiatAmount = result.amount.fiatAssetAmount?.format(formatter) ?? null;
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        result.amount.inputType,
+        cryptoAmount,
+        fiatAmount
+    );
+    const amountNote = result.isMax ? t('confirmation.allAvailableBalance') : secondaryAmount;
 
     const handleSend = async (): Promise<void> => {
         try {
@@ -182,16 +188,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                 <TableCell.Label>{t('confirmation.amount')}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value>
-                                    {isFiatPrimary ? fiatAmount : cryptoAmount}
-                                </TableCell.Value>
-                                <TableCell.Label>
-                                    {result.isMax
-                                        ? t('confirmation.allAvailableBalance')
-                                        : isFiatPrimary
-                                          ? cryptoAmount
-                                          : fiatAmount}
-                                </TableCell.Label>
+                                <TableCell.Value>{primaryAmount}</TableCell.Value>
+                                {amountNote !== null && (
+                                    <TableCell.Label>{amountNote}</TableCell.Label>
+                                )}
                             </TableCell.Column>
                         </TableCell>
 

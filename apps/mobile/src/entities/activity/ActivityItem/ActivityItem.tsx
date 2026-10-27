@@ -3,7 +3,7 @@ import { View } from 'react-native';
 
 import { SPACE } from '@safely/core';
 import type { ActivityCounterparty, ActivityRowView } from '@safely/ux';
-import { useTransactionHistoryAmountOrder } from '@safely/ux';
+import { orderAmounts, useTransactionHistoryAmountOrder } from '@safely/ux';
 
 import { ContactName } from '@mobile/entities/contact';
 import { PortfolioName } from '@mobile/entities/portfolio';
@@ -67,10 +67,11 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
     } = props;
     const amountOrder = useTransactionHistoryAmountOrder();
 
-    const [primaryAmount, secondaryAmount] =
-        amountOrder === 'fiat' && formattedFiat !== null
-            ? [formattedFiat, formattedValue]
-            : [formattedValue, formattedFiat];
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        amountOrder,
+        formattedValue,
+        formattedFiat
+    );
 
     return (
         <Cell

@@ -23,6 +23,8 @@ const TotalBalanceText = (props: { portfolio: Portfolio; isSelected: boolean }) 
         []
     );
 
+    if (balance === null) return null;
+
     return (
         <Text
             variant="bodyM"

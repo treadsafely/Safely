@@ -77,7 +77,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     const formatter = useNumberFormatter();
 
     const onSend = useCallback(async () => {
-        const fiatAmount = confirmationResult.amount.fiatAssetAmount.amount.toNumber();
+        const fiatAmount = confirmationResult.amount.fiatAssetAmount?.amount.toNumber() ?? 0;
         const cryptoCurrency = confirmationResult.amount.cryptoAssetAmount.asset.symbol;
 
         try {
@@ -234,9 +234,10 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                             <MaxAmount amount={txTemplate?.request.amount} />
                         ) : (
                             <Amount
-                                fiatAmount={confirmationResult.amount.fiatAssetAmount.format(
-                                    formatter
-                                )}
+                                fiatAmount={
+                                    confirmationResult.amount.fiatAssetAmount?.format(formatter) ??
+                                    null
+                                }
                                 cryptoAmount={confirmationResult.amount.cryptoAssetAmount.format(
                                     formatter,
                                     { fullPrecision: true }

@@ -1,9 +1,5 @@
 import { BTC_ASSET, CryptoAssetAmount } from '@safely/core';
-import {
-    useActivePortfolioRate,
-    useActiveWalletBtcBalance,
-    useActivePortfolioWallets
-} from '@safely/ux';
+import { useMainnetRate, useActiveWalletBtcBalance, useActivePortfolioWallets } from '@safely/ux';
 
 import { AssetCell, BtcAssetCell } from '@mobile/entities/asset';
 
@@ -11,7 +7,7 @@ const DEMO_BALANCE = new CryptoAssetAmount({ relativeAmount: 0.25, asset: BTC_AS
 
 const BtcPreview = () => {
     const balance = useActiveWalletBtcBalance();
-    const rate = useActivePortfolioRate(BTC_ASSET);
+    const rate = useMainnetRate(BTC_ASSET);
 
     const displayBalance = balance.data?.display;
     const amount = displayBalance && displayBalance.weiAmount > 0n ? displayBalance : DEMO_BALANCE;
@@ -19,7 +15,7 @@ const BtcPreview = () => {
     return (
         <BtcAssetCell
             cryptoAssetAmount={amount}
-            price={rate.data ?? null}
+            price={rate.data}
             showDivider={false}
             background="tertiary"
         />
@@ -27,12 +23,12 @@ const BtcPreview = () => {
 };
 
 const DemoPreview = () => {
-    const rate = useActivePortfolioRate(BTC_ASSET);
+    const rate = useMainnetRate(BTC_ASSET);
 
     return (
         <AssetCell
             cryptoAssetAmount={DEMO_BALANCE}
-            price={rate.data ?? null}
+            price={rate.data}
             image={{ type: 'image', image: BTC_ASSET.image }}
             showDivider={false}
             background="tertiary"

@@ -12,6 +12,8 @@ import {
 } from '../../entities';
 import type { DerivedQueryResult } from '../../shared';
 import { useDerivedQuery } from '../../shared';
+import type { AmountUnit } from '../amount-display';
+import { useDisplayedMainBalanceUnit } from '../amount-display';
 
 export type PortfolioAddress = {
     blockchain: Recipient['blockchain'];
@@ -53,6 +55,12 @@ export function usePortfolioAssets(wallets: PortfolioWallets): PortfolioAsset[] 
     }, [wallets, btc, flame]);
 }
 
+export function usePortfolioBalanceUnit(wallets: PortfolioWallets): AmountUnit {
+    const primaryAsset = usePortfolioAssets(wallets)[0];
+
+    return useDisplayedMainBalanceUnit(primaryAsset?.rated?.price);
+}
+
 type RatedChainQuery = DerivedQueryResult<RatedCryptoAssetAmount | null>;
 
 const asSettled = (query: RatedChainQuery): RatedChainQuery => ({
@@ -74,7 +82,7 @@ export function isolateChainFailures(queries: RatedChainQuery[]): RatedChainQuer
 
 export function usePortfolioTotalBalance(
     wallets: PortfolioWallets
-): DerivedQueryResult<FiatAssetAmount> {
+): DerivedQueryResult<FiatAssetAmount | null> {
     const btcQuery = useBtcRatedAmount(wallets.btc);
     const flameQuery = useFlameRatedAmount(wallets.flame);
     const fiat = useActiveFiat();

@@ -1,10 +1,12 @@
 import type { FC } from 'react';
 
 import {
+    orderAmounts,
+    useActivePortfolioWallets,
     useActiveWalletBtcBalance,
     useIsActivePortfolioWatchOnly,
-    useMainBalanceUnit,
     useNumberFormatter,
+    usePortfolioBalanceUnit,
     useTotalBalance,
     useTranslate
 } from '@safely/ux';
@@ -31,13 +33,16 @@ export const Balance: FC<BalanceProps> = props => {
     const isWatchOnly = useIsActivePortfolioWatchOnly();
 
     const formatter = useNumberFormatter();
-    const mainBalanceUnit = useMainBalanceUnit();
+    const mainBalanceUnit = usePortfolioBalanceUnit(useActivePortfolioWallets());
 
-    const fiatAmount = totalBalance?.format(formatter);
+    const fiatAmount = totalBalance === null ? null : totalBalance?.format(formatter);
     const cryptoAmount = btcBalance?.display.format(formatter);
 
-    const [primaryAmount, secondaryAmount] =
-        mainBalanceUnit === 'crypto' ? [cryptoAmount, fiatAmount] : [fiatAmount, cryptoAmount];
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        mainBalanceUnit,
+        cryptoAmount,
+        fiatAmount
+    );
 
     return (
         <div className={rowStyles}>
@@ -48,13 +53,14 @@ export const Balance: FC<BalanceProps> = props => {
                     <Text variant="titleL">{primaryAmount}</Text>
                 )}
 
-                {secondaryAmount === undefined ? (
-                    <Skeleton {...SECONDARY_SKELETON} />
-                ) : (
-                    <Text variant="bodyL" tone="tertiary">
-                        {secondaryAmount}
-                    </Text>
-                )}
+                {secondaryAmount !== null &&
+                    (secondaryAmount === undefined ? (
+                        <Skeleton {...SECONDARY_SKELETON} />
+                    ) : (
+                        <Text variant="bodyL" tone="tertiary">
+                            {secondaryAmount}
+                        </Text>
+                    ))}
             </div>
 
             <div className={actionsStyles}>

@@ -2,9 +2,10 @@ import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, type ViewStyle } from 'react-native';
 
-import type { CryptoAssetAmount, CryptoFiatRate } from '@safely/core';
+import type { CryptoAssetAmount, CryptoFiatRate, NumberFormatter } from '@safely/core';
 import {
-    useHomeScreenAmountOrder,
+    orderAmounts,
+    useDisplayedHomeScreenAmountOrder,
     useActivePortfolioNetworkBadge,
     useNumberFormatter
 } from '@safely/ux';
@@ -18,7 +19,7 @@ type AssetCellImage = ComponentProps<typeof Cell.Image>;
 
 export type AssetCellProps = {
     cryptoAssetAmount: CryptoAssetAmount;
-    price: CryptoFiatRate | null;
+    price: CryptoFiatRate | null | undefined;
     image: AssetCellImage;
     footer?: ReactNode;
     showDivider?: boolean;
@@ -26,6 +27,16 @@ export type AssetCellProps = {
     background?: 'tertiary' | 'secondary';
     onPress?: () => void;
 };
+
+function formatFiatAmount(
+    amount: CryptoAssetAmount,
+    price: CryptoFiatRate | null | undefined,
+    formatter: NumberFormatter
+): string | null {
+    if (price === null) return null;
+
+    return price ? amount.convert(price).format(formatter) : '–';
+}
 
 export const AssetCell = (props: AssetCellProps) => {
     const {
@@ -41,14 +52,13 @@ export const AssetCell = (props: AssetCellProps) => {
 
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
-    const amountOrder = useHomeScreenAmountOrder();
+    const amountOrder = useDisplayedHomeScreenAmountOrder(price);
     const networkBadge = useActivePortfolioNetworkBadge();
 
-    const fiatAmount = price ? cryptoAssetAmount.convert(price).format(formatter) : '–';
+    const fiatAmount = formatFiatAmount(cryptoAssetAmount, price, formatter);
     const cryptoAmount = cryptoAssetAmount.format(formatter, { fullPrecision: true });
 
-    const [primaryAmount, secondaryAmount] =
-        amountOrder === 'crypto' ? [cryptoAmount, fiatAmount] : [fiatAmount, cryptoAmount];
+    const [primaryAmount, secondaryAmount] = orderAmounts(amountOrder, cryptoAmount, fiatAmount);
 
     return (
         <Cell
@@ -71,9 +81,11 @@ export const AssetCell = (props: AssetCellProps) => {
                         <Cell.Subtitle color="secondary">{t('assetCell.history')}</Cell.Subtitle>
                         <Icon style={styles.chevron} icon={ChevronRight12} color="tertiary" />
                     </View>
-                    <Cell.Subvalue color="secondary" style={styles.subvalue}>
-                        {secondaryAmount}
-                    </Cell.Subvalue>
+                    {secondaryAmount !== null && (
+                        <Cell.Subvalue color="secondary" style={styles.subvalue}>
+                            {secondaryAmount}
+                        </Cell.Subvalue>
+                    )}
                 </Cell.Row>
                 {footer && <Cell.Row>{footer}</Cell.Row>}
             </Cell.Content>
