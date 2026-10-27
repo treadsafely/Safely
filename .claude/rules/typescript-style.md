@@ -38,6 +38,16 @@ Existing examples to model on: `NumberFormatter`, `LedgerController`, `TreeStora
 A lone function stays a function — don't wrap a single operation in a class just to have one. Pure
 helpers without shared state stay functions too.
 
+## A class's runtime name is explicit, never `constructor.name`
+
+Any name a human or a log reads — a logger child tag, a `toJSON` id, an error label — is passed in
+as a string, never read from `this.constructor.name`. Production bundles are minified (esbuild on
+desktop, R8 on Android), so `constructor.name` comes out mangled (`t`, `e`) at runtime, and the log
+or id it feeds is then unreadable with nothing failing in dev. `ApiClient` is the pattern: the
+subclass hands its name to `super(apiName, …)` and the base uses `this.apiName` for `logger.child`
+and `toJSON`. Desktop's `keepNames` esbuild flag only keeps names in stack traces — it is not a
+licence to rely on `constructor.name` in logic.
+
 ## File and directory names
 
 Nothing in lint or CI reads a filename, so the case is on review:

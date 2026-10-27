@@ -1,7 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react';
 import type { FC } from 'react';
 
-import { BTC_ASSET, splitInHalf } from '@safely/core';
+import { BTC_ASSET } from '@safely/core';
 import {
     useIsActivePortfolioTestnet,
     useIsActivePortfolioWatchOnly,
@@ -36,8 +36,6 @@ export const ReceiveModal: FC<ReceiveModalProps> = ({ onClose }) => {
     const { isCopied, copy } = useCopyToClipboard();
     const isTestnet = useIsActivePortfolioTestnet();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
-
-    const [firstLine, secondLine] = splitInHalf(displayAddress);
 
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
@@ -79,9 +77,7 @@ export const ReceiveModal: FC<ReceiveModalProps> = ({ onClose }) => {
                             className={addressStyles}
                             onClick={() => copy(displayAddress)}
                         >
-                            {firstLine}
-                            <br />
-                            {secondLine}
+                            {displayAddress}
                         </Text>
 
                         {(isWatchOnly || isTestnet) && (

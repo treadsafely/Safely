@@ -3,12 +3,14 @@ import { CommonActions } from '@react-navigation/native';
 import { useCallback } from 'react';
 
 import type { PortfolioMeta } from '@safely/core';
-import { MnemonicResource, PortfolioIdBip39Imported, PortfolioNetworkType } from '@safely/core';
+import { MnemonicResource, PortfolioNetworkType } from '@safely/core';
 import {
     resolveGeneratedPortfolioIcon,
+    resolveImportedPortfolio,
     useActiveAccountStoreSlot,
     useAddPortfolioFromSource,
-    useNewPortfolioFallbackName
+    useNewPortfolioFallbackName,
+    usePortfolios
 } from '@safely/ux';
 
 import { handleDuplicatePortfolio } from './handleDuplicatePortfolio';
@@ -22,6 +24,7 @@ const routes = {
 
 export function useAddWalletFlow() {
     const navigation = useNavigation();
+    const portfolios = usePortfolios();
     const { mutateAsync: addPortfolioFromSource } = useAddPortfolioFromSource();
     const nextGeneratingPortfolioInfo = useActiveAccountStoreSlot('nextDerivingPortfolioInfo');
     const defaultName = useNewPortfolioFallbackName();
@@ -75,11 +78,23 @@ export function useAddWalletFlow() {
     }, [navigation]);
 
     const onMnemonicReady = useCallback(
-        (mnemonic: string[], networkType: PortfolioNetworkType) => {
+        async (mnemonic: string[], networkType: PortfolioNetworkType) => {
             using accessor = new MnemonicResource(mnemonic);
 
+            const resolution = await resolveImportedPortfolio(accessor, networkType, portfolios);
+
+            if (resolution.kind === 'duplicate') {
+                navigation.dispatch(
+                    CommonActions.navigate('WalletAlreadyAddedModal', {
+                        portfolio: resolution.portfolio
+                    })
+                );
+
+                return;
+            }
+
             navigation.navigate(routes.customize, {
-                defaultIcon: PortfolioIdBip39Imported.getFallbackEmoji(accessor),
+                defaultIcon: resolution.icon,
                 defaultName,
                 onSave: async (meta: PortfolioMeta) => {
                     try {
@@ -100,7 +115,7 @@ export function useAddWalletFlow() {
                 }
             });
         },
-        [navigation, addPortfolioFromSource, resetToTabs, defaultName]
+        [navigation, addPortfolioFromSource, resetToTabs, defaultName, portfolios]
     );
 
     return {

@@ -359,20 +359,21 @@ export const createSendFormMachine = () =>
                     ({ context }, params: { contact: Contact }) => {
                         const newSuggestionId = params.contact.id.toString();
                         const newSuggestions = mapContactToSuggestions(params.contact);
+                        const contactSuggestions = [
+                            ...context.contactSuggestions,
+                            ...newSuggestions
+                        ];
 
                         return {
                             values: {
                                 ...context.values,
                                 addressBookName: ''
                             },
-                            contactSuggestions: [...context.contactSuggestions, ...newSuggestions],
+                            contactSuggestions,
                             suggestion: {
                                 selectedId: newSuggestionId,
-                                portfoliosIds: context.suggestion.portfoliosIds,
-                                contactsIds: [
-                                    ...(context.suggestion.contactsIds ?? []),
-                                    newSuggestionId
-                                ],
+                                portfoliosIds: context.portfolioSuggestions.map(s => s.id),
+                                contactsIds: contactSuggestions.map(s => s.id),
                                 source: SuggestionSource.USER_DEFINED
                             }
                         };

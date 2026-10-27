@@ -11,6 +11,6 @@ export const SETTINGS_SECTIONS = [
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
-export const DEV_TOOLS = ['logs'] as const;
+export const DEV_TOOLS = ['config', 'logs'] as const;
 
 export type DevTool = (typeof DEV_TOOLS)[number];

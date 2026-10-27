@@ -48,6 +48,8 @@ export const cutoutStyles = css({
 export const addressStyles = css({
     maxWidth: '198px',
     fontFamily: 'ui-monospace, monospace',
+    wordBreak: 'break-all',
+    textWrap: 'balance',
     cursor: 'pointer'
 });
 

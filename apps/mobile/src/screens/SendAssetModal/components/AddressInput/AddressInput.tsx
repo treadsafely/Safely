@@ -62,11 +62,15 @@ export const AddressInput = (props: AddressInputProps) => {
     const fallbackRef = useRef<TextInput>(null);
     const textInputRef = (inputRef as React.RefObject<TextInput>) ?? fallbackRef;
 
+    // iOS multiline TextInput skips re-measure when value is set after a clear while unfocused; remount forces it
+    const [scanRemountKey, setScanRemountKey] = useState(0);
+
     const scan = useScanQrScheme({
         allowedSchemes: ['btc-transfer'] as const,
         onResult: useCallback(
             scheme => {
                 onChangeText(scheme.parsed.address);
+                setScanRemountKey(key => key + 1);
             },
             [onChangeText]
         )
@@ -131,6 +135,7 @@ export const AddressInput = (props: AddressInputProps) => {
                     onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}
                 >
                     <TextInput
+                        key={scanRemountKey}
                         testID={TEST_ID.send.addressInput}
                         ref={textInputRef}
                         value={value}

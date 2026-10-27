@@ -5,7 +5,7 @@ import { ApiClient } from '../../../utils/fetch';
 export class EventsApi extends ApiClient {
     constructor(opts: { baseUrl: string; projectToken: string }) {
         const normalizedUrl = opts.baseUrl.replace(/\/$/, '');
-        super(normalizedUrl, { 'X-Project-Token': opts.projectToken });
+        super('EventsApi', normalizedUrl, { 'X-Project-Token': opts.projectToken });
     }
 
     public async send(events: AnalyticsEvent[]): Promise<void> {

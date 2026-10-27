@@ -1,19 +1,20 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
-import type { Estimation, SendResult } from '@safely/core';
+import type { CryptoAssetAmount, Estimation, SendResult } from '@safely/core';
 import { btcBlockWaitingTimeMinutes, ellipsisMiddle } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
     orderAmounts,
     useActiveBtcWallet,
     useActiveWalletMeta,
-    useErrorToast,
     useEstimateAssetTransfer,
     useExplorerFactory,
     useFiatEquivalent,
     useLinking,
     useNumberFormatter,
+    useParseEstimateError,
+    useParseSendError,
     useSendAssetTransfer,
     useTranslate
 } from '@safely/ux';
@@ -24,6 +25,7 @@ import Checkmark96 from '@safely/ux/assets/icons/96/checkmark-96.svg?react';
 import {
     actionsStyles,
     bodyStyles,
+    errorBlockStyles,
     heroStyles,
     iconSlotStyles,
     listStyles,
@@ -32,7 +34,7 @@ import {
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
 import { AssetIcon, WalletIcon } from '../../entities';
-import { Button, Icon, List, Modal, TableCell, Text } from '../../shared';
+import { Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
 
 export type ConfirmStepProps = {
     result: SendFormResult;
@@ -54,23 +56,84 @@ const FeeValue: FC<{ estimation: Estimation }> = ({ estimation }) => {
     );
 };
 
+const MaxAmountLabel: FC<{ amount: CryptoAssetAmount }> = ({ amount }) => {
+    const formatter = useNumberFormatter();
+    const { data: fiat } = useFiatEquivalent(amount);
+
+    return (
+        <>
+            <TableCell.Label>{amount.format(formatter)}</TableCell.Label>
+            {fiat != null && <TableCell.Label>{fiat.format(formatter)}</TableCell.Label>}
+        </>
+    );
+};
+
+const AmountValue: FC<{ result: SendFormResult; maxAmount: CryptoAssetAmount | undefined }> = ({
+    result,
+    maxAmount
+}) => {
+    const t = useTranslate();
+    const formatter = useNumberFormatter();
+
+    if (result.isMax) {
+        return (
+            <>
+                <TableCell.Value>{t('confirmation.allAvailableBalance')}</TableCell.Value>
+                {maxAmount ? (
+                    <MaxAmountLabel amount={maxAmount} />
+                ) : (
+                    <Skeleton width={64} height={20} />
+                )}
+            </>
+        );
+    }
+
+    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter, { fullPrecision: true });
+    const fiatAmount = result.amount.fiatAssetAmount?.format(formatter) ?? null;
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        result.amount.inputType,
+        cryptoAmount,
+        fiatAmount
+    );
+
+    return (
+        <>
+            <TableCell.Value>{primaryAmount}</TableCell.Value>
+            {secondaryAmount !== null && <TableCell.Label>{secondaryAmount}</TableCell.Label>}
+        </>
+    );
+};
+
+const ErrorBlock: FC<{ title: string; message: string }> = ({ title, message }) => (
+    <div className={errorBlockStyles}>
+        <Text variant="labelL" tone="accentRed">
+            {title}
+        </Text>
+        <Text variant="bodyM" tone="accentRed">
+            {message}
+        </Text>
+    </div>
+);
+
 export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { result, onSent, onClose } = props;
 
     const t = useTranslate();
-    const formatter = useNumberFormatter();
     const walletMeta = useActiveWalletMeta();
     const wallet = useActiveBtcWallet();
     const explorerFactory = useExplorerFactory();
     const { openURL } = useLinking();
-    const errorToast = useErrorToast({});
 
+    const [sendError, setSendError] = useState<unknown>(null);
     const [sendResult, setSendResult] = useState<SendResult | null>(null);
 
-    const { data: transaction } = useEstimateAssetTransfer(result, {
+    const { data: transaction, error: estimationError } = useEstimateAssetTransfer(result, {
         enabled: sendResult === null
     });
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
+
+    const parseSendError = useParseSendError();
+    const parseEstimateError = useParseEstimateError();
 
     const targetBlock =
         transaction && 'txTargetBlock' in transaction.estimation
@@ -78,23 +141,16 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
             : undefined;
     const explorerUrl = sendResult?.toExplorerUrl(explorerFactory) ?? null;
 
-    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter);
-    const fiatAmount = result.amount.fiatAssetAmount?.format(formatter) ?? null;
-    const [primaryAmount, secondaryAmount] = orderAmounts(
-        result.amount.inputType,
-        cryptoAmount,
-        fiatAmount
-    );
-    const amountNote = result.isMax ? t('confirmation.allAvailableBalance') : secondaryAmount;
-
     const handleSend = async (): Promise<void> => {
+        setSendError(null);
+
         try {
             const broadcasted = await send(transaction);
 
             setSendResult(broadcasted);
             onSent();
         } catch (error) {
-            errorToast(error);
+            setSendError(error);
         }
     };
 
@@ -188,10 +244,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                 <TableCell.Label>{t('confirmation.amount')}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value>{primaryAmount}</TableCell.Value>
-                                {amountNote !== null && (
-                                    <TableCell.Label>{amountNote}</TableCell.Label>
-                                )}
+                                <AmountValue
+                                    result={result}
+                                    maxAmount={transaction?.request.amount}
+                                />
                             </TableCell.Column>
                         </TableCell>
 
@@ -206,7 +262,7 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                     {transaction ? (
                                         <FeeValue estimation={transaction.estimation} />
                                     ) : (
-                                        '—'
+                                        <Skeleton width={64} height={20} />
                                     )}
                                 </TableCell.Value>
                                 <TableCell.Label>
@@ -278,7 +334,21 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
             </div>
 
             <Modal.Actions className={actionsStyles}>
-                {sendResult === null ? (
+                {sendResult !== null ? (
+                    <Button variant="secondary" isFullWidth onClick={onClose}>
+                        {t('confirmation.slider.backToWallet')}
+                    </Button>
+                ) : estimationError ? (
+                    <ErrorBlock
+                        title={t('confirmation.estimateError.title')}
+                        message={parseEstimateError(estimationError)}
+                    />
+                ) : sendError !== null ? (
+                    <ErrorBlock
+                        title={t('confirmation.sendError.title')}
+                        message={parseSendError(sendError)}
+                    />
+                ) : (
                     <Button
                         variant="primary"
                         isFullWidth
@@ -287,10 +357,6 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                         onClick={() => void handleSend()}
                     >
                         {t('confirmation.slider.send')}
-                    </Button>
-                ) : (
-                    <Button variant="secondary" isFullWidth onClick={onClose}>
-                        {t('confirmation.slider.backToWallet')}
                     </Button>
                 )}
             </Modal.Actions>

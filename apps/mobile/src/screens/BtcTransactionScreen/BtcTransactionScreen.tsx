@@ -1,7 +1,8 @@
 import type { StaticScreenProps } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 
 import type { BtcActivityItem } from '@safely/ux';
-import { useBtcTransactionDetails } from '@safely/ux';
+import { useBtcHistoryPolling, useBtcTransactionDetails } from '@safely/ux';
 
 import { AssetLogo } from '@mobile/entities/asset';
 import { TransactionDetails } from '@mobile/features/transaction-details';
@@ -13,6 +14,8 @@ type BtcTransactionScreenProps = StaticScreenProps<{
 export const BtcTransactionScreen = (props: BtcTransactionScreenProps) => {
     const { activity } = props.route.params;
     const details = useBtcTransactionDetails(activity);
+
+    useBtcHistoryPolling({ isEnabled: useIsFocused(), onNewActivity: () => undefined });
 
     return (
         <TransactionDetails

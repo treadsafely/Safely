@@ -7,9 +7,11 @@ import { buildStyles } from './DevToolsSettings.styles';
 import { listStyles } from './SettingsSection.styles';
 import type { DevTool } from './types';
 import { DEV_TOOLS } from './types';
+import { DevConfigSection } from '../../../features';
 import { Button, Cell, Icon, List, PageHeader, Text } from '../../../shared';
 
 const TOOL_TITLES: Record<DevTool, string> = {
+    config: 'Dev config',
     logs: 'Logs'
 };
 
@@ -67,7 +69,7 @@ export const DevToolsSettings: FC<DevToolsSettingsProps> = props => {
                 }
             />
 
-            {logs}
+            {tool === 'config' ? <DevConfigSection /> : logs}
         </>
     );
 };

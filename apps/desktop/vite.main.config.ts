@@ -72,5 +72,6 @@ function devStubKeychainPlugin(): Plugin {
    packaged build fails the build instead of shipping. */
 export default defineConfig(({ command }) => ({
     define: { SAFELY_BUILD_NUMBER: JSON.stringify(process.env.SAFELY_BUILD_NUMBER ?? null) },
+    esbuild: { keepNames: true },
     plugins: command === 'serve' ? [devStubKeychainPlugin()] : []
 }));

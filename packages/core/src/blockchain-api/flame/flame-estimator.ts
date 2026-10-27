@@ -31,7 +31,7 @@ export class FlameEstimator implements IIdentifiable {
         private readonly wallet: FlameWallet,
         logger?: Logger
     ) {
-        this.id = `${this.constructor.name}:${this.api.id}:${this.wallet.id.toString()}`;
+        this.id = `FlameEstimator:${this.api.id}:${this.wallet.id.toString()}`;
         this.logger = logger?.child('FlameEstimator');
     }
 

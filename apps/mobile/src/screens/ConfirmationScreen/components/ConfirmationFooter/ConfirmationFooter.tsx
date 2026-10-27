@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { useParseError } from '@safely/ux';
+import { useParseSendError, useParseEstimateError } from '@safely/ux';
 
 import { TEST_ID } from '@mobile/shared/constants';
 import { Button, SlideButton, Text } from '@mobile/shared/ui';
@@ -22,24 +22,8 @@ export const ConfirmationFooter = (props: Props) => {
     const { onSend, onGoBack, state, isEstimating, onLedgerContinue } = props;
     const { t } = useTranslation();
 
-    const parseSendError = useParseError(
-        {
-            BtcSendDustError: 'confirmation.sendError.btc.dust',
-            FlameInputsSpentError: 'confirmation.sendError.flame.inputsSpent'
-        },
-        { fallback: 'confirmation.sendError.default' }
-    );
-
-    const parseEstimateError = useParseError(
-        {
-            OutputsAreSpendingMoreThanInputsError:
-                'confirmation.estimateError.btc.outputsAreSpendingMoreThanInputs',
-            BtcInsufficientFundsForFeeError:
-                'confirmation.estimateError.btc.insufficientFundsForFee',
-            FlameInsufficientBalanceError: 'confirmation.estimateError.flame.insufficientBalance'
-        },
-        { fallback: 'confirmation.estimateError.default' }
-    );
+    const parseSendError = useParseSendError();
+    const parseEstimateError = useParseEstimateError();
 
     const errorInfo = (() => {
         switch (state.type) {

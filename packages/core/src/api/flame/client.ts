@@ -31,9 +31,9 @@ export class FlameApi extends ApiClient implements IIdentifiable {
 
     constructor(options: { rpcUrl: string; logger?: Logger }) {
         const rpcUrl = options.rpcUrl.replace(/\/$/, '');
-        super(rpcUrl, {}, options.logger);
+        super('FlameApi', rpcUrl, {}, options.logger);
 
-        this.id = `${this.constructor.name}:${rpcUrl}`;
+        this.id = `${this.apiName}:${rpcUrl}`;
     }
 
     public unspent(address: string, withPending = false): Promise<FlameApiUnspentResult> {
