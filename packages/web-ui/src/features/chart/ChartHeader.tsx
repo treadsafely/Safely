@@ -12,7 +12,7 @@ import {
     type ChartPeriod
 } from '@safely/ux';
 
-import { diffWrapStyles, headerStyles, priceStyles } from './Chart.styles';
+import { diffWrapStyles, headerStyles, priceStyles, symbolStyles } from './Chart.styles';
 import { PriceDiff } from './PriceDiff';
 import type { ChartActive } from './types';
 import { Text } from '../../shared';
@@ -52,20 +52,21 @@ export const ChartHeader: FC<ChartHeaderProps> = props => {
               ? formatter.formatFiat(rate.data.value, priceFormat)
               : null;
 
-    const displayDiff = active !== null ? active.priceDiff : periodDiff;
+    const displayDiff = active?.priceDiff ?? periodDiff;
+    const isDiffFaded = active !== null && active.priceDiff === null;
 
     return (
         <div className={headerStyles}>
             <Text variant="titleM" isTabular className={priceStyles}>
                 {displayPrice ?? '-'}
             </Text>
-            <Text variant="bodyM" tone="tertiary">
+            <Text variant="bodyM" tone="tertiary" className={symbolStyles}>
                 {asset.symbol}
                 {SPACE.THSP}/{SPACE.THSP}
                 {fiat.id.symbol}
             </Text>
             <div className={diffWrapStyles}>
-                <PriceDiff priceDiff={displayDiff} />
+                <PriceDiff priceDiff={displayDiff} isFaded={isDiffFaded} />
             </div>
         </div>
     );

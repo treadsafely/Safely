@@ -16,11 +16,40 @@ export const headerStyles = css({
 });
 
 export const priceStyles = css({
-    fontFamily: 'ui-monospace, monospace'
+    lineHeight: '1'
+});
+
+export const symbolStyles = css({
+    lineHeight: '1'
 });
 
 export const diffWrapStyles = css({
     marginLeft: 'auto'
+});
+
+export const diffBadgeStyles = css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    borderRadius: 'xs',
+    paddingBlock: '2',
+    paddingInline: '6',
+    textStyle: 'bodyM',
+    fontVariantNumeric: 'tabular-nums',
+    transition: 'opacity 0.18s ease-in-out'
+});
+
+export const diffBadgePositiveStyles = css({
+    background: 'badge.success.background',
+    color: 'badge.success.foreground'
+});
+
+export const diffBadgeNegativeStyles = css({
+    background: 'badge.error.background',
+    color: 'badge.error.foreground'
+});
+
+export const diffBadgeFadedStyles = css({
+    opacity: '0.56'
 });
 
 export const periodsStyles = css({
