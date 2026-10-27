@@ -1,4 +1,3 @@
-import Color from 'color';
 import { StyleSheet } from 'react-native-unistyles';
 
 export const styles = StyleSheet.create(theme => ({
@@ -22,11 +21,12 @@ export const styles = StyleSheet.create(theme => ({
         lineHeight: 20,
         fontWeight: '500'
     },
-    addressShared: {
-        fontWeight: '900'
+    addressWithTracking: {
+        fontSize: 13,
+        lineHeight: 18
     },
     addressRest: {
-        color: Color(theme.colors.other.constant.black).alpha(0.4).toString()
+        color: theme.colors.text.secondary
     },
     badgeContainer: {
         alignItems: 'center',

@@ -26,6 +26,7 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
     const copy = useReceiveCopy();
     const { t } = useTranslation();
     const navigation = useNavigation();
+    const hasTrackingPrefix = trackingAddress !== undefined && address.startsWith(trackingAddress);
 
     const handleCopyAddress = useCallback(() => {
         copy(address);
@@ -54,13 +55,13 @@ export const QRCodeBlock = (props: QRCodeBlockProps) => {
                 <Text
                     testID={TEST_ID.receive.address}
                     textAlign="center"
-                    style={styles.address}
+                    style={[styles.address, hasTrackingPrefix && styles.addressWithTracking]}
                     variant="bodyLMono"
                     color="constantBlack"
                 >
-                    {trackingAddress && address.startsWith(trackingAddress) ? (
+                    {hasTrackingPrefix ? (
                         <>
-                            <RNText style={styles.addressShared}>{trackingAddress}</RNText>
+                            {trackingAddress}
                             <RNText style={styles.addressRest}>
                                 {address.slice(trackingAddress.length)}
                             </RNText>

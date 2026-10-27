@@ -236,8 +236,8 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `trackingAddress`, so the history row and the details screen — both through
   `resolveActivityCounterparty` in `features/activity-display`, for BTC as well — name a contact or
   an own wallet, and otherwise show the shortened address; with none, the "Unknown
-  sender/recipient" placeholder stays. The receive modal (`QRCodeBlock.trackingAddress`) bolds the tracking prefix of
-  the receiving address and dims the encryption key after it.
+  sender/recipient" placeholder stays. The receive modal (`QRCodeBlock.trackingAddress`) shows the receiving
+  address at 13/18 and dims the encryption key after the tracking prefix (`text.secondary`).
 - Core and ux tests run with a fake `flameSdk` installed by their `test/setup-crypto.ts` (creating a
   devnet portfolio calls `viewKey` and `address`; ux's fake tells a receiving address apart by its
   two HRP parts, for the send form); Flame-specific tests swap in their own mock.
