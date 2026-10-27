@@ -1,13 +1,30 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { TransactionTemplate } from '@safely/core';
-import { BtcTransactionTemplate } from '@safely/core';
+import { BLOCKCHAIN_NAME, assertUnreachable } from '@safely/core';
 
-import { BroadcastedBtcTx, useBtcSendLocked, useSetLastBroadcastedBtcTx } from '../../../entities';
+import { BroadcastedBtcTx, flameBlockchain, useSetLastBroadcastedBtcTx } from '../../../entities';
+import type { SendChains } from '../send-chains';
+import { useSendChains } from '../send-chains';
+
+function assertCanSend(template: TransactionTemplate, chains: SendChains): void {
+    switch (template.blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            if (chains.btc?.isLocked) {
+                throw new Error('Cannot send while broadcasted transaction cache exists');
+            }
+            return;
+        case BLOCKCHAIN_NAME.FLAME:
+            return;
+        default:
+            assertUnreachable(template);
+    }
+}
 
 export function useSendAssetTransfer() {
+    const chains = useSendChains();
     const { mutateAsync: setLastBroadcastedBtcTx } = useSetLastBroadcastedBtcTx();
-    const isLocked = useBtcSendLocked();
+    const queryClient = useQueryClient();
 
     return useMutation({
         async mutationFn(transactionTemplate: TransactionTemplate | undefined) {
@@ -15,17 +32,24 @@ export function useSendAssetTransfer() {
                 throw new Error('Estimation not found');
             }
 
-            if (isLocked) {
-                throw new Error('Cannot send while broadcasted transaction cache exists');
-            }
+            assertCanSend(transactionTemplate, chains);
 
             return transactionTemplate.send();
         },
         async onSuccess(_result, transactionTemplate) {
-            if (transactionTemplate instanceof BtcTransactionTemplate) {
-                await setLastBroadcastedBtcTx(
-                    BroadcastedBtcTx.fromTransactionTemplate(transactionTemplate)
-                );
+            if (!transactionTemplate) return;
+
+            switch (transactionTemplate.blockchain) {
+                case BLOCKCHAIN_NAME.BTC:
+                    await setLastBroadcastedBtcTx(
+                        BroadcastedBtcTx.fromTransactionTemplate(transactionTemplate)
+                    );
+                    return;
+                case BLOCKCHAIN_NAME.FLAME:
+                    await queryClient.invalidateQueries({ queryKey: flameBlockchain.toKey() });
+                    return;
+                default:
+                    assertUnreachable(transactionTemplate);
             }
         }
     });

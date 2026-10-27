@@ -10,24 +10,36 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LedgerSigningCancelledError, PortfolioType } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
-    useActiveBtcWallet,
     useActiveFiat,
     useActivePortfolio,
     useActivePortfolioLedgerIndex,
+    useActivePortfolioNetworkBadge,
     useActiveWalletMeta,
     useAnalytics,
     useAppContext,
     useEstimateAssetTransfer,
     useNumberFormatter,
-    useSendAssetTransfer
+    selectSendChain,
+    useSendAssetTransfer,
+    useSendChains
 } from '@safely/ux';
 
+import { AssetLogo } from '@mobile/entities/asset';
 import { getBluetoothState, useBleManager } from '@mobile/features/ledger';
 import { TransactionFee } from '@mobile/screens/ConfirmationScreen/components/TransactionFee';
 import { TransactionSendResult } from '@mobile/screens/ConfirmationScreen/components/TransactionSendResult';
-import { Checkmark96, Icon, List, Screen, Text, Image } from '@mobile/shared/ui';
+import { Checkmark96, Icon, List, Screen, Text } from '@mobile/shared/ui';
 
-import { Amount, MaxAmount, ConfirmationFooter, Wallet, TransactionCell } from './components';
+import {
+    Amount,
+    ChainFeeSubvalue,
+    ChainRecipientCells,
+    MaxAmount,
+    ConfirmationFooter,
+    Wallet,
+    TransactionCell
+} from './components';
+import { IS_ESTIMATE_ENABLED_BY_CHAIN } from './ConfirmationScreen.chains';
 import { styles } from './ConfirmationScreen.styles';
 import type { ConfirmationState } from './ConfirmationScreen.types';
 
@@ -39,33 +51,33 @@ export type SendConfirmationParams = {
 export type ConfirmationScreenProps = StaticScreenProps<SendConfirmationParams>;
 
 export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
-    const { route } = props;
-    const { confirmationResult, onSuccess } = route.params;
+    const { confirmationResult, onSuccess } = props.route.params;
+    const { blockchain } = confirmationResult;
+
+    const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
+    const fromAddress = selectSendChain(useSendChains(), blockchain)?.address ?? '';
+
+    const { data: txTemplate, error: estimateQueryError } = useEstimateAssetTransfer(
+        confirmationResult,
+        { enabled: IS_ESTIMATE_ENABLED_BY_CHAIN[blockchain](confirmationState.type) }
+    );
+    const estimateError = confirmationState.type === 'idle' ? estimateQueryError : null;
+    const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
 
     const { t } = useTranslation();
     const analytics = useAnalytics();
     const fiat = useActiveFiat();
     const navigation = useNavigation();
     const getBleManager = useBleManager();
-    const btcWallet = useActiveBtcWallet();
     const activePortfolio = useActivePortfolio();
     const activeWalletMeta = useActiveWalletMeta();
+    const networkBadge = useActivePortfolioNetworkBadge();
     const activeLedgerIndex = useActivePortfolioLedgerIndex();
     const { logger } = useAppContext();
-
-    const [confirmationState, setConfirmationState] = useState<ConfirmationState>({ type: 'idle' });
-
-    const { data: txTemplate, error: txTemplateError } = useEstimateAssetTransfer(
-        confirmationResult,
-        {
-            enabled: confirmationState.type !== 'success'
-        }
-    );
-    const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
     const formatter = useNumberFormatter();
 
     const onSend = useCallback(async () => {
-        const fiatAmount = confirmationResult.amount.fiatAssetAmount.amount.toNumber();
+        const fiatAmount = confirmationResult.amount.fiatAssetAmount?.amount.toNumber() ?? 0;
         const cryptoCurrency = confirmationResult.amount.cryptoAssetAmount.asset.symbol;
 
         try {
@@ -124,12 +136,12 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
     }, [navigation, onSend, getBleManager]);
 
     const displayState = useMemo(() => {
-        if (txTemplateError) {
-            return { type: 'estimateError' as const, error: txTemplateError };
+        if (estimateError) {
+            return { type: 'estimateError' as const, error: estimateError };
         }
 
         return confirmationState;
-    }, [confirmationState, txTemplateError]);
+    }, [confirmationState, estimateError]);
 
     const onGoBack = useCallback(() => {
         navigation.getParent()?.goBack();
@@ -150,7 +162,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                         style={styles.titleWithLogoContainer}
                     >
                         <View style={styles.assetLogoContainer}>
-                            {asset.image && <Image source={asset.image} style={styles.assetLogo} />}
+                            <AssetLogo asset={asset} size="xlarge" />
                         </View>
                         <Text style={styles.title} variant="titleM">
                             {t('confirmation.title', {
@@ -192,7 +204,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                             title={t('confirmation.from')}
                             value={
                                 <Wallet
-                                    address={btcWallet.address}
+                                    address={fromAddress}
                                     meta={{
                                         kind: 'portfolio',
                                         meta: activeWalletMeta,
@@ -201,7 +213,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                                 ? activeLedgerIndex + 1
                                                 : undefined
                                     }}
-                                    networkType={activePortfolio.networkType}
+                                    networkBadge={networkBadge}
                                 />
                             }
                         />
@@ -211,19 +223,21 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 <Wallet
                                     address={confirmationResult.recipient.address}
                                     meta={confirmationResult.recipientMeta}
-                                    networkType={activePortfolio.networkType}
+                                    networkBadge={networkBadge}
                                 />
                             }
                         />
+                        <ChainRecipientCells form={confirmationResult} />
                     </List.Group>
                     <List.Group style={styles.listGroup}>
                         {confirmationResult.isMax ? (
                             <MaxAmount amount={txTemplate?.request.amount} />
                         ) : (
                             <Amount
-                                fiatAmount={confirmationResult.amount.fiatAssetAmount.format(
-                                    formatter
-                                )}
+                                fiatAmount={
+                                    confirmationResult.amount.fiatAssetAmount?.format(formatter) ??
+                                    null
+                                }
                                 cryptoAmount={confirmationResult.amount.cryptoAssetAmount.format(
                                     formatter,
                                     { fullPrecision: true }
@@ -231,7 +245,15 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
                                 inputType={confirmationResult.amount.inputType}
                             />
                         )}
-                        <TransactionFee estimation={txTemplate?.estimation} />
+                        <TransactionFee
+                            estimation={txTemplate?.estimation}
+                            subvalue={
+                                <ChainFeeSubvalue
+                                    form={confirmationResult}
+                                    estimation={txTemplate?.estimation}
+                                />
+                            }
+                        />
                     </List.Group>
                     {!!sendResult && (
                         <List.Group style={styles.listGroup}>

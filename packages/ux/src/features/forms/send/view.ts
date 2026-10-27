@@ -39,6 +39,7 @@ interface RecipientViewBase {
     selectedSuggestionId: string | undefined;
     selectedSuggestionSource: SuggestionSource | undefined;
     fromMeta: PortfolioMeta;
+    canSaveContact: boolean;
     setRecipient: (value: string) => void;
     setAddressBookName: (name: string) => void;
     selectSuggestion: (id: string, visible: SendSuggestions) => void;
@@ -57,6 +58,7 @@ interface AmountViewBase {
         amount: string;
         assetId: string;
         amountInputType: AmountInputType;
+        memo: string;
     };
     errors: {
         amount: string | undefined;
@@ -75,6 +77,7 @@ interface AmountViewBase {
     pasteAmount: (raw: string) => void;
     setAmountInputType: (type: AmountInputType) => void;
     setAsset: (id: string) => void;
+    setMemo?: (value: string) => void;
     prev: () => void;
 }
 

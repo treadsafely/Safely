@@ -5,7 +5,7 @@ import type { Persister } from '@tanstack/react-query-persist-client';
 import type { IStorage } from '@safely/core';
 import type { Logger } from '@safely/sync';
 
-import { cacheSchemas, isValidSchemaKey } from './cache-config';
+import { cacheSchemas, isValidSchemaKey, persistSanitizers } from './cache-config';
 import { serialize, deserialize } from './serialization';
 
 type DehydratedQuery = DehydratedState['queries'][number];
@@ -52,6 +52,20 @@ function validateQuery(query: DehydratedQuery, logger: Logger): void {
     }
 }
 
+function sanitizeForDisk(queries: DehydratedQuery[]): DehydratedQuery[] {
+    return queries.flatMap(query => {
+        const schemaKey = query.meta?.schemaKey;
+        if (typeof schemaKey !== 'string' || !isValidSchemaKey(schemaKey)) return [query];
+
+        const sanitize = persistSanitizers[schemaKey];
+        if (!sanitize || query.state?.data === undefined) return [query];
+
+        const data = sanitize(query.state.data);
+
+        return data === undefined ? [] : [{ ...query, state: { ...query.state, data } }];
+    });
+}
+
 function keepOnlyFirstInfinityPage(queries: DehydratedQuery[]) {
     for (const query of queries) {
         const data = query.state?.data;
@@ -80,11 +94,16 @@ export function createPersister(storage: IStorage, logger: Logger): Persister {
         persistClient: async client => {
             const queries = client.clientState?.queries;
 
-            if (queries?.length) {
-                keepOnlyFirstInfinityPage(queries);
+            if (!queries?.length) {
+                return basePersister.persistClient(client);
             }
 
-            return basePersister.persistClient(client);
+            keepOnlyFirstInfinityPage(queries);
+
+            return basePersister.persistClient({
+                ...client,
+                clientState: { ...client.clientState, queries: sanitizeForDisk(queries) }
+            });
         },
         restoreClient: async () => {
             const restored = await basePersister.restoreClient();

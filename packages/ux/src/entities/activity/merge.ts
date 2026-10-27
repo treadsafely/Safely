@@ -1,13 +1,18 @@
 import type { InfiniteData } from '@tanstack/react-query';
 
-import type { ActivityPage, BtcActivityItem, IActivityFilters, IActivityPageParam } from './types';
+import type {
+    BtcHistoryPage,
+    BtcActivityItem,
+    IBtcHistoryFilters,
+    IBtcHistoryPageParam
+} from './types';
 import { isBtcActivityItem, isOrderActivityItem } from './types';
 
 export function prependBroadcastedTx(
-    data: InfiniteData<ActivityPage, IActivityPageParam>,
+    data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>,
     item: BtcActivityItem | null,
-    filters: IActivityFilters
-): InfiniteData<ActivityPage, IActivityPageParam> {
+    filters: IBtcHistoryFilters
+): InfiniteData<BtcHistoryPage, IBtcHistoryPageParam> {
     if (!item) {
         return data;
     }
@@ -34,8 +39,8 @@ export function prependBroadcastedTx(
 }
 
 export function dedupeOrderTxs(
-    data: InfiniteData<ActivityPage, IActivityPageParam>
-): InfiniteData<ActivityPage, IActivityPageParam> {
+    data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>
+): InfiniteData<BtcHistoryPage, IBtcHistoryPageParam> {
     const orderTxHashes = new Set<string>();
     const btcByTxId = new Map<string, BtcActivityItem['transaction']>();
 

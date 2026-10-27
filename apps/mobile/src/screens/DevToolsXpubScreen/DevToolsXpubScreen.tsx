@@ -21,7 +21,7 @@ export const DevToolsXpubScreen = () => {
             return BtcXpub.toZpub(entities.btcWallet.xpub);
         }
 
-        return entities.portfolio.wallet.xpub;
+        return entities.type === 'watch-only' ? entities.portfolio.wallet.xpub : undefined;
     }, [entities]);
 
     const handleSelectWallet = useCallback(() => {

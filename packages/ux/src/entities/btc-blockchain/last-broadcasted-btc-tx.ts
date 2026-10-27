@@ -2,7 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 
-import type { BtcApiUtxo, BtcTransactionTemplate, BtcWallet, CryptoFiatRate } from '@safely/core';
+import type {
+    BtcApiUtxo,
+    BtcAsset,
+    BtcTransactionTemplate,
+    BtcWallet,
+    FiatAsset,
+    Rate
+} from '@safely/core';
 import type { BtcApiTx, BtcApiUtxoWithOptionalTx } from '@safely/core/api/btc';
 
 import { useActiveAccount } from '../account';
@@ -122,7 +129,7 @@ export class BroadcastedBtcTx {
 
     public toActivityItem(
         walletAddress: string,
-        rate: CryptoFiatRate | null
+        rate: Rate<BtcAsset, FiatAsset> | null
     ): BtcActivityItem | null {
         return btcTxToActivityItem(this.toBtcApiTx(walletAddress), rate);
     }

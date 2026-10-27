@@ -30,6 +30,9 @@ export const styles = StyleSheet.create(theme => ({
                     borderRadius: theme.radius.xs,
                     borderWidth: theme.border.hairline
                 },
+                translucent: {
+                    backgroundColor: theme.colors.button.transparent.background
+                },
                 small: {
                     paddingVertical: 10,
                     paddingHorizontal: theme.spacing[16],

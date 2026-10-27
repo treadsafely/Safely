@@ -19,14 +19,16 @@ import { useUnistyles } from 'react-native-unistyles';
 
 import { ellipsisMiddle } from '@safely/core';
 import {
-    useActiveBtcWallet,
+    useActivePortfolioWallets,
     useActivePortfolioLedgerIndex,
+    useActivePortfolioNetworkBadge,
     useDateFormatter,
-    useIsActivePortfolioTestnet,
     useIsActivePortfolioWatchOnly,
-    useTotalBalance
+    resolvePortfolioAddresses,
+    usePortfolioTotalBalance
 } from '@safely/ux';
 
+import { NetworkBadge } from '@mobile/entities/portfolio';
 import type { TextProps } from '@mobile/shared/ui';
 import { Badge, Text } from '@mobile/shared/ui';
 
@@ -69,9 +71,10 @@ export const SubtitleAnimatedText = ({ children, ...props }: TextProps) => {
 export const Subtitle = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const totalBalance = useTotalBalance();
-    const { address } = useActiveBtcWallet();
-    const isTestnet = useIsActivePortfolioTestnet();
+    const wallets = useActivePortfolioWallets();
+    const totalBalance = usePortfolioTotalBalance(wallets);
+    const address = resolvePortfolioAddresses(wallets)[0]?.address ?? '';
+    const networkBadge = useActivePortfolioNetworkBadge();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
     const ledgerIndex = useActivePortfolioLedgerIndex();
     const lastUpdatedAt = totalBalance.dataUpdatedAt;
@@ -141,10 +144,8 @@ export const Subtitle = () => {
                                 </Badge>
                             </Pressable>
                         )}
-                        {isTestnet && (
-                            <Badge type="warning" isUppercase>
-                                {t('portfolio.testnet')}
-                            </Badge>
+                        {networkBadge && (
+                            <NetworkBadge badge={networkBadge} neutralType="warning" />
                         )}
                         {ledgerIndex !== undefined && (
                             <>
@@ -181,7 +182,7 @@ export const Subtitle = () => {
         handleCopyAddress,
         address,
         isWatchOnly,
-        isTestnet,
+        networkBadge,
         ledgerIndex,
         handleWatchOnlyPress
     ]);

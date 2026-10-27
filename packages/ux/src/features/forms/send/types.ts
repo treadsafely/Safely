@@ -1,6 +1,7 @@
 import type {
     BLOCKCHAIN_NAME,
     BtcAsset,
+    FlameAsset,
     ContactMeta,
     CryptoAsset,
     CryptoAssetAmount,
@@ -13,6 +14,8 @@ import type {
 export type RecipientMeta =
     | { kind: 'portfolio'; meta: PortfolioMeta; tag?: number }
     | { kind: 'contact'; meta: ContactMeta };
+
+export type OwnAddresses = Partial<Record<Recipient['blockchain'], string>>;
 
 export interface PortfolioSuggestion {
     id: string;
@@ -38,7 +41,7 @@ export type AmountInputType = 'crypto' | 'fiat';
 export type AmountCryptoFirst<C extends CryptoAsset> = {
     inputType: 'crypto';
     cryptoAssetAmount: CryptoAssetAmount<C>;
-    fiatAssetAmount: FiatAssetAmount;
+    fiatAssetAmount: FiatAssetAmount | null;
 };
 
 export type AmountFiatFirst<C extends CryptoAsset> = {
@@ -68,7 +71,16 @@ export type SendFormResultBtc = {
     recipientMeta?: RecipientMeta;
 };
 
-export type SendFormResult = SendFormResultBtc;
+export type SendFormResultFlame = {
+    blockchain: BLOCKCHAIN_NAME.FLAME;
+    recipient: Recipient;
+    amount: AmountWithInputType<FlameAsset>;
+    isMax: boolean;
+    memo: string;
+    recipientMeta?: RecipientMeta;
+};
+
+export type SendFormResult = SendFormResultBtc | SendFormResultFlame;
 
 export enum FormStepNames {
     RECIPIENT = 'recipient',
@@ -92,6 +104,7 @@ export interface SendFormValues {
     amountInputType: AmountInputType;
     isMax: boolean;
     assetId: string;
+    memo: string;
 }
 
 export interface SendFormParsed {

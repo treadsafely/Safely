@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
-import type { ActivityItem } from '@safely/ux';
-import { useHistoryGroups, useHistoryPolling } from '@safely/ux';
+import type { BtcHistoryItem } from '@safely/ux';
+import { useBtcHistoryGroups, useBtcHistoryPolling } from '@safely/ux';
 
 import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { groupStyles, listStyles, loaderStyles, sentinelStyles } from './HistoryList.styles';
@@ -13,7 +13,7 @@ const PREFETCH_MARGIN = '400px';
 
 export type HistoryListProps = {
     selectedActivityKey?: string;
-    onSelectActivity: (activity: ActivityItem) => void;
+    onSelectActivity: (activity: BtcHistoryItem) => void;
     onReceive: () => void;
     onNewActivity: () => void;
 };
@@ -21,9 +21,9 @@ export type HistoryListProps = {
 export const HistoryList: FC<HistoryListProps> = props => {
     const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
 
-    const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useHistoryGroups();
+    const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useBtcHistoryGroups();
 
-    useHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
+    useBtcHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
 
     const sentinelRef = useOnVisible(fetchNextPage, {
         isEnabled: hasNextPage && !isFetchingNextPage,

@@ -2,13 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { AmountInputType } from '@safely/ux';
+import { orderAmounts } from '@safely/ux';
 
 import { Text } from '@mobile/shared/ui';
 
 import { TransactionCell } from '../TransactionCell';
 
 export type AmountProps = {
-    fiatAmount: string;
+    fiatAmount: string | null;
     cryptoAmount: string;
     inputType: AmountInputType;
 };
@@ -17,9 +18,7 @@ export const Amount = (props: AmountProps) => {
     const { fiatAmount, cryptoAmount, inputType } = props;
     const { t } = useTranslation();
 
-    const isFiatPrimary = inputType === 'fiat';
-    const primary = isFiatPrimary ? fiatAmount : cryptoAmount;
-    const secondary = isFiatPrimary ? cryptoAmount : fiatAmount;
+    const [primary, secondary] = orderAmounts(inputType, cryptoAmount, fiatAmount);
 
     return (
         <TransactionCell
@@ -27,9 +26,11 @@ export const Amount = (props: AmountProps) => {
             value={
                 <View>
                     <Text variant="bodyM">{primary}</Text>
-                    <Text variant="bodyM" color="tertiary">
-                        {secondary}
-                    </Text>
+                    {secondary !== null && (
+                        <Text variant="bodyM" color="tertiary">
+                            {secondary}
+                        </Text>
+                    )}
                 </View>
             }
         />

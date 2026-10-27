@@ -869,6 +869,10 @@
             "received": "Получено",
             "recipient": "Получатель",
             "sender": "Отправитель",
+            "unknownSender": "Неизвестный отправитель",
+            "unknownRecipient": "Неизвестный получатель",
+            "unknown": "Неизвестно",
+            "memo": "Зашифрованная заметка",
             "fee": "Комиссия сети",
             "hash": "Транзакция",
             "openInExplorer": "Открыть в обозревателе",
@@ -887,6 +891,11 @@
                 "confirmed-long-ago": {
                     "title": "Подтверждено {{date}}",
                     "description": "Более 6 подтверждений"
+                },
+                "confirmed": {
+                    "title": "Подтверждено {{date}}",
+                    "titleUndated": "Подтверждено",
+                    "block": "Блок {{height}}"
                 }
             }
         },

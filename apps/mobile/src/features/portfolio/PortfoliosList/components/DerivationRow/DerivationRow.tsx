@@ -31,15 +31,17 @@ export const DerivationRow = ({ derivation, isSelected }: DerivationRowProps) =>
                         </View>
                         <Cell.Title style={styles.title}>{derivation.meta.name}</Cell.Title>
                     </View>
-                    <Text
-                        variant="bodyM"
-                        color={isSelected ? 'secondary' : 'tertiary'}
-                        skeleton
-                        skeletonWidth={42}
-                        skeletonVariant="transparentElement"
-                    >
-                        {balance?.format(formatter)}
-                    </Text>
+                    {balance !== null && (
+                        <Text
+                            variant="bodyM"
+                            color={isSelected ? 'secondary' : 'tertiary'}
+                            skeleton
+                            skeletonWidth={42}
+                            skeletonVariant="transparentElement"
+                        >
+                            {balance?.format(formatter)}
+                        </Text>
+                    )}
                 </Cell.Row>
             </Cell.Content>
         </Cell>

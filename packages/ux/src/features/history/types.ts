@@ -1,16 +1,9 @@
-import type { ContactMeta, PortfolioMeta } from '@safely/core';
+import type { BtcHistoryItem } from '../../entities';
+import type { ActivityCounterparty } from '../activity-display';
 
-import type { ActivityItem } from '../../entities';
-
-export type ActivityCounterparty =
-    | { kind: 'contact'; meta: ContactMeta }
-    | { kind: 'portfolio'; meta: PortfolioMeta }
-    | { kind: 'address'; label: string }
-    | { kind: 'provider'; label: string };
-
-export type ActivityRowView = {
+export type ActivityRowView<TActivity = BtcHistoryItem> = {
     key: string;
-    activity: ActivityItem;
+    activity: TActivity;
     title: string;
     amountSign: '+' | '−' | null;
     formattedValue: string;
@@ -19,10 +12,11 @@ export type ActivityRowView = {
     timestampLabel: string | null;
     isPending: boolean;
     counterparty: ActivityCounterparty;
+    note?: string | null;
 };
 
-export type HistoryGroupView = {
+export type HistoryGroupView<TActivity = BtcHistoryItem> = {
     key: string;
     title: string;
-    rows: ActivityRowView[];
+    rows: ActivityRowView<TActivity>[];
 };

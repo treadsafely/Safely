@@ -17,7 +17,8 @@
         "watchOnly": "Watch only",
         "testnet": "Testnet",
         "ledger": "Ledger",
-        "ledgerWallet": "Ledger Wallet {{number}}"
+        "ledgerWallet": "Ledger Wallet {{number}}",
+        "flameDevnet": "Devnet"
     },
     "ledgerSign": {
         "retry": "Retry",
@@ -98,6 +99,11 @@
         "maxHint": "All available balance will be sent. Fee included.",
         "remaining": "Remaining:",
         "pending": "Pending:",
+        "memo": {
+            "label": "Encrypted memo",
+            "placeholder": "Optional",
+            "description": "Only the recipient can read it."
+        },
         "addressBook": {
             "label": "Save to your address book",
             "placeholder": "Name",
@@ -473,6 +479,7 @@
         "continueWithLedger": "Continue with Ledger",
         "from": "From",
         "to": "To",
+        "memo": "Encrypted memo",
         "amount": "Amount",
         "allAvailableBalance": "All available balance",
         "networkFee": {
@@ -501,6 +508,9 @@
             "default": "Check details and try again",
             "btc": {
                 "dust": "Transaction value is too small."
+            },
+            "flame": {
+                "inputsSpent": "Your balance has changed. Go back and try again."
             }
         },
         "estimateError": {
@@ -509,6 +519,9 @@
             "btc": {
                 "outputsAreSpendingMoreThanInputs": "Insufficient balance for transfer amount and fee",
                 "insufficientFundsForFee": "Not enough funds to send the specified amount and pay the network fee. Reduce the amount."
+            },
+            "flame": {
+                "insufficientBalance": "Insufficient balance for transfer amount and fee"
             }
         }
     },
@@ -877,6 +890,10 @@
             "received": "Received",
             "recipient": "Recipient",
             "sender": "Sender",
+            "unknownSender": "Unknown sender",
+            "unknownRecipient": "Unknown recipient",
+            "unknown": "Unknown",
+            "memo": "Encrypted memo",
             "fee": "Network fee",
             "hash": "Transaction",
             "openInExplorer": "Open in explorer",
@@ -895,6 +912,11 @@
                 "confirmed-long-ago": {
                     "title": "Confirmed at {{date}}",
                     "description": "More than 6 confirmations"
+                },
+                "confirmed": {
+                    "title": "Confirmed at {{date}}",
+                    "titleUndated": "Confirmed",
+                    "block": "Block {{height}}"
                 }
             }
         },
@@ -1079,5 +1101,9 @@
         "wallets": {
             "title": "Selected wallets"
         }
+    },
+    "importFlameDevnetWallet": {
+        "imported": "Flame Devnet wallet imported",
+        "noAccount": "Create or sign in to an account to import a Flame Devnet wallet"
     }
 }

@@ -29,7 +29,11 @@ export const WalletCell: FC<WalletCellProps> = props => {
                 <Cell.Row>
                     <Cell.Title>{portfolio.meta.name}</Cell.Title>
                     <PortfolioTypeBadge type={portfolio.type} />
-                    <Cell.Value className={valueStyles}>{balance?.format(formatter)}</Cell.Value>
+                    {balance !== null && (
+                        <Cell.Value className={valueStyles}>
+                            {balance?.format(formatter)}
+                        </Cell.Value>
+                    )}
                 </Cell.Row>
             </Cell.Content>
         </Cell>

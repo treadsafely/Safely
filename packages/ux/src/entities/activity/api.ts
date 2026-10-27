@@ -4,7 +4,6 @@ import type {
     BtcApiTxWithBtcRate,
     BtcAsset,
     BtcWalletReadOnly,
-    CryptoFiatRate,
     ExchangeApi,
     FiatAsset,
     RampOrder,
@@ -22,7 +21,7 @@ import {
 import type {
     BtcActivityItem,
     BtcActivityPage,
-    IActivityFilters,
+    IBtcHistoryFilters,
     OrderActivityItem,
     OrdersActivityPage
 } from './types';
@@ -58,7 +57,7 @@ function btcTxNetAmount(tx: BtcApiTx) {
 
 export function btcTxToActivityItem(
     tx: BtcApiTx,
-    rate: CryptoFiatRate | null
+    rate: Rate<BtcAsset, FiatAsset> | null
 ): BtcActivityItem | null {
     const { isInitiator, weiAmount } = btcTxNetAmount(tx);
 
@@ -128,7 +127,10 @@ export function isRampOrderActive(order: Pick<RampOrder, 'status'>): boolean {
     return ACTIVE_ORDER_STATUSES.has(order.status);
 }
 
-function historicalRate(tx: BtcApiTxWithBtcRate, fiat: FiatAsset): CryptoFiatRate | null {
+function historicalRate(
+    tx: BtcApiTxWithBtcRate,
+    fiat: FiatAsset
+): Rate<BtcAsset, FiatAsset> | null {
     return tx.btcRate === undefined ? null : new Rate(BTC_ASSET, fiat, toBig(tx.btcRate));
 }
 
@@ -137,7 +139,7 @@ export async function fetchBtcActivity(
     wallet: Pick<BtcWalletReadOnly, 'type' | 'xpub' | 'address'>,
     fiat: FiatAsset,
     page: number,
-    filters: IActivityFilters
+    filters: IBtcHistoryFilters
 ): Promise<BtcActivityPage> {
     const pageNum = page >= 1 ? page : 1;
 
@@ -173,7 +175,7 @@ export async function fetchOrdersActivity(
     exchangeApi: ExchangeApi,
     request: { lang: string; storeCountryCode?: string | null; deviceCountryCode?: string | null },
     cursor: string | null,
-    filters: IActivityFilters
+    filters: IBtcHistoryFilters
 ): Promise<OrdersActivityPage> {
     const result = await exchangeApi.getRampOrders({
         ...request,

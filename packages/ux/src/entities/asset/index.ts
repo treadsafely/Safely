@@ -1,7 +1,8 @@
 export { assetKeys } from './keys';
-export { getSortedAssets, calculateTotalBalance } from './utils';
-export { useAssets } from './useAssets';
+export { calculateTotalBalance } from './utils';
+export { useBtcRatedAmount, useActiveBtcRatedAmount } from './useBtcRatedAmount';
+export { useFlameRatedAmount, useActiveFlameRatedAmount } from './useFlameRatedAmount';
 export { useTotalBalance } from './useTotalBalance';
-export { useActivePortfolioRate } from './useRate';
+export { useActivePortfolioRate, useMainnetRate } from './useRate';
 export { useBtcWalletFiatBalance } from './usePortfolioBalance';
 export { useChart } from './useChart';

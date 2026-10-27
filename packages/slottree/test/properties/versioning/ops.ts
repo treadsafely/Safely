@@ -5,6 +5,7 @@ import {
     arrayItemV2,
     unionBip39V1,
     unionBip39V2,
+    unionDevnet,
     unionWatchOnly,
     type VersioningStateV1,
     type VersioningStateV2,
@@ -35,7 +36,14 @@ type LogicalUnionItem =
           id: string;
           type: 'WATCH_ONLY';
           label: string;
+      }
+    | {
+          id: string;
+          type: 'DEVNET';
+          address: string;
       };
+
+type LegacyUnionItem = Exclude<LogicalUnionItem, { type: 'DEVNET' }>;
 
 export type VersioningOp =
     | { type: 'stable.set'; value: string }
@@ -97,6 +105,11 @@ const unionItemArb = fc.oneof(
         id: idArb,
         type: fc.constant('WATCH_ONLY' as const),
         label: safeString
+    }),
+    fc.record({
+        id: idArb,
+        type: fc.constant('DEVNET' as const),
+        address: safeString
     })
 );
 
@@ -223,7 +236,7 @@ function applyV1Op(storage: StorageV1, op: VersioningOp): void {
                 return;
 
             case 'unionItems.set':
-                draft.set('unionItems', op.value.map(toUnionItemV1));
+                draft.set('unionItems', op.value.filter(isLegacyUnionItem).map(toUnionItemV1));
                 return;
 
             case 'addedV2.set':
@@ -269,7 +282,7 @@ function applyV2Op(storage: StorageV2, op: VersioningOp): void {
                 return;
 
             case 'unionItems.set':
-                draft.set('unionItems', op.value.map(toUnionItemV2));
+                draft.set('unionItems', op.value.filter(isLegacyUnionItem).map(toUnionItemV2));
                 return;
 
             case 'deleted.set':
@@ -323,7 +336,7 @@ function applyV3Op(storage: StorageV3, op: VersioningOp): void {
                 return;
 
             case 'unionItems.set':
-                draft.set('unionItems', op.value.map(toUnionItemV2));
+                draft.set('unionItems', op.value.map(toUnionItemV3));
                 return;
         }
     });
@@ -361,7 +374,7 @@ function toRecordItemV2(item: LogicalRecordItem): VersioningStateV2['recordItems
     };
 }
 
-function toUnionItemV1(item: LogicalUnionItem): VersioningStateV1['unionItems'][number] {
+function toUnionItemV1(item: LegacyUnionItem): VersioningStateV1['unionItems'][number] {
     switch (item.type) {
         case 'BIP39':
             return unionBip39V1.toJson({
@@ -379,7 +392,7 @@ function toUnionItemV1(item: LogicalUnionItem): VersioningStateV1['unionItems'][
     }
 }
 
-function toUnionItemV2(item: LogicalUnionItem): VersioningStateV2['unionItems'][number] {
+function toUnionItemV2(item: LegacyUnionItem): VersioningStateV2['unionItems'][number] {
     switch (item.type) {
         case 'BIP39':
             return unionBip39V2.toJson({
@@ -396,4 +409,20 @@ function toUnionItemV2(item: LogicalUnionItem): VersioningStateV2['unionItems'][
                 label: item.label
             });
     }
+}
+
+function toUnionItemV3(item: LogicalUnionItem): VersioningStateV3['unionItems'][number] {
+    if (item.type === 'DEVNET') {
+        return unionDevnet.toJson({
+            id: item.id,
+            type: 'DEVNET',
+            address: item.address
+        });
+    }
+
+    return toUnionItemV2(item);
+}
+
+function isLegacyUnionItem(item: LogicalUnionItem): item is LegacyUnionItem {
+    return item.type !== 'DEVNET';
 }

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { useActiveWalletBtcBalance, useNumberFormatter } from '@safely/ux';
+import { useNumberFormatter, useSendChains } from '@safely/ux';
 
 import { Icon, InformationCircle12 } from '@mobile/shared/ui/Icon';
 import { Text } from '@mobile/shared/ui/Text';
@@ -20,8 +20,7 @@ export const AmountStatus = (props: AmountStatusProps) => {
     const { isMax, amountError, remainingBalance } = props;
 
     const formatter = useNumberFormatter();
-    const { data: balance } = useActiveWalletBtcBalance();
-    const pendingBalance = balance?.pending;
+    const pendingBalance = useSendChains().btc?.pendingBalance;
     const hasPendingBalance = pendingBalance?.relativeAmount.gt(0);
 
     const { t } = useTranslation();

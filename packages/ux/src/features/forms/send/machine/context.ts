@@ -23,7 +23,8 @@ export const DEFAULT_VALUES: SendFormValues = {
     amount: '',
     amountInputType: 'crypto',
     isMax: false,
-    assetId: ''
+    assetId: '',
+    memo: ''
 };
 
 export const DEFAULT_PARSED = {
@@ -44,7 +45,8 @@ export function withResetDependentValues(values: SendFormValues): SendFormValues
         ...values,
         amount: '',
         assetId: '',
-        isMax: false
+        isMax: false,
+        memo: ''
     };
 }
 
@@ -149,7 +151,7 @@ export function buildInitialContext(input: SendFormMachineInput): SendFormMachin
     );
 
     const result = validateRecipientInput(initialValues.recipient, {
-        activeWalletAddress: input.activeWallet.address,
+        ownAddresses: input.ownAddresses,
         networkType: input.networkType,
         portfolioSuggestions: input.portfolioSuggestions,
         contactSuggestions: input.contactSuggestions,

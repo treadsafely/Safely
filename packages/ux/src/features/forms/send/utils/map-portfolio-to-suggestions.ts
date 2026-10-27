@@ -1,6 +1,12 @@
-import type { IDerivation, IPortfolioId, Portfolio } from '@safely/core';
-import { isLedgerDerivation, PortfolioType } from '@safely/core';
+import type { IDerivation, IPortfolioId, Portfolio, Recipient } from '@safely/core';
+import {
+    assertUnreachable,
+    BLOCKCHAIN_NAME,
+    isLedgerDerivation,
+    PortfolioType
+} from '@safely/core';
 
+import { isDerivablePortfolio, resolveFlameWallet } from '../../../../entities';
 import type { PortfolioSuggestion } from '../types';
 
 export interface ActivePortfolioEntity {
@@ -11,10 +17,42 @@ export interface ActivePortfolioEntity {
 export function mapPortfolioToSuggestions(
     portfolio: Portfolio,
     active: ActivePortfolioEntity | undefined,
-    derivationName: (index: number) => string
+    derivationName: (index: number) => string,
+    blockchain: Recipient['blockchain'] = BLOCKCHAIN_NAME.BTC
 ): PortfolioSuggestion[] {
     const isActivePortfolio = !!active && portfolio.id.isEq(active.portfolioId);
 
+    switch (blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            return mapPortfolioToBtcSuggestions(
+                portfolio,
+                active,
+                isActivePortfolio,
+                derivationName
+            );
+        case BLOCKCHAIN_NAME.FLAME:
+            return mapPortfolioToFlameSuggestions(portfolio, isActivePortfolio);
+        default:
+            return assertUnreachable(blockchain);
+    }
+}
+
+function mapPortfolioToFlameSuggestions(
+    portfolio: Portfolio,
+    isActivePortfolio: boolean
+): PortfolioSuggestion[] {
+    const flame = resolveFlameWallet(portfolio);
+    if (isActivePortfolio || !flame) return [];
+
+    return [{ id: portfolio.id.toString(), address: flame.receivingAddress, meta: portfolio.meta }];
+}
+
+function mapPortfolioToBtcSuggestions(
+    portfolio: Portfolio,
+    active: ActivePortfolioEntity | undefined,
+    isActivePortfolio: boolean,
+    derivationName: (index: number) => string
+): PortfolioSuggestion[] {
     if (portfolio.type === PortfolioType.WATCH_ONLY) {
         if (isActivePortfolio) return [];
 
@@ -28,23 +66,32 @@ export function mapPortfolioToSuggestions(
         ];
     }
 
+    if (!isDerivablePortfolio(portfolio)) return [];
+
     const derivations = portfolio.getDerivations();
     const isLedger = portfolio.type === PortfolioType.LEDGER;
     const isPerDerivation = isLedger || derivations.length > 1;
 
     return derivations
         .filter(d => !(isActivePortfolio && active?.derivation && d.id.isEq(active.derivation.id)))
-        .map(derivation => ({
-            id: derivation.id.toString(),
-            address: derivation.chains.btc.wallets[0]?.address,
-            meta: isPerDerivation
-                ? {
-                      name: isLedgerDerivation(derivation)
-                          ? derivation.meta.name
-                          : derivationName(derivation.index + 1),
-                      icon: portfolio.meta.icon
-                  }
-                : portfolio.meta,
-            tag: isPerDerivation ? derivation.index + 1 : undefined
-        }));
+        .flatMap(derivation => {
+            const btc = derivation.chains.btc.wallets.at(0);
+            if (!btc) return [];
+
+            return [
+                {
+                    id: derivation.id.toString(),
+                    address: btc.address,
+                    meta: isPerDerivation
+                        ? {
+                              name: isLedgerDerivation(derivation)
+                                  ? derivation.meta.name
+                                  : derivationName(derivation.index + 1),
+                              icon: portfolio.meta.icon
+                          }
+                        : portfolio.meta,
+                    tag: isPerDerivation ? derivation.index + 1 : undefined
+                }
+            ];
+        });
 }

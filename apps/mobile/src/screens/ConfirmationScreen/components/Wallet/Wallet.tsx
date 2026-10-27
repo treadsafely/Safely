@@ -1,12 +1,11 @@
 import type { FC } from 'react';
-import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { ellipsisMiddle, PortfolioNetworkType } from '@safely/core';
-import type { RecipientMeta } from '@safely/ux';
+import { ellipsisMiddle } from '@safely/core';
+import type { PortfolioNetworkBadge, RecipientMeta } from '@safely/ux';
 
 import { ContactName } from '@mobile/entities/contact';
-import { PortfolioName } from '@mobile/entities/portfolio/PortfolioName';
+import { NetworkBadge, PortfolioName } from '@mobile/entities/portfolio';
 import { Badge, Text } from '@mobile/shared/ui';
 
 import { styles } from './Wallet.styles';
@@ -14,20 +13,13 @@ import { styles } from './Wallet.styles';
 interface WalletProps {
     address: string;
     meta?: RecipientMeta;
-    networkType?: PortfolioNetworkType;
+    networkBadge?: PortfolioNetworkBadge | null;
 }
 
 export const Wallet: FC<WalletProps> = props => {
-    const { address, meta, networkType } = props;
-    const { t } = useTranslation();
+    const { address, meta, networkBadge } = props;
 
-    const isTestnet = networkType === PortfolioNetworkType.TESTNET;
-
-    const testnetBadge = isTestnet ? (
-        <Badge type="neutral" isUppercase>
-            {t('portfolio.testnet')}
-        </Badge>
-    ) : null;
+    const badge = networkBadge && <NetworkBadge badge={networkBadge} />;
 
     if (meta) {
         return (
@@ -35,17 +27,12 @@ export const Wallet: FC<WalletProps> = props => {
                 {meta.kind === 'contact' ? (
                     <View style={styles.row}>
                         <ContactName meta={meta.meta} size={12} gap={6} fontVariant="bodyM" />
-                        {testnetBadge}
+                        {badge}
                     </View>
                 ) : (
                     <View style={styles.row}>
-                        <PortfolioName
-                            meta={meta.meta}
-                            size={12}
-                            gap={6}
-                            fontVariant="bodyM"
-                            networkType={networkType}
-                        />
+                        <PortfolioName meta={meta.meta} size={12} gap={6} fontVariant="bodyM" />
+                        {badge}
                         {meta.tag !== undefined && <Badge>{String(meta.tag)}</Badge>}
                     </View>
                 )}
@@ -56,14 +43,14 @@ export const Wallet: FC<WalletProps> = props => {
         );
     }
 
-    if (isTestnet) {
+    if (badge) {
         return (
             <View style={styles.container}>
                 <View style={styles.row}>
                     <Text variant="bodyM" numberOfLines={1} style={styles.address}>
                         {ellipsisMiddle(address)}
                     </Text>
-                    {testnetBadge}
+                    {badge}
                 </View>
             </View>
         );

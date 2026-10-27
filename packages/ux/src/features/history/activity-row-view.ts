@@ -1,20 +1,30 @@
-import type { Contact, CryptoFiatRate, NumberFormatter, Portfolio } from '@safely/core';
-import { GROUP_LABEL, assertUnreachable, ellipsisMiddle } from '@safely/core';
+import type {
+    Contact,
+    CryptoFiatRate,
+    DatedGroup,
+    FlameHistoryItem,
+    NumberFormatter,
+    Portfolio
+} from '@safely/core';
+import { GROUP_LABEL, assertUnreachable } from '@safely/core';
 
 import type { ActivityRowView, HistoryGroupView } from './types';
 import type {
-    ActivityItem,
-    ActivityItemsDatedGroup,
+    BtcHistoryItem,
+    BtcHistoryItemsDatedGroup,
     BtcActivityItem,
+    FlameHistoryItemsDatedGroup,
     OrderActivityItem
 } from '../../entities';
-import {
-    findContactMetaByAddress,
-    findPortfolioMetaByAddress,
-    isActivityItemPending
-} from '../../entities';
+import { isActivityItemPending } from '../../entities';
 import type { DateFormatter, TranslateFn } from '../../shared';
 import { getDateGroupTitle } from '../../shared';
+import type { ActivityCounterparty } from '../activity-display';
+import {
+    buildFlameActivityAmountView,
+    resolveActivityCounterparty,
+    transactionTitleKey
+} from '../activity-display';
 import { resolveSentAmount } from '../amount-display';
 
 export type ActivityRowContext = {
@@ -25,8 +35,11 @@ export type ActivityRowContext = {
     numberFormatter: NumberFormatter;
     portfolios: Portfolio[];
     contacts: Contact[];
-    rate: CryptoFiatRate | null | undefined;
     showFullSentAmount: boolean;
+};
+
+export type BtcActivityRowContext = ActivityRowContext & {
+    rate: CryptoFiatRate | null | undefined;
 };
 
 type TimeFormatDetails = 'time' | 'day-month-time';
@@ -43,45 +56,20 @@ const timeFormatDetailsByGroupLabel: Record<GROUP_LABEL, TimeFormatDetails> = {
 const formatTimestampLabel = (
     timestamp: number,
     timeFormatDetails: TimeFormatDetails,
-    context: ActivityRowContext
+    context: Pick<ActivityRowContext, 'timeFormatter' | 'dayMonthFormatter'>
 ): string =>
     timeFormatDetails === 'time'
         ? context.timeFormatter.format(timestamp)
         : context.dayMonthFormatter.format(timestamp);
 
-const resolveCounterparty = (
-    address: string,
-    context: ActivityRowContext
-): ActivityRowView['counterparty'] => {
-    const contactMeta = findContactMetaByAddress(context.contacts, address);
-    if (contactMeta) {
-        return { kind: 'contact', meta: contactMeta };
-    }
-
-    const portfolioMeta = findPortfolioMetaByAddress(context.portfolios, address);
-    if (portfolioMeta) {
-        return { kind: 'portfolio', meta: portfolioMeta };
-    }
-
-    return { kind: 'address', label: ellipsisMiddle(address, 6) };
-};
-
-const buildTransactionRow = (
+const buildBtcTransactionRow = (
     activity: BtcActivityItem,
     groupKey: string,
     timeFormatDetails: TimeFormatDetails,
-    context: ActivityRowContext
+    context: BtcActivityRowContext
 ): ActivityRowView => {
     const isInitiator = activity.transaction.isInitiator;
     const isPending = isActivityItemPending(activity);
-
-    const title = isPending
-        ? isInitiator
-            ? context.t('history.transactionInfo.sending')
-            : context.t('history.transactionInfo.receiving')
-        : isInitiator
-          ? context.t('history.transactionInfo.sent')
-          : context.t('history.transactionInfo.received');
 
     const { amount, isFullPrecision } = resolveSentAmount({
         isInitiator,
@@ -102,7 +90,7 @@ const buildTransactionRow = (
     return {
         key: `${groupKey}-${activity.key}`,
         activity,
-        title,
+        title: context.t(transactionTitleKey({ isInitiator, isPending })),
         amountSign: isInitiator ? '−' : '+',
         formattedValue,
         valueTone: isInitiator ? 'primary' : 'accentGreen',
@@ -111,7 +99,7 @@ const buildTransactionRow = (
             ? null
             : formatTimestampLabel(activity.timestamp, timeFormatDetails, context),
         isPending,
-        counterparty: resolveCounterparty(counterpartyAddress, context)
+        counterparty: resolveActivityCounterparty(counterpartyAddress, context)
     };
 };
 
@@ -119,7 +107,7 @@ const buildOrderRow = (
     activity: OrderActivityItem,
     groupKey: string,
     timeFormatDetails: TimeFormatDetails,
-    context: ActivityRowContext
+    context: BtcActivityRowContext
 ): ActivityRowView => {
     const { order } = activity;
     const isPending = isActivityItemPending(activity);
@@ -175,15 +163,15 @@ const buildOrderRow = (
     };
 };
 
-function buildActivityRowView(
-    activity: ActivityItem,
+function buildBtcActivityRowView(
+    activity: BtcHistoryItem,
     groupKey: string,
     timeFormatDetails: TimeFormatDetails,
-    context: ActivityRowContext
+    context: BtcActivityRowContext
 ): ActivityRowView {
     switch (activity.type) {
         case 'transaction':
-            return buildTransactionRow(activity, groupKey, timeFormatDetails, context);
+            return buildBtcTransactionRow(activity, groupKey, timeFormatDetails, context);
         case 'order':
             return buildOrderRow(activity, groupKey, timeFormatDetails, context);
         default:
@@ -191,10 +179,15 @@ function buildActivityRowView(
     }
 }
 
-export function buildHistoryGroupViews(
-    groups: ActivityItemsDatedGroup[],
-    context: ActivityRowContext
-): HistoryGroupView[] {
+function buildGroupViews<TActivity>(
+    groups: DatedGroup<TActivity, BtcHistoryItemsDatedGroup['meta']>[],
+    context: Pick<ActivityRowContext, 't' | 'groupFormatter'>,
+    buildRow: (
+        activity: TActivity,
+        groupKey: string,
+        timeFormatDetails: TimeFormatDetails
+    ) => ActivityRowView<TActivity>
+): HistoryGroupView<TActivity>[] {
     return groups.map(group => {
         const { key, meta, items } = group;
         const timeFormatDetails = timeFormatDetailsByGroupLabel[meta.label];
@@ -202,9 +195,64 @@ export function buildHistoryGroupViews(
         return {
             key,
             title: getDateGroupTitle(meta, context.t, context.groupFormatter),
-            rows: items.map(activity =>
-                buildActivityRowView(activity, key, timeFormatDetails, context)
-            )
+            rows: items.map(activity => buildRow(activity, key, timeFormatDetails))
         };
     });
+}
+
+export function buildBtcHistoryGroupViews(
+    groups: BtcHistoryItemsDatedGroup[],
+    context: BtcActivityRowContext
+): HistoryGroupView[] {
+    return buildGroupViews(groups, context, (activity, groupKey, timeFormatDetails) =>
+        buildBtcActivityRowView(activity, groupKey, timeFormatDetails, context)
+    );
+}
+
+const buildFlameTransactionRow = (
+    activity: FlameHistoryItem,
+    groupKey: string,
+    timeFormatDetails: TimeFormatDetails,
+    context: ActivityRowContext
+): ActivityRowView<FlameHistoryItem> => {
+    const { isInitiator, isPending, timestamp, counterpartyAddress } = activity;
+
+    const counterparty: ActivityCounterparty = counterpartyAddress
+        ? resolveActivityCounterparty(counterpartyAddress, context)
+        : {
+              kind: 'address',
+              label: context.t(
+                  isInitiator
+                      ? 'history.transactionInfo.unknownRecipient'
+                      : 'history.transactionInfo.unknownSender'
+              )
+          };
+
+    const { amountSign, formattedValue } = buildFlameActivityAmountView(activity, context);
+
+    return {
+        key: `${groupKey}-${activity.txid}`,
+        activity,
+        title: context.t(transactionTitleKey({ isInitiator, isPending })),
+        amountSign,
+        formattedValue,
+        valueTone: isInitiator ? 'primary' : 'accentGreen',
+        formattedFiat: null,
+        timestampLabel:
+            isPending || timestamp === null
+                ? null
+                : formatTimestampLabel(timestamp, timeFormatDetails, context),
+        isPending,
+        counterparty,
+        note: activity.memo
+    };
+};
+
+export function buildFlameHistoryGroupViews(
+    groups: FlameHistoryItemsDatedGroup[],
+    context: ActivityRowContext
+): HistoryGroupView<FlameHistoryItem>[] {
+    return buildGroupViews(groups, context, (activity, groupKey, timeFormatDetails) =>
+        buildFlameTransactionRow(activity, groupKey, timeFormatDetails, context)
+    );
 }

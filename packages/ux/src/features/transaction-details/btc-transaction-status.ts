@@ -1,7 +1,8 @@
 import { assertUnreachable } from '@safely/core';
 import type { BtcApiTx } from '@safely/core';
 
-import type { TransactionStatusView } from './types';
+import { STATUS_DATE_FORMAT } from './transaction-details-view';
+import type { BtcTransactionStatusView } from './types';
 import type { BtcTransactionDisplayStatus } from '../../entities';
 import { useBtcTransactionDisplayStatus } from '../../entities';
 import type { DateFormatter, TranslateFn } from '../../shared';
@@ -17,17 +18,10 @@ export type BtcTransactionStatusContext = {
     statusFormatter: DateFormatter;
 };
 
-const STATUS_DATE_FORMAT = {
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-} as const;
-
 export function buildBtcTransactionStatusView(
     status: BtcTransactionDisplayStatus,
     context: BtcTransactionStatusContext
-): TransactionStatusView {
+): BtcTransactionStatusView {
     const { t, statusFormatter } = context;
 
     switch (status.type) {
@@ -60,7 +54,9 @@ export function buildBtcTransactionStatusView(
     }
 }
 
-export function useBtcTransactionStatusView(tx: BtcTransactionStatusSource): TransactionStatusView {
+export function useBtcTransactionStatusView(
+    tx: BtcTransactionStatusSource
+): BtcTransactionStatusView {
     const t = useTranslate();
     const statusFormatter = useDateFormatter(STATUS_DATE_FORMAT);
     const status = useBtcTransactionDisplayStatus(tx);

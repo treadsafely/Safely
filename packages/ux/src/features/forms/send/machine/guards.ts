@@ -1,5 +1,7 @@
 import { SendFormError } from '../errors';
+import { SEND_FORM_FEATURES_BY_CHAIN } from '../utils';
 import type { SendFormEvent, SendFormMachineContext } from './types';
+import { hasFiatPrice } from '../validators/amount';
 
 type GuardArg = { context: SendFormMachineContext; event: SendFormEvent };
 
@@ -24,8 +26,13 @@ export const isAmountStepValid = ({ context }: GuardArg): boolean =>
     !context.errors.amount &&
     !context.errors.asset;
 
+export const recipientHasMemo = ({ context }: GuardArg): boolean =>
+    !!context.parsed.recipient &&
+    SEND_FORM_FEATURES_BY_CHAIN[context.parsed.recipient.blockchain].hasMemo;
+
 export const shouldCreateContact = ({ context }: GuardArg): boolean =>
     !!context.parsed.recipient &&
+    SEND_FORM_FEATURES_BY_CHAIN[context.parsed.recipient.blockchain].canSaveContact &&
     context.values.addressBookName.trim().length > 0 &&
     !context.suggestion.selectedId;
 
@@ -49,6 +56,10 @@ export const isAmountValueEmpty = ({ event }: GuardArg): boolean =>
 export const isAmountContextEmpty = ({ context }: GuardArg): boolean =>
     context.values.amount === '' && !context.parsed.amount;
 
+export const canSwitchAmountInputType = ({ context, event }: GuardArg): boolean =>
+    event.type === 'SET_AMOUNT_INPUT_TYPE' &&
+    (event.value === 'crypto' || hasFiatPrice(context.parsed.asset));
+
 export const isNewSuggestion = ({ context, event }: GuardArg): boolean =>
     event.type === 'SELECT_SUGGESTION' && context.suggestion.selectedId !== event.id;
 
@@ -59,6 +70,7 @@ export const guards = {
     hasRecipientError,
     isRecipientStepValid,
     isAmountStepValid,
+    recipientHasMemo,
     shouldCreateContact,
     canEnterMax,
     shouldRestoreMax,
@@ -66,5 +78,6 @@ export const guards = {
     isAmountValueUnchanged,
     isAmountValueEmpty,
     isAmountContextEmpty,
-    isNewSuggestion
+    isNewSuggestion,
+    canSwitchAmountInputType
 };

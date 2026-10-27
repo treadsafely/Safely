@@ -18,7 +18,7 @@ export function useExplorerFactory(): ExplorerFactory {
 }
 
 export function useExplorer(blockchain: BLOCKCHAIN_NAME.BTC): BtcExplorer;
-export function useExplorer(blockchain: BLOCKCHAIN_NAME): Explorer {
+export function useExplorer(blockchain: BLOCKCHAIN_NAME.BTC): Explorer {
     const factory = useExplorerFactory();
     const isTestnetPortfolio = useIsActivePortfolioTestnet();
 
