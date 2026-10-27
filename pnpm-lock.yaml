@@ -350,8 +350,8 @@ importers:
         specifier: ^7.20.0
         version: 7.20.0(@react-navigation/native@7.5.0(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-safe-area-context@5.7.0(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-screens@4.26.2(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
       '@runflame/wallet-rn':
-        specifier: 0.0.1-rc.38
-        version: 0.0.1-rc.38
+        specifier: 0.0.1-rc.39
+        version: 0.0.1-rc.39
       '@safely/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -2952,8 +2952,8 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@runflame/wallet-rn@0.0.1-rc.38':
-    resolution: {integrity: sha512-sbT2UEM8jO3l0XgWdBT5fgvS0RPxENTmkL+QvJNiK7fN4X3spZDn1MVeNUd1ViDiVLlXNnFJbD55q2ih0+DfSg==}
+  '@runflame/wallet-rn@0.0.1-rc.39':
+    resolution: {integrity: sha512-vW7YVNRDstvZt5xublFvyJMnaaztqszCeE2CI22Zwlj59ttcFvw+Smvfah+UwLbIhZlLmZaUZSxhEGCj/1Nqkg==}
 
   '@scure/base@2.2.0':
     resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
@@ -10989,7 +10989,7 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@runflame/wallet-rn@0.0.1-rc.38': {}
+  '@runflame/wallet-rn@0.0.1-rc.39': {}
 
   '@scure/base@2.2.0': {}
 
