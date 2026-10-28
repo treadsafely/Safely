@@ -108,9 +108,26 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `blockchains.flame.<network>.rpc_url` from the boot config; until the config serves it,
   `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet.
 - **No UI creates a devnet portfolio.** Mobile imports one from
-  `safely://import-flame-devnet-wallet?testseed=<phrase>`: the `import-flame-devnet-wallet` path maps
+  `https://link.safely.app/import-flame-devnet-wallet#testseed=<phrase>` (a Universal Link / Android
+  App Link) or `safely://import-flame-devnet-wallet?testseed=<phrase>`. The https link opens the app
+  when it is installed and otherwise loads the page on `link.safely.app`, which sends the user to the
+  store; the phrase rides in the fragment so that page's server never receives it, and
+  `fragmentToQuery` in the linking options' `getStateFromPath` turns it back into the query React
+  Navigation parses (it ignores a fragment). The app side is `ios.associatedDomains` and the
+  `android.intentFilters` (`autoVerify`, every path of the host) in
+  `app.config.js`, all built from its `UNIVERSAL_LINK_HOST`, which also goes to
+  `extra.universalLinkHost` for `useLockAwareLinking` to read through `expo-constants` — change the
+  host there and nowhere else; the domain must
+  serve `/.well-known/apple-app-site-association` (app ID `<team>.com.safely.wallet`) and
+  `/.well-known/assetlinks.json` (SHA-256 of the Play app-signing key and of the key EAS signs tester
+  APKs with), with no redirect. The host exists only for app links, so the intent filter and the
+  AASA (`"/": "/*"`) claim every path: a new deep link needs only its `linking.path`, no rebuild for
+  the manifest, and a path the navigation does not know opens the app where it was. The
+  `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
-  through `useLockAwareLinking`, so it runs only after unlock. It parses the phrase
+  through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
+  only drops the https prefix (logged), never the app. The modal reads `testseed` through zod as a
+  string or `''` — a link repeating the key (query plus fragment) delivers an array. It parses the phrase
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case); the flow is keyed by `testseed`, because a
   second link only updates the params of the open modal. If a portfolio with the same phrase hash is
   already in the account (`useExistingFlameDevnetPortfolio`, read once when the modal opens — after

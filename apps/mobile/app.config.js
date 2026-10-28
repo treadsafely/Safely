@@ -1,5 +1,8 @@
 const { version } = require('./package.json');
 
+// the app reads it back from `extra.universalLinkHost`; the host must serve the AASA and assetlinks.json files
+const UNIVERSAL_LINK_HOST = 'link.safely.app';
+
 module.exports = {
     expo: {
         name: 'Safely',
@@ -29,7 +32,8 @@ module.exports = {
             */
             requireFullScreen: true,
             bundleIdentifier: 'com.safely.wallet',
-            appleTeamId: '3ZVCUSJU6R'
+            appleTeamId: '3ZVCUSJU6R',
+            associatedDomains: [`applinks:${UNIVERSAL_LINK_HOST}`]
         },
         android: {
             permissions: ["android.permission.CAMERA"],
@@ -44,7 +48,20 @@ module.exports = {
             },
             package: 'com.safely.wallet',
             googleServicesFile: './google-services.json',
-            allowBackup: false
+            allowBackup: false,
+            intentFilters: [
+                {
+                    action: 'VIEW',
+                    autoVerify: true,
+                    data: [
+                        {
+                            scheme: 'https',
+                            host: UNIVERSAL_LINK_HOST
+                        }
+                    ],
+                    category: ['BROWSABLE', 'DEFAULT']
+                }
+            ]
         },
         plugins: [
             'expo-image',
@@ -101,6 +118,7 @@ module.exports = {
             './plugins/withNetworkSecurityConfig'
         ],
         extra: {
+            universalLinkHost: UNIVERSAL_LINK_HOST,
             eas: {
                 projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658',
                 build: {

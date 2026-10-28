@@ -3,6 +3,7 @@ import { CommonActions, type StaticScreenProps, usePreventRemove } from '@react-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import { z } from 'zod';
 
 import { ellipsisMiddle, MnemonicResource } from '@safely/core';
 import {
@@ -35,7 +36,10 @@ import {
 
 import { styles } from './ImportFlameDevnetWalletModal.styles';
 
-type ImportFlameDevnetWalletModalProps = StaticScreenProps<{ testseed?: string } | undefined>;
+type ImportFlameDevnetWalletModalProps = StaticScreenProps<{ testseed?: unknown } | undefined>;
+
+// a link that repeats `testseed` (query and fragment) arrives as an array
+const sTestseedParam = z.string().catch('');
 
 const IMPORT_ERRORS = {
     InvalidMnemonicError: 'importWalletScreen.errors.invalidMnemonic',
@@ -278,7 +282,7 @@ const ImportFlameDevnetWalletFlow = ({ testseed }: { testseed: string }) => {
 };
 
 export const ImportFlameDevnetWalletModal = (props: ImportFlameDevnetWalletModalProps) => {
-    const testseed = props.route.params?.testseed ?? '';
+    const testseed = sTestseedParam.parse(props.route.params?.testseed);
 
     // a second link updates the params of the open modal; a new phrase must start over
     return <ImportFlameDevnetWalletFlow key={testseed} testseed={testseed} />;
