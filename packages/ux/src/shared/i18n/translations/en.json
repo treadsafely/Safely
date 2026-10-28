@@ -617,6 +617,10 @@
                         "title": "Turn on Bluetooth.",
                         "description": "Allow access when prompted."
                     },
+                    "usb": {
+                        "title": "Plug in your Ledger.",
+                        "description": "Connect it to this computer with a USB cable."
+                    },
                     "unlock": {
                         "title": "Unlock your Ledger.",
                         "description": "Make sure it's unlocked and nearby."
@@ -642,7 +646,8 @@
                 "notFound": "No devices found",
                 "locationDisabled": "Turn on Location in your device settings to find your Ledger",
                 "title": "Looking for devices…",
-                "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with."
+                "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with.",
+                "subtitleUsb": "Make sure your Ledger is unlocked and connected to this computer."
             },
             "pairing": {
                 "title": "Pairing with Ledger {{device}}",
@@ -659,6 +664,7 @@
             "pairingUnsuccess": {
                 "title": "Pairing unsuccessful",
                 "subtitle": "Make sure your {{device}} is close to your mobile phone and try again.",
+                "subtitleUsb": "Make sure your {{device}} is unlocked and connected to this computer, then try again.",
                 "appNotInstalled": "Install the Bitcoin app on your {{device}} via Ledger Wallet and try again.",
                 "retry": "Retry pairing"
             },
