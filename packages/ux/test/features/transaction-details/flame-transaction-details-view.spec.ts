@@ -54,7 +54,7 @@ const flameActivity = (params: Partial<FlameHistoryItem> = {}): FlameHistoryItem
     isPending: false,
     isInitiator: false,
     value: FlameAssetAmount.fromWeiAmount(150_000_000n),
-    fee: null,
+    fee: FlameAssetAmount.fromWeiAmount(10_000n),
     hasUnreadableOutputs: false,
     memo: null,
     counterpartyAddress: COUNTERPARTY_ADDRESS,
@@ -67,7 +67,7 @@ const buildView = (
 ) => buildFlameTransactionDetailsView(activity, { ...baseContext, ...context });
 
 describe('buildFlameTransactionDetailsView', () => {
-    it('renders a confirmed receipt with its sender and memo', () => {
+    it('renders a confirmed receipt with its sender, memo and the payer fee', () => {
         expect(buildView(flameActivity({ memo: 'rent' }))).toEqual({
             title: 'history.transactionInfo.received',
             confirmedAtLabel: DATE_LABEL,
@@ -80,7 +80,10 @@ describe('buildFlameTransactionDetailsView', () => {
             counterpartyName: ellipsisMiddle(COUNTERPARTY_ADDRESS, 6),
             memo: 'rent',
             status,
-            fee: null,
+            fee: {
+                formattedFiat: null,
+                formattedValue: flameActivity().fee.format(numberFormatter)
+            },
             txid: TXID,
             txidLabel: ellipsisMiddle(TXID, 8),
             explorerUrl: null,

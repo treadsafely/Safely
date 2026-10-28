@@ -28,7 +28,7 @@ export function buildFlameTransactionDetailsView(
         secondaryAmount: null,
         memo: activity.memo,
         status: context.status,
-        fee: fee && { formattedFiat: null, formattedValue: fee.format(context.numberFormatter) },
+        fee: { formattedFiat: null, formattedValue: fee.format(context.numberFormatter) },
         explorerUrl: null,
         hasFiatRateNote: false
     };

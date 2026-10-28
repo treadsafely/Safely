@@ -20,7 +20,7 @@ export function buildFlameActivityAmountView(
     const { amount, isFullPrecision } = resolveSentAmount({
         isInitiator: activity.isInitiator,
         value: activity.value,
-        fee: activity.fee ?? undefined,
+        fee: activity.fee,
         showFullSentAmount: context.showFullSentAmount
     });
 

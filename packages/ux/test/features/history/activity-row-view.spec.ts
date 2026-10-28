@@ -238,7 +238,7 @@ const flameActivity = (params: Partial<FlameHistoryItem> = {}): FlameHistoryItem
     isPending: false,
     isInitiator: false,
     value: FlameAssetAmount.fromWeiAmount(150_000_000n),
-    fee: null,
+    fee: FlameAssetAmount.fromWeiAmount(0n),
     hasUnreadableOutputs: false,
     memo: null,
     counterpartyAddress: null,

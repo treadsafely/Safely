@@ -57,10 +57,10 @@ describe('toFlameHistoryItem', () => {
             memo: null
         });
         expect(item?.value.weiAmount).toBe(60_000n);
-        expect(item?.fee?.weiAmount).toBe(1_000n);
+        expect(item?.fee.weiAmount).toBe(1_000n);
     });
 
-    it('counts a receipt as its created outputs and carries their memo', () => {
+    it('counts a receipt as its created outputs, with the payer fee, and carries their memo', () => {
         const item = toFlameHistoryItem(
             entry('b', ['3'], [], { height: 13, time: 1_760_000_100 }),
             amounts
@@ -68,7 +68,7 @@ describe('toFlameHistoryItem', () => {
 
         expect(item?.isInitiator).toBe(false);
         expect(item?.value.weiAmount).toBe(5_000n);
-        expect(item?.fee).toBeNull();
+        expect(item?.fee.weiAmount).toBe(1_000n);
         expect(item?.memo).toBe('rent');
     });
 

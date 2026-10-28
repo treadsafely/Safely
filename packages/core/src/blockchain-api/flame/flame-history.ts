@@ -14,7 +14,7 @@ export type FlameHistoryItem = {
     isPending: boolean;
     isInitiator: boolean;
     value: FlameAssetAmount;
-    fee: FlameAssetAmount | null;
+    fee: FlameAssetAmount;
     hasUnreadableOutputs: boolean;
     memo: string | null;
     counterpartyAddress: string | null;
@@ -65,7 +65,7 @@ export function toFlameHistoryItem(
         isPending: entry.height === undefined,
         isInitiator,
         value: FlameAssetAmount.fromWeiAmount(value < 0n ? 0n : value),
-        fee: isInitiator ? FlameAssetAmount.fromWeiAmount(fee) : null,
+        fee: FlameAssetAmount.fromWeiAmount(fee),
         hasUnreadableOutputs: [...created, ...spent].some(amount => amount.status !== 'counted'),
         memo:
             created
