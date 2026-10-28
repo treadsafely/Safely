@@ -17,7 +17,8 @@
         "watchOnly": "Просмотр",
         "testnet": "Testnet",
         "ledger": "Ledger",
-        "ledgerWallet": "Кошелёк Ledger {{number}}"
+        "ledgerWallet": "Кошелёк Ledger {{number}}",
+        "flameDevnet": "Demo"
     },
     "walletAlreadyAdded": {
         "title": "Вы уже добавили этот кошелёк как {{name}}",
