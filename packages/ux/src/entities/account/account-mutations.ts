@@ -5,6 +5,7 @@ import type { IMnemonicAccessor, IMnemonicVault, ITreeStorage } from '@safely/co
 import { deriveAnalyticsAccountUuid, MnemonicResource } from '@safely/core';
 import {
     PortfolioBip39,
+    PortfolioFlameDevnet,
     PortfolioIdBip39Imported,
     PortfolioIdBip39MasterKeyDerived,
     PortfolioIdLedger,
@@ -81,6 +82,11 @@ export function useNewAccountDefaultName() {
     );
 }
 
+export function useFirstPortfolioName() {
+    const t = useTranslate();
+    return t('security.groups.wallet.defaultName', { number: 1 });
+}
+
 export type AccountPortfolioSource =
     | { kind: 'generated' }
     | {
@@ -88,6 +94,7 @@ export type AccountPortfolioSource =
           mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
           networkType: PortfolioNetworkType;
       }
+    | { kind: 'flameDevnet'; mnemonicAccessor: IMnemonicAccessor & IMnemonicVault }
     | { kind: 'watchOnly'; input: string; networkType: PortfolioNetworkType }
     | {
           kind: 'ledger';
@@ -142,6 +149,18 @@ async function buildFirstPortfolio(params: {
                     icon: defaultIcon
                 },
                 options: { seedRevealedFromDevice: deviceName },
+                logger
+            });
+            break;
+        }
+        case 'flameDevnet': {
+            portfolio = await PortfolioFlameDevnet.createSerializedPortfolio({
+                encryptor: new SecretEncryptor(account.secretEncryptor, secureEncryptedStorage),
+                mnemonicAccessor: source.mnemonicAccessor,
+                meta: {
+                    name: portfolioName,
+                    icon: PortfolioIdBip39Imported.getFallbackEmoji(source.mnemonicAccessor)
+                },
                 logger
             });
             break;
@@ -238,11 +257,11 @@ async function archiveOwnDevices(accounts: SyncAccount[], logger: Logger): Promi
 }
 
 export function useCreateAccount(options?: { setActive?: boolean }) {
-    const t = useTranslate();
     const client = useQueryClient();
     const factory = useAccountsFactory();
     const { mutateAsync: setActive } = useSetActiveAccount();
     const newAccountName = useNewAccountDefaultName();
+    const firstPortfolioName = useFirstPortfolioName();
     const updateSyncStorage = useAccountSyncStorageUpdate();
     const generateOwnMeta = useGenerateOwnSyncedDeviceMeta();
     const { deviceInfo } = useAppContext();
@@ -274,7 +293,7 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
                     account,
                     secureEncryptedStorage: params.secureEncryptedStorage,
                     source: params.firstPortfolio,
-                    portfolioName: t('security.groups.wallet.defaultName', { number: 1 }),
+                    portfolioName: firstPortfolioName,
                     deviceName: deviceInfo.name,
                     logger
                 });

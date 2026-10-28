@@ -129,20 +129,44 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   only drops the https prefix (logged), never the app. The modal reads `testseed` through zod as a
   string or `''` — a link repeating the key (query plus fragment) delivers an array. It parses the phrase
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case); the flow is keyed by `testseed`, because a
-  second link only updates the params of the open modal. If a portfolio with the same phrase hash is
+  second link only updates the params of the open modal. The modal sits on top of whatever screen
+  the user was on, onboarding included, and picks its branch once, by whether an account existed
+  when it opened. **With no account** it shows the same confirmation with "a new account will be
+  created" copy and the name "Wallet 1"; Import replaces the modal with `OnboardingPasscodeScreen`
+  carrying a `flameDevnet` source (its own `MnemonicResource` copy — the modal closes its own on
+  unmount), and the account is created there with the devnet portfolio as its first, as for an
+  imported phrase. A link that arrives while a device sign-in is in the stack (`SignInScreen` in onboarding,
+  `SignInModal` when adding an account) goes straight back:
+  the device link could complete under the modal and add an account the branch does not know
+  about, and the link must not abort a sign-in the user is in the middle of (the import's reset to
+  the tabs would). The modal also
+  leaves when the account it opened with disappears (signed out or archived from another device),
+  and goes straight back for an account without a passcode (after a device sign-in, before passcode
+  setup): the mobile security check throws without a passcode, so Import could not succeed, and
+  skipping the check is not worth it for a link the user can open again.
+  **With an account**, if a
+  portfolio with the same phrase hash is
   already in the account (`useExistingFlameDevnetPortfolio`, read once when the modal opens — after
   its own import the list holds the wallet too), it makes that one active, toasts "already imported"
-  and resets to the tabs without showing anything. Otherwise it first shows a confirmation
+  and leaves without showing anything. Otherwise it first shows a confirmation
   ("Import Demo wallet" in the copy): the target account, a table of the wallet's name, balance and
   shortened address, a test-network note, and an "I came here from the runflame.org website"
   checkbox under the buttons that gates Import — a link can come from any site, so the user sees what lands in the wallet list. The address and balance
   come from `useFlameDevnetWalletPreview` → `PortfolioFlameDevnet.createPreviewFlameWallet`: the same
   `FlameWallet` the import would create (same id, so the persisted outputs carry over), derived
   without the secure store and kept only in a non-persisted query. Import then unlocks the secure
-  store, adds the portfolio (or finds the one with the same phrase hash) and makes it active
-  (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). With no account it
-  only shows a toast; a link that cold-starts the app leaves nothing under the modal, so it resets
-  instead of going back. While the import writes, `usePreventRemove` keeps the modal on screen
+  store, adds the portfolio with the name and icon the preview showed (passed in, never resolved
+  twice) or finds the one with the same phrase hash, and makes it active
+  (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). After an import or a
+  duplicate it resets to the tabs. Cancel, close and a preview
+  error always go back, so an onboarding step or an open flow underneath is kept. A link is
+  dispatched on top of the initial route (`initialState` is always set, so React Navigation never
+  reads the initial URL itself), so there is always something to go back to; the reset to
+  `resolveStartRoute` (`@mobile/shared/navigation`) is only a fallback. `resolveStartRoute` is the one
+  place the start route is decided — `useInitialNavigationState` and `useRestrictionGuard` read it;
+  never hand-write that choice again (the restriction guard once sent an account without a passcode
+  to `WelcomeScreen`, which throws on an account). The passcode-setup route itself is
+  `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup. While the import writes, `usePreventRemove` keeps the modal on screen
   (see the UI section below), since the write cannot be cancelled and would reset the stack after
   the user left.
 - `flame` holds `{ viewKey, receivingAddress, trackingAddress, predicate }`, all computed once at

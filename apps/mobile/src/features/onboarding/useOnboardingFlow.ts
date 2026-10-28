@@ -16,6 +16,7 @@ import { useAppContext, useCreateAccount, useErrorToast, useLoader } from '@safe
 // eslint-disable-next-line boundaries/element-types
 import { tabsInitialState } from '@mobile/app/navigation/tabs';
 import { usePasscode } from '@mobile/entities/security';
+import { PASSCODE_SETUP_ROUTE } from '@mobile/shared/navigation';
 
 type OnboardingCustomizeParams = {
     defaultName: string;
@@ -51,12 +52,7 @@ export function useOnboardingFlow() {
         navigation.dispatch(
             CommonActions.reset({
                 index: 0,
-                routes: [
-                    {
-                        name: 'OnboardingPasscodeScreen',
-                        params: { source: null, headerType: 'placeholder' }
-                    }
-                ]
+                routes: [PASSCODE_SETUP_ROUTE]
             })
         );
     }, [navigation]);

@@ -11,7 +11,6 @@ import {
 import {
     portfolioKeys,
     useImportFlameDevnetPortfolio,
-    useNewPortfolioFallbackName,
     usePortfolios,
     useUnlockableSecretEncryptorFactory
 } from '../../entities';
@@ -46,8 +45,7 @@ export function useExistingFlameDevnetPortfolio(
     }, [portfolios, mnemonicResource]);
 }
 
-export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource) {
-    const fallbackName = useNewPortfolioFallbackName();
+export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource, name: string) {
     const id = useMemo(() => PortfolioIdFlameDevnet.create(mnemonicResource), [mnemonicResource]);
 
     const walletQuery = useQuery({
@@ -59,8 +57,8 @@ export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource) 
     });
 
     const meta = useMemo(
-        () => newFlameDevnetPortfolioMeta(mnemonicResource, fallbackName),
-        [mnemonicResource, fallbackName]
+        () => newFlameDevnetPortfolioMeta(mnemonicResource, name),
+        [mnemonicResource, name]
     );
 
     return { meta, walletQuery };
@@ -69,17 +67,16 @@ export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource) 
 export function useImportFlameDevnetPortfolioFromSeed() {
     const { mutateAsync: importFlameDevnetPortfolio } = useImportFlameDevnetPortfolio();
     const createEncryptor = useUnlockableSecretEncryptorFactory();
-    const fallbackName = useNewPortfolioFallbackName();
 
-    return useMutation<void, Error, { mnemonicResource: MnemonicResource }>({
-        async mutationFn({ mnemonicResource }) {
+    return useMutation<void, Error, { mnemonicResource: MnemonicResource; meta: PortfolioMeta }>({
+        async mutationFn({ mnemonicResource, meta }) {
             using secretEncryptor = createEncryptor();
             await secretEncryptor.unlockEncryption();
 
             await importFlameDevnetPortfolio({
                 mnemonicAccessor: mnemonicResource,
                 secretEncryptor,
-                meta: newFlameDevnetPortfolioMeta(mnemonicResource, fallbackName)
+                meta
             });
         }
     });

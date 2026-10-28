@@ -25,7 +25,10 @@ import {
 } from '../../entities';
 import { useAppContext } from '../../shared';
 
-export type NewPortfolioSource = Exclude<AccountPortfolioSource, { kind: 'ledger' }>;
+export type NewPortfolioSource = Exclude<
+    AccountPortfolioSource,
+    { kind: 'ledger' | 'flameDevnet' }
+>;
 
 export type NewPortfolioResolution =
     { kind: 'duplicate'; portfolio: Portfolio } | { kind: 'new'; icon: PortfolioMetaIcon };

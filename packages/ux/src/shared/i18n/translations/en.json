@@ -100,9 +100,9 @@
         "remaining": "Remaining:",
         "pending": "Pending:",
         "memo": {
-            "label": "Encrypted memo",
+            "label": "Memo",
             "placeholder": "Optional",
-            "description": "Only the recipient can read it."
+            "description": "Encrypted. Only you and the recipient can read it."
         },
         "addressBook": {
             "label": "Save to your address book",
@@ -479,7 +479,7 @@
         "continueWithLedger": "Continue with Ledger",
         "from": "From",
         "to": "To",
-        "memo": "Encrypted memo",
+        "memo": "Memo",
         "amount": "Amount",
         "allAvailableBalance": "All available balance",
         "networkFee": {
@@ -893,7 +893,7 @@
             "unknownSender": "Unknown sender",
             "unknownRecipient": "Unknown recipient",
             "unknown": "Unknown",
-            "memo": "Encrypted memo",
+            "memo": "Memo",
             "fee": "Network fee",
             "hash": "Transaction",
             "openInExplorer": "Open in explorer",
@@ -1105,14 +1105,14 @@
     "importFlameDevnetWallet": {
         "title": "Import Demo wallet",
         "subtitle": "This wallet will be imported to your “{{accountName}}” account.",
+        "subtitleNewAccount": "A new account will be created with this wallet. Next, you will set a passcode.",
         "walletLabel": "Wallet",
         "balanceLabel": "Balance",
         "addressLabel": "Address",
         "devnetOnly": "This wallet works only on Flame Demo, a test network. Its coins have no real value — never send real funds to it.",
         "trustedSite": "I came here from the <site>runflame.org</site> website",
         "importButton": "Import",
-        "imported": "Flame Devnet wallet imported",
-        "alreadyImported": "This wallet is already imported",
-        "noAccount": "Create or sign in to an account to import a Flame Devnet wallet"
+        "imported": "Demo wallet imported",
+        "alreadyImported": "This wallet is already imported"
     }
 }
