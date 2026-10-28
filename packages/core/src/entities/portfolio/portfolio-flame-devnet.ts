@@ -7,6 +7,7 @@ import { PortfolioIdFlameDevnet } from './portfolio-id-flame-devnet';
 import type { PortfolioMeta } from './portfolio-meta';
 import type { ISecretEncryptor } from '../../di';
 import { FLAME_DEVNET_NETWORK } from '../blockchain';
+import type { FlameWallet } from '../derivation';
 import { DerivationChainItemFlame } from '../derivation';
 import { InvalidMnemonicError, PortfolioGenerationFailedError } from '../errors';
 import type {
@@ -54,6 +55,34 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
                 encryptedSecret,
                 flame
             });
+        } catch (error) {
+            if (error instanceof InvalidMnemonicError) {
+                throw error;
+            }
+
+            throw new PortfolioGenerationFailedError(undefined, { cause: error });
+        }
+    }
+
+    // reads amounts from the view key alone; `buildTransfer` needs the accessor still open
+    public static async createPreviewFlameWallet(
+        mnemonicAccessor: IMnemonicAccessor & IMnemonicVault
+    ): Promise<FlameWallet> {
+        try {
+            validateMnemonic(MNEMONIC_TYPE.BIP39, mnemonicAccessor.value);
+
+            const seedProducer = new BtcBip39SeedProducer(mnemonicAccessor);
+            const sChainItem = await DerivationChainItemFlame.createSChainItem(
+                seedProducer,
+                FLAME_DEVNET_NETWORK
+            );
+
+            return new DerivationChainItemFlame({
+                ownerId: PortfolioIdFlameDevnet.create(mnemonicAccessor),
+                network: FLAME_DEVNET_NETWORK,
+                sChainItem,
+                seedProducer
+            }).wallets[0];
         } catch (error) {
             if (error instanceof InvalidMnemonicError) {
                 throw error;

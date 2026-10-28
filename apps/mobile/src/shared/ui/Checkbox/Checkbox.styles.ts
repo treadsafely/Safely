@@ -9,7 +9,17 @@ export const styles = StyleSheet.create(theme => ({
         borderColor: theme.colors.other.transparentElement,
         backgroundColor: theme.colors.background.tertiary,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        variants: {
+            size: {
+                regular: {},
+                small: {
+                    width: 16,
+                    height: 16,
+                    borderRadius: theme.radius.xss
+                }
+            }
+        }
     },
     boxChecked: {
         backgroundColor: theme.colors.accent.accent,

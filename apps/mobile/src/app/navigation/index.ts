@@ -15,7 +15,7 @@ import { DeviceSupportWizardModal } from '@mobile/screens/DeviceSupportWizardMod
 import { DeviceUnarchivedSheet } from '@mobile/screens/DeviceUnarchivedSheet';
 import { ExchangeModal } from '@mobile/screens/ExchangeModal';
 import { FlameTransactionScreen } from '@mobile/screens/FlameTransactionScreen';
-import { ImportFlameDevnetWalletSheet } from '@mobile/screens/ImportFlameDevnetWalletSheet';
+import { ImportFlameDevnetWalletModal } from '@mobile/screens/ImportFlameDevnetWalletModal';
 import { LinkDeviceWarningModal } from '@mobile/screens/LinkDeviceWarningModal';
 import { MoreOptionsSheet } from '@mobile/screens/MoreOptionsSheet';
 import { NewContactModal } from '@mobile/screens/NewContactModal';
@@ -115,7 +115,13 @@ export const RootStack = createNativeStackNavigator({
                 SelectAccountModal: SelectAccountModal,
                 SelectAccountSelectorModal: SelectAccountSelectorModal,
                 ReceiveAssetModal: ReceiveAssetModal,
-                SendAssetModal: SendStack
+                SendAssetModal: SendStack,
+                ImportFlameDevnetWalletModal: {
+                    screen: ImportFlameDevnetWalletModal,
+                    linking: {
+                        path: 'import-flame-devnet-wallet'
+                    }
+                }
             },
             screenOptions: {
                 presentation: 'modal'
@@ -135,13 +141,7 @@ export const RootStack = createNativeStackNavigator({
                 ConfirmDeleteContactSheet: ConfirmDeleteContactSheet,
                 ConnectToSignSheet: ConnectToSignSheet,
                 ConfirmXpubImportSheet: ConfirmXpubImportSheet,
-                ProviderSheet: ProviderSheet,
-                ImportFlameDevnetWalletSheet: {
-                    screen: ImportFlameDevnetWalletSheet,
-                    linking: {
-                        path: 'import-flame-devnet-wallet'
-                    }
-                }
+                ProviderSheet: ProviderSheet
             },
             screenOptions: {
                 animationDuration: 0,

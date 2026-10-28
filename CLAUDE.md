@@ -158,9 +158,11 @@ git history too. Point at where the value lives (`.env`, the secret manager) ins
 
 1. `pnpm -r run compile` (or `--filter` the packages you touched)
 2. lint and test for the packages you touched
-3. if you changed a native module with a `*Core` type (`safely-crypto`, `safely-store-country`), run
+3. if you added or changed copy in `en.json`, add the translation to every other locale file in
+   `packages/ux/src/shared/i18n/translations/` (`ru.json`)
+4. if you changed a native module with a `*Core` type (`safely-crypto`, `safely-store-country`), run
    its Swift/Kotlin host tests (see `.claude/rules/mobile-app.md`)
-4. if the change touched anything listed under "Keeping these instructions current", update
+5. if the change touched anything listed under "Keeping these instructions current", update
    `CLAUDE.md` / `.claude/rules/*` in the same PR
 
 PRs target `master`; a non-draft PR triggers CI and the Claude review workflow
