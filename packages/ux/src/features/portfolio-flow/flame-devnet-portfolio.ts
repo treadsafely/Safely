@@ -1,10 +1,18 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import { MnemonicResource, PortfolioIdBip39Imported } from '@safely/core';
+import type { IMnemonicAccessor, Portfolio, PortfolioMeta, MnemonicResource } from '@safely/core';
+import {
+    PortfolioFlameDevnet,
+    PortfolioIdBip39Imported,
+    PortfolioIdFlameDevnet
+} from '@safely/core';
 
 import {
+    portfolioKeys,
     useImportFlameDevnetPortfolio,
     useNewPortfolioFallbackName,
+    usePortfolios,
     useUnlockableSecretEncryptorFactory
 } from '../../entities';
 
@@ -19,24 +27,59 @@ export function parseFlameDevnetSeedParam(raw: string): string[] {
         .filter(word => word.length > 0);
 }
 
+const newFlameDevnetPortfolioMeta = (
+    mnemonicAccessor: IMnemonicAccessor,
+    name: string
+): PortfolioMeta => ({
+    name,
+    icon: PortfolioIdBip39Imported.getFallbackEmoji(mnemonicAccessor)
+});
+
+export function useExistingFlameDevnetPortfolio(
+    mnemonicResource: MnemonicResource
+): Portfolio | undefined {
+    const portfolios = usePortfolios();
+
+    return useMemo(() => {
+        const id = PortfolioIdFlameDevnet.create(mnemonicResource);
+        return portfolios.find(portfolio => portfolio.id.isEq(id));
+    }, [portfolios, mnemonicResource]);
+}
+
+export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource) {
+    const fallbackName = useNewPortfolioFallbackName();
+    const id = useMemo(() => PortfolioIdFlameDevnet.create(mnemonicResource), [mnemonicResource]);
+
+    const walletQuery = useQuery({
+        queryKey: portfolioKeys.flameDevnetPreview({ portfolioId: id.toString() }).toKey(),
+        queryFn: () => PortfolioFlameDevnet.createPreviewFlameWallet(mnemonicResource),
+        staleTime: Infinity,
+        gcTime: 0,
+        retry: false
+    });
+
+    const meta = useMemo(
+        () => newFlameDevnetPortfolioMeta(mnemonicResource, fallbackName),
+        [mnemonicResource, fallbackName]
+    );
+
+    return { meta, walletQuery };
+}
+
 export function useImportFlameDevnetPortfolioFromSeed() {
     const { mutateAsync: importFlameDevnetPortfolio } = useImportFlameDevnetPortfolio();
     const createEncryptor = useUnlockableSecretEncryptorFactory();
     const fallbackName = useNewPortfolioFallbackName();
 
-    return useMutation<void, Error, { mnemonic: string[] }>({
-        async mutationFn({ mnemonic }) {
-            using mnemonicAccessor = new MnemonicResource(mnemonic);
+    return useMutation<void, Error, { mnemonicResource: MnemonicResource }>({
+        async mutationFn({ mnemonicResource }) {
             using secretEncryptor = createEncryptor();
             await secretEncryptor.unlockEncryption();
 
             await importFlameDevnetPortfolio({
-                mnemonicAccessor,
+                mnemonicAccessor: mnemonicResource,
                 secretEncryptor,
-                meta: {
-                    name: fallbackName,
-                    icon: PortfolioIdBip39Imported.getFallbackEmoji(mnemonicAccessor)
-                }
+                meta: newFlameDevnetPortfolioMeta(mnemonicResource, fallbackName)
             });
         }
     });

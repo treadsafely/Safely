@@ -156,6 +156,32 @@ describe('DerivationChainItemFlame', () => {
         expect(portfolio.toJSON()).toEqual(serialized);
     });
 
+    it('previews the wallet a seed would import, without a vault', async () => {
+        const { serialized, encryptor } = await createSerialized();
+        const [imported] = PortfolioFlameDevnet.restore(encryptor, serialized).flame.wallets;
+
+        const preview = await PortfolioFlameDevnet.createPreviewFlameWallet(
+            new ClosableMnemonicAccessorVault(MNEMONIC)
+        );
+
+        expect(preview.id.isEq(imported.id)).toBe(true);
+        expect(preview).toMatchObject({
+            network: 'testnet',
+            receivingAddress: imported.receivingAddress,
+            trackingAddress: imported.trackingAddress,
+            predicate: imported.predicate
+        });
+    });
+
+    it('refuses to preview an invalid seed', async () => {
+        await expect(
+            PortfolioFlameDevnet.createPreviewFlameWallet(
+                new ClosableMnemonicAccessorVault(['not', 'a', 'seed'])
+            )
+        ).rejects.toThrow('Mnemonic is not valid BIP39 mnemonic');
+        expect(mocked.flame.viewKey).not.toHaveBeenCalled();
+    });
+
     it('reads clear amounts natively and opens confidential notes with the view key', async () => {
         const [wallet] = (await createPortfolio()).flame.wallets;
 

@@ -1103,7 +1103,16 @@
         }
     },
     "importFlameDevnetWallet": {
+        "title": "Import Demo wallet",
+        "subtitle": "This wallet will be imported to your “{{accountName}}” account.",
+        "walletLabel": "Wallet",
+        "balanceLabel": "Balance",
+        "addressLabel": "Address",
+        "devnetOnly": "This wallet works only on Flame Demo, a test network. Its coins have no real value — never send real funds to it.",
+        "trustedSite": "I came here from the <site>runflame.org</site> website",
+        "importButton": "Import",
         "imported": "Flame Devnet wallet imported",
+        "alreadyImported": "This wallet is already imported",
         "noAccount": "Create or sign in to an account to import a Flame Devnet wallet"
     }
 }

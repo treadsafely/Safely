@@ -109,12 +109,25 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet.
 - **No UI creates a devnet portfolio.** Mobile imports one from
   `safely://import-flame-devnet-wallet?testseed=<phrase>`: the `import-flame-devnet-wallet` path maps
-  to `ImportFlameDevnetWalletSheet`, a screen with no UI that goes through `useLockAwareLinking`, so it runs
-  only after unlock. It parses the phrase (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case),
-  unlocks the secure store, adds the portfolio (or finds the one with the same phrase hash) and makes
-  it active (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). With no account it
-  only shows a toast; a link that cold-starts the app leaves nothing under the sheet, so it resets
-  instead of going back.
+  to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
+  through `useLockAwareLinking`, so it runs only after unlock. It parses the phrase
+  (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case); the flow is keyed by `testseed`, because a
+  second link only updates the params of the open modal. If a portfolio with the same phrase hash is
+  already in the account (`useExistingFlameDevnetPortfolio`, read once when the modal opens — after
+  its own import the list holds the wallet too), it makes that one active, toasts "already imported"
+  and resets to the tabs without showing anything. Otherwise it first shows a confirmation
+  ("Import Demo wallet" in the copy): the target account, a table of the wallet's name, balance and
+  shortened address, a test-network note, and an "I came here from the runflame.org website"
+  checkbox under the buttons that gates Import — a link can come from any site, so the user sees what lands in the wallet list. The address and balance
+  come from `useFlameDevnetWalletPreview` → `PortfolioFlameDevnet.createPreviewFlameWallet`: the same
+  `FlameWallet` the import would create (same id, so the persisted outputs carry over), derived
+  without the secure store and kept only in a non-persisted query. Import then unlocks the secure
+  store, adds the portfolio (or finds the one with the same phrase hash) and makes it active
+  (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). With no account it
+  only shows a toast; a link that cold-starts the app leaves nothing under the modal, so it resets
+  instead of going back. While the import writes, `usePreventRemove` keeps the modal on screen
+  (see the UI section below), since the write cannot be cancelled and would reset the stack after
+  the user left.
 - `flame` holds `{ viewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
   portfolio creation (`trackingAddress` is the receiving address's first half, as the SDK issues it)
   (the mnemonic is already in hand): the chain builds its `wallets` from them synchronously, so the
@@ -207,12 +220,14 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `proofs`, builds and calls `submit_tx` back to back, and rebuilds once on `MEMPOOL_REJECTED`.
   The amount step shows an encrypted memo field for a Flame recipient only (`AmountView.setMemo`);
   the form clamps it to the SDK's `memoMaxBytes()` (UTF-8 bytes that fit the note's cell) and drops it
-  when the recipient changes. The template puts it on the recipient's output only, never on change;
-  the library seals it into that output's note, so only the recipient's view key reads it.
-  The sender therefore can't read its own memo back from the chain, and a sent memo is deliberately
-  not stored anywhere: history shows only a received memo, from the opened note
-  (`FlameOutputAmount.memo` → `FlameHistoryItem.memo`); the confirmation screen shows the memo
-  being sent.
+  when the recipient changes. The library seals a memo into its output's note, so only that
+  output's owner reads it — the sender cannot open the recipient's note. The template therefore
+  puts the same memo on the change output too, and history reads a sent memo back from the change
+  exactly as it reads a received one from the opened note (`FlameOutputAmount.memo` →
+  `FlameHistoryItem.memo`, the first memo among the wallet's created outputs); a sent memo is
+  stored nowhere else. A send with no change (max, or an exact amount) has no output of the
+  wallet's own, so its memo is not readable afterwards; neither is one sent before the change
+  carried it.
   The node admits a transfer synchronously, so `useSendAssetTransfer` invalidates the balance and
   the history (`flameBlockchain`) and the next `unspent` already leaves the spent inputs out; there
   is no local broadcast cache like `BroadcastedBtcTx` and no store of the sent txid. The history
@@ -261,6 +276,13 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   the header buttons read the navigation context optionally. Route behaviour ("closing this sheet
   means leaving the route") lives in `src/shared/navigation/BottomSheetScreen`, which sheet screens
   use instead of `BottomSheet`. This is what lets the same UI render outside the navigator.
+- **A screen that must not close while it writes blocks removal with `usePreventRemove`.** Disabling
+  its buttons or setting `gestureEnabled: false` leaves the Android hardware back and any programmatic
+  pop open, and a write that finishes after the screen is gone still runs its navigation and toast on
+  whatever the user moved to. `usePreventRemove(isPending, …)` stops every removal, the native swipe
+  included. Its callback receives the blocked action: a screen that navigates away itself when the
+  write succeeds (a `reset` right after `await`, before `isPending` drops) dispatches that action
+  from the callback once it knows the write is done — `ImportFlameDevnetWalletModal` is the example.
 - **The app lock is not a route.** `LockScreenProvider` (`entities/security`) owns `isLocked`;
   `features/app-lock` renders the lock UI in a `FullWindowOverlay` (iOS window level, like
   `BlurOverlay`), and `AppNavigation` wraps the navigator in `<Activity mode="hidden">` while
@@ -273,9 +295,12 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
 
 The strings live in `@safely/ux/translations` (`packages/ux/src/shared/i18n/translations/`), shared
 with the web targets; `src/shared/i18n` only creates the i18next instance and detects the language.
-The source of strings is `en.json`; the other locale files are produced by translation and are not
-edited by hand. Add new copy to `en.json` and read it through `useTranslate()`. Supported locales are
-also listed in `app.config.js` (`CFBundleLocalizations`) — update it when adding a language.
+The source of strings is `en.json`; read copy through `useTranslate()`. Every key a task adds or
+changes in `en.json` gets its translation in every other locale file of the directory (today `ru.json`)
+before the task is done — never leave one for a later translation pass, since nothing in lint or CI
+reports a missing key and i18next silently falls back to English. Keep Russian copy gender-neutral
+("Ссылка открыта…", not "Я перешёл…"). Supported locales are also listed in `app.config.js`
+(`CFBundleLocalizations`) — update it when adding a language.
 
 ## Build and release
 
