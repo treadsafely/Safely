@@ -198,6 +198,12 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: 'catalog:'
+        version: 1.6.0(rxjs@7.8.2)
+      '@ledgerhq/device-transport-kit-web-hid':
+        specifier: 1.2.3
+        version: 1.2.3(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(rxjs@7.8.2)
       '@noble/hashes':
         specifier: 'catalog:'
         version: 2.2.0
@@ -2327,6 +2333,12 @@ packages:
       '@ledgerhq/device-management-kit': ^1.0.0
       react-native: '>0.74.1'
       react-native-ble-plx: 3.4.0
+      rxjs: 7.8.2
+
+  '@ledgerhq/device-transport-kit-web-hid@1.2.3':
+    resolution: {integrity: sha512-p0v0K4otRT/jVC1ysLiXWJ6Nrzw1/5IxGxHaNUrbdiX+ndpjTFQsELkqDyDMKCHaP22sGSXqrQFVFW5Z2DNRVw==}
+    peerDependencies:
+      '@ledgerhq/device-management-kit': ^1.0.0
       rxjs: 7.8.2
 
   '@ledgerhq/signer-utils@1.2.0':
@@ -10152,6 +10164,14 @@ snapshots:
       purify-ts: 2.1.0
       react-native: 0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3)
       react-native-ble-plx: 3.5.1(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
+      rxjs: 7.8.2
+      uuid: 11.0.3
+
+  '@ledgerhq/device-transport-kit-web-hid@1.2.3(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(rxjs@7.8.2)':
+    dependencies:
+      '@ledgerhq/device-management-kit': 1.6.0(rxjs@7.8.2)
+      '@sentry/minimal': 6.19.7
+      purify-ts: 2.1.0
       rxjs: 7.8.2
       uuid: 11.0.3
 
