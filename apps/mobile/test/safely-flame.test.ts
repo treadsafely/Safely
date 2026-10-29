@@ -19,6 +19,13 @@ const SEED = new Uint8Array(64).fill(1);
 const VIEW_KEY = 'testview1example';
 const PATH = { branch: 0, index: 0 };
 
+const containsBytes = (value: unknown): boolean => {
+    if (value instanceof Uint8Array) return true;
+    if (value !== null && typeof value === 'object')
+        return Object.values(value).some(containsBytes);
+    return false;
+};
+
 describe('safely-flame facade', () => {
     beforeEach(() => {
         native.viewKey.mockReset();
@@ -257,26 +264,28 @@ describe('safely-flame facade', () => {
                 flameSdk.buildTransfer(Buffer.from(SEED), 'testnet', PATH, request)
             ).resolves.toEqual(transfer);
 
-            const [seed, network, branch, index, contracts, notes, proofs, plan] = native
-                .buildTransfer.mock.calls[0] as [
+            const [seed, contracts, notes, proofs, memos, plan] = native.buildTransfer.mock
+                .calls[0] as [
                 Uint8Array,
-                string,
-                number,
-                number,
                 Uint8Array[],
                 Uint8Array[],
                 Uint8Array[],
-                unknown
+                Uint8Array[],
+                Record<string, unknown>
             ];
-            expect([network, branch, index]).toEqual(['testnet', 0, 0]);
             expect(seed.every(byte => byte === 0)).toBe(true);
             expect(contracts.map(c => c.constructor)).toEqual([Uint8Array]);
             expect(notes).toEqual([new Uint8Array(0)]);
             expect(proofs).toEqual([new Uint8Array([2])]);
+            expect(memos.map(m => m.constructor)).toEqual([Uint8Array, Uint8Array]);
+            expect(memos).toEqual([new Uint8Array([7]), new Uint8Array(0)]);
+            expect(containsBytes(plan)).toBe(false);
             expect(plan).toEqual({
+                network: 'testnet',
+                branch: 0,
+                index: 0,
                 addresses: ['tf1recipient', 'tf1change'],
                 qtys: ['18446744073709551615', '1'],
-                memos: [new Uint8Array([7]), new Uint8Array(0)],
                 fee: '1000',
                 gas: '1000000'
             });

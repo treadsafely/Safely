@@ -16,6 +16,7 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
 import expo.modules.kotlin.records.Record
+import expo.modules.kotlin.records.Required
 
 private class FlameFailure(val code: String, val reason: String) : Exception(reason)
 
@@ -56,12 +57,16 @@ private fun uint32(value: Long): UInt {
 private fun uint64(value: String): ULong =
     value.toULongOrNull() ?: throw invalidArgument("$value is not a uint64")
 
+// No ByteArray fields: a record arrives as a ReadableNativeMap, where a Uint8Array is no longer a typed array.
+// Initializers only satisfy Kotlin: @Required rejects a missing key, so none of them is ever used.
 class TransferPlan : Record {
-    @Field val addresses: List<String> = emptyList()
-    @Field val qtys: List<String> = emptyList()
-    @Field val memos: List<ByteArray> = emptyList()
-    @Field val fee: String = ""
-    @Field val gas: String = ""
+    @Field @Required val network: String = ""
+    @Field @Required val branch: Long = 0
+    @Field @Required val index: Long = 0
+    @Field @Required val addresses: List<String> = emptyList()
+    @Field @Required val qtys: List<String> = emptyList()
+    @Field @Required val fee: String = ""
+    @Field @Required val gas: String = ""
 }
 
 private fun noteFailure(failure: NoteFailure): String = when (failure) {
@@ -140,17 +145,17 @@ class SafelyFlameModule : Module() {
         }
 
         // A confidential input is opened here, so its blindings never cross the bridge.
-        AsyncFunction("buildTransfer") { seed: ByteArray, networkName: String, branch: Long, index: Long, contracts: List<ByteArray>, notes: List<ByteArray>, proofs: List<ByteArray>, plan: TransferPlan ->
+        AsyncFunction("buildTransfer") { seed: ByteArray, contracts: List<ByteArray>, notes: List<ByteArray>, proofs: List<ByteArray>, memos: List<ByteArray>, plan: TransferPlan ->
             outcome {
                 try {
                     if (contracts.size != notes.size || contracts.size != proofs.size) {
                         throw invalidArgument("${contracts.size} contracts for ${notes.size} notes and ${proofs.size} proofs")
                     }
-                    if (plan.addresses.size != plan.qtys.size || plan.addresses.size != plan.memos.size) {
-                        throw invalidArgument("${plan.addresses.size} addresses for ${plan.qtys.size} amounts and ${plan.memos.size} memos")
+                    if (plan.addresses.size != plan.qtys.size || plan.addresses.size != memos.size) {
+                        throw invalidArgument("${plan.addresses.size} addresses for ${plan.qtys.size} amounts and ${memos.size} memos")
                     }
-                    val path = KeyPath(uint32(branch), uint32(index))
-                    Wallet(seed, network(networkName), 0u).use { wallet ->
+                    val path = KeyPath(uint32(plan.branch), uint32(plan.index))
+                    Wallet(seed, network(plan.network), 0u).use { wallet ->
                         val inputs = contracts.indices.map { i ->
                             val opening = if (decodeContract(contracts[i]).value is ContractValue.Confidential) {
                                 wallet.openNote(contracts[i], notes[i].takeIf { it.isNotEmpty() }, path).opening
@@ -160,7 +165,7 @@ class SafelyFlameModule : Module() {
                             TransferInput(contracts[i], proofs[i], path, opening)
                         }
                         val outputs = plan.addresses.indices.map { i ->
-                            TransferOutput(plan.addresses[i], uint64(plan.qtys[i]), null, plan.memos[i])
+                            TransferOutput(plan.addresses[i], uint64(plan.qtys[i]), null, memos[i])
                         }
                         val transfer = wallet.buildTransfer(
                             TransferRequest(inputs, outputs, uint64(plan.fee), uint64(plan.gas), 0u)

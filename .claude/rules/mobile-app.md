@@ -80,12 +80,20 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   the mnemonic); `viewKey` returns the account's bech32f view key, and `address` and `openNotes`
   build a view wallet (`Wallet.fromViewKey`) from it. `buildTransfer` builds a spend wallet, opens
   each confidential input's note itself (the blindings never cross the bridge), then proves and signs;
-  binary inputs travel as three parallel arrays and the rest as one `TransferPlan` record (outputs as
-  parallel `addresses`/`qtys`/`memos`, an empty memo for none), because
-  Kotlin Expo functions take at most 8 arguments. `validateReceivingAddress` and `memoMaxBytes` need no
-  wallet and are synchronous (`Function`, not `AsyncFunction`), so the send form validates and
-  clamps without awaiting; the first still answers an `{ ok, … }` outcome, unwrapped in the facade.
-  Each async call builds its `Wallet` and drops it before returning (Kotlin
+  every binary value travels as a function argument of its own (`contracts`/`notes`/`proofs` per
+  input, `memos` per output, an empty memo for none) and the rest as one `TransferPlan` record
+  (network, path, parallel `addresses`/`qtys`, fee, gas; every field required, so a missing key
+  rejects the call instead of falling back to a default path), because Kotlin Expo functions take
+  at most 8 arguments. **Never put a `Uint8Array` inside a record:** on Android a record arrives as
+  a `ReadableNativeMap`, where a typed array is a plain map, and its `ByteArray` conversion fails
+  with `DynamicFromArray cannot be cast to byte[]`. A function argument is converted as a typed
+  array, alone or as an array of them (`List<ByteArray>`); a record or map field is not. iOS
+  converts both, so only Android breaks. The facade test asserts the plan holds no `Uint8Array` at
+  any depth; the bridge itself is mocked there, so only a device build exercises the conversion.
+  `validateReceivingAddress` and `memoMaxBytes` need no wallet and are synchronous (`Function`, not
+  `AsyncFunction`), so the send form validates and clamps without awaiting; the first still answers
+  an `{ ok, … }` outcome, unwrapped in the facade. Each async call builds its `Wallet` and drops it
+  before returning (Kotlin
   also zeroes its seed copy). Never log the seed or the view key — the view key reads every amount
   and memo. The library's `reason` is passed through as is — log it only through
   `filterSensitiveData`.
@@ -301,8 +309,11 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`unsupportedFlameSdk`, where `validateReceivingAddress` answers `false` so BTC address detection
   keeps working) and nothing else — no flag, no filtering, so a synced devnet portfolio
   reaches the desktop UI as is.
-- Open: release builds with R8 have not been tried; JNA and the generated `com.flame.wallet` classes
-  will need keep rules before the module is used outside a dev-client.
+- Under R8 the module relies on two sets of consumer rules, nothing in `extraProguardRules`:
+  `@runflame/wallet-rn`'s keeps JNA and the generated `com.flame.wallet` classes (see
+  `android-minification.md`), and `expo-modules-core`'s keeps every `Record` with its field names,
+  which are the JS keys. A minified staging APK reads wallets and balances; `buildTransfer` on a
+  minified build is still to be confirmed by a send.
 
 ## UI
 
