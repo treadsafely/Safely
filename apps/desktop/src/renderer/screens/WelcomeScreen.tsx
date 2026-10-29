@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { useBootConfig, useLinking, useTranslate } from '@safely/ux';
+import { useBootConfig, useLinking, useTrackOnboardingOpen, useTranslate } from '@safely/ux';
 import {
     BiometryCard,
     ImportWalletModal,
@@ -18,6 +18,8 @@ export const WelcomeScreen: FC = () => {
     const onboarding = useOnboardingFlow();
     const { openURL } = useLinking();
     const legal = useBootConfig().references.legal;
+
+    useTrackOnboardingOpen();
 
     return (
         <>

@@ -1,9 +1,15 @@
 import type { FC } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ellipsisMiddle } from '@safely/core';
 import type { SendFormInitialValues, SendFormResult, SendFormView } from '@safely/ux';
-import { useActivePortfolio, useLastSeen, useSendForm, useTranslate } from '@safely/ux';
+import {
+    useActivePortfolio,
+    useAnalytics,
+    useLastSeen,
+    useSendForm,
+    useTranslate
+} from '@safely/ux';
 
 import { AmountStep } from './AmountStep';
 import { ConfirmStep } from './ConfirmStep';
@@ -24,7 +30,16 @@ function resolveNext(view: SendFormView): (() => void) | undefined {
 
 export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
     const t = useTranslate();
+    const analytics = useAnalytics();
     const portfolio = useActivePortfolio();
+
+    const trackedStart = useRef(false);
+    useEffect(() => {
+        if (trackedStart.current) return;
+        trackedStart.current = true;
+
+        void analytics.trackSendStart();
+    }, [analytics]);
 
     const [result, setResult] = useState<SendFormResult | null>(null);
     const [isSent, setIsSent] = useState(false);
