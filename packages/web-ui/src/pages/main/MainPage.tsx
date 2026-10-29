@@ -22,6 +22,7 @@ import { SettingsSidebar } from './SettingsSidebar';
 import {
     AccountModals,
     AddWalletModals,
+    LedgerSignModal,
     ReceiveModals,
     SafetyContent,
     SendModals,
@@ -187,6 +188,7 @@ export const MainPage: FC<MainPageProps> = props => {
             <AddWalletModals flow={addWallet} />
             <AccountModals flow={account} />
             {!isWatchOnly && <SendModals flow={send} />}
+            <LedgerSignModal />
             <ReceiveModals flow={receive} />
         </AppLayout>
     );
