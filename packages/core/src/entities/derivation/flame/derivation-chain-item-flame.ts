@@ -61,17 +61,32 @@ export class ViewKeyFlameWallet implements FlameWallet {
 
     private readonly amountsCache = new Map<string, FlameOutputAmount>();
 
-    constructor(
-        ownerId: Id,
-        public readonly network: FlameNetwork,
-        addresses: FlameAddresses,
-        private readonly getViewKey: () => Promise<string>,
-        private readonly seedProducer: ISeedProducer
-    ) {
+    public readonly network: FlameNetwork;
+
+    private readonly getViewKey: () => Promise<string>;
+
+    private readonly seedProducer: ISeedProducer;
+
+    constructor({
+        ownerId,
+        network,
+        addresses,
+        getViewKey,
+        seedProducer
+    }: {
+        ownerId: Id;
+        network: FlameNetwork;
+        addresses: FlameAddresses;
+        getViewKey: () => Promise<string>;
+        seedProducer: ISeedProducer;
+    }) {
         this.id = new FlameWalletId(ownerId);
+        this.network = network;
         this.receivingAddress = addresses.receivingAddress;
         this.trackingAddress = addresses.trackingAddress;
         this.predicate = addresses.predicate;
+        this.getViewKey = getViewKey;
+        this.seedProducer = seedProducer;
     }
 
     public async readAmounts(outputs: FlameOutputBytes[]): Promise<Map<string, FlameOutputAmount>> {
@@ -222,13 +237,13 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
         this.network = network;
         this.encryptedViewKey = encryptedViewKey;
         this.wallets = [
-            new ViewKeyFlameWallet(
+            new ViewKeyFlameWallet({
                 ownerId,
                 network,
                 addresses,
-                () => viewKeyEncryptor.decrypt(encryptedViewKey),
+                getViewKey: () => viewKeyEncryptor.decrypt(encryptedViewKey),
                 seedProducer
-            )
+            })
         ];
     }
 

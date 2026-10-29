@@ -186,7 +186,9 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   deleting the account wipes it. Every device of the account derives the same key, so a
   portfolio created on one opens on another with no prompt. `readAmounts`
   decrypts the key only when there are confidential outputs and does not keep it. The preview,
-  which may run with no account yet, seals it with a throwaway in-memory key instead. The chain caches every read amount per output id, except an output read without
+  which may run with no account yet, never encrypts it: `createPreviewFlameWallet` builds a
+  `ViewKeyFlameWallet` straight from the derived plaintext key, held in memory for as long as the
+  preview query lives (`gcTime: 0`). The chain caches every read amount per output id, except an output read without
   its note (`missing`), whose contract failed to decode, or whose opening hit a native error (`error`):
   native code reports any per-item exception the same way, so a transient one would stick.
 - **Balance is one set, pending or not.** `useFlameWalletOutputs` calls the node's

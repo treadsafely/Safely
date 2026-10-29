@@ -79,13 +79,13 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
                 seedProducer,
                 FLAME_DEVNET_NETWORK
             );
-            return new ViewKeyFlameWallet(
-                PortfolioIdFlameDevnet.create(mnemonicAccessor),
-                FLAME_DEVNET_NETWORK,
+            return new ViewKeyFlameWallet({
+                ownerId: PortfolioIdFlameDevnet.create(mnemonicAccessor),
+                network: FLAME_DEVNET_NETWORK,
                 addresses,
-                () => Promise.resolve(viewKey),
+                getViewKey: () => Promise.resolve(viewKey),
                 seedProducer
-            );
+            });
         } catch (error) {
             if (error instanceof InvalidMnemonicError) {
                 throw error;
