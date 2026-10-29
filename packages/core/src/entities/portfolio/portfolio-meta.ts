@@ -5,6 +5,8 @@ export interface PortfolioMeta {
     icon: PortfolioMetaIcon;
 }
 
+export const PORTFOLIO_NAME_MAX_LENGTH = 24;
+
 export type NoIconPortfolioMeta = OptionalProperty<PortfolioMeta, 'icon'>;
 
 export type PortfolioMetaIcon = PortfolioMetaIconEmoji | PortfolioMetaIconColor;

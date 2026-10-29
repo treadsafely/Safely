@@ -87,9 +87,10 @@ preload still parses it with the zod schema.
 
 **The environment is this app's job, not the shared package's.** `src/renderer/global-polyfills.ts`
 installs the globals the domain packages read at load time — `Buffer`, `IsomorphicEventSource`
-(XHR-based: the SSE stream needs an `Authorization` header) and `safelyCrypto.pbkdf2Sha512`
+(XHR-based: the SSE stream needs an `Authorization` header), `safelyCrypto.pbkdf2Sha512`
 (`pbkdf2Async` from `@noble/hashes`, which yields to the scheduler instead of blocking the renderer)
-— and it is the web counterpart of `apps/mobile/global-polyfills.ts`. `import './global-polyfills'`
+and `flameSdk`, the rejecting `unsupportedFlameSdk` from `platform/unsupported.ts` (type-only
+imports, so it drags no module graph in; a mock until desktop Flame support lands) — and it is the web counterpart of `apps/mobile/global-polyfills.ts`. `import './global-polyfills'`
 **must stay the first import of `src/renderer/index.tsx`**: ES imports are evaluated before the
 importing module's body, and the Ledger SDK reads `Buffer` while being evaluated. For the same
 reason nothing inside `global-polyfills.ts` may import `@safely/ux` or `@safely/web-ui`, whose

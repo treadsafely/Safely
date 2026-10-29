@@ -2,12 +2,14 @@ import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import type { PortfolioMeta } from '@safely/core';
-import { PortfolioNetworkType, PortfolioType } from '@safely/core';
+import type { PortfolioMeta, PortfolioNetworkType } from '@safely/core';
+import { PortfolioType } from '@safely/core';
+import { resolvePortfolioNetworkBadge } from '@safely/ux';
 
 import type { TextProps } from '@mobile/shared/ui';
 import { Badge, Text } from '@mobile/shared/ui';
 
+import { NetworkBadge } from '../NetworkBadge';
 import { styles } from './PortfolioName.styles';
 
 type WatchOnlyBadgeType = ComponentProps<typeof Badge>['type'];
@@ -45,7 +47,7 @@ export const PortfolioName = (props: PortfolioNameProps) => {
 
     const badgeLabelKey = type ? BADGE_LABEL_BY_TYPE[type] : undefined;
     const badgeLabel = badgeLabelKey ? t(badgeLabelKey) : null;
-    const isTestnet = networkType === PortfolioNetworkType.TESTNET;
+    const networkBadge = resolvePortfolioNetworkBadge({ type, networkType });
 
     const icon =
         meta.icon.type === 'color' ? (
@@ -72,11 +74,7 @@ export const PortfolioName = (props: PortfolioNameProps) => {
                     {badgeLabel}
                 </Badge>
             )}
-            {isTestnet && (
-                <Badge type="neutral" isUppercase>
-                    {t('portfolio.testnet')}
-                </Badge>
-            )}
+            {networkBadge && <NetworkBadge badge={networkBadge} />}
         </View>
     );
 };

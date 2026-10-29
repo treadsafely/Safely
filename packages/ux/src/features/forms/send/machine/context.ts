@@ -23,7 +23,8 @@ export const DEFAULT_VALUES: SendFormValues = {
     amount: '',
     amountInputType: 'crypto',
     isMax: false,
-    assetId: ''
+    assetId: '',
+    memo: ''
 };
 
 export const DEFAULT_PARSED = {
@@ -36,7 +37,8 @@ export const DEFAULT_PARSED = {
 export const DEFAULT_ERRORS: SendFormErrors = {
     recipient: undefined,
     amount: undefined,
-    asset: undefined
+    asset: undefined,
+    memo: undefined
 };
 
 export function withResetDependentValues(values: SendFormValues): SendFormValues {
@@ -44,7 +46,8 @@ export function withResetDependentValues(values: SendFormValues): SendFormValues
         ...values,
         amount: '',
         assetId: '',
-        isMax: false
+        isMax: false,
+        memo: ''
     };
 }
 
@@ -61,7 +64,8 @@ export function withResetDependentErrors(errors: SendFormErrors): SendFormErrors
     return {
         ...errors,
         amount: undefined,
-        asset: undefined
+        asset: undefined,
+        memo: undefined
     };
 }
 
@@ -149,7 +153,7 @@ export function buildInitialContext(input: SendFormMachineInput): SendFormMachin
     );
 
     const result = validateRecipientInput(initialValues.recipient, {
-        activeWalletAddress: input.activeWallet.address,
+        ownAddresses: input.ownAddresses,
         networkType: input.networkType,
         portfolioSuggestions: input.portfolioSuggestions,
         contactSuggestions: input.contactSuggestions,
@@ -186,7 +190,8 @@ export function buildInitialContext(input: SendFormMachineInput): SendFormMachin
         errors: {
             recipient: result.error,
             amount: undefined,
-            asset: undefined
+            asset: undefined,
+            memo: undefined
         },
         suggestion:
             validatorSuggestion ?? (draftSuggestionValid ? initialSuggestion : EMPTY_SUGGESTION)

@@ -17,7 +17,8 @@
         "watchOnly": "Watch only",
         "testnet": "Testnet",
         "ledger": "Ledger",
-        "ledgerWallet": "Ledger Wallet {{number}}"
+        "ledgerWallet": "Ledger Wallet {{number}}",
+        "flameDevnet": "Demo"
     },
     "ledgerSign": {
         "retry": "Retry",
@@ -98,6 +99,11 @@
         "maxHint": "All available balance will be sent. Fee included.",
         "remaining": "Remaining:",
         "pending": "Pending:",
+        "memo": {
+            "label": "Memo",
+            "placeholder": "Optional",
+            "description": "Encrypted. Only you and the recipient can read it."
+        },
         "addressBook": {
             "label": "Save to your address book",
             "placeholder": "Name",
@@ -210,7 +216,7 @@
     },
     "qrScan": {
         "title": "Scan QR code",
-        "subtitle": "Scan BTC address to continue.",
+        "subtitle": "Scan wallet address to continue.",
         "addDevice": {
             "title": "Scan QR code to add",
             "subtitle": "Scan the QR code shown in \"Link with QR\" on your other device."
@@ -473,6 +479,7 @@
         "continueWithLedger": "Continue with Ledger",
         "from": "From",
         "to": "To",
+        "memo": "Memo",
         "amount": "Amount",
         "allAvailableBalance": "All available balance",
         "networkFee": {
@@ -501,6 +508,9 @@
             "default": "Check details and try again",
             "btc": {
                 "dust": "Transaction value is too small."
+            },
+            "flame": {
+                "inputsSpent": "Your balance has changed. Go back and try again."
             }
         },
         "estimateError": {
@@ -509,6 +519,9 @@
             "btc": {
                 "outputsAreSpendingMoreThanInputs": "Insufficient balance for transfer amount and fee",
                 "insufficientFundsForFee": "Not enough funds to send the specified amount and pay the network fee. Reduce the amount."
+            },
+            "flame": {
+                "insufficientBalance": "Insufficient balance for transfer amount and fee"
             }
         }
     },
@@ -522,7 +535,8 @@
             "unableToValidateToken": "Unable to validate token",
             "invalidAmount": "Invalid amount",
             "insufficientBalance": "Insufficient balance",
-            "unrecognizedAmount": "Couldn't recognize the amount"
+            "unrecognizedAmount": "Couldn't recognize the amount",
+            "memoTooLong": "Memo is too long"
         }
     },
     "signIn": {
@@ -883,6 +897,10 @@
             "received": "Received",
             "recipient": "Recipient",
             "sender": "Sender",
+            "unknownSender": "Unknown sender",
+            "unknownRecipient": "Unknown recipient",
+            "unknown": "Unknown",
+            "memo": "Memo",
             "fee": "Network fee",
             "hash": "Transaction",
             "openInExplorer": "Open in explorer",
@@ -901,6 +919,11 @@
                 "confirmed-long-ago": {
                     "title": "Confirmed at {{date}}",
                     "description": "More than 6 confirmations"
+                },
+                "confirmed": {
+                    "title": "Confirmed at {{date}}",
+                    "titleUndated": "Confirmed",
+                    "block": "Block {{height}}"
                 }
             }
         },
@@ -955,7 +978,8 @@
         "errors": {
             "invalidAmount": "Invalid payment amount in the code",
             "unrecognized": "Unrecognized input",
-            "unsupportedScheme": "Unsupported input type"
+            "unsupportedScheme": "Unsupported input type",
+            "unsupportedMemo": "Codes with a memo are not supported"
         }
     },
     "addressBook": {
@@ -1085,5 +1109,18 @@
         "wallets": {
             "title": "Selected wallets"
         }
+    },
+    "importFlameDevnetWallet": {
+        "title": "Import Demo wallet",
+        "subtitle": "This wallet will be imported to your “{{accountName}}” account.",
+        "subtitleNewAccount": "A new account will be created with this wallet. Next, you will set a passcode.",
+        "walletLabel": "Wallet",
+        "balanceLabel": "Balance",
+        "addressLabel": "Address",
+        "devnetOnly": "This wallet works only on Flame Demo, a test network. Its coins have no real value — never send real funds to it.",
+        "trustedSite": "I came here from the <site>runflame.org</site> website",
+        "importButton": "Import",
+        "imported": "Demo wallet imported",
+        "alreadyImported": "This wallet is already imported"
     }
 }

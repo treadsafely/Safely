@@ -4,7 +4,7 @@ import type { MKDerivationDomain } from '../crypto/service/master-key-service';
 import type { Device } from '../device-manager/device-repository';
 import type { ITreeStorage } from '../I-storage';
 import type { OnboardingConnector } from '../onboarding/connector';
-import type { ISecretEncryptor } from '../secret-encryptor';
+import type { IVaultSecretEncryptor } from '../secret-encryptor';
 import type { ISyncProvider } from '../sync-provider/I-sync-provider';
 
 export interface ISyncAccount<Latest extends StorageVersion> {
@@ -17,10 +17,11 @@ export interface ISyncAccount<Latest extends StorageVersion> {
      */
     readonly syncProvider: ISyncProvider<NewOf<Latest>>;
     /**
-     * The secret encryptor associated with this account, used to encrypt and decrypt secrets
-     * before putting them into storage.
+     * The VaultKey-backed encryptor of this account, used to encrypt and decrypt secrets that can
+     * move funds (the mnemonic) before putting them into storage; decrypting may require the
+     * presence check. Secrets that must read without it use the account data key instead.
      */
-    readonly secretEncryptor: ISecretEncryptor;
+    readonly secureSecretEncryptor: IVaultSecretEncryptor;
 
     /**
      * Connects a new device to the sync account using the provided onboarding data.

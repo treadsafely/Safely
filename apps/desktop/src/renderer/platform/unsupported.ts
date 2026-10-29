@@ -1,4 +1,4 @@
-import type { IPushNotifications } from '@safely/core';
+import type { IPushNotifications, SafelyFlame } from '@safely/core';
 
 /* Capabilities this app does not have yet. They fail loudly rather than being absent, and they live
    here rather than in `@safely/web-ui` because what is missing is a property of the target: the
@@ -12,4 +12,22 @@ export const unsupportedPushNotifications: IPushNotifications = {
         Promise.reject(new Error('Push notifications are not available on the desktop app yet')),
     openSystemSettings: () => undefined,
     setWalletNames: () => Promise.resolve()
+};
+
+/* TODO(flame): desktop Flame support lands before the release; until then every call rejects, and no
+   address validates as Flame, so address detection keeps working for BTC */
+const flameUnsupportedError = () => new Error('Flame is not available on the desktop app');
+const flameUnsupported = (): Promise<never> => Promise.reject(flameUnsupportedError());
+const flameUnsupportedSync = (): never => {
+    throw flameUnsupportedError();
+};
+
+export const unsupportedFlameSdk: SafelyFlame = {
+    viewKey: flameUnsupported,
+    address: flameUnsupported,
+    decodeContracts: flameUnsupported,
+    openNotes: flameUnsupported,
+    buildTransfer: flameUnsupported,
+    validateReceivingAddress: () => false,
+    memoMaxBytes: flameUnsupportedSync
 };

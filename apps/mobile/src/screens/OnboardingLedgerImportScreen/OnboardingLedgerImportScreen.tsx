@@ -3,7 +3,7 @@ import { StackActions } from '@react-navigation/native';
 import { useCallback } from 'react';
 
 import type { Portfolio } from '@safely/core';
-import { useLedgerImport, useLedgerPortfolioSource } from '@safely/ux';
+import { useLedgerImport, useLedgerFirstPortfolio } from '@safely/ux';
 
 import { useExitToConnectLedger } from '@mobile/features/ledger';
 import { useOnboardingFlow } from '@mobile/features/onboarding';
@@ -15,7 +15,7 @@ export const OnboardingLedgerImportScreen = () => {
     const exitToConnect = useExitToConnectLedger();
     const navigation = useNavigation();
     const { onLedgerReady } = useOnboardingFlow();
-    const toLedgerPortfolioSource = useLedgerPortfolioSource();
+    const toLedgerFirstPortfolio = useLedgerFirstPortfolio();
 
     const {
         accounts,
@@ -34,8 +34,8 @@ export const OnboardingLedgerImportScreen = () => {
             return;
         }
 
-        onLedgerReady(toLedgerPortfolioSource(selection));
-    }, [selection, onLedgerReady, toLedgerPortfolioSource]);
+        onLedgerReady(toLedgerFirstPortfolio(selection));
+    }, [selection, onLedgerReady, toLedgerFirstPortfolio]);
 
     const handleRetry = useCallback(async () => {
         await retry();

@@ -2,9 +2,11 @@ export type { Security, IUnlockableSecuredEncryptedStorage } from './types';
 export { SecurityCheckCancelledError } from './errors';
 export {
     UnlockableSecuredEncryptedStorage,
-    SecretEncryptor,
-    UnlockableSecretEncryptor
+    BaseSecureSecretEncryptor,
+    UnlockableSecureSecretEncryptor
 } from './storage';
+export { AccountDataKey } from './account-data-key';
+export type { AccountDataKeyStorages } from './account-data-key';
 export { useSecurityCheck } from './use-security-check';
 export {
     sLockoutState,

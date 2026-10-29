@@ -103,6 +103,16 @@ for imports within a single module only.
   effect only subscribes to changes and re-reads the snapshot after subscribing.
 - Multi-step flows and forms (send, exchange, onboarding) are xstate machines; the machine lives next
   to its scenario (`packages/ux/src/features/forms/**`).
+- A price has three states, and they are not interchangeable: a rate query still loading or failed
+  is `undefined`, an asset with no market price (every testnet asset, FLM) is `null`, and a
+  `Rate` with value `0` is a real price of zero. `fetchMarketRate` (`entities/asset/rateQuery.ts`)
+  decides per chain which assets have one. `null` hides the fiat amount everywhere and overrides
+  the user's crypto/fiat display settings without changing them (`resolveAmountUnit`, the
+  `useDisplayed*` hooks and `orderAmounts` in `features/amount-display`, `usePortfolioBalanceUnit`
+  for the main balance — both platforms pick the unit through these, never inline); entering an amount in fiat needs a non-zero
+  price (`hasFiatPrice`), so a zero price blocks only that. A total balance with no priced asset is
+  `null` and is not shown at all. Market screens — the chart and the settings previews — read
+  `useMainnetRate`, not the active portfolio's rate.
 - Query-cache persistence goes through `query-core/persistence.ts` and the managers in
   `apps/mobile/src/app/tanstack-query-managers.ts` — don't hand-roll a cache.
 
@@ -151,10 +161,10 @@ and what moves into it is the part with no platform and no flow in it:
   *transition* into a full value rather than on the state, which is what lets mobile hold the entered
   code on screen for its 300 ms success animation without a second submit; clearing the value stays
   the caller's job.
-- **a screen's view model, when both platforms decide it identically** — `useHistoryGroups` plus the
-  pure `buildHistoryGroupViews` (`features/history`), the same shape as
+- **a screen's view model, when both platforms decide it identically** — `useBtcHistoryGroups` plus
+  the pure `buildBtcHistoryGroupViews` (`features/history`), the same shape as
   `features/home-screen/useHomeScreenList`: the hook composes the entity queries and the formatters,
-  the builder turns `ActivityItemsDatedGroup[]` into rows whose title, sign, tone, counterparty and
+  the builder turns `BtcHistoryItemsDatedGroup[]` into rows whose title, sign, tone, counterparty and
   timestamp are already decided. It renders nothing and navigates nowhere — every row carries its
   `activity`, and each app builds `onPress`/`onSelect` from that. Both apps then declare
   `ActivityItemProps = Omit<ActivityRowView, 'key' | 'activity'> & { onPress | onSelect }`, so the
@@ -162,10 +172,17 @@ and what moves into it is the part with no platform and no flow in it:
   This module takes a `TranslateFn` and returns display strings, the way `getDateGroupTitle` does,
   because a date heading needs a formatted date; the key-plus-count rule above still holds for copy
   a platform assembles itself. `features/transaction-details` is the second instance of the shape —
-  `useTransactionDetails` over the pure `buildTransactionDetailsView`, plus
-  `buildBtcTransactionStatusView` for the confirmation copy that the order screen reuses. Mobile
+  `useBtcTransactionDetails` over the pure `buildBtcTransactionDetailsView`, plus
+  `buildBtcTransactionStatusView` for the confirmation copy that the order screen reuses; the Flame
+  pair (`useFlameTransactionDetails`, `buildFlameTransactionDetailsView`) fills the same
+  `TransactionDetailsView`, so one component renders both. Every field a chain may lack is
+  in that base type as a required nullable (`memo`, `explorerUrl`, `hasFiatRateNote`), never an
+  optional added at the call site, so a renamed field breaks both builders and both renderers. What
+  a history row and the details screen must decide alike — the title key, the counterparty, the
+  Flame amount — sits in `features/activity-display`, which both slices import instead of each
+  other's barrel. Mobile
   renders it as a screen and the web as a side panel, and neither decides a title, a sign, an amount
-  order or an explorer URL of its own. `useHistoryPolling` sits next to them: the 3 s refetch, the
+  order or an explorer URL of its own. `useBtcHistoryPolling` sits next to them: the 3 s refetch, the
   first-key comparison and the asset invalidation are one policy, and each app only supplies
   `onNewActivity` — mobile raises its reanimated bubble, the web its `NewTransactionsBubble`.
 - **the mechanism of a typed key/value store** — `createStructuredStorage` / `useStructuredStorage`

@@ -15,7 +15,7 @@ import {
     useCreateExistingAccountConnector,
     useErrorToast,
     useHasAccount,
-    useLedgerPortfolioSource,
+    useLedgerFirstPortfolio,
     useLoader,
     useToast,
     useTranslate
@@ -56,7 +56,7 @@ export function useOnboardingFlow() {
 
     const hasAccount = useHasAccount();
     const signIn = useCreateExistingAccountConnector();
-    const toLedgerPortfolioSource = useLedgerPortfolioSource();
+    const toLedgerFirstPortfolio = useLedgerFirstPortfolio();
     const signInStorage = useRef<IUnlockableSecuredEncryptedStorage | null>(null);
 
     const [step, setStep] = useState<OnboardingStep | null>(hasAccount ? 'passcode' : null);
@@ -212,7 +212,7 @@ export function useOnboardingFlow() {
                 if (pending.kind === 'ledger') {
                     await createAccount({
                         secureEncryptedStorage,
-                        firstPortfolio: toLedgerPortfolioSource(pending.selection)
+                        ...toLedgerFirstPortfolio(pending.selection)
                     });
                     return;
                 }
@@ -223,7 +223,7 @@ export function useOnboardingFlow() {
                 });
             });
         },
-        [withLoader, getSecureEncrypted, createAccount, toLedgerPortfolioSource]
+        [withLoader, getSecureEncrypted, createAccount, toLedgerFirstPortfolio]
     );
 
     const createAndOpenMain = useCallback(async () => {

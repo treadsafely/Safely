@@ -15,7 +15,7 @@ import {
     PortfolioWatchOnlyBtc,
     WatchOnlySource
 } from '@safely/core';
-import { OnboardingAbortedError } from '@safely/sync';
+import { MKDerivationDomain, OnboardingAbortedError } from '@safely/sync';
 
 import {
     useChangeAccountMeta,
@@ -187,6 +187,16 @@ describe('useCreateAccount (add)', () => {
 
         const analyticsSlot = recorder.slots.get('analyticsId');
         expect(analyticsSlot?.set).toHaveBeenCalled();
+
+        expect(newAccount.deriveKeyFromMasterKey).toHaveBeenCalledWith(
+            MKDerivationDomain.ACCOUNT_DATA_KEY,
+            expect.anything()
+        );
+        await expect(
+            appContext.storage.sync.encrypted
+                .child(['new-account-id', 'masterKeyDerived'])
+                .getItem(MKDerivationDomain.ACCOUNT_DATA_KEY)
+        ).resolves.not.toBeNull();
     });
 
     it('with firstPortfolio generated seeds portfolios + nextDerivingPortfolioInfo', async () => {
@@ -265,6 +275,55 @@ describe('useCreateAccount (add)', () => {
         expect(portfolios[0].type).toBe(PortfolioType.BIP39);
         expect(portfolios[0].id.source).toBe(Bip39Source.IMPORTED);
         expect(portfolios[0].id.networkType).toBe(PortfolioNetworkType.MAINNET);
+
+        const nextInfoSet = recorder.set.mock.calls.find(c => c[0] === 'nextDerivingPortfolioInfo');
+        expect(nextInfoSet?.[1]).toEqual({ index: 0, emoji: expect.any(String) });
+    });
+
+    it('with firstPortfolio flameDevnet seeds a devnet portfolio at deriving index 0', async () => {
+        const newAccount = createMockSyncAccount({ accountId: 'devnet-account' });
+        const factory = createFactoryStub({
+            createSyncAccount: vi.fn(async () => newAccount)
+        });
+        setupAccountState({ accounts: [], factory });
+        setupSyncedDevice();
+        vi.spyOn(globalThis.flameSdk, 'viewKey').mockResolvedValue('view-key');
+        vi.spyOn(globalThis.flameSdk, 'address').mockResolvedValue({
+            receivingAddress: 't1trackingi1encryption',
+            trackingAddress: 't1tracking',
+            predicate: new Uint8Array([1, 2, 3])
+        });
+
+        const mnemonic =
+            'world ceiling fine urge fringe gap item muffin another eyebrow search vault'.split(
+                ' '
+            );
+
+        const appContext = createTestAppContext();
+        const { result } = renderHookWithProviders(() => useCreateAccount(), {
+            appContext
+        });
+
+        await act(async () => {
+            await result.current.mutateAsync({
+                secureEncryptedStorage: appContext.storage.sync.encrypted as unknown as Parameters<
+                    typeof result.current.mutateAsync
+                >[0]['secureEncryptedStorage'],
+                firstPortfolio: {
+                    kind: 'flameDevnet',
+                    mnemonicAccessor: new MnemonicResource(mnemonic)
+                },
+                firstPortfolioName: 'Flame demo'
+            });
+        });
+
+        const recorder = newAccount.transactions[0];
+
+        const portfoliosSet = recorder.set.mock.calls.find(c => c[0] === 'portfolios');
+        const portfolios = portfoliosSet?.[1] as Array<{ type: string; meta: { name: string } }>;
+        expect(portfolios).toHaveLength(1);
+        expect(portfolios[0].type).toBe(PortfolioType.FLAME_DEVNET);
+        expect(portfolios[0].meta.name).toBe('Flame demo');
 
         const nextInfoSet = recorder.set.mock.calls.find(c => c[0] === 'nextDerivingPortfolioInfo');
         expect(nextInfoSet?.[1]).toEqual({ index: 0, emoji: expect.any(String) });

@@ -2,10 +2,10 @@ import type {
     IEnumerableStorage,
     SSecretDecrypted,
     SSecretEncrypted,
-    ISecretEncryptor
+    ISecureSecretEncryptor
 } from '@safely/core';
 import { TreeStorage } from '@safely/core';
-import type { ITreeStorage, ISecretEncryptor as ISyncSecretEncryptor } from '@safely/sync';
+import type { ITreeStorage, IVaultSecretEncryptor } from '@safely/sync';
 
 import type { IUnlockableSecuredEncryptedStorage, Security } from './types';
 
@@ -78,9 +78,11 @@ export class UnlockableSecuredEncryptedStorage
     }
 }
 
-export class SecretEncryptor implements ISecretEncryptor {
+export class BaseSecureSecretEncryptor implements ISecureSecretEncryptor {
+    public readonly kind = 'secure';
+
     constructor(
-        private readonly syncEncryptor: ISyncSecretEncryptor,
+        private readonly syncEncryptor: IVaultSecretEncryptor,
         private readonly secureStorage: ITreeStorage
     ) {}
 
@@ -93,7 +95,9 @@ export class SecretEncryptor implements ISecretEncryptor {
     }
 }
 
-export class UnlockableSecretEncryptor implements ISecretEncryptor {
+export class UnlockableSecureSecretEncryptor implements ISecureSecretEncryptor {
+    public readonly kind = 'secure';
+
     readonly #encryptStorage: IUnlockableSecuredEncryptedStorage;
 
     readonly #decryptStorage: IUnlockableSecuredEncryptedStorage;
@@ -107,7 +111,7 @@ export class UnlockableSecretEncryptor implements ISecretEncryptor {
     }
 
     constructor(
-        private readonly syncEncryptor: ISyncSecretEncryptor,
+        private readonly syncEncryptor: IVaultSecretEncryptor,
         getSecureStorage: () => IUnlockableSecuredEncryptedStorage
     ) {
         this.#decryptStorage = getSecureStorage();

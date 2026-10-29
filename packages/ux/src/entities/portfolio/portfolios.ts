@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type {
     BtcWalletReadOnly,
+    FlameWallet,
     SignableBtcWallet,
     IDerivation,
     ILedgerDerivation,
@@ -10,10 +11,11 @@ import type {
     Portfolio,
     PortfolioMeta,
     PortfolioWatchOnly,
-    ISecretEncryptor,
-    ITreeStorage,
-    IMnemonicVault
+    ISecureSecretEncryptor,
+    IMnemonicVault,
+    ITreeStorage
 } from '@safely/core';
+import { PortfolioFlameDevnet, PortfolioIdFlameDevnet } from '@safely/core';
 import { PortfolioWatchOnlyBtc } from '@safely/core';
 import { PortfolioLedger } from '@safely/core';
 import { PortfolioIdBip39Imported } from '@safely/core';
@@ -40,12 +42,13 @@ import {
     useSecurityCheck,
     useAppContext,
     useLogger,
-    SecretEncryptor
+    BaseSecureSecretEncryptor,
+    AccountDataKey
 } from '../../shared';
 import { useSuspenseQuery } from '../../shared';
 import type { SActivePortfolioSchema, UseAccountSyncStorageUpdateOptions } from '../account';
 import { resolveActivePortfolio, useAccountSyncStorageUpdate } from '../account';
-import { useActiveAccountSyncStorageSlotUpdate } from '../account';
+import { useActiveAccount, useActiveAccountSyncStorageSlotUpdate } from '../account';
 import { useActiveAccountStoreSlot } from '../account';
 import {
     useActiveAccountLocalStorage,
@@ -121,8 +124,8 @@ export function useGeneratePortfolio() {
 
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 mnemonicAccessor,
-                encryptor: new SecretEncryptor(
-                    account.secretEncryptor,
+                encryptor: new BaseSecureSecretEncryptor(
+                    account.secureSecretEncryptor,
                     params.secureEncryptedStorage
                 ),
                 id,
@@ -174,13 +177,13 @@ export function useImportPortfolio() {
         Error,
         {
             mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
-            secretEncryptor: ISecretEncryptor;
+            secureSecretEncryptor: ISecureSecretEncryptor;
             meta: PortfolioMeta;
             networkType: PortfolioNetworkType;
         },
         unknown
     >({
-        async mutationFn({ mnemonicAccessor, secretEncryptor, meta, networkType }) {
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta, networkType }) {
             portfolioLogger.info('importing portfolio');
             await delay();
 
@@ -188,7 +191,7 @@ export function useImportPortfolio() {
 
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 id,
-                encryptor: secretEncryptor,
+                encryptor: secureSecretEncryptor,
                 mnemonicAccessor,
                 meta,
                 options: {
@@ -260,15 +263,57 @@ export function useReorderPortfolios() {
     });
 }
 
+export function useImportFlameDevnetPortfolio() {
+    const { mutateAsync: addPortfolio } = useAddPortfolio({ showErrorToast: false });
+    const { mutateAsync: setActivePortfolio } = useSetActivePortfolio();
+    const portfolios = usePortfolios();
+    const account = useActiveAccount();
+    const { storage } = useAppContext();
+    const logger = useLogger('portfolio');
+
+    return useMutation<
+        void,
+        Error,
+        {
+            mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
+            secureSecretEncryptor: ISecureSecretEncryptor;
+            meta: PortfolioMeta;
+        }
+    >({
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta }) {
+            logger.info('importing devnet portfolio');
+            const id = PortfolioIdFlameDevnet.create(mnemonicAccessor);
+
+            if (!portfolios.some(p => p.id.isEq(id))) {
+                await addPortfolio(
+                    await PortfolioFlameDevnet.createSerializedPortfolio({
+                        secureSecretEncryptor,
+                        silentSecretEncryptor: new AccountDataKey(
+                            account,
+                            storage.sync
+                        ).encryptor(),
+                        mnemonicAccessor,
+                        meta,
+                        logger
+                    })
+                );
+            }
+
+            await setActivePortfolio({ id });
+            logger.info('devnet portfolio imported', { id });
+        }
+    });
+}
+
 export function useReorderDerivations() {
     const update = useActiveAccountSyncStorageSlotUpdate('portfolios');
 
     return useMutation<void, Error, { portfolio: Portfolio; orderedDerivationIds: string[] }>({
         async mutationFn({ portfolio, orderedDerivationIds }) {
-            if (portfolio.type === PortfolioType.WATCH_ONLY) return;
+            if (!isDerivablePortfolio(portfolio)) return;
 
             const derivations = portfolio.getDerivations();
-            const byId = new Map(derivations.map(d => [d.id.toString(), d]));
+            const byId = new Map<string, IDerivation>(derivations.map(d => [d.id.toString(), d]));
             const ordered = orderedDerivationIds
                 .map(id => byId.get(id))
                 .filter((d): d is IDerivation => d !== undefined);
@@ -326,7 +371,7 @@ export function useHideDerivation() {
 
     return useMutation<void, Error, { portfolio: Portfolio; derivationIndex: number }>({
         async mutationFn({ portfolio, derivationIndex }) {
-            if (portfolio.type === PortfolioType.WATCH_ONLY) return;
+            if (!isDerivablePortfolio(portfolio)) return;
 
             await check();
 
@@ -372,13 +417,21 @@ type ActivePortfolioEntitiesWatchOnly = {
     portfolio: PortfolioWatchOnly;
 };
 
+type ActivePortfolioEntitiesFlameDevnet = {
+    type: 'flame-devnet';
+    portfolio: PortfolioFlameDevnet;
+};
+
 type ActivePortfolioEntities =
-    ActivePortfolioEntitiesBip39 | ActivePortfolioEntitiesLedger | ActivePortfolioEntitiesWatchOnly;
+    | ActivePortfolioEntitiesBip39
+    | ActivePortfolioEntitiesLedger
+    | ActivePortfolioEntitiesWatchOnly
+    | ActivePortfolioEntitiesFlameDevnet;
 
 export function isDerivableEntities(
     entities: ActivePortfolioEntities
 ): entities is ActivePortfolioEntitiesBip39 | ActivePortfolioEntitiesLedger {
-    return entities.type !== 'watch-only';
+    return entities.type === 'bip39' || entities.type === 'ledger';
 }
 
 export function useActivePortfolioEntitiesIdsQuery<TData = SActivePortfolioSchema>(
@@ -427,6 +480,10 @@ export function useActivePortfolioEntitiesQuery() {
 
                 if (portfolio.type === PortfolioType.WATCH_ONLY) {
                     return { type: 'watch-only' as const, portfolio };
+                }
+
+                if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+                    return { type: 'flame-devnet' as const, portfolio };
                 }
 
                 const derivationIndex = sActivePortfolioSchema?.derivationIndex;
@@ -752,14 +809,64 @@ export function useActivePortfolio() {
     return useActivePortfolioEntities().portfolio;
 }
 
-export function useActiveBtcWallet(): BtcWalletReadOnly {
-    const entities = useActivePortfolioEntities();
+export type PortfolioWallets = {
+    btc: BtcWalletReadOnly | null;
+    flame: FlameWallet | null;
+};
 
-    if (entities.type === 'watch-only') {
-        return entities.portfolio.wallet;
+function walletsOfEntities(entities: ActivePortfolioEntities): PortfolioWallets {
+    switch (entities.type) {
+        case 'watch-only':
+            return { btc: entities.portfolio.wallet, flame: null };
+        case 'flame-devnet':
+            return { btc: null, flame: resolveFlameWallet(entities.portfolio) };
+        default:
+            return { btc: entities.btcWallet, flame: null };
+    }
+}
+
+export function resolveFlameWallet(portfolio: Portfolio): FlameWallet | null {
+    return portfolio.type === PortfolioType.FLAME_DEVNET ? portfolio.flame.wallets[0] : null;
+}
+
+export function resolvePortfolioWallets(portfolio: Portfolio): PortfolioWallets {
+    if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+        return { btc: null, flame: resolveFlameWallet(portfolio) };
     }
 
-    return entities.btcWallet;
+    return { btc: resolveBtcWallet(portfolio), flame: null };
+}
+
+export function useActivePortfolioWallets(): PortfolioWallets {
+    const entities = useActivePortfolioEntities();
+
+    return useMemo(() => walletsOfEntities(entities), [entities]);
+}
+
+export function useActivePortfolioWalletsOrNull(): PortfolioWallets | null {
+    const entities = useActivePortfolioEntitiesQuery().data;
+
+    return useMemo(() => (entities ? walletsOfEntities(entities) : null), [entities]);
+}
+
+export function useActiveBtcWallet(): BtcWalletReadOnly {
+    const { btc } = useActivePortfolioWallets();
+
+    if (!btc) {
+        throw new Error('The active portfolio has no BTC wallet');
+    }
+
+    return btc;
+}
+
+export function useActiveFlameWallet(): FlameWallet {
+    const { flame } = useActivePortfolioWallets();
+
+    if (!flame) {
+        throw new Error('The active portfolio has no Flame wallet');
+    }
+
+    return flame;
 }
 
 export function useActiveSignableBtcWallet(): SignableBtcWallet {
@@ -788,6 +895,14 @@ export function findPortfolioMetaByAddress(
             continue;
         }
 
+        if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+            if (resolveFlameWallet(portfolio)?.trackingAddress === address) {
+                return portfolio.meta;
+            }
+
+            continue;
+        }
+
         if (resolveBtcWallet(portfolio).address === address) {
             return portfolio.meta;
         }
@@ -801,6 +916,10 @@ export function resolveBtcWallet(portfolio: Portfolio): BtcWalletReadOnly {
         return portfolio.wallet;
     }
 
+    if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+        throw new Error('BTC wallet unavailable for devnet portfolio');
+    }
+
     return portfolio.derivations[0].chains.btc.wallets[0];
 }
 
@@ -812,6 +931,7 @@ export function isDerivablePortfolio(
         case PortfolioType.LEDGER:
             return true;
         case PortfolioType.WATCH_ONLY:
+        case PortfolioType.FLAME_DEVNET:
             return false;
         default:
             return assertUnreachable(portfolio);

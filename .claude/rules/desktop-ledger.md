@@ -81,7 +81,7 @@ development build lists the device, the entitlement is the first suspect.
   `CANCEL`, exactly as mobile's sheet does.
 - Everything that is not a view is shared through `@safely/ux`, and mobile calls the same thing:
   `useLedgerDiscovery`, `useLedgerPairingSteps`, `useLedgerSigningSteps`, `useLedgerImport`,
-  `useSaveLedgerAccounts`, `useLedgerPortfolioSource`, `getLedgerPortfolioDraft`, `getLedgerDerivationName`,
+  `useSaveLedgerAccounts`, `useLedgerFirstPortfolio`, `getLedgerPortfolioDraft`, `getLedgerDerivationName`,
   `resolveLedgerStepStatus`, `getLedgerModelName` / `getLedgerModelLabel` / `getLedgerWalletName`,
   `getLedgerImageKey` and the session's `disconnect`. The PNGs live in
   `@safely/ux/assets/images/ledger/*` for the web; mobile keeps its copies under `resources/` and

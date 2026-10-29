@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IEnumerableStorage, SSecretDecrypted, SSecretEncrypted } from '@safely/core';
-import type { ISecretEncryptor as ISyncSecretEncryptor, ITreeStorage } from '@safely/sync';
+import { TreeStorage } from '@safely/core';
+import type { IVaultSecretEncryptor, ITreeStorage } from '@safely/sync';
+import { MKDerivationDomain } from '@safely/sync';
 
 import type { IUnlockableSecuredEncryptedStorage, Security } from '../src/shared/security';
 import {
-    UnlockableSecretEncryptor,
+    AccountDataKey,
+    UnlockableSecureSecretEncryptor,
     UnlockableSecuredEncryptedStorage
 } from '../src/shared/security';
 
@@ -145,8 +148,8 @@ describe('UnlockableSecuredEncryptedStorage', () => {
     });
 });
 
-describe('UnlockableSecretEncryptor', () => {
-    function createSyncEncryptor(): ISyncSecretEncryptor {
+describe('UnlockableSecureSecretEncryptor', () => {
+    function createSyncEncryptor(): IVaultSecretEncryptor {
         return {
             encrypt: vi.fn(async (plaintext: SSecretDecrypted) => `enc(${plaintext})`),
             decrypt: vi.fn(async (ciphertext: SSecretEncrypted) =>
@@ -172,7 +175,7 @@ describe('UnlockableSecretEncryptor', () => {
         const sync = createSyncEncryptor();
         const { factory, created } = createFactory();
 
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         expect(created).toHaveLength(2);
         expect(created[0]).not.toBe(created[1]);
@@ -184,7 +187,7 @@ describe('UnlockableSecretEncryptor', () => {
         const sync = createSyncEncryptor();
         const { factory } = createFactory();
 
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
         await enc.unlockEncryption();
 
         expect(enc.isEncryptLocked).toBe(false);
@@ -195,7 +198,7 @@ describe('UnlockableSecretEncryptor', () => {
         const sync = createSyncEncryptor();
         const { factory } = createFactory();
 
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
         await enc.unlockDecryption();
 
         expect(enc.isEncryptLocked).toBe(true);
@@ -205,7 +208,7 @@ describe('UnlockableSecretEncryptor', () => {
     it('encrypt() forwards to the sync encryptor with the encrypt-side storage', async () => {
         const sync = createSyncEncryptor();
         const { factory, created } = createFactory();
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         const result = await enc.encrypt('plaintext');
         expect(result).toBe('enc(plaintext)');
@@ -218,7 +221,7 @@ describe('UnlockableSecretEncryptor', () => {
     it('decrypt() forwards to the sync encryptor with the decrypt-side storage', async () => {
         const sync = createSyncEncryptor();
         const { factory, created } = createFactory();
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         const result = await enc.decrypt('enc(plaintext)');
         expect(result).toBe('plaintext');
@@ -230,7 +233,7 @@ describe('UnlockableSecretEncryptor', () => {
     it('encrypt and decrypt use different storages', async () => {
         const sync = createSyncEncryptor();
         const { factory } = createFactory();
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         await enc.encrypt('a');
         await enc.decrypt('enc(a)');
@@ -243,7 +246,7 @@ describe('UnlockableSecretEncryptor', () => {
     it('Symbol.dispose disposes both inner storages', async () => {
         const sync = createSyncEncryptor();
         const { factory } = createFactory();
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         await enc.unlockEncryption();
         await enc.unlockDecryption();
@@ -260,7 +263,7 @@ describe('UnlockableSecretEncryptor', () => {
         const sync = createSyncEncryptor();
         (sync.encrypt as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('boom'));
         const { factory } = createFactory();
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         await expect(enc.encrypt('x')).rejects.toThrow('boom');
     });
@@ -285,12 +288,109 @@ describe('UnlockableSecretEncryptor', () => {
             return stub;
         };
 
-        const enc = new UnlockableSecretEncryptor(sync, factory);
+        const enc = new UnlockableSecureSecretEncryptor(sync, factory);
 
         await enc.encrypt('p');
         await enc.decrypt('c');
 
         expect(sync.encrypt).toHaveBeenCalledWith('p', stubs[1]);
         expect(sync.decrypt).toHaveBeenCalledWith('c', stubs[0]);
+    });
+});
+
+describe('account data key', () => {
+    const MASTER_DERIVED = Buffer.alloc(32, 5);
+
+    function createDevice() {
+        const security = createSecurity();
+        const secureBacking = createMemoryStorage();
+        const encrypted = TreeStorage.root(createMemoryStorage());
+        const account = {
+            accountId: 'account-1',
+            deriveKeyFromMasterKey: vi.fn(
+                async (_domain: MKDerivationDomain, secureStorage: ITreeStorage) => {
+                    await secureStorage.getItem('master_key');
+                    return Buffer.from(MASTER_DERIVED);
+                }
+            )
+        };
+        const storages = {
+            encrypted,
+            getSecureEncrypted: vi.fn(
+                () => new UnlockableSecuredEncryptedStorage(secureBacking, security)
+            )
+        };
+        return { security, encrypted, account, storages };
+    }
+
+    it('derives the key once without a security check and then reads it from storage', async () => {
+        const { security, account, storages } = createDevice();
+
+        const first = await new AccountDataKey(account, storages).get();
+        const second = await new AccountDataKey(account, storages).get();
+
+        expect(first).toEqual(MASTER_DERIVED);
+        expect(second).toEqual(MASTER_DERIVED);
+        expect(account.deriveKeyFromMasterKey).toHaveBeenCalledTimes(1);
+        expect(account.deriveKeyFromMasterKey).toHaveBeenCalledWith(
+            MKDerivationDomain.ACCOUNT_DATA_KEY,
+            expect.anything()
+        );
+        expect(security.check).not.toHaveBeenCalled();
+    });
+
+    it('derives the key once when several first reads run at the same time', async () => {
+        const { account, storages } = createDevice();
+
+        const keys = await Promise.all([
+            new AccountDataKey(account, storages).get(),
+            new AccountDataKey(account, storages).get(),
+            new AccountDataKey(account, storages).get()
+        ]);
+
+        keys.forEach(key => expect(key).toEqual(MASTER_DERIVED));
+        expect(account.deriveKeyFromMasterKey).toHaveBeenCalledTimes(1);
+        expect(storages.getSecureEncrypted).toHaveBeenCalledTimes(1);
+        keys[0].fill(0);
+        expect(keys[1]).toEqual(MASTER_DERIVED);
+    });
+
+    it('reads a key stored at account creation without opening the secure storage', async () => {
+        const { security, account, storages } = createDevice();
+        const secureStorage = new UnlockableSecuredEncryptedStorage(
+            createMemoryStorage(),
+            security
+        );
+        secureStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
+
+        await new AccountDataKey(account, storages).create(secureStorage);
+
+        await expect(new AccountDataKey(account, storages).get()).resolves.toEqual(MASTER_DERIVED);
+        expect(storages.getSecureEncrypted).not.toHaveBeenCalled();
+        expect(account.deriveKeyFromMasterKey).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the key under the account node, so clearing the account drops it', async () => {
+        const { encrypted, account, storages } = createDevice();
+
+        await new AccountDataKey(account, storages).get();
+        await encrypted.child(['account-1']).clear();
+        await new AccountDataKey(account, storages).get();
+
+        expect(account.deriveKeyFromMasterKey).toHaveBeenCalledTimes(2);
+    });
+
+    it('lets another device of the account open what one device encrypted', async () => {
+        const one = createDevice();
+        const other = createDevice();
+
+        const encrypted = await new AccountDataKey(one.account, one.storages)
+            .encryptor()
+            .encrypt('view-key');
+
+        expect(encrypted).not.toContain('view-key');
+        await expect(
+            new AccountDataKey(other.account, other.storages).encryptor().decrypt(encrypted)
+        ).resolves.toBe('view-key');
     });
 });

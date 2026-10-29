@@ -40,6 +40,10 @@ export const badgeRecipe = defineRecipe({
             warningFilled: {
                 backgroundColor: 'badge.warningFilled.background',
                 color: 'badge.warningFilled.foreground'
+            },
+            purple: {
+                backgroundColor: 'badge.purple.background',
+                color: 'badge.purple.foreground'
             }
         },
         isUppercase: {

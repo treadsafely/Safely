@@ -2,14 +2,13 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import type { PortfolioMeta, PortfolioMetaIcon } from '@safely/core';
+import { PORTFOLIO_NAME_MAX_LENGTH } from '@safely/core';
 import { useTranslate } from '@safely/ux';
 
 import { fieldStyles, popupStyles } from './CustomizeWalletModal.styles';
 import { IconPicker } from './IconPicker';
 import { WalletIcon } from './WalletIcon';
 import { Badge, Button, Input, Modal } from '../../shared';
-
-const NAME_MAX_LENGTH = 24;
 
 export type CustomizeWalletModalProps = {
     title?: string;
@@ -49,7 +48,7 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
                 <div className={fieldStyles}>
                     <Input>
                         <Input.Field
-                            maxLength={NAME_MAX_LENGTH}
+                            maxLength={PORTFOLIO_NAME_MAX_LENGTH}
                             value={name}
                             placeholder={t('customizeWallet.namePlaceholder')}
                             onChange={event => setName(event.target.value)}

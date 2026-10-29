@@ -39,12 +39,14 @@ interface RecipientViewBase {
     selectedSuggestionId: string | undefined;
     selectedSuggestionSource: SuggestionSource | undefined;
     fromMeta: PortfolioMeta;
+    canSaveContact: boolean;
     setRecipient: (value: string) => void;
     setAddressBookName: (name: string) => void;
     selectSuggestion: (id: string, visible: SendSuggestions) => void;
 }
 
 type CanGoNext = { next: () => void };
+type MaybeGoNext = { next: (() => void) | undefined };
 type CanEnterMax = { enterMax?: () => void };
 type CanExitMax = { exitMax: () => void };
 
@@ -57,10 +59,12 @@ interface AmountViewBase {
         amount: string;
         assetId: string;
         amountInputType: AmountInputType;
+        memo: string;
     };
     errors: {
         amount: string | undefined;
         asset: string | undefined;
+        memo: string | undefined;
     };
     parsed: {
         recipient: Recipient;
@@ -75,14 +79,15 @@ interface AmountViewBase {
     pasteAmount: (raw: string) => void;
     setAmountInputType: (type: AmountInputType) => void;
     setAsset: (id: string) => void;
+    setMemo?: (value: string) => void;
     prev: () => void;
 }
 
 export type AmountView = AmountViewBase &
     (
         | ({ status: 'idle' | 'invalid' } & CanEnterMax)
-        | ({ status: 'manual' } & CanEnterMax & CanGoNext)
-        | ({ status: 'max' } & CanExitMax & CanGoNext)
+        | ({ status: 'manual' } & CanEnterMax & MaybeGoNext)
+        | ({ status: 'max' } & CanExitMax & MaybeGoNext)
     );
 
 export interface SubmittedView {

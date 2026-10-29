@@ -21,10 +21,12 @@ export const styles = StyleSheet.create(theme => ({
         lineHeight: 20,
         fontWeight: '500'
     },
-    logo: {
-        height: 48,
-        width: 48,
-        borderRadius: theme.radius.full
+    addressWithTracking: {
+        fontSize: 13,
+        lineHeight: 18
+    },
+    addressRest: {
+        color: theme.colors.text.secondary
     },
     badgeContainer: {
         alignItems: 'center',

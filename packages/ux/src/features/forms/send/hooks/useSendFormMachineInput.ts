@@ -1,17 +1,16 @@
 import type { RatedCryptoAssetAmount } from '@safely/core';
 
 import {
-    useActiveBtcWallet,
     useActivePortfolio,
     useActiveWalletMeta,
     useCreateContact,
     useNumberFormatter
 } from '../../../../entities';
-import { useFetchMaxValue } from '../../../blockchain-send';
 import { useAmountInputType, useSetAmountInputType } from '../amountInputType';
-import type { SendFormMachineInput } from '../machine/types';
+import type { FetchMaxValue, SendFormMachineInput } from '../machine/types';
 import type {
     ContactSuggestion,
+    OwnAddresses,
     PortfolioSuggestion,
     SendFormInitialValues,
     SendFormResult
@@ -24,6 +23,8 @@ export interface UseSendFormMachineInputProps {
     portfolioSuggestions: PortfolioSuggestion[];
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
+    ownAddresses: OwnAddresses;
+    fetchMaxValue: FetchMaxValue;
 }
 
 export function useSendFormMachineInput(props: UseSendFormMachineInputProps): SendFormMachineInput {
@@ -33,12 +34,12 @@ export function useSendFormMachineInput(props: UseSendFormMachineInputProps): Se
         initialValues,
         portfolioSuggestions,
         contactSuggestions,
-        ratedAssets
+        ratedAssets,
+        ownAddresses,
+        fetchMaxValue
     } = props;
 
     const formatter = useNumberFormatter();
-    const fetchMaxValue = useFetchMaxValue();
-    const activeBtcWallet = useActiveBtcWallet();
     const activePortfolio = useActivePortfolio();
     const activeWalletMeta = useActiveWalletMeta();
     const { mutateAsync: createContact } = useCreateContact();
@@ -54,9 +55,9 @@ export function useSendFormMachineInput(props: UseSendFormMachineInputProps): Se
         ratedAssets,
         activeWallet: {
             id: activePortfolio.id.toString(),
-            address: activeBtcWallet.address,
             meta: activeWalletMeta
         },
+        ownAddresses,
         networkType: activePortfolio.networkType,
         shouldResetForm: () => shouldResetForm,
         onSubmit,

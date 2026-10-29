@@ -9,13 +9,14 @@ import {
     type PortfolioMetaIcon,
     type PortfolioNetworkType
 } from '@safely/core';
-import type { AccountPortfolioSource, LedgerPortfolioSource } from '@safely/ux';
+import type { AccountPortfolioSource, LedgerFirstPortfolio } from '@safely/ux';
 import { useAppContext, useCreateAccount, useErrorToast, useLoader } from '@safely/ux';
 
 // TODO IMPORT Discuss with Max what to do with this
 // eslint-disable-next-line boundaries/element-types
 import { tabsInitialState } from '@mobile/app/navigation/tabs';
 import { usePasscode } from '@mobile/entities/security';
+import { PASSCODE_SETUP_ROUTE } from '@mobile/shared/navigation';
 
 type OnboardingCustomizeParams = {
     defaultName: string;
@@ -51,12 +52,7 @@ export function useOnboardingFlow() {
         navigation.dispatch(
             CommonActions.reset({
                 index: 0,
-                routes: [
-                    {
-                        name: 'OnboardingPasscodeScreen',
-                        params: { source: null, headerType: 'placeholder' }
-                    }
-                ]
+                routes: [PASSCODE_SETUP_ROUTE]
             })
         );
     }, [navigation]);
@@ -84,14 +80,22 @@ export function useOnboardingFlow() {
     );
 
     const onLedgerReady = useCallback(
-        (source: LedgerPortfolioSource) => {
-            navigation.navigate('OnboardingPasscodeScreen', { source, headerType: 'back' });
+        ({ firstPortfolio, firstPortfolioName }: LedgerFirstPortfolio) => {
+            navigation.navigate('OnboardingPasscodeScreen', {
+                source: firstPortfolio,
+                firstPortfolioName,
+                headerType: 'back'
+            });
         },
         [navigation]
     );
 
     const onPasscodeReady = useCallback(
-        async (passcode: string, source: AccountPortfolioSource | null) => {
+        async (
+            passcode: string,
+            source: AccountPortfolioSource | null,
+            firstPortfolioName?: string
+        ) => {
             await setPasscode(passcode);
 
             if (source) {
@@ -103,7 +107,11 @@ export function useOnboardingFlow() {
                         // don't ask for the password while setting app initially after first account creation during onboarding to provide smooth user experience
                         secureEncryptedStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
 
-                        await createAccount({ secureEncryptedStorage, firstPortfolio: source });
+                        await createAccount({
+                            secureEncryptedStorage,
+                            firstPortfolio: source,
+                            firstPortfolioName
+                        });
                     });
                 } catch (error) {
                     errorToast(error);

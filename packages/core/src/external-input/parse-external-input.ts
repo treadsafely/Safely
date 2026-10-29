@@ -1,23 +1,78 @@
 import {
     ParserInvalidAmountError,
     ParserUnrecognizedError,
+    ParserUnsupportedMemoError,
     ParserUnsupportedSchemeError
 } from './errors';
-import type { BtcTransferScheme, ExternalInputScheme, ExternalInputSchemeName } from './schemes';
+import type {
+    BtcTransferScheme,
+    ExternalInputScheme,
+    ExternalInputSchemeName,
+    FlameTransferScheme
+} from './schemes';
 import { BtcAddress } from '../blockchain-api/btc/btc-address';
+import { FlameAddress } from '../blockchain-api/flame/flame-address';
 import { BTC_ASSET } from '../entities/asset/btc-asset';
+import { FLAME_ASSET } from '../entities/asset/flame-asset';
 import { CANONICAL_DECIMAL_REGEX } from '../utils/format/number-formatter';
 import { toBig } from '../utils/number';
 
 type Parser = (raw: string) => ExternalInputScheme | null;
 
-function parseBip21Amount(raw: string): string {
+type NetworkDetector<Network> = (address: string) => Network | null;
+
+interface AddressTarget<Network> {
+    address: string;
+    network: Network;
+}
+
+interface PaymentUri<Network> {
+    target: AddressTarget<Network>;
+    params: URLSearchParams;
+}
+
+const detectBtcNetwork: NetworkDetector<BtcTransferScheme['parsed']['network']> = address =>
+    BtcAddress.validForNetwork(address);
+
+const detectFlameNetwork: NetworkDetector<FlameTransferScheme['parsed']['network']> = address =>
+    FlameAddress.validForNetwork(address);
+
+function matchAddress<Network>(
+    address: string,
+    detectNetwork: NetworkDetector<Network>
+): AddressTarget<Network> | null {
+    const network = detectNetwork(address);
+
+    return network === null ? null : { address, network };
+}
+
+function matchPaymentUri<Network>(
+    raw: string,
+    prefix: string,
+    detectNetwork: NetworkDetector<Network>
+): PaymentUri<Network> | null {
+    if (!raw.toLowerCase().startsWith(prefix)) {
+        return null;
+    }
+
+    const [address, queryString] = raw.slice(prefix.length).split('?', 2);
+
+    if (!address) {
+        return null;
+    }
+
+    const target = matchAddress(address, detectNetwork);
+
+    return target && { target, params: new URLSearchParams(queryString) };
+}
+
+function parseUriAmount(raw: string, decimals: number): string {
     if (!CANONICAL_DECIMAL_REGEX.test(raw)) {
         throw new ParserInvalidAmountError();
     }
 
     const value = toBig(raw);
-    if (value.lte(0) || !value.eq(value.round(BTC_ASSET.decimals, 0))) {
+    if (value.lte(0) || !value.eq(value.round(decimals, 0))) {
         throw new ParserInvalidAmountError();
     }
 
@@ -25,73 +80,64 @@ function parseBip21Amount(raw: string): string {
 }
 
 const parseBip21: Parser = raw => {
-    const prefix = 'bitcoin:';
-    if (!raw.toLowerCase().startsWith(prefix)) {
+    const uri = matchPaymentUri(raw, 'bitcoin:', detectBtcNetwork);
+    if (!uri) {
         return null;
     }
 
-    const withoutPrefix = raw.slice(prefix.length);
-    const [address, queryString] = withoutPrefix.split('?', 2);
+    const parsed: BtcTransferScheme['parsed'] = { ...uri.target };
 
-    if (!address) {
+    const amount = uri.params.get('amount');
+    if (amount !== null) parsed.amount = parseUriAmount(amount, BTC_ASSET.decimals);
+
+    const label = uri.params.get('label');
+    if (label) parsed.label = label;
+
+    const message = uri.params.get('message');
+    if (message) parsed.message = message;
+
+    return { name: 'btc-transfer', parsed };
+};
+
+const parseFlameUri: Parser = raw => {
+    const uri = matchPaymentUri(raw, 'flame:', detectFlameNetwork);
+    if (!uri) {
         return null;
     }
 
-    const network = BtcAddress.validForNetwork(address);
-
-    if (network === null) {
-        return null;
+    if (uri.params.has('memo')) {
+        throw new ParserUnsupportedMemoError();
     }
 
-    const parsed: BtcTransferScheme['parsed'] = {
-        address,
-        network
-    };
+    const parsed: FlameTransferScheme['parsed'] = { ...uri.target };
 
-    if (queryString) {
-        const params = new URLSearchParams(queryString);
+    const amount = uri.params.get('amount');
+    if (amount !== null) parsed.amount = parseUriAmount(amount, FLAME_ASSET.decimals);
 
-        const amount = params.get('amount');
-        if (amount !== null) parsed.amount = parseBip21Amount(amount);
-
-        const label = params.get('label');
-        if (label) parsed.label = label;
-
-        const message = params.get('message');
-        if (message) parsed.message = message;
-    }
-
-    return {
-        name: 'btc-transfer',
-        parsed
-    };
+    return { name: 'flame-transfer', parsed };
 };
 
 const parseBtcAddress: Parser = raw => {
-    const trimmed = raw.trim();
-    const network = BtcAddress.validForNetwork(trimmed);
+    const target = matchAddress(raw, detectBtcNetwork);
 
-    if (network === null) {
-        return null;
-    }
+    return target && { name: 'btc-transfer', parsed: target };
+};
 
-    return {
-        name: 'btc-transfer',
-        parsed: {
-            address: trimmed,
-            network
-        }
-    };
+const parseFlameAddress: Parser = raw => {
+    const target = matchAddress(raw, detectFlameNetwork);
+
+    return target && { name: 'flame-transfer', parsed: target };
 };
 
 export function parseExternalInput(
     raw: string,
     allowedSchemes?: readonly ExternalInputSchemeName[]
 ) {
-    const parsers: Parser[] = [parseBip21, parseBtcAddress];
+    const input = raw.trim();
+    const parsers: Parser[] = [parseBip21, parseFlameUri, parseBtcAddress, parseFlameAddress];
 
     for (const parser of parsers) {
-        const scheme = parser(raw);
+        const scheme = parser(input);
         if (!scheme) continue;
 
         if (allowedSchemes && !allowedSchemes.includes(scheme.name)) {

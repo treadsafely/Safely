@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { SPortfolioBip39, SPortfolioBip39IdImported } from '@safely/sync-storage';
 import { sPortfolio } from '@safely/sync-storage';
 
-import type { ILedgerSessionPort, ISecretEncryptor, NoIconPortfolioMeta } from '../src';
+import type { ILedgerSessionPort, ISecureSecretEncryptor, NoIconPortfolioMeta } from '../src';
 import {
     BtcNetwork,
     BtcWalletType,
@@ -18,7 +18,11 @@ import {
     PortfolioWatchOnlyBtc,
     WatchOnlySource
 } from '../src';
-import { ClosableMnemonicAccessorVault, MockSecretEncryptor } from './utils/mocks';
+import {
+    ClosableMnemonicAccessorVault,
+    MockSecureSecretEncryptor,
+    MockSilentSecretEncryptor
+} from './utils/mocks';
 
 const ledgerSessionPort: ILedgerSessionPort = {
     withSession: () => {
@@ -34,7 +38,7 @@ const TESTNET_KNOWN_MNEMONIC =
 const TESTNET_EXPECTED_ADDRESS = 'tb1q4tvt7x6veyr96kj3deph5av03czytyw5ssalr6';
 
 async function createBip39Portfolio(
-    encryptor: ISecretEncryptor,
+    encryptor: ISecureSecretEncryptor,
     accessor: ClosableMnemonicAccessorVault,
     options: {
         network: PortfolioNetworkType;
@@ -56,16 +60,17 @@ async function createBip39Portfolio(
         }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        encryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
 
 describe('PortfolioBip39 generation', () => {
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     it('derives the expected testnet address for a known mnemonic', async () => {
@@ -114,10 +119,10 @@ describe('PortfolioBip39 generation', () => {
 });
 
 describe('PortfolioBip39 serialization', () => {
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     it('JSON roundtrip preserves the derived address (no revealed status)', async () => {
@@ -135,7 +140,8 @@ describe('PortfolioBip39 serialization', () => {
         const json = portfolio.toJSON();
         const parsed = sPortfolio.parse(JSON.parse(JSON.stringify(json))) as SPortfolioBip39;
         const restored = PortfolioFactory.restorePortfolio(parsed, {
-            encryptor,
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -164,7 +170,8 @@ describe('PortfolioBip39 serialization', () => {
 
         const parsed = sPortfolio.parse(JSON.parse(JSON.stringify(portfolio))) as SPortfolioBip39;
         const restored = PortfolioFactory.restorePortfolio(parsed, {
-            encryptor,
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -179,10 +186,10 @@ describe('PortfolioBip39 serialization', () => {
 });
 
 describe('PortfolioBip39 identity & determinism', () => {
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     it('same mnemonic + same network → same id (regardless of name)', async () => {
@@ -314,10 +321,10 @@ describe('PortfolioBip39 identity & determinism', () => {
 });
 
 describe('PortfolioBip39 derivations', () => {
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     it('throws when removing the last derivation', async () => {
@@ -429,7 +436,8 @@ describe('PortfolioBip39 derivations', () => {
         );
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            encryptor,
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -447,10 +455,10 @@ describe('PortfolioBip39 derivations', () => {
 });
 
 describe('PortfolioBip39 negative scenarios', () => {
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     async function expectRejection(invalidMnemonic: string[]) {
@@ -513,10 +521,10 @@ describe('PortfolioWatchOnlyBtc', () => {
     const TESTNET_ADDRESS = TESTNET_EXPECTED_ADDRESS;
     const META = { name: 'Watch Wallet', icon: { type: 'emoji' as const, value: '👀' } };
 
-    let encryptor: MockSecretEncryptor;
+    let encryptor: MockSecureSecretEncryptor;
 
     beforeEach(() => {
-        encryptor = new MockSecretEncryptor();
+        encryptor = new MockSecureSecretEncryptor();
     });
 
     it('creates a watch-only portfolio from a plain address', () => {
@@ -538,7 +546,8 @@ describe('PortfolioWatchOnlyBtc', () => {
         );
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            encryptor,
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         });
 
@@ -581,7 +590,8 @@ describe('PortfolioWatchOnlyBtc', () => {
         expect(portfolio.wallet.address.startsWith('bc1q')).toBe(true);
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            encryptor,
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         });
         if (restored.type !== PortfolioType.WATCH_ONLY) {

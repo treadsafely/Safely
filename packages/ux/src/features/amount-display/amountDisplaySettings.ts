@@ -1,5 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 
+import type { CryptoFiatRate } from '@safely/core';
+
+import { resolveAmountUnit } from './amount-unit';
 import type { AmountUnit } from './types';
 import {
     useAccountStore,
@@ -35,12 +38,22 @@ export function useMainBalanceUnit(): AmountUnit {
     return useAmountUnit('mainBalanceUnit');
 }
 
+export function useDisplayedMainBalanceUnit(rate: CryptoFiatRate | null | undefined): AmountUnit {
+    return resolveAmountUnit(useMainBalanceUnit(), rate);
+}
+
 export function useSetMainBalanceUnit(): (unit: AmountUnit) => void {
     return useSetAmountUnit('mainBalanceUnit');
 }
 
 export function useHomeScreenAmountOrder(): AmountUnit {
     return useAmountUnit('homeScreenOrder');
+}
+
+export function useDisplayedHomeScreenAmountOrder(
+    rate: CryptoFiatRate | null | undefined
+): AmountUnit {
+    return resolveAmountUnit(useHomeScreenAmountOrder(), rate);
 }
 
 export function useSetHomeScreenAmountOrder(): (order: AmountUnit) => void {

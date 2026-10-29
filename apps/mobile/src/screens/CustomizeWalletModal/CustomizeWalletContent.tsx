@@ -7,7 +7,11 @@ import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboa
 import { useUnistyles } from 'react-native-unistyles';
 
 import type { PortfolioMetaIcon } from '@safely/core';
-import { allowedPortfolioMetaColors, allowedPortfolioMetaEmojis } from '@safely/core';
+import {
+    allowedPortfolioMetaColors,
+    allowedPortfolioMetaEmojis,
+    PORTFOLIO_NAME_MAX_LENGTH
+} from '@safely/core';
 
 import { Badge, ColorPicker, EmojiPicker, Text } from '@mobile/shared/ui';
 import { smoothstepGradient, useAutoFocus } from '@mobile/shared/utils';
@@ -100,7 +104,7 @@ export const CustomizeWalletContent = ({
                             editable={!disabled}
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
-                            maxLength={24}
+                            maxLength={PORTFOLIO_NAME_MAX_LENGTH}
                             returnKeyType="done"
                             onSubmitEditing={onSubmitEditing}
                         />

@@ -1,10 +1,11 @@
-import { useQueries } from '@tanstack/react-query';
+import { skipToken, useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import type { BtcWallet, RequiredProperties } from '@safely/core';
-import { BtcAssetAmount } from '@safely/core';
+import { BtcAssetAmount, BtcNetwork } from '@safely/core';
 import type { BtcApi, BtcApiUtxoWithOptionalTx } from '@safely/core/api/btc';
 
+import type { DerivedQueryResult } from '../../shared';
 import {
     QUERIES_REFETCH_INTERVAL,
     useBtcApi,
@@ -108,19 +109,41 @@ function btcWalletUtxoOptions(deps: {
     };
 }
 
-export function useBtcWalletUtxo(btcWallet: BtcWallet) {
-    const api = useBtcApi(btcWallet.network);
+type BtcWalletUtxos = Awaited<ReturnType<ReturnType<typeof btcWalletUtxoOptions>['queryFn']>>;
+
+type BtcWalletUtxoQuery = ReturnType<typeof useBtcWalletUtxoQuery>;
+
+function useBtcWalletUtxoQuery(btcWallet: BtcWallet | null) {
+    const api = useBtcApi(btcWallet?.network ?? BtcNetwork.MAINNET);
     const account = useActiveAccount();
     const accessibleBtcWallets = useAccessibleBtcWallets();
 
-    return usePersistQuery(
-        btcWalletUtxoOptions({
-            api,
-            accessibleBtcWallets,
-            accountId: account.accountId,
-            btcWallet
-        })
+    const options = btcWallet
+        ? btcWalletUtxoOptions({
+              api,
+              accessibleBtcWallets,
+              accountId: account.accountId,
+              btcWallet
+          })
+        : null;
+
+    return usePersistQuery<BtcWalletUtxos | null>(
+        options ?? {
+            queryKey: utxo.none.toKey(),
+            queryFn: skipToken,
+            initialData: null,
+            schemaKey: 'sBtcWalletUtxos',
+            refetchInterval: QUERIES_REFETCH_INTERVAL.UTXO
+        }
     );
+}
+
+export function useBtcWalletUtxo(
+    btcWallet: BtcWallet
+): BtcWalletUtxoQuery & { data: NonNullable<BtcWalletUtxoQuery['data']> | undefined };
+export function useBtcWalletUtxo(btcWallet: BtcWallet | null): BtcWalletUtxoQuery;
+export function useBtcWalletUtxo(btcWallet: BtcWallet | null): BtcWalletUtxoQuery {
+    return useBtcWalletUtxoQuery(btcWallet);
 }
 
 export function useAccountlessBtcConfirmedBalances(wallets: BtcWallet[]) {
@@ -192,15 +215,20 @@ export function useBtcWalletBalances(wallets: BtcWallet[]) {
     });
 }
 
-export function useBtcBalance(wallet: BtcWallet) {
+type BtcBalance = { display: BtcAssetAmount; pending: BtcAssetAmount };
+
+export function useBtcBalance(wallet: BtcWallet): DerivedQueryResult<BtcBalance>;
+export function useBtcBalance(wallet: BtcWallet | null): DerivedQueryResult<BtcBalance | null>;
+export function useBtcBalance(wallet: BtcWallet | null): DerivedQueryResult<BtcBalance | null> {
     const utxosQuery = useBtcWalletUtxo(wallet);
 
     return useDerivedQuery({
         queries: [utxosQuery],
-        queryFn: ([utxos]) => ({
-            display: utxos.confirmed.totalAmount.amountAdd(utxos.unconfirmedSafe.totalAmount),
-            pending: utxos.unconfirmedUnsafe.totalAmount
-        })
+        queryFn: ([utxos]) =>
+            utxos && {
+                display: utxos.confirmed.totalAmount.amountAdd(utxos.unconfirmedSafe.totalAmount),
+                pending: utxos.unconfirmedUnsafe.totalAmount
+            }
     });
 }
 

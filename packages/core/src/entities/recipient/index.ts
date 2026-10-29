@@ -1,1 +1,6 @@
-export { BtcRecipient, type Recipient, type RecipientDisplayData } from './recipient';
+export {
+    BtcRecipient,
+    FlameRecipient,
+    type Recipient,
+    type RecipientDisplayData
+} from './recipient';

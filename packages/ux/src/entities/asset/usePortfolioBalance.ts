@@ -2,20 +2,15 @@ import type { BtcWallet } from '@safely/core';
 
 import { useDerivedQuery } from '../../shared';
 import { useActiveFiat } from '../fiat';
-import { useWalletAssets } from './useAssets';
+import { useBtcRatedAmount } from './useBtcRatedAmount';
 import { calculateTotalBalance } from './utils';
 
 export function useBtcWalletFiatBalance(wallet: BtcWallet) {
-    const assetsQuery = useWalletAssets(wallet);
+    const btcQuery = useBtcRatedAmount(wallet);
     const fiat = useActiveFiat();
 
     return useDerivedQuery({
-        queries: [assetsQuery],
-        queryFn([assets]) {
-            return assets ?? [];
-        },
-        select(assets) {
-            return calculateTotalBalance(assets, fiat);
-        }
+        queries: [btcQuery],
+        queryFn: ([btc]) => calculateTotalBalance([btc], fiat)
     });
 }

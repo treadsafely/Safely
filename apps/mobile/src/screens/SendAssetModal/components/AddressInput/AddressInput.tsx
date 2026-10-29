@@ -66,7 +66,7 @@ export const AddressInput = (props: AddressInputProps) => {
     const [scanRemountKey, setScanRemountKey] = useState(0);
 
     const scan = useScanQrScheme({
-        allowedSchemes: ['btc-transfer'] as const,
+        allowedSchemes: ['btc-transfer', 'flame-transfer'] as const,
         onResult: useCallback(
             scheme => {
                 onChangeText(scheme.parsed.address);

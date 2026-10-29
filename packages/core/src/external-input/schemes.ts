@@ -1,3 +1,4 @@
+import type { FlameNetwork } from '../di/safely-flame';
 import type { BtcNetwork } from '../entities';
 
 export interface BtcTransferScheme {
@@ -11,7 +12,16 @@ export interface BtcTransferScheme {
     };
 }
 
-export type ExternalInputScheme = BtcTransferScheme;
+export interface FlameTransferScheme {
+    name: 'flame-transfer';
+    parsed: {
+        address: string;
+        network: FlameNetwork;
+        amount?: string;
+    };
+}
+
+export type ExternalInputScheme = BtcTransferScheme | FlameTransferScheme;
 export type ExternalInputSchemeName = ExternalInputScheme['name'];
 
 export type SchemeByName<SName extends ExternalInputSchemeName = ExternalInputSchemeName> = Extract<

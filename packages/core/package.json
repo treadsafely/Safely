@@ -34,6 +34,7 @@
     ".": "./src/index.ts",
     "./api/config": "./src/api/config/index.ts",
     "./api/btc": "./src/api/btc/index.ts",
+    "./api/flame": "./src/api/flame/index.ts",
     "./api/price": "./src/api/price/index.ts",
     "./api/exchange": "./src/api/exchange/index.ts"
   }

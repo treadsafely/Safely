@@ -19,7 +19,7 @@ export { useLedgerImport } from './useLedgerImport';
 export { useLedgerImportTarget } from './useLedgerImportTarget';
 export { useLedgerPairing, type PairingStatus } from './useLedgerPairing';
 export { useLedgerPairingSteps } from './useLedgerPairingSteps';
-export { useLedgerPortfolioSource, type LedgerPortfolioSource } from './useLedgerPortfolioSource';
+export { useLedgerFirstPortfolio, type LedgerFirstPortfolio } from './useLedgerFirstPortfolio';
 export { useLedgerSigningSteps } from './useLedgerSigningSteps';
 export { useSaveLedgerAccounts, type SaveLedgerAccounts } from './useSaveLedgerAccounts';
 export {

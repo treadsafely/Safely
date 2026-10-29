@@ -5,6 +5,7 @@ import { useHasAccount } from '@safely/ux';
 
 import { useIsAppRestricted } from '@mobile/entities/restrictions';
 import { usePasscode } from '@mobile/entities/security';
+import { resolveStartRoute } from '@mobile/shared/navigation';
 
 import { navigationRef } from './navigationRef';
 
@@ -46,7 +47,7 @@ export function useRestrictionGuard() {
         navigationRef.dispatch(
             CommonActions.reset({
                 index: 0,
-                routes: [{ name: hasAccount && hasPasscode ? 'TabsNavigator' : 'WelcomeScreen' }]
+                routes: [resolveStartRoute({ isRestricted, hasAccount, hasPasscode })]
             })
         );
     }, [hasAccount, hasPasscode, isRestricted]);

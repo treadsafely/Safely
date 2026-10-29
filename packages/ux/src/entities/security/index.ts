@@ -1,2 +1,2 @@
 export type { Security } from '../../shared/security/types';
-export { useUnlockableSecretEncryptorFactory } from './use-unlockable-secret-encryptor-factory';
+export { useUnlockableSecureSecretEncryptorFactory } from './use-unlockable-secure-secret-encryptor-factory';
