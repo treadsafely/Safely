@@ -168,8 +168,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). After an import or a
   duplicate it resets to the tabs. Cancel, close and a preview
   error always go back, so an onboarding step or an open flow underneath is kept. A link is
-  dispatched on top of the initial route (`initialState` is always set, so React Navigation never
-  reads the initial URL itself), so there is always something to go back to; the reset to
+  dispatched on top of the initial route (`initialState` is always set, so React Navigation discards
+  the initial URL — it still calls the linking options' `getInitialURL` on its first render, which
+  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getInitialURL()` and
+  delivers it like any other link, after unlock), so there is always something to go back to; the reset to
   `resolveStartRoute` (`@mobile/shared/navigation`) is only a fallback. `resolveStartRoute` is the one
   place the start route is decided — `useInitialNavigationState` and `useRestrictionGuard` read it;
   never hand-write that choice again (the restriction guard once sent an account without a passcode
