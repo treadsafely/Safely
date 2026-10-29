@@ -196,7 +196,7 @@
     },
     "qrScan": {
         "title": "Сканировать QR-код",
-        "subtitle": "Отсканируйте адрес BTC для продолжения.",
+        "subtitle": "Отсканируйте адрес кошелька для продолжения.",
         "addDevice": {
             "title": "Сканировать QR-код",
             "subtitle": "Откройте «Войти по QR-коду» на другом устройстве."
@@ -531,7 +531,8 @@
             "unableToValidateToken": "Не удалось проверить токен",
             "invalidAmount": "Неверная сумма",
             "insufficientBalance": "Недостаточно средств",
-            "unrecognizedAmount": "Не удалось распознать сумму"
+            "unrecognizedAmount": "Не удалось распознать сумму",
+            "memoTooLong": "Слишком длинная заметка"
         }
     },
     "signIn": {
@@ -960,7 +961,8 @@
         "errors": {
             "invalidAmount": "Некорректная сумма в коде",
             "unrecognized": "Нераспознанный ввод",
-            "unsupportedScheme": "Неподдерживаемый тип ввода"
+            "unsupportedScheme": "Неподдерживаемый тип ввода",
+            "unsupportedMemo": "Коды с заметкой не поддерживаются"
         }
     },
     "addressBook": {

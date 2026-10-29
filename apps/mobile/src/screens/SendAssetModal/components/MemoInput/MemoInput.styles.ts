@@ -6,5 +6,8 @@ export const styles = StyleSheet.create(theme => ({
     },
     field: {
         maxHeight: 120
+    },
+    error: {
+        color: theme.colors.accent.red
     }
 }));

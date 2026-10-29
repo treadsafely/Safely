@@ -32,6 +32,7 @@ export const HomeActions = () => {
             scheme => {
                 switch (scheme.name) {
                     case 'btc-transfer':
+                    case 'flame-transfer':
                         navigation.navigate('SendAssetModal', {
                             screen: 'SendFormModal',
                             params: {

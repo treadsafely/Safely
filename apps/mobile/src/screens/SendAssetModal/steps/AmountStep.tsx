@@ -91,7 +91,13 @@ export const AmountStep = (props: AmountStepProps) => {
                     </Animated.View>
                 )}
             </View>
-            {view.setMemo && <MemoInput value={view.values.memo} onChangeText={view.setMemo} />}
+            {view.setMemo && (
+                <MemoInput
+                    value={view.values.memo}
+                    error={view.errors.memo}
+                    onChangeText={view.setMemo}
+                />
+            )}
         </View>
     );
 };

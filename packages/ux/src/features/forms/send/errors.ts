@@ -7,5 +7,6 @@ export enum SendFormError {
     UNABLE_TO_VALIDATE_TOKEN = 'sendForm.errors.unableToValidateToken',
     INVALID_AMOUNT = 'sendForm.errors.invalidAmount',
     INSUFFICIENT_BALANCE = 'sendForm.errors.insufficientBalance',
-    UNRECOGNIZED_AMOUNT = 'sendForm.errors.unrecognizedAmount'
+    UNRECOGNIZED_AMOUNT = 'sendForm.errors.unrecognizedAmount',
+    MEMO_TOO_LONG = 'sendForm.errors.memoTooLong'
 }

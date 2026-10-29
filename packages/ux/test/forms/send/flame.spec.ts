@@ -130,14 +130,38 @@ describe('sendFormMachine — devnet wallet', () => {
         expect(onSubmit.mock.calls[0]?.[0].amount.cryptoAssetAmount.weiAmount).toBe(4_000_000_000n);
     });
 
-    it('clamps the memo to the byte limit', () => {
+    it('flags an over-limit memo without trimming it and blocks NEXT until it fits', () => {
+        const onSubmit = vi.fn();
+        const actor = startActor(makeFlameInput({ onSubmit }));
+        actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
+        actor.send({ type: 'NEXT' });
+        actor.send({ type: 'SET_AMOUNT', value: '1' });
+
+        const tooLong = 'a'.repeat(FLAME_MEMO_MAX_BYTES + 1);
+        actor.send({ type: 'SET_MEMO', value: tooLong });
+
+        expect(actor.getSnapshot().context.values.memo).toBe(tooLong);
+        expect(actor.getSnapshot().context.errors.memo).toBe(SendFormError.MEMO_TOO_LONG);
+
+        actor.send({ type: 'NEXT' });
+        expect(onSubmit).not.toHaveBeenCalled();
+
+        actor.send({ type: 'SET_MEMO', value: 'a'.repeat(FLAME_MEMO_MAX_BYTES) });
+        expect(actor.getSnapshot().context.errors.memo).toBeUndefined();
+
+        actor.send({ type: 'NEXT' });
+        expect(onSubmit).toHaveBeenCalledOnce();
+    });
+
+    it('clears the memo error together with the memo when the recipient changes', () => {
         const actor = startActor(makeFlameInput());
         actor.send({ type: 'SET_RECIPIENT', value: FLAME_ADDRESS });
         actor.send({ type: 'NEXT' });
-
         actor.send({ type: 'SET_MEMO', value: 'a'.repeat(FLAME_MEMO_MAX_BYTES + 1) });
+        actor.send({ type: 'PREV' });
+        actor.send({ type: 'SET_RECIPIENT', value: '' });
 
-        expect(actor.getSnapshot().context.values.memo).toHaveLength(FLAME_MEMO_MAX_BYTES);
+        expect(actor.getSnapshot().context.errors.memo).toBeUndefined();
     });
 
     it('rejects a BTC address', () => {

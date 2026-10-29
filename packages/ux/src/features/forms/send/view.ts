@@ -46,6 +46,7 @@ interface RecipientViewBase {
 }
 
 type CanGoNext = { next: () => void };
+type MaybeGoNext = { next: (() => void) | undefined };
 type CanEnterMax = { enterMax?: () => void };
 type CanExitMax = { exitMax: () => void };
 
@@ -63,6 +64,7 @@ interface AmountViewBase {
     errors: {
         amount: string | undefined;
         asset: string | undefined;
+        memo: string | undefined;
     };
     parsed: {
         recipient: Recipient;
@@ -84,8 +86,8 @@ interface AmountViewBase {
 export type AmountView = AmountViewBase &
     (
         | ({ status: 'idle' | 'invalid' } & CanEnterMax)
-        | ({ status: 'manual' } & CanEnterMax & CanGoNext)
-        | ({ status: 'max' } & CanExitMax & CanGoNext)
+        | ({ status: 'manual' } & CanEnterMax & MaybeGoNext)
+        | ({ status: 'max' } & CanExitMax & MaybeGoNext)
     );
 
 export interface SubmittedView {

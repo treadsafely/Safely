@@ -5,6 +5,7 @@ import type { ILedgerSessionPort, ISeedProducer, SafelyFlame } from '../../../..
 import {
     DerivationChainItemFlame,
     FLAME_RECEIVING_KEY_PATH,
+    FlameNetwork,
     PortfolioFlameDevnet,
     PortfolioFactory,
     PortfolioIdFlameDevnet,
@@ -129,10 +130,13 @@ describe('DerivationChainItemFlame', () => {
             predicate: 'ab'.repeat(32)
         });
         expect(serialized.id).toEqual(PortfolioIdFlameDevnet.create({ value: MNEMONIC }).toJSON());
-        expect(mocked.flame.viewKey).toHaveBeenCalledWith(expect.any(Uint8Array), 'testnet');
+        expect(mocked.flame.viewKey).toHaveBeenCalledWith(
+            expect.any(Uint8Array),
+            FlameNetwork.TESTNET
+        );
         expect(mocked.flame.address).toHaveBeenCalledWith(
             VIEW_KEY,
-            'testnet',
+            FlameNetwork.TESTNET,
             FLAME_RECEIVING_KEY_PATH
         );
         expect(mocked.seeds[0]).toEqual(new Uint8Array(await mnemonicToSeed(MNEMONIC.join(' '))));
@@ -146,7 +150,7 @@ describe('DerivationChainItemFlame', () => {
         const [wallet] = portfolio.flame.wallets;
 
         expect(wallet).toMatchObject({
-            network: 'testnet',
+            network: FlameNetwork.TESTNET,
             receivingAddress: 't1examplei1key',
             trackingAddress: 't1example',
             predicate: 'ab'.repeat(32)
@@ -166,7 +170,7 @@ describe('DerivationChainItemFlame', () => {
 
         expect(preview.id.isEq(imported.id)).toBe(true);
         expect(preview).toMatchObject({
-            network: 'testnet',
+            network: FlameNetwork.TESTNET,
             receivingAddress: imported.receivingAddress,
             trackingAddress: imported.trackingAddress,
             predicate: imported.predicate
@@ -207,7 +211,7 @@ describe('DerivationChainItemFlame', () => {
 
         expect(mocked.flame.openNotes).toHaveBeenCalledWith(
             VIEW_KEY,
-            'testnet',
+            FlameNetwork.TESTNET,
             FLAME_RECEIVING_KEY_PATH,
             expect.any(Array)
         );
@@ -365,7 +369,7 @@ describe('DerivationChainItemFlame', () => {
         mocked.flame.viewKey.mockRejectedValueOnce(new Error('native failure'));
 
         await expect(
-            DerivationChainItemFlame.createSChainItem(seedProducer, 'testnet')
+            DerivationChainItemFlame.createSChainItem(seedProducer, FlameNetwork.TESTNET)
         ).rejects.toThrow('native failure');
 
         expect(seed.every(byte => byte === 0)).toBe(true);
@@ -387,7 +391,7 @@ describe('DerivationChainItemFlame', () => {
 
         expect(mocked.flame.buildTransfer).toHaveBeenCalledWith(
             expect.any(Uint8Array),
-            'testnet',
+            FlameNetwork.TESTNET,
             { branch: 0, index: 0 },
             request
         );
@@ -399,7 +403,7 @@ describe('DerivationChainItemFlame', () => {
         const seed = Buffer.alloc(64, 9);
         const [wallet] = new DerivationChainItemFlame({
             ownerId: portfolio.id,
-            network: 'testnet',
+            network: FlameNetwork.TESTNET,
             sChainItem: portfolio.flame.toJSON(),
             seedProducer: { getSeed: () => Promise.resolve(seed) }
         }).wallets;

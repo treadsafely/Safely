@@ -1,5 +1,5 @@
 import type { FlameWallet, RatedCryptoAssetAmount } from '@safely/core';
-import { FLAME_ASSET } from '@safely/core';
+import { FLAME_ASSET, FlameNetwork } from '@safely/core';
 
 import type { DerivedQueryResult } from '../../shared';
 import { useDerivedQuery } from '../../shared';
@@ -11,7 +11,7 @@ export function useFlameRatedAmount(
     flameWallet: FlameWallet | null
 ): DerivedQueryResult<RatedCryptoAssetAmount | null> {
     const outputsQuery = useFlameWalletOutputs(flameWallet);
-    const rateQuery = useRate(FLAME_ASSET, flameWallet?.network !== 'mainnet');
+    const rateQuery = useRate(FLAME_ASSET, flameWallet?.network !== FlameNetwork.MAINNET);
 
     return useDerivedQuery({
         queries: [outputsQuery, rateQuery],

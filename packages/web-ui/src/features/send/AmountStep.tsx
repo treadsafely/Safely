@@ -72,7 +72,7 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
         if (event.key === 'Enter' && 'next' in view) {
-            view.next();
+            view.next?.();
         }
     };
 
