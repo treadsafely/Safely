@@ -67,7 +67,7 @@ export type SyncContainer<Latest extends StorageVersion, Rest> = {
     snapshotApi: SnapshotsApi;
     snapshotSse: SnapshotsSse;
 
-    secretEncryptor: SecureSecretEncryptor;
+    secureSecretEncryptor: SecureSecretEncryptor;
 };
 
 export type SyncContainerConfig = {
@@ -166,7 +166,7 @@ export async function createSyncContainer<Latest extends StorageVersion, Rest>(o
         crdtController
     );
 
-    const secretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
+    const secureSecretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
 
     return {
         versions: opts.versions,
@@ -196,6 +196,6 @@ export async function createSyncContainer<Latest extends StorageVersion, Rest>(o
         accountsApi,
         snapshotApi: snapshotsApi,
         snapshotSse,
-        secretEncryptor
+        secureSecretEncryptor
     };
 }

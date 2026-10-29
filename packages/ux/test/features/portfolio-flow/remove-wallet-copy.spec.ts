@@ -43,8 +43,8 @@ async function makeBip39(options?: { revealedFromDevice: string }): Promise<Port
     });
 
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
-        silentEncryptor: new MockSilentSecretEncryptor(),
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     });
 }
@@ -72,8 +72,8 @@ function makeLedger(): Portfolio {
     });
 
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: new MockSecureSecretEncryptor(),
-        silentEncryptor: new MockSilentSecretEncryptor(),
+        secureSecretEncryptor: new MockSecureSecretEncryptor(),
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     });
 }
@@ -143,8 +143,8 @@ describe('resolveRemoveWalletCopy', () => {
                 }
             }),
             {
-                secureEncryptor: new MockSecureSecretEncryptor(),
-                silentEncryptor: new MockSilentSecretEncryptor(),
+                secureSecretEncryptor: new MockSecureSecretEncryptor(),
+                silentSecretEncryptor: new MockSilentSecretEncryptor(),
                 ledgerSessionPort
             }
         );

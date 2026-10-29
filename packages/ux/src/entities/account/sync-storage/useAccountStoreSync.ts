@@ -19,7 +19,7 @@ export function useAccountStoreTransformFactory() {
             new AccountStoreTransform(
                 () =>
                     new BaseSecureSecretEncryptor(
-                        account.secretEncryptor,
+                        account.secureSecretEncryptor,
                         storage.sync.getSecureEncrypted()
                     ),
                 () => new AccountDataKey(account, storage.sync).encryptor(),

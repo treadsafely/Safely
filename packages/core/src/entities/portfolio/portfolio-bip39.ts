@@ -88,8 +88,11 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         }
     }
 
-    public static restore(secretEncryptor: ISecureSecretEncryptor, sPortfolio: SPortfolioBip39) {
-        const mnemonicVault = new MnemonicVault(secretEncryptor, sPortfolio.encryptedSecret);
+    public static restore(
+        secureSecretEncryptor: ISecureSecretEncryptor,
+        sPortfolio: SPortfolioBip39
+    ) {
+        const mnemonicVault = new MnemonicVault(secureSecretEncryptor, sPortfolio.encryptedSecret);
         return new PortfolioBip39({
             id: toPortfolioIdBip39(sPortfolio.id),
             meta: sPortfolio.meta,

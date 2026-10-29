@@ -11,7 +11,7 @@ export type SSecretEncrypted = z.infer<typeof sSecretEncrypted>;
 export const sSecretDecrypted = z.string();
 export type SSecretDecrypted = z.infer<typeof sSecretDecrypted>;
 
-export interface ISecretEncryptor {
+export interface IVaultSecretEncryptor {
     encrypt(
         decryptedSecret: SSecretDecrypted,
         secureEncryptedStorage: ITreeStorage
@@ -37,7 +37,7 @@ function decodePayload(encryptedPayload: string): { ciphertext: Buffer; nonce: B
     return { nonce: data.subarray(1, 25), ciphertext: data.subarray(25) };
 }
 
-export class SecureSecretEncryptor implements ISecretEncryptor {
+export class SecureSecretEncryptor implements IVaultSecretEncryptor {
     constructor(private readonly keyServiceFactory: KeyServiceFactory) {}
 
     public async encrypt(plaintext: string, secureEncryptedStorage: ITreeStorage): Promise<string> {

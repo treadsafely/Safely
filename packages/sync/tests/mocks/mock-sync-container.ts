@@ -111,7 +111,7 @@ export async function createMockSyncContainer<Latest extends StorageVersion, Res
         crdtController
     );
 
-    const secretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
+    const secureSecretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
 
     return {
         versions,
@@ -141,6 +141,6 @@ export async function createMockSyncContainer<Latest extends StorageVersion, Res
         accountsApi,
         snapshotApi,
         snapshotSse,
-        secretEncryptor
+        secureSecretEncryptor
     };
 }

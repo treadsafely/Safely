@@ -20,14 +20,14 @@ import { BtcBip39SeedProducer } from '../seed';
 
 export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
     public static async createSerializedPortfolio({
-        encryptor,
-        viewKeyEncryptor,
+        secureSecretEncryptor,
+        silentSecretEncryptor,
         mnemonicAccessor,
         meta,
         logger
     }: {
-        encryptor: ISecureSecretEncryptor;
-        viewKeyEncryptor: ISilentSecretEncryptor;
+        secureSecretEncryptor: ISecureSecretEncryptor;
+        silentSecretEncryptor: ISilentSecretEncryptor;
         mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
         meta: PortfolioMeta;
         logger?: Logger;
@@ -42,10 +42,10 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
             const flame = await DerivationChainItemFlame.createSChainItem(
                 new BtcBip39SeedProducer(mnemonicAccessor),
                 FLAME_DEVNET_NETWORK,
-                viewKeyEncryptor
+                silentSecretEncryptor
             );
             const { encryptedSecret } = await MnemonicVault.fromMnemonicAccessor(
-                encryptor,
+                secureSecretEncryptor,
                 mnemonicAccessor
             );
 
@@ -96,11 +96,11 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
     }
 
     public static restore(
-        encryptor: ISecureSecretEncryptor,
-        viewKeyEncryptor: ISilentSecretEncryptor,
+        secureSecretEncryptor: ISecureSecretEncryptor,
+        silentSecretEncryptor: ISilentSecretEncryptor,
         sPortfolio: SPortfolioFlameDevnet
     ) {
-        const mnemonicVault = new MnemonicVault(encryptor, sPortfolio.encryptedSecret);
+        const mnemonicVault = new MnemonicVault(secureSecretEncryptor, sPortfolio.encryptedSecret);
         const id = new PortfolioIdFlameDevnet(sPortfolio.id);
 
         return new PortfolioFlameDevnet({
@@ -111,7 +111,7 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
                 ownerId: id,
                 network: FLAME_DEVNET_NETWORK,
                 sChainItem: sPortfolio.flame,
-                viewKeyEncryptor,
+                viewKeyEncryptor: silentSecretEncryptor,
                 seedProducer: new BtcBip39SeedProducer(mnemonicVault)
             })
         });

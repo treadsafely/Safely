@@ -117,8 +117,8 @@ async function makeImportedPortfolio(
         meta: { name, icon: PortfolioIdBip39Imported.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
-        silentEncryptor: new MockSilentSecretEncryptor(),
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -137,13 +137,16 @@ async function makeDerivedPortfolio(
     });
     const serialized = await PortfolioBip39.createSerializedPortfolio({
         id,
-        encryptor: new BaseSecureSecretEncryptor(account.secretEncryptor, storage),
+        encryptor: new BaseSecureSecretEncryptor(account.secureSecretEncryptor, storage),
         mnemonicAccessor: accessor,
         meta: { name, icon: PortfolioIdBip39MasterKeyDerived.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: new BaseSecureSecretEncryptor(account.secretEncryptor, storage),
-        silentEncryptor: new MockSilentSecretEncryptor(),
+        secureSecretEncryptor: new BaseSecureSecretEncryptor(
+            account.secureSecretEncryptor,
+            storage
+        ),
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -331,14 +334,17 @@ describe('useImportPortfolio (add)', () => {
 
         const accessor = new ClosableMnemonicAccessorVault(MAINNET_MNEMONIC);
         const secureStorage = new InMemoryTreeStorage(['secure']);
-        const encryptor = new BaseSecureSecretEncryptor(account.secretEncryptor, secureStorage);
+        const encryptor = new BaseSecureSecretEncryptor(
+            account.secureSecretEncryptor,
+            secureStorage
+        );
 
         let mutationError: unknown;
         await act(async () => {
             try {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: encryptor,
+                    secureSecretEncryptor: encryptor,
                     meta: meta('Imported #1'),
                     networkType: PortfolioNetworkType.MAINNET
                 });
@@ -370,8 +376,8 @@ describe('useImportPortfolio (add)', () => {
             act(async () => {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: new BaseSecureSecretEncryptor(
-                        account.secretEncryptor,
+                    secureSecretEncryptor: new BaseSecureSecretEncryptor(
+                        account.secureSecretEncryptor,
                         secureStorage
                     ),
                     meta: meta('Dup'),
@@ -404,8 +410,8 @@ describe('useImportPortfolio (add)', () => {
             try {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: new BaseSecureSecretEncryptor(
-                        account.secretEncryptor,
+                    secureSecretEncryptor: new BaseSecureSecretEncryptor(
+                        account.secureSecretEncryptor,
                         secureStorage
                     ),
                     meta: meta('Bad'),

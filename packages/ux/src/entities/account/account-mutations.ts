@@ -113,7 +113,7 @@ export type AccountPortfolioSource =
 async function buildFirstPortfolio(params: {
     account: ISyncAccount<SyncedStorageStructure>;
     secureEncryptedStorage: ITreeStorage;
-    silentEncryptor: ISilentSecretEncryptor;
+    silentSecretEncryptor: ISilentSecretEncryptor;
     source: AccountPortfolioSource;
     portfolioName: string;
     deviceName: string;
@@ -122,7 +122,7 @@ async function buildFirstPortfolio(params: {
     const {
         account,
         secureEncryptedStorage,
-        silentEncryptor,
+        silentSecretEncryptor,
         source,
         portfolioName,
         deviceName,
@@ -144,7 +144,7 @@ async function buildFirstPortfolio(params: {
         }
         case 'imported': {
             const encryptor = new BaseSecureSecretEncryptor(
-                account.secretEncryptor,
+                account.secureSecretEncryptor,
                 secureEncryptedStorage
             );
             const id = await PortfolioIdBip39Imported.create(
@@ -173,11 +173,11 @@ async function buildFirstPortfolio(params: {
         }
         case 'flameDevnet': {
             portfolio = await PortfolioFlameDevnet.createSerializedPortfolio({
-                encryptor: new BaseSecureSecretEncryptor(
-                    account.secretEncryptor,
+                secureSecretEncryptor: new BaseSecureSecretEncryptor(
+                    account.secureSecretEncryptor,
                     secureEncryptedStorage
                 ),
-                viewKeyEncryptor: silentEncryptor,
+                silentSecretEncryptor,
                 mnemonicAccessor: source.mnemonicAccessor,
                 meta: {
                     name: portfolioName,
@@ -203,7 +203,7 @@ async function buildFirstPortfolio(params: {
         }
         case 'generated': {
             const encryptor = new BaseSecureSecretEncryptor(
-                account.secretEncryptor,
+                account.secureSecretEncryptor,
                 secureEncryptedStorage
             );
             using mnemonicAccessor = await portfolioMnemonicFactory.deriveBip39MnemonicResource(0);
@@ -319,7 +319,7 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
                 const built = await buildFirstPortfolio({
                     account,
                     secureEncryptedStorage: params.secureEncryptedStorage,
-                    silentEncryptor: accountDataKey.encryptor(),
+                    silentSecretEncryptor: accountDataKey.encryptor(),
                     source: params.firstPortfolio,
                     portfolioName: firstPortfolioName,
                     deviceName: deviceInfo.name,

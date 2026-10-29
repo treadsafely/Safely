@@ -105,8 +105,8 @@ export class AccountStoreTransform {
         if (!json) return [];
         return this.reconcileById(prev, json, p =>
             PortfolioFactory.restorePortfolio(p, {
-                secureEncryptor: this.getSecureSecretEncryptor(),
-                silentEncryptor: this.getSilentSecretEncryptor(),
+                secureSecretEncryptor: this.getSecureSecretEncryptor(),
+                silentSecretEncryptor: this.getSilentSecretEncryptor(),
                 ledgerSessionPort: this.getLedgerSessionPort()
             })
         );

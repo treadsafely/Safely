@@ -10,7 +10,7 @@ import { SilentSecretEncryptor, SecureSecretEncryptor } from '../../src/secret-e
 import { InMemStorage } from '../mocks/server-mock/storage';
 
 describe('sync machine', () => {
-    let secretEncryptor: SecureSecretEncryptor;
+    let secureSecretEncryptor: SecureSecretEncryptor;
     let secureEncryptedStorage: ITreeStorage;
 
     beforeEach(async () => {
@@ -24,21 +24,24 @@ describe('sync machine', () => {
             secureEncryptedStorage.child(accountId)
         );
         await initializeKeys(keyRepository, secureEncryptedKeyRepository, masterKey);
-        secretEncryptor = new SecureSecretEncryptor(new KeyServiceFactory(accountId));
+        secureSecretEncryptor = new SecureSecretEncryptor(new KeyServiceFactory(accountId));
     });
 
     it('should encrypt and decrypt the same message', async () => {
-        const encryptedPayload = await secretEncryptor.encrypt(
+        const encryptedPayload = await secureSecretEncryptor.encrypt(
             'hello world',
             secureEncryptedStorage
         );
         expect(encryptedPayload).not.toEqual('hello world');
-        const plaintext = await secretEncryptor.decrypt(encryptedPayload, secureEncryptedStorage);
+        const plaintext = await secureSecretEncryptor.decrypt(
+            encryptedPayload,
+            secureEncryptedStorage
+        );
         expect(plaintext).toBe('hello world');
     });
 
     it('should fail on wrong version', async () => {
-        const encryptedPayload = await secretEncryptor.encrypt(
+        const encryptedPayload = await secureSecretEncryptor.encrypt(
             'hello world',
             secureEncryptedStorage
         );
@@ -46,7 +49,7 @@ describe('sync machine', () => {
         data[0] = 0x02; // change version to unsupported one
         const tamperedPayload = data.toString('hex');
         await expect(
-            secretEncryptor.decrypt(tamperedPayload, secureEncryptedStorage)
+            secureSecretEncryptor.decrypt(tamperedPayload, secureEncryptedStorage)
         ).rejects.toThrow('Unsupported version: 2');
     });
 });

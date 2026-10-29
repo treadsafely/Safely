@@ -91,12 +91,12 @@ export function useAddPortfolioFromSource() {
                     await addWatchOnlyPortfolio({ input: source.input, meta });
                     return;
                 case 'imported': {
-                    using secretEncryptor = createEncryptor();
-                    await secretEncryptor.unlockEncryption();
+                    using secureSecretEncryptor = createEncryptor();
+                    await secureSecretEncryptor.unlockEncryption();
 
                     await importPortfolio({
                         mnemonicAccessor: source.mnemonicAccessor,
-                        secretEncryptor,
+                        secureSecretEncryptor,
                         meta,
                         networkType: source.networkType
                     });

@@ -10,8 +10,8 @@ import { assertUnreachable } from '../../utils';
 import type { ILedgerSessionPort } from '../signer';
 
 export type PortfolioRestoreDeps = {
-    secureEncryptor: ISecureSecretEncryptor;
-    silentEncryptor: ISilentSecretEncryptor;
+    secureSecretEncryptor: ISecureSecretEncryptor;
+    silentSecretEncryptor: ISilentSecretEncryptor;
     ledgerSessionPort: ILedgerSessionPort;
 };
 
@@ -19,15 +19,15 @@ export class PortfolioFactory {
     public static restorePortfolio(portfolio: SPortfolio, deps: PortfolioRestoreDeps) {
         switch (portfolio.type) {
             case PortfolioType.BIP39:
-                return PortfolioBip39.restore(deps.secureEncryptor, portfolio);
+                return PortfolioBip39.restore(deps.secureSecretEncryptor, portfolio);
             case PortfolioType.LEDGER:
                 return PortfolioLedger.restore(portfolio, deps.ledgerSessionPort);
             case PortfolioType.WATCH_ONLY:
                 return PortfolioWatchOnlyBtc.restore(portfolio);
             case PortfolioType.FLAME_DEVNET:
                 return PortfolioFlameDevnet.restore(
-                    deps.secureEncryptor,
-                    deps.silentEncryptor,
+                    deps.secureSecretEncryptor,
+                    deps.silentSecretEncryptor,
                     portfolio
                 );
             default:

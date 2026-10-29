@@ -27,11 +27,13 @@ change the spec and the code together, never the code alone.
 - On-device secret encryption goes through `ISecretEncryptor` (`packages/core/src/di`), i.e. the
   platform's secure storage — not JS-side constants. It has two subtypes, told apart by the `kind`
   discriminant and picked by what the secret unlocks: a mnemonic takes an `ISecureSecretEncryptor`
-  (`SecureSecretEncryptor` over `VaultKey`, behind the presence check); synced data that must read
-  without the passcode (the Flame view key) takes an `ISilentSecretEncryptor`
+  (`BaseSecureSecretEncryptor`/`UnlockableSecureSecretEncryptor` in ux, binding a secure storage
+  to `@safely/sync`'s `IVaultSecretEncryptor` over `VaultKey`, behind the presence check); synced
+  data that must read without the passcode (the Flame view key) takes an `ISilentSecretEncryptor`
   (`SilentSecretEncryptor` over the account data key cached in `encrypted`, `AccountDataKey`,
   spec §1.4). Type a new consumer with the subtype it needs, never the base interface, and never put
-  anything that can move funds behind the silent one.
+  anything that can move funds behind the silent one. `IVaultSecretEncryptor` takes the storage per
+  call and is not a core encryptor: a domain consumer never takes it directly.
 - slottree's cbor encoding is deterministic: changing the encoding or field order changes merge
   results and hashes. That is a new format version, not an in-place edit.
 - User-state schemas are versioned: `packages/sync-storage/src/v1` … `v7`, and `actual-version.ts`

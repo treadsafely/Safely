@@ -28,12 +28,15 @@ export function useReadOnlyRequestSigner(): RequestSigner | undefined {
             using secureStorage = storage.sync.getSecureEncrypted();
             // skips security check for UX reason. We use it to sign requests with read-only credentials.
             secureStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
-            const encryptor = new BaseSecureSecretEncryptor(account.secretEncryptor, secureStorage);
+            const encryptor = new BaseSecureSecretEncryptor(
+                account.secureSecretEncryptor,
+                secureStorage
+            );
             const credential = await portfolio.createReadOnlyCredential(encryptor);
 
             await cache.set(portfolio.id, credential).catch(() => undefined);
 
             return credential;
         });
-    }, [isOnrampsEnabled, portfolioKey, account.secretEncryptor, storage, cache]);
+    }, [isOnrampsEnabled, portfolioKey, account.secureSecretEncryptor, storage, cache]);
 }

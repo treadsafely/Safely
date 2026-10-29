@@ -60,8 +60,8 @@ async function createBip39Portfolio(
         }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
-        silentEncryptor: new MockSilentSecretEncryptor(),
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -140,8 +140,8 @@ describe('PortfolioBip39 serialization', () => {
         const json = portfolio.toJSON();
         const parsed = sPortfolio.parse(JSON.parse(JSON.stringify(json))) as SPortfolioBip39;
         const restored = PortfolioFactory.restorePortfolio(parsed, {
-            secureEncryptor: encryptor,
-            silentEncryptor: new MockSilentSecretEncryptor(),
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -170,8 +170,8 @@ describe('PortfolioBip39 serialization', () => {
 
         const parsed = sPortfolio.parse(JSON.parse(JSON.stringify(portfolio))) as SPortfolioBip39;
         const restored = PortfolioFactory.restorePortfolio(parsed, {
-            secureEncryptor: encryptor,
-            silentEncryptor: new MockSilentSecretEncryptor(),
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -436,8 +436,8 @@ describe('PortfolioBip39 derivations', () => {
         );
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            secureEncryptor: encryptor,
-            silentEncryptor: new MockSilentSecretEncryptor(),
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         }) as PortfolioBip39;
 
@@ -546,8 +546,8 @@ describe('PortfolioWatchOnlyBtc', () => {
         );
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            secureEncryptor: encryptor,
-            silentEncryptor: new MockSilentSecretEncryptor(),
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         });
 
@@ -590,8 +590,8 @@ describe('PortfolioWatchOnlyBtc', () => {
         expect(portfolio.wallet.address.startsWith('bc1q')).toBe(true);
 
         const restored = PortfolioFactory.restorePortfolio(sPortfolio.parse(portfolio.toJSON()), {
-            secureEncryptor: encryptor,
-            silentEncryptor: new MockSilentSecretEncryptor(),
+            secureSecretEncryptor: encryptor,
+            silentSecretEncryptor: new MockSilentSecretEncryptor(),
             ledgerSessionPort
         });
         if (restored.type !== PortfolioType.WATCH_ONLY) {

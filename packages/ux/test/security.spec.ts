@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IEnumerableStorage, SSecretDecrypted, SSecretEncrypted } from '@safely/core';
 import { TreeStorage } from '@safely/core';
-import type { ISecretEncryptor as ISyncSecretEncryptor, ITreeStorage } from '@safely/sync';
+import type { IVaultSecretEncryptor, ITreeStorage } from '@safely/sync';
 import { MKDerivationDomain } from '@safely/sync';
 
 import type { IUnlockableSecuredEncryptedStorage, Security } from '../src/shared/security';
@@ -149,7 +149,7 @@ describe('UnlockableSecuredEncryptedStorage', () => {
 });
 
 describe('UnlockableSecureSecretEncryptor', () => {
-    function createSyncEncryptor(): ISyncSecretEncryptor {
+    function createSyncEncryptor(): IVaultSecretEncryptor {
         return {
             encrypt: vi.fn(async (plaintext: SSecretDecrypted) => `enc(${plaintext})`),
             decrypt: vi.fn(async (ciphertext: SSecretEncrypted) =>

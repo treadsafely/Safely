@@ -96,8 +96,8 @@ async function createSerialized() {
     const viewKeyEncryptor = createViewKeyEncryptor();
     const accessor = new ClosableMnemonicAccessorVault(MNEMONIC);
     const serialized = await PortfolioFlameDevnet.createSerializedPortfolio({
-        encryptor,
-        viewKeyEncryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: viewKeyEncryptor,
         mnemonicAccessor: accessor,
         meta: { name: 'Devnet', icon: { type: 'emoji', value: '🙂' } }
     });
@@ -107,8 +107,8 @@ async function createSerialized() {
 async function createPortfolio() {
     const { serialized, encryptor, viewKeyEncryptor } = await createSerialized();
     return PortfolioFactory.restorePortfolio(serialized, {
-        secureEncryptor: encryptor,
-        silentEncryptor: viewKeyEncryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: viewKeyEncryptor,
         ledgerSessionPort
     }) as PortfolioFlameDevnet;
 }

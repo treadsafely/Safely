@@ -124,7 +124,7 @@ export function useGeneratePortfolio() {
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 mnemonicAccessor,
                 encryptor: new BaseSecureSecretEncryptor(
-                    account.secretEncryptor,
+                    account.secureSecretEncryptor,
                     params.secureEncryptedStorage
                 ),
                 id,
@@ -176,13 +176,13 @@ export function useImportPortfolio() {
         Error,
         {
             mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
-            secretEncryptor: ISecureSecretEncryptor;
+            secureSecretEncryptor: ISecureSecretEncryptor;
             meta: PortfolioMeta;
             networkType: PortfolioNetworkType;
         },
         unknown
     >({
-        async mutationFn({ mnemonicAccessor, secretEncryptor, meta, networkType }) {
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta, networkType }) {
             portfolioLogger.info('importing portfolio');
             await delay();
 
@@ -190,7 +190,7 @@ export function useImportPortfolio() {
 
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 id,
-                encryptor: secretEncryptor,
+                encryptor: secureSecretEncryptor,
                 mnemonicAccessor,
                 meta,
                 options: {
@@ -275,19 +275,22 @@ export function useImportFlameDevnetPortfolio() {
         Error,
         {
             mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
-            secretEncryptor: ISecureSecretEncryptor;
+            secureSecretEncryptor: ISecureSecretEncryptor;
             meta: PortfolioMeta;
         }
     >({
-        async mutationFn({ mnemonicAccessor, secretEncryptor, meta }) {
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta }) {
             logger.info('importing devnet portfolio');
             const id = PortfolioIdFlameDevnet.create(mnemonicAccessor);
 
             if (!portfolios.some(p => p.id.isEq(id))) {
                 await addPortfolio(
                     await PortfolioFlameDevnet.createSerializedPortfolio({
-                        encryptor: secretEncryptor,
-                        viewKeyEncryptor: new AccountDataKey(account, storage.sync).encryptor(),
+                        secureSecretEncryptor,
+                        silentSecretEncryptor: new AccountDataKey(
+                            account,
+                            storage.sync
+                        ).encryptor(),
                         mnemonicAccessor,
                         meta,
                         logger

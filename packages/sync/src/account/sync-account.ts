@@ -11,7 +11,7 @@ import { withSyncFlow } from '../logger';
 import type { OnboardingConnector } from '../onboarding/connector';
 import { PrimaryDeviceOnboarding } from '../onboarding/primary-device-onboarding';
 import { ReconnectOnboardingCoordinator } from '../onboarding/reconnect/reconnect-onboarding-coordinator';
-import type { ISecretEncryptor } from '../secret-encryptor';
+import type { IVaultSecretEncryptor } from '../secret-encryptor';
 import type { SyncContainer } from '../sync-container';
 import type { ISyncProvider } from '../sync-provider/I-sync-provider';
 import { OnlineSyncProvider } from '../sync-provider/online-sync-provider';
@@ -19,7 +19,7 @@ import type { SyncStatusManager } from '../sync-provider/sync-status';
 import { SyncStatus } from '../sync-provider/sync-status';
 
 export class SyncAccount<Latest extends StorageVersion, Rest> implements ISyncAccount<Latest> {
-    public readonly secretEncryptor: ISecretEncryptor;
+    public readonly secureSecretEncryptor: IVaultSecretEncryptor;
     public readonly accountId: string;
 
     private readonly structure: HCons<Latest, Rest> & AssertVersionHList<HCons<Latest, Rest>>;
@@ -45,7 +45,7 @@ export class SyncAccount<Latest extends StorageVersion, Rest> implements ISyncAc
         this.syncAccountRepository = opts.syncAccountRepository;
         this.syncProviderInternal = opts.syncProvider;
         this.online = opts.online;
-        this.secretEncryptor = opts.container.secretEncryptor;
+        this.secureSecretEncryptor = opts.container.secureSecretEncryptor;
         this.reconnectOnboardingCoordinator = new ReconnectOnboardingCoordinator(
             this,
             () => this.syncProviderInternal,

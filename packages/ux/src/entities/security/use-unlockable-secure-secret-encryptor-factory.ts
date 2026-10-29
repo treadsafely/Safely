@@ -10,9 +10,9 @@ export function useUnlockableSecureSecretEncryptorFactory() {
     return useCallback(
         () =>
             new UnlockableSecureSecretEncryptor(
-                account.secretEncryptor,
+                account.secureSecretEncryptor,
                 storage.sync.getSecureEncrypted
             ),
-        [account.secretEncryptor, storage.sync.getSecureEncrypted]
+        [account.secureSecretEncryptor, storage.sync.getSecureEncrypted]
     );
 }
