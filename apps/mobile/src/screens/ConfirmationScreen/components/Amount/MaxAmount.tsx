@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import type { BtcAssetAmount } from '@safely/core';
+import type { CryptoAssetAmount } from '@safely/core';
 import { useFiatEquivalent, useNumberFormatter } from '@safely/ux';
 
 import { Text } from '@mobile/shared/ui';
@@ -9,7 +9,7 @@ import { Text } from '@mobile/shared/ui';
 import { TransactionCell } from '../TransactionCell';
 
 export type MaxAmountProps = {
-    amount: BtcAssetAmount | undefined;
+    amount: CryptoAssetAmount | undefined;
 };
 
 export const MaxAmount = ({ amount }: MaxAmountProps) => {
@@ -35,7 +35,7 @@ export const MaxAmount = ({ amount }: MaxAmountProps) => {
     );
 };
 
-const MaxAmountValue = ({ amount }: { amount: BtcAssetAmount }) => {
+const MaxAmountValue = ({ amount }: { amount: CryptoAssetAmount }) => {
     const formatter = useNumberFormatter();
     const { data: fiat } = useFiatEquivalent(amount);
 

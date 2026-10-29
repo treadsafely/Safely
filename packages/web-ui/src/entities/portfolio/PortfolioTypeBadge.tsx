@@ -5,10 +5,16 @@ import { useTranslate } from '@safely/ux';
 
 import { Badge } from '../../shared';
 
-const LABEL_KEYS = {
-    [PortfolioType.WATCH_ONLY]: 'portfolio.watchOnly',
-    [PortfolioType.LEDGER]: 'portfolio.ledger'
-} as const;
+type TypeBadge = {
+    labelKey: string;
+    tone?: 'purple';
+};
+
+const TYPE_BADGES: Partial<Record<PortfolioType, TypeBadge>> = {
+    [PortfolioType.WATCH_ONLY]: { labelKey: 'portfolio.watchOnly' },
+    [PortfolioType.LEDGER]: { labelKey: 'portfolio.ledger' },
+    [PortfolioType.FLAME_DEVNET]: { labelKey: 'portfolio.flameDevnet', tone: 'purple' }
+};
 
 export type PortfolioTypeBadgeProps = {
     type: PortfolioType;
@@ -19,14 +25,15 @@ export const PortfolioTypeBadge: FC<PortfolioTypeBadgeProps> = props => {
     const { type, tone = 'neutral' } = props;
 
     const t = useTranslate();
+    const typeBadge = TYPE_BADGES[type];
 
-    if (type === PortfolioType.BIP39) {
+    if (!typeBadge) {
         return null;
     }
 
     return (
-        <Badge tone={tone} isUppercase>
-            {t(LABEL_KEYS[type])}
+        <Badge tone={typeBadge.tone ?? tone} isUppercase>
+            {t(typeBadge.labelKey)}
         </Badge>
     );
 };

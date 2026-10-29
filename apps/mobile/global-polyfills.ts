@@ -70,3 +70,4 @@ const { XHREventSource } = require('@safely/xhr-event-source');
  * Safely crypto implementations
  */
 require('./safely-crypto');
+require('./safely-flame');

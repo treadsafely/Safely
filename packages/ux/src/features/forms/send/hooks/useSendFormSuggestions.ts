@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { PortfolioNetworkType } from '@safely/core';
+import type { Recipient } from '@safely/core';
+import { BLOCKCHAIN_NAME, PortfolioNetworkType } from '@safely/core';
 
 import {
     isDerivableEntities,
@@ -17,7 +18,9 @@ export interface SendFormSuggestions {
     contactSuggestions: ContactSuggestion[];
 }
 
-export function useSendFormSuggestions(): SendFormSuggestions {
+export function useSendFormSuggestions(
+    blockchains: readonly Recipient['blockchain'][]
+): SendFormSuggestions {
     const t = useTranslate();
     const contacts = useContacts();
     const entities = useActivePortfolioEntities();
@@ -38,19 +41,25 @@ export function useSendFormSuggestions(): SendFormSuggestions {
             portfolios
                 .filter(p => p.networkType === networkType)
                 .flatMap(p =>
-                    mapPortfolioToSuggestions(p, activePortfolio, number =>
-                        t('portfolio.ledgerWallet', { number })
+                    blockchains.flatMap(blockchain =>
+                        mapPortfolioToSuggestions(
+                            p,
+                            activePortfolio,
+                            number => t('portfolio.ledgerWallet', { number }),
+                            blockchain
+                        )
                     )
                 ),
-        [portfolios, activePortfolio, networkType, t]
+        [portfolios, activePortfolio, networkType, t, blockchains]
     );
 
     const contactSuggestions = useMemo(
         () =>
-            networkType === PortfolioNetworkType.TESTNET
+            networkType === PortfolioNetworkType.TESTNET ||
+            !blockchains.includes(BLOCKCHAIN_NAME.BTC)
                 ? []
                 : contacts.flatMap(c => mapContactToSuggestions(c)),
-        [contacts, networkType]
+        [contacts, networkType, blockchains]
     );
 
     return { portfolioSuggestions, contactSuggestions };

@@ -42,6 +42,10 @@ export const darkTheme = {
                 background: 'rgba(38, 38, 43, 1)',
                 foreground: 'rgba(255, 255, 255, 1)'
             },
+            transparent: {
+                background: 'rgba(255, 255, 255, 0.2)',
+                foreground: 'rgba(255, 255, 255, 1)'
+            },
             destructive: {
                 background: 'rgba(255, 85, 85, 0.16)',
                 foreground: 'rgba(255, 85, 85, 1)'
@@ -75,6 +79,10 @@ export const darkTheme = {
             warningFilled: {
                 background: 'rgba(255, 179, 71, 1)',
                 foreground: 'rgba(0, 0, 0, 1)'
+            },
+            purple: {
+                background: 'rgba(146, 92, 255, 0.16)',
+                foreground: 'rgba(146, 92, 255, 1)'
             }
         },
         cell: {
@@ -108,6 +116,10 @@ export const darkTheme = {
             orange: 'rgba(255, 179, 71, 1)',
             blue: 'rgba(1, 120, 255, 1)'
         },
+        brand: {
+            bitcoin: 'rgba(247, 147, 26, 1)',
+            flame: 'rgba(250, 70, 25, 1)'
+        },
         chart: {
             line: 'rgba(247, 147, 26, 1)'
         },
@@ -126,7 +138,9 @@ export const darkTheme = {
             hover: 'rgba(255, 255, 255, 0.04)',
             constant: {
                 white: 'rgba(255, 255, 255, 1)',
-                black: 'rgba(0, 0, 0, 1)'
+                black: 'rgba(0, 0, 0, 1)',
+                translucentWhite: 'rgba(255, 255, 255, 0.08)',
+                translucentWhitePulse: 'rgba(255, 255, 255, 0.12)'
             }
         }
     }

@@ -1,24 +1,22 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { Estimation } from '@safely/core';
-import { btcBlockWaitingTimeMinutes } from '@safely/core';
 import { useFiatEquivalent, useNumberFormatter } from '@safely/ux';
 
-import { TransactionCell } from '@mobile/screens/ConfirmationScreen/components';
 import { TEST_ID } from '@mobile/shared/constants';
 import { Text } from '@mobile/shared/ui';
 
+import { TransactionCell } from '../TransactionCell';
 import { styles } from './TransactionFee.styles';
 
-export const TransactionFee: FC<{ estimation: Estimation | undefined; showDivider?: boolean }> = ({
-    estimation,
-    showDivider = true
-}) => {
+export const TransactionFee: FC<{
+    estimation: Estimation | undefined;
+    subvalue?: ReactNode;
+    showDivider?: boolean;
+}> = ({ estimation, subvalue, showDivider = true }) => {
     const { t } = useTranslation();
-
-    const targetBlock = estimation ? Math.max(estimation.txTargetBlock, 1) : undefined;
 
     return (
         <TransactionCell
@@ -30,15 +28,7 @@ export const TransactionFee: FC<{ estimation: Estimation | undefined; showDivide
                     <Text variant="bodyM" skeletonVariant="transparentElement" skeletonWidth={64} />
                 )
             }
-            subvalue={
-                <TransactionCell.Subvalue skeletonVariant="transparentElement" skeletonWidth={40}>
-                    {targetBlock !== undefined
-                        ? t('confirmation.networkFee.timeMinutes', {
-                              count: targetBlock * btcBlockWaitingTimeMinutes
-                          })
-                        : undefined}
-                </TransactionCell.Subvalue>
-            }
+            subvalue={subvalue}
             showDivider={showDivider}
         />
     );

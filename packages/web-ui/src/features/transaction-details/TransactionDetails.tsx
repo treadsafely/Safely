@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import { SPACE } from '@safely/core';
 import type { BtcActivityItem } from '@safely/ux';
-import { useLinking, useTransactionDetails, useTranslate } from '@safely/ux';
+import { useLinking, useBtcTransactionDetails, useTranslate } from '@safely/ux';
 import Copy16 from '@safely/ux/assets/icons/16/copy-16.svg?react';
 import Globe16 from '@safely/ux/assets/icons/16/globe-16.svg?react';
 import Xmark16 from '@safely/ux/assets/icons/16/xmark-16.svg?react';
@@ -23,7 +23,7 @@ export const TransactionDetails: FC<TransactionDetailsProps> = props => {
 
     const t = useTranslate();
     const { openURL } = useLinking();
-    const details = useTransactionDetails(activity);
+    const details = useBtcTransactionDetails(activity);
 
     return (
         <>
@@ -73,9 +73,7 @@ export const TransactionDetails: FC<TransactionDetailsProps> = props => {
                                 <TableCell.Label>{details.counterpartyLabel}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                <TableCell.Value>
-                                    {details.counterpartyAddressLabel}
-                                </TableCell.Value>
+                                <TableCell.Value>{details.counterpartyName}</TableCell.Value>
                             </TableCell.Column>
                         </TableCell>
 

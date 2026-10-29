@@ -72,7 +72,7 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
         if (event.key === 'Enter' && 'next' in view) {
-            view.next();
+            view.next?.();
         }
     };
 
@@ -112,17 +112,19 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
                         <span className={suffixStyles}>{symbol}</span>
                     </div>
 
-                    <button
-                        type="button"
-                        className={alternativeStyles}
-                        disabled={!hasPrice}
-                        onClick={() =>
-                            view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
-                        }
-                    >
-                        {alternativeAmount}
-                        {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
-                    </button>
+                    {alternativeAmount !== null && (
+                        <button
+                            type="button"
+                            className={alternativeStyles}
+                            disabled={!hasPrice}
+                            onClick={() =>
+                                view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
+                            }
+                        >
+                            {alternativeAmount}
+                            {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
+                        </button>
+                    )}
                 </div>
 
                 {asset !== undefined && <AssetIcon image={asset.image} size={ASSET_ICON_SIZE} />}

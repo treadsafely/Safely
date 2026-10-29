@@ -1,6 +1,6 @@
 import type {
-    BtcAssetAmount,
     Contact,
+    CryptoAssetAmount,
     CryptoAsset,
     NumberFormatter,
     PortfolioNetworkType,
@@ -12,6 +12,7 @@ import type {
     AmountInputType,
     AmountWithInputType,
     ContactSuggestion,
+    OwnAddresses,
     PortfolioSuggestion,
     SendFormErrors,
     SendFormInitialValues,
@@ -29,7 +30,9 @@ export interface CreateContactInput {
     }[];
 }
 
-export type FetchMaxValue = (recipient: Recipient) => Promise<BtcAssetAmount | undefined>;
+export type FetchMaxValue = (recipient: Recipient) => Promise<CryptoAssetAmount | undefined>;
+
+export type ActiveWallet = Pick<PortfolioSuggestion, 'id' | 'meta'>;
 
 export interface SendFormMachineInput {
     resolvedInitialValues: SendFormInitialValues | undefined;
@@ -38,7 +41,8 @@ export interface SendFormMachineInput {
     portfolioSuggestions: PortfolioSuggestion[];
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
-    activeWallet: PortfolioSuggestion;
+    activeWallet: ActiveWallet;
+    ownAddresses: OwnAddresses;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: () => boolean;
@@ -55,7 +59,7 @@ export interface SendFormMachineContext {
         recipient: Recipient | undefined;
         amount: AmountWithInputType<CryptoAsset> | undefined;
         asset: RatedCryptoAssetAmount | undefined;
-        maxValue: BtcAssetAmount | undefined;
+        maxValue: CryptoAssetAmount | undefined;
     };
     errors: SendFormErrors;
     suggestion: SendSuggestionState;
@@ -65,7 +69,8 @@ export interface SendFormMachineContext {
     portfolioSuggestions: PortfolioSuggestion[];
     contactSuggestions: ContactSuggestion[];
     ratedAssets: RatedCryptoAssetAmount[];
-    activeWallet: PortfolioSuggestion;
+    activeWallet: ActiveWallet;
+    ownAddresses: OwnAddresses;
     networkType: PortfolioNetworkType;
 
     shouldResetForm: SendFormMachineInput['shouldResetForm'];
@@ -84,6 +89,7 @@ export type SendFormEvent =
     | { type: 'PASTE_AMOUNT'; raw: string }
     | { type: 'SET_AMOUNT_INPUT_TYPE'; value: AmountInputType }
     | { type: 'SET_ASSET'; assetId: string }
+    | { type: 'SET_MEMO'; value: string }
     | { type: 'ENTER_MAX' }
     | { type: 'EXIT_MAX' }
     | { type: 'NEXT' }

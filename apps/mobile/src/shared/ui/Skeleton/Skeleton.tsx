@@ -12,12 +12,14 @@ import { useUnistyles } from 'react-native-unistyles';
 
 import { styles } from './Skeleton.styles';
 
+export type SkeletonVariant = 'transparentElement' | 'secondary' | 'constantWhite';
+
 type SkeletonProps = {
     width: number | 'auto';
     height: number | 'auto';
     borderRadius?: number;
     style?: ViewStyle;
-    variant?: 'transparentElement' | 'secondary';
+    variant?: SkeletonVariant;
 };
 
 const PULSE_DURATION = 600;
@@ -32,7 +34,7 @@ export const Skeleton = ({
     const { theme } = useUnistyles();
     const progress = useSharedValue(0);
 
-    const colors = {
+    const colors: Record<SkeletonVariant, { start: string; end: string }> = {
         transparentElement: {
             start: theme.colors.other.transparentElement,
             end: 'rgba(255, 255, 255, 0.12)'
@@ -40,6 +42,10 @@ export const Skeleton = ({
         secondary: {
             start: theme.colors.background.secondary,
             end: theme.colors.background.tertiary
+        },
+        constantWhite: {
+            start: theme.colors.other.constant.translucentWhite,
+            end: theme.colors.other.constant.translucentWhitePulse
         }
     };
 

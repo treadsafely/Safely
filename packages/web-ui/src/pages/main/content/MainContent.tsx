@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
-import type { ActivityItem } from '@safely/ux';
+import type { BtcHistoryItem } from '@safely/ux';
 import { useActivePortfolio } from '@safely/ux';
 
 import { Balance } from './Balance';
@@ -15,7 +15,7 @@ export type MainContentProps = {
     onSend: () => void;
     onReceive: () => void;
     onScan: () => void;
-    onSelectActivity: (activity: ActivityItem) => void;
+    onSelectActivity: (activity: BtcHistoryItem) => void;
     onPortfolioChange: () => void;
 };
 

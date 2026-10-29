@@ -56,15 +56,15 @@ Nothing in lint or CI reads a filename, so the case is on review:
   `TableCell.tsx`, `TableCell.styles.ts`, `Screen.context.ts`, `ConfirmationScreen.types.ts`. A
   module whose single export is a class or a React context takes the same form
   (`DmkLoggerAdapter.ts`, `BannerContext.ts`).
-- **camelCase** for a module named after the hook it exports: `useHistoryGroups.ts`,
-  `useTransactionDetails.ts`. One hook per file — once a second export appears the name no longer
+- **camelCase** for a module named after the hook it exports: `useBtcHistoryGroups.ts`,
+  `useBtcTransactionDetails.ts`. One hook per file — once a second export appears the name no longer
   describes the file, and it becomes kebab-case.
 - **kebab-case** for everything else: pure logic, builders, view models, schemas, constants
   (`transaction-details-view.ts`, `btc-transaction-status.ts`, `date-groups.ts`,
   `btc-derivation-path.ts`), the Panda recipes (`app-layout.recipe.ts`), and the fixed module names
   `index.ts`, `keys.ts`, `types.ts`, `api.ts`.
 - Directories split the same way: a component owns a PascalCase directory (`shared/ui/TableCell/`,
-  `screens/TransactionScreen/`), a slice a kebab-case one (`features/transaction-details/`,
+  `screens/BtcTransactionScreen/`), a slice a kebab-case one (`features/transaction-details/`,
   `features/add-wallet/`).
 
 `packages/core` prefixes an interface module with `I-` and keeps the rest kebab (`I-btc-wallet.ts`);
@@ -79,6 +79,30 @@ sweep, and never together with a behaviour change, where the diff hides the move
 `any` is banned, and unknown input (API responses, storage contents) is `unknown` parsed by a zod
 schema — zod is available in every package through `catalog:`. The ban is a lint error; reaching for
 zod rather than a cast is not.
+
+## No chained ternaries
+
+A ternary carries one `?`. When a value depends on more than one condition, don't chain them
+(`a ? x : b ? y : z`) — that reads as a puzzle and the next case gets bolted on as a third `?`.
+Use instead:
+
+- **a config structure** when the choice is a lookup — a `Record`/object keyed by the discriminant
+  (`TYPE_BADGES[portfolio.type]`, `NETWORK_BADGES` behind `resolvePortfolioNetworkBadge`), so adding
+  a case is adding an entry;
+- **a named variable or a small function with early returns** when the conditions are not a single
+  key (`byQtyDescending` in `flame-estimator.ts`, `resolvePortfolioNetworkBadge`).
+
+In JSX the same applies: a chain of `cond ? <A/> : other ? <B/> : <C/>` becomes a lookup or a child
+component that returns early. Existing chains are not swept; don't add new ones.
+
+## A path that must not run throws, never returns stand-in data
+
+When a dependency has to be supplied but the caller guarantees it is never used — a callback a
+preview never calls, a port a read-only path never reaches — implement it with `throw new Error(…)`
+naming why it is unreachable, not with a mock value (a random key, an empty list, `0`). A stand-in
+value turns the day the guarantee breaks into silently wrong data; a throw turns it into an error at
+the call that broke it. If the path *is* reached, it is not a stand-in: give it a real
+implementation, or change the type so the dependency is not needed there at all.
 
 ## Equality
 

@@ -6,6 +6,7 @@ import type { Portfolio } from '@safely/core';
 import { PortfolioType } from '@safely/core';
 import {
     isDerivableEntities,
+    isDerivablePortfolio,
     useActivePortfolioEntities,
     useReorderPortfolios,
     useSetActivePortfolio
@@ -24,8 +25,7 @@ interface PortfoliosListProps {
 }
 
 const estimateHeight = (portfolio: Portfolio): number => {
-    const count =
-        portfolio.type === PortfolioType.WATCH_ONLY ? 1 : portfolio.getDerivations().length;
+    const count = isDerivablePortfolio(portfolio) ? portfolio.getDerivations().length : 1;
     const isGroup = portfolio.type === PortfolioType.LEDGER || count > 1;
 
     return isGroup ? ROW_HEIGHT * (count + 1) : ROW_HEIGHT;

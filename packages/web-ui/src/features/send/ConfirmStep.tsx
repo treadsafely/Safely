@@ -1,10 +1,11 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
-import type { BtcAssetAmount, Estimation, SendResult } from '@safely/core';
+import type { CryptoAssetAmount, Estimation, SendResult } from '@safely/core';
 import { btcBlockWaitingTimeMinutes, ellipsisMiddle } from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
+    orderAmounts,
     useActiveBtcWallet,
     useActiveWalletMeta,
     useEstimateAssetTransfer,
@@ -55,7 +56,7 @@ const FeeValue: FC<{ estimation: Estimation }> = ({ estimation }) => {
     );
 };
 
-const MaxAmountLabel: FC<{ amount: BtcAssetAmount }> = ({ amount }) => {
+const MaxAmountLabel: FC<{ amount: CryptoAssetAmount }> = ({ amount }) => {
     const formatter = useNumberFormatter();
     const { data: fiat } = useFiatEquivalent(amount);
 
@@ -63,6 +64,42 @@ const MaxAmountLabel: FC<{ amount: BtcAssetAmount }> = ({ amount }) => {
         <>
             <TableCell.Label>{amount.format(formatter)}</TableCell.Label>
             {fiat != null && <TableCell.Label>{fiat.format(formatter)}</TableCell.Label>}
+        </>
+    );
+};
+
+const AmountValue: FC<{ result: SendFormResult; maxAmount: CryptoAssetAmount | undefined }> = ({
+    result,
+    maxAmount
+}) => {
+    const t = useTranslate();
+    const formatter = useNumberFormatter();
+
+    if (result.isMax) {
+        return (
+            <>
+                <TableCell.Value>{t('confirmation.allAvailableBalance')}</TableCell.Value>
+                {maxAmount ? (
+                    <MaxAmountLabel amount={maxAmount} />
+                ) : (
+                    <Skeleton width={64} height={20} />
+                )}
+            </>
+        );
+    }
+
+    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter, { fullPrecision: true });
+    const fiatAmount = result.amount.fiatAssetAmount?.format(formatter) ?? null;
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        result.amount.inputType,
+        cryptoAmount,
+        fiatAmount
+    );
+
+    return (
+        <>
+            <TableCell.Value>{primaryAmount}</TableCell.Value>
+            {secondaryAmount !== null && <TableCell.Label>{secondaryAmount}</TableCell.Label>}
         </>
     );
 };
@@ -82,7 +119,6 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { result, onSent, onClose } = props;
 
     const t = useTranslate();
-    const formatter = useNumberFormatter();
     const walletMeta = useActiveWalletMeta();
     const wallet = useActiveBtcWallet();
     const explorerFactory = useExplorerFactory();
@@ -99,11 +135,11 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const parseSendError = useParseSendError();
     const parseEstimateError = useParseEstimateError();
 
-    const targetBlock = transaction ? Math.max(transaction.estimation.txTargetBlock, 1) : undefined;
-
-    const cryptoAmount = result.amount.cryptoAssetAmount.format(formatter, { fullPrecision: true });
-    const fiatAmount = result.amount.fiatAssetAmount.format(formatter);
-    const isFiatPrimary = result.amount.inputType === 'fiat';
+    const targetBlock =
+        transaction && 'txTargetBlock' in transaction.estimation
+            ? Math.max(transaction.estimation.txTargetBlock, 1)
+            : undefined;
+    const explorerUrl = sendResult?.toExplorerUrl(explorerFactory) ?? null;
 
     const handleSend = async (): Promise<void> => {
         setSendError(null);
@@ -208,27 +244,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                 <TableCell.Label>{t('confirmation.amount')}</TableCell.Label>
                             </TableCell.Column>
                             <TableCell.Column>
-                                {result.isMax ? (
-                                    <>
-                                        <TableCell.Value>
-                                            {t('confirmation.allAvailableBalance')}
-                                        </TableCell.Value>
-                                        {transaction ? (
-                                            <MaxAmountLabel amount={transaction.request.amount} />
-                                        ) : (
-                                            <Skeleton width={64} height={20} />
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <TableCell.Value>
-                                            {isFiatPrimary ? fiatAmount : cryptoAmount}
-                                        </TableCell.Value>
-                                        <TableCell.Label>
-                                            {isFiatPrimary ? cryptoAmount : fiatAmount}
-                                        </TableCell.Label>
-                                    </>
-                                )}
+                                <AmountValue
+                                    result={result}
+                                    maxAmount={transaction?.request.amount}
+                                />
                             </TableCell.Column>
                         </TableCell>
 
@@ -289,18 +308,16 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                             </TableCell.Value>
                                         </TableCell.Column>
                                         <TableCell.Actions>
-                                            <TableCell.Action
-                                                aria-label={t(
-                                                    'history.transactionInfo.openInExplorer'
-                                                )}
-                                                onClick={() =>
-                                                    openURL(
-                                                        sendResult.toExplorerUrl(explorerFactory)
-                                                    )
-                                                }
-                                            >
-                                                <Icon asset={Globe16} tone="inherit" />
-                                            </TableCell.Action>
+                                            {explorerUrl && (
+                                                <TableCell.Action
+                                                    aria-label={t(
+                                                        'history.transactionInfo.openInExplorer'
+                                                    )}
+                                                    onClick={() => openURL(explorerUrl)}
+                                                >
+                                                    <Icon asset={Globe16} tone="inherit" />
+                                                </TableCell.Action>
+                                            )}
                                             <TableCell.Action
                                                 aria-label={t('actions.copy')}
                                                 onClick={copy}

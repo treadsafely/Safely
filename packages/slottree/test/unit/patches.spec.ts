@@ -26,6 +26,8 @@ type RuntimeDraft = {
     move(from: readonly string[], to: readonly string[]): RuntimeDraft;
     updateEach(map: (draft: RuntimeDraft) => unknown): RuntimeDraft;
     updateEach(path: readonly string[], map: (draft: RuntimeDraft) => unknown): RuntimeDraft;
+    deleteEach(match: (value: unknown) => boolean): RuntimeDraft;
+    deleteEach(path: readonly string[], match: (value: unknown) => boolean): RuntimeDraft;
     when(value: RuntimeMatcher, map: (draft: RuntimeDraft) => unknown): RuntimeDraft;
     when(
         path: readonly string[],
@@ -474,6 +476,96 @@ describe('PatchDraft runtime', () => {
         });
     });
 
+    describe('deleteEach', () => {
+        it('physically removes matching ordered array items and keeps the rest untouched', () => {
+            const slot = sourceSlot({
+                items: [
+                    { __setId: 'keep', kind: 'keep' },
+                    { __setId: 'drop', kind: 'drop' }
+                ]
+            });
+            const items = expectOrderedArray(slot.v.items, 'items');
+            const kept = items.v.keep;
+
+            draftOf(slot).deleteEach(['items'], value => isKind(value, 'drop'));
+
+            expect(stripSlot(slot)).toEqual({ items: [{ __setId: 'keep', kind: 'keep' }] });
+            expect(items.v.drop).toBeUndefined();
+            expect(items.v.keep).toBe(kept);
+            expect(items).toMatchObject(clock());
+        });
+
+        it('physically removes matching record children', () => {
+            const slot = sourceSlot({
+                users: {
+                    alice: { kind: 'keep' },
+                    bob: { kind: 'drop' }
+                }
+            });
+
+            draftOf(slot).deleteEach(['users'], value => isKind(value, 'drop'));
+
+            const users = expectContainer(slot.v.users, 'users');
+            expect(stripSlot(slot)).toEqual({ users: { alice: { kind: 'keep' } } });
+            expect(users.v.bob).toBeUndefined();
+        });
+
+        it('uses the root path when path is omitted', () => {
+            const slot = sourceSlot({
+                alice: { kind: 'keep' },
+                bob: { kind: 'drop' }
+            });
+
+            draftOf(slot).deleteEach(value => isKind(value, 'drop'));
+
+            expect(stripSlot(slot)).toEqual({ alice: { kind: 'keep' } });
+        });
+
+        it('keeps tombstone items without passing them to the matcher', () => {
+            const slot = sourceSlot({
+                items: [{ __setId: 'live', kind: 'drop' }]
+            });
+            const items = expectOrderedArray(slot.v.items, 'items');
+            items.v.deleted = createTombstoneSlot(8, 'device-2');
+            const seen: unknown[] = [];
+
+            draftOf(slot).deleteEach(['items'], value => {
+                seen.push(value);
+                return true;
+            });
+
+            expect(seen).toEqual([{ __setId: 'live', kind: 'drop' }]);
+            expect(items.v.live).toBeUndefined();
+            expect(items.v.deleted).toEqual(createTombstoneSlot(8, 'device-2'));
+        });
+
+        it('passes the matcher a copy, so a mutating matcher cannot change the tree', () => {
+            const slot = sourceSlot({
+                items: [{ __setId: 'item', meta: { kind: 'keep' } }],
+                users: { alice: { meta: { kind: 'keep' } } }
+            });
+            const mutate = (value: unknown) => {
+                (value as { meta: { kind: string } }).meta.kind = 'changed';
+                return false;
+            };
+
+            draftOf(slot).deleteEach(['items'], mutate).deleteEach(['users'], mutate);
+
+            expect(stripSlot(slot)).toEqual({
+                items: [{ __setId: 'item', meta: { kind: 'keep' } }],
+                users: { alice: { meta: { kind: 'keep' } } }
+            });
+        });
+
+        it('throws when target is not a collection', () => {
+            const draft = draftOf(sourceSlot({ value: 'atomic' }));
+
+            expect(() => draft.deleteEach(['value'], () => true)).toThrow(
+                'deleteEach target must be an ordered array or record slot'
+            );
+        });
+    });
+
     describe('when', () => {
         it('applies the mapper when the value at path matches', () => {
             const slot = sourceSlot({
@@ -560,7 +652,8 @@ function sourceSlot(value: JsonValue): ContainerSlot {
 }
 
 function draftOf(slot: ContainerSlot): RuntimeDraft {
-    return createPatchDraft(PatchCursor.root(slot));
+    // the typed deleteEach takes a type guard; the runtime matcher is any predicate
+    return createPatchDraft(PatchCursor.root(slot)) as unknown as RuntimeDraft;
 }
 
 function clock(): { t: number; a: string } {
@@ -591,4 +684,10 @@ function expectOrderedArray(slot: Slot | undefined, label: string) {
     }
 
     return slot;
+}
+
+function isKind(value: unknown, kind: string): boolean {
+    return (
+        typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === kind
+    );
 }

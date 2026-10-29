@@ -1,13 +1,13 @@
 import type {
-    ActivityItem,
-    ActivityPage,
+    BtcHistoryItem,
+    BtcHistoryPage,
     BtcActivityPage,
-    IActivityPageParam,
+    IBtcHistoryPageParam,
     OrdersActivityPage
 } from './types';
 import { isBtcActivityItem, isOrderActivityItem } from './types';
 
-export const INITIAL_ACTIVITY_PAGE_PARAM: IActivityPageParam = {
+export const INITIAL_BTC_HISTORY_PAGE_PARAM: IBtcHistoryPageParam = {
     fetch: 'both',
     btcPage: 1,
     ordersCursor: null
@@ -17,7 +17,7 @@ function minTimestamp(items: { timestamp: number }[]): number {
     return items.reduce((min, item) => Math.min(min, item.timestamp), Infinity);
 }
 
-export function getSourceFrontiers(items: ActivityItem[]): { btc: number; orders: number } {
+export function getSourceFrontiers(items: BtcHistoryItem[]): { btc: number; orders: number } {
     const dated = items.filter(item => item.timestamp > 0);
     return {
         btc: minTimestamp(dated.filter(isBtcActivityItem)),
@@ -26,9 +26,9 @@ export function getSourceFrontiers(items: ActivityItem[]): { btc: number; orders
 }
 
 export function getNextActivityPageParam(
-    lastPage: ActivityPage,
-    allPages: ActivityPage[]
-): IActivityPageParam | undefined {
+    lastPage: BtcHistoryPage,
+    allPages: BtcHistoryPage[]
+): IBtcHistoryPageParam | undefined {
     const carry = { btcPage: lastPage.btcNextPage, ordersCursor: lastPage.ordersNextCursor };
 
     if (carry.btcPage === null && carry.ordersCursor === null) {
@@ -47,10 +47,10 @@ export function getNextActivityPageParam(
 }
 
 export function buildActivityPage(input: {
-    pageParam: IActivityPageParam;
+    pageParam: IBtcHistoryPageParam;
     btcResult: BtcActivityPage | null;
     ordersResult: OrdersActivityPage | 'failed' | null;
-}): ActivityPage {
+}): BtcHistoryPage {
     const { pageParam, btcResult, ordersResult } = input;
 
     const btcNextPage = btcResult

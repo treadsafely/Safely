@@ -1,49 +1,33 @@
-import { useIsFocused, useScrollToTop } from '@react-navigation/native';
-import { useCallback, useMemo, useRef } from 'react';
+import { useScrollToTop } from '@react-navigation/native';
+import type { RefObject } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
-import {
-    type ActivityItem as ActivityItemData,
-    useHistoryGroups,
-    useHistoryPolling
-} from '@safely/ux';
+import type { HistoryGroupView } from '@safely/ux';
 
 import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
 import { List, Screen, Text } from '@mobile/shared/ui';
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
 
 import { HistoryEmptyPlaceholder } from '../HistoryEmptyPlaceholder';
-import { NewTransactionsBubble, useNewTransactionsBubble } from './components';
+import type { useNewTransactionsBubble } from './components';
+import { NewTransactionsBubble } from './components';
 import { styles } from './HistoryList.styles';
-import { useScrollToTopOnNewBroadcastedTx } from './hooks';
 import { type HistoryRowItem, buildHistoryRows } from './utils/rows';
 
-type HistoryListProps = {
-    onNavigateToActivityItem: (activity: ActivityItemData) => void;
+type HistoryListProps<TActivity> = {
+    listRef: RefObject<ListRef<HistoryRowItem> | null>;
+    bubble: ReturnType<typeof useNewTransactionsBubble>;
+    groups: HistoryGroupView<TActivity>[] | undefined;
+    fetchNextPage: () => unknown;
+    onNavigateToActivityItem: (activity: TActivity) => void;
 };
 
-export const HistoryList = (props: HistoryListProps) => {
-    const { onNavigateToActivityItem } = props;
-
-    const isFocused = useIsFocused();
-    const listRef = useRef<ListRef<HistoryRowItem>>(null);
-    const { groups, fetchNextPage } = useHistoryGroups();
+export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>) => {
+    const { listRef, bubble, groups, fetchNextPage, onNavigateToActivityItem } = props;
     const windowHeight = useWindowDimensions().height;
 
     useScrollToTop(listRef);
-    useScrollToTopOnNewBroadcastedTx(listRef);
-
-    const {
-        scrollHandler,
-        mode: bubbleMode,
-        onPress: onBubblePress,
-        show: showBubble
-    } = useNewTransactionsBubble({
-        listRef,
-        topThreshold: 44
-    });
-
-    useHistoryPolling({ isEnabled: isFocused, onNewActivity: showBubble });
 
     const getItemType = useCallback((item: HistoryRowItem) => item.type, []);
 
@@ -79,7 +63,10 @@ export const HistoryList = (props: HistoryListProps) => {
     if (!rows) {
         return (
             <List>
-                <List.Title containerStyle={styles.titleContainer} skeleton />
+                <List.Title
+                    containerStyle={styles.titleContainer}
+                    skeletonVariant="transparentElement"
+                />
                 <List.Group style={styles.contentContainer} variant="separated">
                     <ActivityItemSkeleton />
                     <ActivityItemSkeleton />
@@ -107,10 +94,10 @@ export const HistoryList = (props: HistoryListProps) => {
                 onEndReachedThreshold={0.5}
                 ItemSeparatorComponent={renderSeparator}
                 renderItem={renderItem}
-                onScroll={scrollHandler}
+                onScroll={bubble.scrollHandler}
                 scrollEventThrottle={50}
             />
-            <NewTransactionsBubble mode={bubbleMode} onPress={onBubblePress} />
+            <NewTransactionsBubble mode={bubble.mode} onPress={bubble.onPress} />
         </View>
     );
 };

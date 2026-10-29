@@ -5,7 +5,7 @@ import { BTC_ASSET } from '@safely/core';
 import {
     useIsActivePortfolioTestnet,
     useIsActivePortfolioWatchOnly,
-    useReceiveInfo,
+    useBtcReceiveInfo,
     useTranslate
 } from '@safely/ux';
 
@@ -32,7 +32,7 @@ export type ReceiveModalProps = {
 
 export const ReceiveModal: FC<ReceiveModalProps> = ({ onClose }) => {
     const t = useTranslate();
-    const { displayAddress } = useReceiveInfo();
+    const { displayAddress } = useBtcReceiveInfo();
     const { isCopied, copy } = useCopyToClipboard();
     const isTestnet = useIsActivePortfolioTestnet();
     const isWatchOnly = useIsActivePortfolioWatchOnly();

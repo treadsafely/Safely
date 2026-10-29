@@ -12,6 +12,7 @@ export interface SendFormDispatchers {
     pasteAmount: (raw: string) => void;
     setAmountInputType: (value: AmountInputType) => void;
     setAsset: (assetId: string) => void;
+    setMemo: (value: string) => void;
     enterMax: () => void;
     exitMax: () => void;
     selectSuggestion: (id: string, visible: SendSuggestions) => void;
@@ -29,6 +30,7 @@ export function useSendFormDispatchers(send: Send): SendFormDispatchers {
             pasteAmount: raw => send({ type: 'PASTE_AMOUNT', raw }),
             setAmountInputType: value => send({ type: 'SET_AMOUNT_INPUT_TYPE', value }),
             setAsset: assetId => send({ type: 'SET_ASSET', assetId }),
+            setMemo: value => send({ type: 'SET_MEMO', value }),
             enterMax: () => send({ type: 'ENTER_MAX' }),
             exitMax: () => send({ type: 'EXIT_MAX' }),
             selectSuggestion: (id, visible) => send({ type: 'SELECT_SUGGESTION', id, visible }),

@@ -1,7 +1,11 @@
-import type { CryptoAsset, FiatAsset, PriceApi } from '@safely/core';
-import { Rate, toBig } from '@safely/core';
+import type { CryptoAsset, CryptoFiatRate, FiatAsset, PriceApi } from '@safely/core';
+import { assertUnreachable, BLOCKCHAIN_NAME, Rate, toBig } from '@safely/core';
 
-export async function getRateFn(priceApi: PriceApi, asset: CryptoAsset, fiat: FiatAsset) {
+async function fetchBtcRate(
+    priceApi: PriceApi,
+    asset: CryptoAsset,
+    fiat: FiatAsset
+): Promise<CryptoFiatRate> {
     const response = await priceApi.getCurrentPrice({
         token: 'native',
         blockchain: 'bitcoin',
@@ -16,4 +20,23 @@ export async function getRateFn(priceApi: PriceApi, asset: CryptoAsset, fiat: Fi
         String(response.diff_24h),
         undefined
     );
+}
+
+export async function fetchMarketRate(
+    priceApi: PriceApi,
+    asset: CryptoAsset,
+    fiat: FiatAsset,
+    isTestnet: boolean
+): Promise<CryptoFiatRate | null> {
+    if (isTestnet) return null;
+
+    const blockchain = asset.id.blockchain;
+    switch (blockchain) {
+        case BLOCKCHAIN_NAME.BTC:
+            return fetchBtcRate(priceApi, asset, fiat);
+        case BLOCKCHAIN_NAME.FLAME:
+            return null;
+        default:
+            assertUnreachable(blockchain);
+    }
 }

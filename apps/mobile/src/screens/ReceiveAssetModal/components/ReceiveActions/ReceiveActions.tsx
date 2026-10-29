@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share } from 'react-native';
 
-import { Actions, ArrowTop28, Copy28 } from '@mobile/shared/ui';
+import { Actions, Copy28, Share28 } from '@mobile/shared/ui';
 
 import { useReceiveCopy } from '../ReceiveCopyToastProvider';
 import { styles } from './ReceiveActions.styles';
@@ -34,11 +34,13 @@ export const ReceiveActions = (props: ReceiveActionsProps) => {
                 title={t('receiveAsset.actions.copy')}
                 icon={Copy28}
                 onPress={handleCopyAddress}
+                variant="transparent"
             />
             <Actions.Button
                 title={t('receiveAsset.actions.share')}
-                icon={ArrowTop28}
+                icon={Share28}
                 onPress={handleShareAddress}
+                variant="transparent"
             />
         </Actions>
     );

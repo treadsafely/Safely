@@ -175,6 +175,22 @@ export interface PatchDraft<T> {
         f: (v: PatchDraft<CollectionItem<PathValue<T, P>>>) => PatchDraft<Output>
     ): PatchDraft<SetPath<T, P, CollectionWithItem<PathValue<T, P>, Output>>>;
 
+    deleteEach<Removed extends CollectionItem<T>>(
+        match: (item: DeepReadonly<CollectionItem<T>>) => item is DeepReadonly<Removed>
+    ): PatchDraft<CollectionWithItem<T, Exclude<CollectionItem<T>, Removed>>>;
+    deleteEach<const P extends readonly string[], Removed extends CollectionItem<PathValue<T, P>>>(
+        path: P & PatchPath<T>,
+        match: (
+            item: DeepReadonly<CollectionItem<PathValue<T, P>>>
+        ) => item is DeepReadonly<Removed>
+    ): PatchDraft<
+        SetPath<
+            T,
+            P,
+            CollectionWithItem<PathValue<T, P>, Exclude<CollectionItem<PathValue<T, P>>, Removed>>
+        >
+    >;
+
     when<
         const P extends readonly string[],
         const V extends Extract<PathValue<T, P>, JsonValue>,

@@ -19,7 +19,7 @@ import type { tDevicesLatest, tDevicesRest } from '../../src/device-manager/devi
 import { DevicesVersions } from '../../src/device-manager/device-storage-schema';
 import type { ITreeStorage } from '../../src/I-storage';
 import type { Logger } from '../../src/logger/logger';
-import { SecretEncryptor } from '../../src/secret-encryptor';
+import { SecureSecretEncryptor } from '../../src/secret-encryptor';
 import type { SyncContainer } from '../../src/sync-container';
 import { SnapshotSender } from '../../src/sync-operations/snapshot-sender';
 import { SyncOperations } from '../../src/sync-operations/sync-operations';
@@ -111,7 +111,7 @@ export async function createMockSyncContainer<Latest extends StorageVersion, Res
         crdtController
     );
 
-    const secretEncryptor = new SecretEncryptor(keyServiceFactory);
+    const secureSecretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
 
     return {
         versions,
@@ -141,6 +141,6 @@ export async function createMockSyncContainer<Latest extends StorageVersion, Res
         accountsApi,
         snapshotApi,
         snapshotSse,
-        secretEncryptor
+        secureSecretEncryptor
     };
 }

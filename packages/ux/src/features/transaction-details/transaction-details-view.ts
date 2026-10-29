@@ -1,85 +1,70 @@
-import type { NumberFormatter } from '@safely/core';
-import { SPACE, ellipsisMiddle } from '@safely/core';
+import { ellipsisMiddle } from '@safely/core';
 
-import type { TransactionDetailsView, TransactionStatusView } from './types';
-import type { BtcActivityItem } from '../../entities';
-import { isBtcTransactionPending } from '../../entities';
+import type { TransactionDetailsView } from './types';
 import type { DateFormatter, TranslateFn } from '../../shared';
-import type { AmountUnit } from '../amount-display';
-import { resolveSentAmount } from '../amount-display';
+import type { KnownCounterparties } from '../activity-display';
+import {
+    counterpartyLabelOf,
+    resolveActivityCounterparty,
+    transactionTitleKey
+} from '../activity-display';
 
-export type TransactionDetailsContext = {
-    t: TranslateFn;
-    confirmedAtFormatter: DateFormatter;
-    numberFormatter: NumberFormatter;
-    showFullSentAmount: boolean;
-    amountOrder: AmountUnit;
-    status: TransactionStatusView;
-    explorerUrl: string;
-};
+export const CONFIRMED_AT_FORMAT = {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+} as const;
 
-const ADDRESS_ELLIPSIS_CHARS = 6;
+export const STATUS_DATE_FORMAT = {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+} as const;
+
 const TXID_ELLIPSIS_CHARS = 8;
 
-export function buildTransactionDetailsView(
-    activity: BtcActivityItem,
-    context: TransactionDetailsContext
-): TransactionDetailsView {
-    const { transaction } = activity;
-    const { isInitiator, fee, rate } = transaction;
-    const { t, numberFormatter } = context;
+type TransactionDetailsSummary = Pick<
+    TransactionDetailsView,
+    | 'title'
+    | 'confirmedAtLabel'
+    | 'isInitiator'
+    | 'counterpartyLabel'
+    | 'counterpartyAddress'
+    | 'counterpartyName'
+    | 'txid'
+    | 'txidLabel'
+>;
 
-    const isPending = isBtcTransactionPending(transaction.raw);
-
-    const { amount, isFullPrecision } = resolveSentAmount({
-        isInitiator,
-        value: transaction.value,
-        fee: fee?.amount,
-        showFullSentAmount: context.showFullSentAmount
-    });
-
-    const formattedValue = amount.format(numberFormatter, { fullPrecision: isFullPrecision });
-    const formattedFiat = rate
-        ? amount.convert(rate).format(numberFormatter, { currencyDisplay: 'code' })
-        : null;
-    const isFiatFirst = context.amountOrder === 'fiat' && formattedFiat !== null;
-
-    const counterpartyAddress = isInitiator ? transaction.toAddress : transaction.fromAddress;
+export function buildTransactionDetailsSummary(
+    transaction: {
+        isInitiator: boolean;
+        isPending: boolean;
+        timestamp: number | null;
+        counterpartyAddress: string | null;
+        txid: string;
+    },
+    context: KnownCounterparties & { t: TranslateFn; confirmedAtFormatter: DateFormatter }
+): TransactionDetailsSummary {
+    const { isInitiator, isPending, timestamp, counterpartyAddress, txid } = transaction;
+    const { t } = context;
 
     return {
-        title: isInitiator
-            ? t(isPending ? 'history.transactionInfo.sending' : 'history.transactionInfo.sent')
-            : t(
-                  isPending
-                      ? 'history.transactionInfo.receiving'
-                      : 'history.transactionInfo.received'
-              ),
-        confirmedAtLabel: isPending
-            ? null
-            : context.confirmedAtFormatter.formatWithNonCurrentYear(activity.timestamp),
+        title: t(transactionTitleKey({ isInitiator, isPending })),
+        confirmedAtLabel:
+            isPending || timestamp === null
+                ? null
+                : context.confirmedAtFormatter.formatWithNonCurrentYear(timestamp),
         isInitiator,
-        assetImage: transaction.value.asset.image,
-        amountSign: isInitiator ? '−' : '+',
-        primaryAmount: isFiatFirst ? formattedFiat : formattedValue,
-        secondaryAmount: isFiatFirst
-            ? formattedValue
-            : formattedFiat && `≈${SPACE.THSP}${formattedFiat}`,
         counterpartyLabel: isInitiator
             ? t('history.transactionInfo.recipient')
             : t('history.transactionInfo.sender'),
         counterpartyAddress,
-        counterpartyAddressLabel: ellipsisMiddle(counterpartyAddress, ADDRESS_ELLIPSIS_CHARS),
-        status: context.status,
-        fee:
-            rate && fee
-                ? {
-                      formattedFiat: fee.amount.convert(rate).format(numberFormatter),
-                      formattedValue: fee.amount.format(numberFormatter)
-                  }
-                : null,
-        txid: transaction.raw.txid,
-        txidLabel: ellipsisMiddle(transaction.raw.txid, TXID_ELLIPSIS_CHARS),
-        explorerUrl: context.explorerUrl,
-        hasFiatRateNote: rate !== null
+        counterpartyName: counterpartyAddress
+            ? counterpartyLabelOf(resolveActivityCounterparty(counterpartyAddress, context))
+            : t('history.transactionInfo.unknown'),
+        txid,
+        txidLabel: ellipsisMiddle(txid, TXID_ELLIPSIS_CHARS)
     };
 }

@@ -6,7 +6,7 @@ import { useScanQrScheme } from '@safely/ux';
 import type { DisclosureProps } from '../../shared';
 import { useDisclosure } from '../../shared';
 
-const SCAN_SCHEMES = ['btc-transfer'] as const;
+const SCAN_SCHEMES = ['btc-transfer', 'flame-transfer'] as const;
 
 export function useSendFlow(props: DisclosureProps) {
     const { isOpen, onOpen, onClose } = useDisclosure(props);

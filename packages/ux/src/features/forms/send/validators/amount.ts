@@ -1,5 +1,11 @@
-import type { CryptoAsset, NumberFormatter, RatedCryptoAssetAmount } from '@safely/core';
-import { BTC_ASSET, CryptoAssetAmount, FiatAssetAmount } from '@safely/core';
+import type {
+    BtcAsset,
+    CryptoAsset,
+    FlameAsset,
+    NumberFormatter,
+    RatedCryptoAssetAmount
+} from '@safely/core';
+import { BTC_ASSET, CryptoAssetAmount, FiatAssetAmount, FLAME_ASSET } from '@safely/core';
 
 import { SendFormError } from '../errors';
 import type {
@@ -9,6 +15,23 @@ import type {
     AmountWithOutputType
 } from '../types';
 import { DEFAULT_FIAT_DECIMALS } from '../utils';
+
+export function isBtcAmountWithInputType(
+    amount: AmountWithInputType<CryptoAsset>
+): amount is AmountWithInputType<BtcAsset> {
+    return amount.cryptoAssetAmount.asset.id.isEq(BTC_ASSET.id);
+}
+
+export function isFlameAmountWithInputType(
+    amount: AmountWithInputType<CryptoAsset>
+): amount is AmountWithInputType<FlameAsset> {
+    return amount.cryptoAssetAmount.asset.id.isEq(FLAME_ASSET.id);
+}
+
+// a zero price blocks fiat input too: a fiat amount can't be converted into the asset
+export function hasFiatPrice(asset: RatedCryptoAssetAmount | undefined): boolean {
+    return !!asset?.price && !asset.price.value.eq(0);
+}
 
 // TODO CRITICAL for multichain: Get rid of default decimals
 export function resolveAmountDecimals(
@@ -27,11 +50,6 @@ export function formatAmount(
     formatter: NumberFormatter
 ): AmountWithOutputType | null {
     const { amount, price } = asset;
-
-    if (!price) {
-        return null;
-    }
-
     const decimals = resolveAmountDecimals(inputType, asset);
     const { formatted, parsed: parsedAmount } = formatter.parseInput(value, decimals);
 
@@ -40,50 +58,62 @@ export function formatAmount(
             asset: amount.asset,
             relativeAmount: parsedAmount
         });
-        const fiatAssetAmount = cryptoAssetAmount.convert(price);
 
         return {
             formatted,
             parsed: {
                 inputType: 'crypto',
                 cryptoAssetAmount,
-                fiatAssetAmount
-            }
-        };
-    } else {
-        const fiatAssetAmount = new FiatAssetAmount({
-            asset: price.quote,
-            amount: parsedAmount
-        });
-        const cryptoAssetAmount = fiatAssetAmount.convert<CryptoAsset>(price);
-
-        return {
-            formatted,
-            parsed: {
-                inputType: 'fiat',
-                cryptoAssetAmount,
-                fiatAssetAmount
+                fiatAssetAmount: price && cryptoAssetAmount.convert(price)
             }
         };
     }
+
+    if (!price) {
+        return null;
+    }
+
+    const fiatAssetAmount = new FiatAssetAmount({
+        asset: price.quote,
+        amount: parsedAmount
+    });
+
+    return {
+        formatted,
+        parsed: {
+            inputType: 'fiat',
+            cryptoAssetAmount: fiatAssetAmount.convert<CryptoAsset>(price),
+            fiatAssetAmount
+        }
+    };
 }
 
 export function formatAmountForDisplay(
-    inputType: AmountInputType,
-    fiatAssetAmount: FiatAssetAmount,
-    cryptoAssetAmount: CryptoAssetAmount,
+    parsed: AmountWithInputType<CryptoAsset>,
     formatter: NumberFormatter
 ): string {
-    return inputType === 'fiat'
-        ? formatter.formatAssetAmount(fiatAssetAmount, {
+    return parsed.inputType === 'fiat'
+        ? formatter.formatAssetAmount(parsed.fiatAssetAmount, {
               currencyDisplay: 'none',
               useGrouping: false
           })
-        : formatter.formatAssetAmount(cryptoAssetAmount, {
+        : formatter.formatAssetAmount(parsed.cryptoAssetAmount, {
               currencyDisplay: 'none',
               fullPrecision: true,
               useGrouping: false
           });
+}
+
+function withInputType(
+    inputType: AmountInputType,
+    cryptoAssetAmount: CryptoAssetAmount,
+    fiatAssetAmount: FiatAssetAmount | null
+): AmountWithInputType<CryptoAsset> | null {
+    if (inputType === 'crypto') {
+        return { inputType, cryptoAssetAmount, fiatAssetAmount };
+    }
+
+    return fiatAssetAmount && { inputType, cryptoAssetAmount, fiatAssetAmount };
 }
 
 export function validateAmount(
@@ -151,41 +181,22 @@ export function calculateMaxAmount(
     inputType: AmountInputType,
     formatter: NumberFormatter
 ): AmountWithOutputType | null {
-    if (!asset.price) {
-        return null;
-    }
+    const fiatAssetAmount = asset.price && asset.amount.convert(asset.price);
+    const parsed = withInputType(inputType, asset.amount, fiatAssetAmount);
 
-    const fiatAssetAmount = asset.amount.convert(asset.price);
-    const formatted = formatAmountForDisplay(inputType, fiatAssetAmount, asset.amount, formatter);
-
-    return {
-        formatted,
-        parsed: {
-            inputType,
-            cryptoAssetAmount: asset.amount,
-            fiatAssetAmount
-        }
-    };
+    return parsed && { formatted: formatAmountForDisplay(parsed, formatter), parsed };
 }
 
 export function reformatForInputType(
     currentParsed: AmountWithInputType<CryptoAsset>,
     newInputType: AmountInputType,
     formatter: NumberFormatter
-): AmountWithOutputType {
-    const formatted = formatAmountForDisplay(
+): AmountWithOutputType | null {
+    const parsed = withInputType(
         newInputType,
-        currentParsed.fiatAssetAmount,
         currentParsed.cryptoAssetAmount,
-        formatter
+        currentParsed.fiatAssetAmount
     );
 
-    return {
-        formatted,
-        parsed: {
-            inputType: newInputType,
-            cryptoAssetAmount: currentParsed.cryptoAssetAmount,
-            fiatAssetAmount: currentParsed.fiatAssetAmount
-        }
-    };
+    return parsed && { formatted: formatAmountForDisplay(parsed, formatter), parsed };
 }

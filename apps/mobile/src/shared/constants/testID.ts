@@ -54,7 +54,8 @@ export const TEST_ID = {
         addressInput: 'send.addressInput',
         nextButton: 'send.nextButton',
         amountInput: 'send.amountInput',
-        switchAmountMode: 'send.switchAmountMode'
+        switchAmountMode: 'send.switchAmountMode',
+        memoInput: 'send.memoInput'
     },
     confirmation: {
         fee: 'confirmation.fee',

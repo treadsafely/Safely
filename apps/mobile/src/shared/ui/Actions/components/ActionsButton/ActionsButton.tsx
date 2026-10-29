@@ -13,10 +13,13 @@ export type ActionsButtonProps = {
     onPress: () => void;
     opacity?: number;
     testID?: string;
+    variant?: 'tertiary' | 'transparent';
 };
 
 export const ActionsButton = (props: ActionsButtonProps) => {
-    const { title, icon, onPress, opacity, testID } = props;
+    const { title, icon, onPress, opacity, testID, variant = 'tertiary' } = props;
+
+    styles.useVariants({ variant });
 
     return (
         <TouchableOpacity

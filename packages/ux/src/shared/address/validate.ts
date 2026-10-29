@@ -3,7 +3,9 @@ import {
     BLOCKCHAIN_NAME,
     BtcAddress,
     btcNetworkByPortfolioNetworkType,
-    btcNetworkConfig
+    btcNetworkConfig,
+    FlameAddress,
+    flameNetworkByPortfolioNetworkType
 } from '@safely/core';
 
 import { InvalidAddressFormatError, UnsupportedBlockchainError } from './errors';
@@ -23,6 +25,10 @@ export function detectAddressType(
         BtcAddress.validate(input, btcNetworkConfig[btcNetworkByPortfolioNetworkType(networkType)])
     ) {
         return { blockchain: BLOCKCHAIN_NAME.BTC, address: input };
+    }
+
+    if (FlameAddress.validate(input, flameNetworkByPortfolioNetworkType(networkType))) {
+        return { blockchain: BLOCKCHAIN_NAME.FLAME, address: input };
     }
 
     return null;

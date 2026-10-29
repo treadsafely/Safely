@@ -37,6 +37,23 @@
             "owner": "sergey@andreevco.com",
             "expires": "2026-12-02",
             "url": "https://github.com/advisories/GHSA-gwrp-pvrq-jmwv"
+        },
+        {
+            "id": "GHSA-xxph-c9ww-hj94",
+            "package": "com.google.guava:guava",
+            "version": "33.3.1-android",
+            "ecosystem": "Maven",
+            "severity": "high",
+            "context": "runtime",
+            "declaredBy": [
+                "npm:react-native-vision-camera",
+                "npm:react-native-vision-camera-barcode-scanner"
+            ],
+            "patchable": "resolutionStrategy",
+            "rationale": "CVE-2026-102554 is an OutOfMemoryError (availability only, no read or write) when an attacker-controlled Java serialization stream reaches ObjectInputStream.readObject of a Guava CompactHashMap/CompactHashSet/MapMakerInternalMap. Measured over the Android sources of every npm package and apps/mobile/modules: the only ObjectInputStream is expo-notifications' Base64Serialization, which reads back NotificationRequest/NotificationCategory objects the app itself wrote into its private SharedPreferences, and every expo-notifications component is exported=false; the remaining getSerializable/readSerializable calls read Bundles and Parcels the app builds itself. No network, file-import or IPC input is deserialized with Java serialization. Residual path, not closed by this argument: on Android below 13 (minSdk is 24) touching any extra of an Intent delivered to the exported MainActivity unparcels every value, so an installed malicious app could crash Safely by OOM; that is a local denial of service with no access to keys or state. CameraX and MLKit ship as binaries and were not inspected. Fix: resolutionStrategy.force to 33.7.2-android through a config plugin, after release testing of the QR scanner.",
+            "owner": "sergey@andreevco.com",
+            "expires": "2027-01-26",
+            "url": "https://github.com/advisories/GHSA-xxph-c9ww-hj94"
         }
     ]
 }

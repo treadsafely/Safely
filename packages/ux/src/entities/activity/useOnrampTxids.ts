@@ -1,13 +1,13 @@
 import type { InfiniteData } from '@tanstack/react-query';
 
-import type { ActivityPage, IActivityPageParam } from './types';
+import type { BtcHistoryPage, IBtcHistoryPageParam } from './types';
 import { isOrderActivityItem } from './types';
-import { useHistory } from './useHistory';
+import { useBtcHistory } from './useBtcHistory';
 
 const EMPTY_TXIDS: ReadonlySet<string> = new Set();
 
 const selectOnrampTxids = (
-    data: InfiniteData<ActivityPage, IActivityPageParam>
+    data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>
 ): ReadonlySet<string> => {
     const txids = new Set<string>();
 
@@ -23,7 +23,7 @@ const selectOnrampTxids = (
 };
 
 export function useOnrampTxids(): ReadonlySet<string> {
-    const { data } = useHistory({ isInitiator: false }, { select: selectOnrampTxids });
+    const { data } = useBtcHistory({ isInitiator: false }, { select: selectOnrampTxids });
 
     return data ?? EMPTY_TXIDS;
 }
