@@ -285,8 +285,15 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `FlameEstimator` spends the largest readable native-flavor outputs first, pays the fixed
   `FLAME_TRANSFER_FEE` (1000 sparks; the node has no fee market yet) with a `FLAME_TRANSFER_GAS`
   limit of 1,000,000, and returns change to the wallet's own address `{0,0}`, the only address the
-  wallet reads. A proof outlives its tip by one block, so `FlameTransactionTemplate.send` fetches
-  `proofs`, builds and calls `submit_tx` back to back, and rebuilds once on `MEMPOOL_REJECTED`.
+  wallet reads. A new transaction is admitted only with proofs against the node's current tip (the
+  one-block `Catchup` in flame-lib covers transactions already in the mempool, not `submit_tx`),
+  and `buildTransfer` waits on the passcode. Proofs are neither signed nor part of the txid, so
+  `FlameTransactionTemplate.send` builds once, then before every `submit_tx` fetches fresh `proofs`
+  and swaps them in with `flameSdk.replaceProofs` — no seed, no passcode. Every attempt carries the
+  same txid, so after any `submit_tx` failure the template asks `tx_status`: `mempool`/`confirmed`
+  is a success (a lost response, or a duplicate of an accepted submit), `unknown` resubmits once,
+  and an unreadable status throws `FlameSendStatusUnknownError` ("check the history before sending
+  again") rather than a send failure, since a second send would be a second payment.
   The amount step shows an encrypted memo field for a Flame recipient only (`AmountView.setMemo`);
   the form clamps it to the SDK's `memoMaxBytes()` (UTF-8 bytes that fit the note's cell) and drops it
   when the recipient changes. The library seals a memo into its output's note, so only that
