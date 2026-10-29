@@ -32,6 +32,13 @@ describe('parseFlameDevnetWalletNameParam', () => {
         expect(parseFlameDevnetWalletNameParam('a'.repeat(30))).toBe('a'.repeat(24));
     });
 
+    it('cuts by code point, never splitting a surrogate pair', () => {
+        expect(parseFlameDevnetWalletNameParam(`${'a'.repeat(23)}🔥🔥`)).toBe(
+            `${'a'.repeat(23)}🔥`
+        );
+        expect(parseFlameDevnetWalletNameParam(`${'a'.repeat(24)}🔥`)).toBe('a'.repeat(24));
+    });
+
     it('returns nothing for an empty or blank param', () => {
         expect(parseFlameDevnetWalletNameParam('')).toBeUndefined();
         expect(parseFlameDevnetWalletNameParam(' \u200D ')).toBeUndefined();

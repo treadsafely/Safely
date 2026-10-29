@@ -30,7 +30,8 @@ export function parseFlameDevnetSeedParam(raw: string): string[] {
 export function parseFlameDevnetWalletNameParam(raw: string): string | undefined {
     // any site can craft the link: a bidi override or zero-width character would spoof the name
     const name = raw.replace(/[\p{Cc}\p{Cf}]/gu, '').trim();
-    return name.slice(0, PORTFOLIO_NAME_MAX_LENGTH).trim() || undefined;
+    // by code point: a UTF-16 slice can split a surrogate pair, which encodes as invalid UTF-8
+    return Array.from(name).slice(0, PORTFOLIO_NAME_MAX_LENGTH).join('').trim() || undefined;
 }
 
 const newFlameDevnetPortfolioMeta = (

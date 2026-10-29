@@ -140,7 +140,9 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
   (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft
   the link, and a bidi override or zero-width character would spoof the synced name — trimmed, cut
-  to `PORTFOLIO_NAME_MAX_LENGTH`, blank → the default name below). The name is read once when the flow mounts: a repeated link for the same phrase
+  to `PORTFOLIO_NAME_MAX_LENGTH` code points — a UTF-16 slice can split a surrogate pair, which
+  encodes as invalid UTF-8 and decodes differently on other devices; a grapheme cluster may still be
+  cut, which only a segmenter would avoid and Hermes has none — blank → the default name below). The name is read once when the flow mounts: a repeated link for the same phrase
   leaves it as it is, so the confirmed name cannot change under a ticked checkbox. The flow is keyed by `testseed`, because a
   second link only updates the params of the open modal. The modal sits on top of whatever screen
   the user was on, onboarding included, and picks its branch once, by whether an account existed

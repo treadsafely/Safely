@@ -74,12 +74,12 @@ describe('parseExternalInput', () => {
         );
     });
 
-    it('treats a throwing native validation as an unrecognized input only while parsing', () => {
+    it('treats a throwing native validation as an invalid address', () => {
         validateReceivingAddress.mockImplementation(() => {
             throw new Error('native failure');
         });
 
-        expect(() => FlameAddress.validate('garbage', FlameNetwork.TESTNET)).toThrow();
+        expect(FlameAddress.validate('garbage', FlameNetwork.TESTNET)).toBe(false);
         expect(FlameAddress.validForNetwork('garbage')).toBeNull();
         expect(() => parseExternalInput('garbage')).toThrow(ParserUnrecognizedError);
     });
