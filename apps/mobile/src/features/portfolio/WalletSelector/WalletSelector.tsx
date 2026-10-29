@@ -1,6 +1,5 @@
 import type { Portfolio } from '@safely/core';
-import { PortfolioType } from '@safely/core';
-import { usePortfolios } from '@safely/ux';
+import { isDerivablePortfolio, usePortfolios } from '@safely/ux';
 
 import { AccountSelector } from './components/AccountSelector';
 import { CompactAccountSelector } from './components/CompactAccountSelector';
@@ -8,7 +7,7 @@ import { CompactAccountSelector } from './components/CompactAccountSelector';
 const MAX_COMPACT_ROWS = 10;
 
 const rowCount = (portfolio: Portfolio): number => {
-    if (portfolio.type === PortfolioType.WATCH_ONLY) {
+    if (!isDerivablePortfolio(portfolio)) {
         return 1;
     }
 

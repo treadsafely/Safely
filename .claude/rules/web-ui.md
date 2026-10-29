@@ -190,7 +190,8 @@ differs in storage, in user presence and in how links open.
 Stubs for capabilities a target lacks are the app's too
 (`apps/desktop/src/renderer/platform/unsupported.ts`): what is missing differs per target, and a
 shared "unsupported" list would quietly define the extension's gaps as well. Desktop currently stubs
-Ledger only; the secret storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate
+Ledger, push and Flame (a rejecting `flameSdk` mock until desktop Flame support lands); the secret
+storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate
 around it — passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR
 scanning is split the same way: the three modals live in `src/features/qr-scan` here, everything
 that decides — the OS permission, the device list, the remembered source — in the app

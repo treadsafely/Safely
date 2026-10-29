@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BTC_ASSET, CryptoAssetAmount } from '@safely/core';
 import {
     resolveSentAmount,
-    useActivePortfolioRate,
+    useMainnetRate,
     useNumberFormatter,
     useShowFullSentAmount
 } from '@safely/ux';
@@ -18,7 +18,7 @@ const DEMO_TIMESTAMP_LABEL = '23:45';
 export const SentAmountPreview = () => {
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
-    const rate = useActivePortfolioRate(BTC_ASSET);
+    const rate = useMainnetRate(BTC_ASSET);
     const showFullSentAmount = useShowFullSentAmount();
 
     const { amount, isFullPrecision } = resolveSentAmount({

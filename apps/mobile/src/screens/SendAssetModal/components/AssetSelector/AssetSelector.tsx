@@ -1,9 +1,13 @@
+import { View } from 'react-native';
+
 import type { CryptoAsset } from '@safely/core';
 
-import { Image } from '@mobile/shared/ui';
+import { AssetLogo } from '@mobile/entities/asset';
 
 import { styles } from './AssetSelector.styles';
 
 export const AssetSelector = ({ asset }: { asset: CryptoAsset }) => (
-    <Image source={asset.image} style={styles.image} />
+    <View style={styles.container}>
+        <AssetLogo asset={asset} />
+    </View>
 );

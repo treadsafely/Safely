@@ -3,16 +3,17 @@ import type { InfiniteData } from '@tanstack/react-query';
 import type {
     BtcApiTx,
     BtcAsset,
-    CryptoFiatRate,
     DateGroupMeta,
     DatedGroup,
+    FiatAsset,
     PendingGroupMeta,
     RampOrder,
+    Rate,
     TransactionFeeCrypto
 } from '@safely/core';
 import type { CryptoAssetAmount } from '@safely/core';
 
-export interface IActivityFilters {
+export interface IBtcHistoryFilters {
     isInitiator?: boolean;
 }
 
@@ -26,7 +27,7 @@ export interface BtcActivityItem {
         toAddress: string;
         value: CryptoAssetAmount;
         fee: TransactionFeeCrypto<BtcAsset> | undefined;
-        rate: CryptoFiatRate | null;
+        rate: Rate<BtcAsset, FiatAsset> | null;
         raw: BtcApiTx;
     };
 }
@@ -40,19 +41,22 @@ export interface OrderActivityItem {
     transaction?: BtcActivityItem['transaction'];
 }
 
-export type ActivityItem = BtcActivityItem | OrderActivityItem;
+export type BtcHistoryItem = BtcActivityItem | OrderActivityItem;
 
-export function isBtcActivityItem(item: ActivityItem): item is BtcActivityItem {
+export function isBtcActivityItem(item: BtcHistoryItem): item is BtcActivityItem {
     return item.type === 'transaction';
 }
 
-export function isOrderActivityItem(item: ActivityItem): item is OrderActivityItem {
+export function isOrderActivityItem(item: BtcHistoryItem): item is OrderActivityItem {
     return item.type === 'order';
 }
 
-export type ActivityItemsDatedGroup = DatedGroup<ActivityItem, DateGroupMeta | PendingGroupMeta>;
+export type BtcHistoryItemsDatedGroup = DatedGroup<
+    BtcHistoryItem,
+    DateGroupMeta | PendingGroupMeta
+>;
 
-export interface IActivityPageParam {
+export interface IBtcHistoryPageParam {
     fetch: 'both' | 'btc' | 'orders';
     btcPage: number | null;
     ordersCursor: string | null;
@@ -68,12 +72,12 @@ export interface OrdersActivityPage {
     nextCursor: string | null;
 }
 
-export interface ActivityPage {
-    items: ActivityItem[];
+export interface BtcHistoryPage {
+    items: BtcHistoryItem[];
     btcNextPage: number | null;
     ordersNextCursor: string | null;
 }
 
-export interface IHistoryOptions<TData> {
-    select?: (data: InfiniteData<ActivityPage, IActivityPageParam>) => TData;
+export interface IBtcHistoryOptions<TData> {
+    select?: (data: InfiniteData<BtcHistoryPage, IBtcHistoryPageParam>) => TData;
 }

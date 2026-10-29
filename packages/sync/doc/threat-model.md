@@ -98,7 +98,13 @@ Operational data includes:
 - `SyncKey`;
 - the device `IdentityKey` private key;
 - synchronized account metadata protected by `SyncKey`;
-- protocol metadata used for device and synchronization state.
+- protocol metadata used for device and synchronization state;
+- the cached account data key (spec section 1.4).
+
+Data encrypted with the account data key is readable on every device without user interaction. Today that is the
+Flame view key, which decrypts the amounts and memos of the user's Flame notes but cannot spend them. It is stored in
+synchronized state encrypted with the account data key, so a copy of local application storage or of a
+snapshot without the operational Keychain items does not reveal it.
 
 `SyncKey` and the device `IdentityKey` private key cannot require an interactive user-approval check for every use 
 because they are part of the real-time synchronization protocol.
@@ -127,7 +133,9 @@ Compromise of a device's operational keys allows the attacker to:
 - construct cryptographically valid encrypted snapshots;
 - modify synchronized state and encrypted Vault payloads.
 
-Operational-key compromise does not by itself reveal the plaintext of `VaultKey`-encrypted secrets.
+Operational-key compromise does not by itself reveal the plaintext of `VaultKey`-encrypted secrets. It does reveal
+everything encrypted with the account data key, today the Flame view key and with it the amounts and memos of the
+user's Flame notes, because the account data key is cached next to `SyncKey`.
 
 Protection against malicious updates produced by a device whose operational keys are compromised is outside the current 
 threat model.

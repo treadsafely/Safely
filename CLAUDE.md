@@ -14,7 +14,7 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/slottree`         | CRDT slot tree + deterministic cbor: the primitive under all synced state. Has a formal spec.                                                  |
 | `packages/sync`             | E2EE sync protocol: key hierarchy, device onboarding, device list, snapshots, SSE stream, xstate machine, generated OpenAPI client.            |
 | `packages/sync-storage`     | Versioned schemas of user state (`v1`, `v2`, …) on top of slottree, plus migrations.                                                           |
-| `packages/core`             | Wallet domain: BTC (xpub, PSBT, fee estimation), Ledger, external APIs (config/price/rate/exchange), entities, DI interfaces. No React.        |
+| `packages/core`             | Wallet domain: BTC (xpub, PSBT, fee estimation), Flame, Ledger, external APIs (config/price/rate/exchange/flame RPC), entities, DI interfaces. No React. |
 | `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms, plus the design tokens (`./theme`) and the strings (`./translations`). No RN/DOM specifics. |
 | `packages/web-ui`           | React layer shared by the web targets: design system (Base UI + Panda), the screens built from it and the flows that drive them over `@safely/ux`. FSD + `pages`. No router, no Electron/extension code, no platform contract, no globals, no build config. |
 | `apps/mobile`               | Expo dev-client (iOS/Android): FSD + `screens`, native modules `modules/safely-*`, unistyles, i18n.                                            |
@@ -23,9 +23,11 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
 Platform capabilities reach the domain through DI interfaces from `@safely/core` (`src/di/`:
-`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`, `IPushNotifications`).
-Implementations live in the app, never in a package: a package that needs a native API declares an
-interface instead of importing the platform.
+`IStorage`, `ISecretEncryptor`, `ILoggerTransport`, `QrScanner`, `IPushNotifications`,
+`SafelyFlame`; plus `SafelyCrypto` from `@safely/sync`). The native primitives `SafelyFlame` /
+`SafelyCrypto` are installed by the app as `globalThis.flameSdk` / `globalThis.safelyCrypto` from
+`global-polyfills.ts`. Implementations live in the app, never in a package: a package that needs a
+native API declares an interface instead of importing the platform.
 
 ## Commands
 
@@ -156,9 +158,11 @@ git history too. Point at where the value lives (`.env`, the secret manager) ins
 
 1. `pnpm -r run compile` (or `--filter` the packages you touched)
 2. lint and test for the packages you touched
-3. if you changed a native module with a `*Core` type (`safely-crypto`, `safely-store-country`), run
+3. if you added or changed copy in `en.json`, add the translation to every other locale file in
+   `packages/ux/src/shared/i18n/translations/` (`ru.json`)
+4. if you changed a native module with a `*Core` type (`safely-crypto`, `safely-store-country`), run
    its Swift/Kotlin host tests (see `.claude/rules/mobile-app.md`)
-4. if the change touched anything listed under "Keeping these instructions current", update
+5. if the change touched anything listed under "Keeping these instructions current", update
    `CLAUDE.md` / `.claude/rules/*` in the same PR
 
 PRs target `master`; a non-draft PR triggers CI and the Claude review workflow

@@ -1,4 +1,11 @@
-export { useHistoryGroups } from './useHistoryGroups';
-export { buildHistoryGroupViews, type ActivityRowContext } from './activity-row-view';
-export type { ActivityCounterparty, ActivityRowView, HistoryGroupView } from './types';
-export { useHistoryPolling, type UseHistoryPollingParams } from './useHistoryPolling';
+export { useBtcHistoryGroups } from './useBtcHistoryGroups';
+export { useFlameHistoryGroups } from './useFlameHistoryGroups';
+export {
+    buildBtcHistoryGroupViews,
+    buildFlameHistoryGroupViews,
+    type ActivityRowContext,
+    type BtcActivityRowContext
+} from './activity-row-view';
+export type { ActivityRowView, HistoryGroupView } from './types';
+export { useBtcHistoryPolling, type UseBtcHistoryPollingParams } from './useBtcHistoryPolling';
+export { useFlameHistoryPolling } from './useFlameHistoryPolling';

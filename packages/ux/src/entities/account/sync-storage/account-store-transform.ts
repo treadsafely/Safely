@@ -1,4 +1,8 @@
-import type { ILedgerSessionPort, ISecretEncryptor } from '@safely/core';
+import type {
+    ILedgerSessionPort,
+    ISecureSecretEncryptor,
+    ISilentSecretEncryptor
+} from '@safely/core';
 import { assertUnreachable } from '@safely/core';
 import { Contact, FiatAsset, PortfolioFactory } from '@safely/core';
 import type { SContact, SPortfolio, SyncedStorageSchema } from '@safely/sync-storage';
@@ -10,7 +14,8 @@ type WithToJson<J> = { toJSON(): J };
 
 export class AccountStoreTransform {
     constructor(
-        private readonly getSecretEncryptor: () => ISecretEncryptor,
+        private readonly getSecureSecretEncryptor: () => ISecureSecretEncryptor,
+        private readonly getSilentSecretEncryptor: () => ISilentSecretEncryptor,
         private readonly getLedgerSessionPort: () => ILedgerSessionPort
     ) {}
 
@@ -100,7 +105,8 @@ export class AccountStoreTransform {
         if (!json) return [];
         return this.reconcileById(prev, json, p =>
             PortfolioFactory.restorePortfolio(p, {
-                encryptor: this.getSecretEncryptor(),
+                secureSecretEncryptor: this.getSecureSecretEncryptor(),
+                silentSecretEncryptor: this.getSilentSecretEncryptor(),
                 ledgerSessionPort: this.getLedgerSessionPort()
             })
         );

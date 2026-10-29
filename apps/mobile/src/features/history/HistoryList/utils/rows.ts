@@ -1,4 +1,4 @@
-import type { ActivityItem, HistoryGroupView } from '@safely/ux';
+import type { HistoryGroupView } from '@safely/ux';
 
 import type { ActivityItemProps } from '@mobile/entities/activity';
 
@@ -16,9 +16,9 @@ export type HistoryActivityRow = {
 
 export type HistoryRowItem = HistoryHeaderRow | HistoryActivityRow;
 
-export function buildHistoryRows(
-    groups: HistoryGroupView[],
-    onNavigateToActivityItem: (activity: ActivityItem) => void
+export function buildHistoryRows<TActivity>(
+    groups: HistoryGroupView<TActivity>[],
+    onNavigateToActivityItem: (activity: TActivity) => void
 ): HistoryRowItem[] {
     return groups.flatMap(group => [
         { key: `header-${group.key}`, type: 'header' as const, title: group.title },

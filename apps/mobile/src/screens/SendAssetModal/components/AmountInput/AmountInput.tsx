@@ -19,7 +19,7 @@ export type AmountInputProps = {
     label?: string;
     RightComponent?: React.ReactNode;
     onSwitchFiatMode?: () => void;
-    formattedAlternativeAmount?: string;
+    formattedAlternativeAmount: string | null;
     errored?: boolean;
     currencySymbol?: string;
     isMax?: boolean;
@@ -107,19 +107,29 @@ export const AmountInput = forwardRef<MaskedInputRef, AmountInputProps>((props, 
                                 style={styles.input}
                             />
                         </View>
-                        <TouchableOpacity
-                            testID={TEST_ID.send.switchAmountMode}
-                            activeOpacity={0.8}
-                            onPress={onSwitchFiatMode}
-                            style={styles.switchButton}
-                        >
-                            <Animated.View style={styles.secondaryCurrencyContainer}>
-                                <Text numberOfLines={1} variant="bodyM" color="tertiary" monospace>
-                                    {formattedAlternativeAmount ?? '0'}
-                                </Text>
-                                <Icon icon={SwapVertical20} color="secondary" />
-                            </Animated.View>
-                        </TouchableOpacity>
+                        {formattedAlternativeAmount !== null && (
+                            <TouchableOpacity
+                                testID={TEST_ID.send.switchAmountMode}
+                                activeOpacity={0.8}
+                                disabled={!onSwitchFiatMode}
+                                onPress={onSwitchFiatMode}
+                                style={styles.switchButton}
+                            >
+                                <Animated.View style={styles.secondaryCurrencyContainer}>
+                                    <Text
+                                        numberOfLines={1}
+                                        variant="bodyM"
+                                        color="tertiary"
+                                        monospace
+                                    >
+                                        {formattedAlternativeAmount}
+                                    </Text>
+                                    {onSwitchFiatMode && (
+                                        <Icon icon={SwapVertical20} color="secondary" />
+                                    )}
+                                </Animated.View>
+                            </TouchableOpacity>
+                        )}
                     </View>
                     {RightComponent && (
                         <View style={styles.rightContentContainer}>{RightComponent}</View>

@@ -255,14 +255,20 @@ reporting a clean run. Same for `severity` everywhere: membership is checked wit
 never `in`, because `in` walks the prototype chain and `"constructor"` would pass, rank as a
 function, and disable `ESCALATED` for that entry. A severity no lookup can rank reads as `high`.
 
-Two native entries live today, both expiring **2026-12-02**, both argued from reachability rather
-than severity, with the measurement written out in `native-advisories.json`:
+Three native entries live today, all argued from reachability rather than severity, with the
+measurement written out in `native-advisories.json`:
 
 - `gson 2.8.6` (`rn-dev`) — the classes ship, but `ExpoLogBoxPackage` returns `emptyList()` unless
   `BuildConfig.DEBUG && BuildConfig.EXPO_UNSTABLE_LOG_BOX`, both false in release.
+- `gson 2.8.6` and `commons-io 1.4` expire **2026-12-02**.
 - `commons-io 1.4` (`runtime`) — nothing calls the vulnerable `FilenameUtils.normalize`. This one
   does execute, so the entry records the fix rather than dismissing it: force 2.16.1, after release
   testing of the download, cache and import flows.
+- `guava 33.3.1-android` (`runtime`, via CameraX from `react-native-vision-camera`, expires
+  **2027-01-26**) — an OOM on Java deserialization, and the only `ObjectInputStream` in the shipped
+  sources reads expo-notifications' own SharedPreferences. Not closed: on Android below 13 another
+  installed app can make the exported `MainActivity` unparcel a crafted `Serializable` extra and
+  crash it. The fix recorded is force 33.7.2-android, after release testing of the QR scanner.
 
 The JavaScript registry holds the two `image-size` advisories — Metro's bundle-time and dev-server
 image-header parser, expiring 2026-11-30 — and three `build` entries from the desktop packaging

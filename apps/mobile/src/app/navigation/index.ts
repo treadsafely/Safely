@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AddAccountSheet } from '@mobile/screens/AddAccountSheet';
 import { BiometryScreen } from '@mobile/screens/BiometryScreen';
+import { BtcTransactionScreen } from '@mobile/screens/BtcTransactionScreen';
 import { ChangePasscodeScreen } from '@mobile/screens/ChangePasscodeScreen';
 import { ConfirmXpubImportSheet } from '@mobile/screens/ConfirmXpubImportSheet';
 import { ConnectToSignSheet } from '@mobile/screens/ConnectToSignSheet';
@@ -13,6 +14,8 @@ import { DeviceLinkedModal } from '@mobile/screens/DeviceLinkedModal';
 import { DeviceSupportWizardModal } from '@mobile/screens/DeviceSupportWizardModal';
 import { DeviceUnarchivedSheet } from '@mobile/screens/DeviceUnarchivedSheet';
 import { ExchangeModal } from '@mobile/screens/ExchangeModal';
+import { FlameTransactionScreen } from '@mobile/screens/FlameTransactionScreen';
+import { ImportFlameDevnetWalletModal } from '@mobile/screens/ImportFlameDevnetWalletModal';
 import { LinkDeviceWarningModal } from '@mobile/screens/LinkDeviceWarningModal';
 import { MoreOptionsSheet } from '@mobile/screens/MoreOptionsSheet';
 import { NewContactModal } from '@mobile/screens/NewContactModal';
@@ -34,7 +37,6 @@ import { SelectAccountSelectorModal } from '@mobile/screens/SelectAccountSelecto
 import { SignInScreen } from '@mobile/screens/SignInScreen';
 import { SignInSuccessScreen } from '@mobile/screens/SignInSuccessScreen';
 import { SignOutAccountSheet } from '@mobile/screens/SignOutAccountSheet';
-import { TransactionScreen } from '@mobile/screens/TransactionScreen';
 import { WatchOnlySheet } from '@mobile/screens/WatchOnlySheet';
 import { WelcomeScreen } from '@mobile/screens/WelcomeScreen';
 
@@ -81,7 +83,8 @@ export const RootStack = createNativeStackNavigator({
                     }
                 },
                 RestrictedFlow: RestrictedStack,
-                TransactionScreen: TransactionScreen,
+                BtcTransactionScreen: BtcTransactionScreen,
+                FlameTransactionScreen: FlameTransactionScreen,
                 OrderScreen: OrderScreen,
                 DeviceDetailsScreen: DeviceDetailsScreen,
                 ChangePasscodeScreen: {
@@ -112,7 +115,13 @@ export const RootStack = createNativeStackNavigator({
                 SelectAccountModal: SelectAccountModal,
                 SelectAccountSelectorModal: SelectAccountSelectorModal,
                 ReceiveAssetModal: ReceiveAssetModal,
-                SendAssetModal: SendStack
+                SendAssetModal: SendStack,
+                ImportFlameDevnetWalletModal: {
+                    screen: ImportFlameDevnetWalletModal,
+                    linking: {
+                        path: 'import-flame-devnet-wallet'
+                    }
+                }
             },
             screenOptions: {
                 presentation: 'modal'

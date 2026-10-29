@@ -3,7 +3,7 @@ import { View } from 'react-native';
 
 import { SPACE } from '@safely/core';
 import type { ActivityCounterparty, ActivityRowView } from '@safely/ux';
-import { useTransactionHistoryAmountOrder } from '@safely/ux';
+import { orderAmounts, useTransactionHistoryAmountOrder } from '@safely/ux';
 
 import { ContactName } from '@mobile/entities/contact';
 import { PortfolioName } from '@mobile/entities/portfolio';
@@ -14,6 +14,7 @@ import { styles } from './ActivityItem.styles';
 
 export type ActivityItemProps = Omit<ActivityRowView, 'key' | 'activity'> & {
     background?: CellContainerProps['background'];
+    note?: string | null;
     onPress?: () => void;
 };
 
@@ -61,14 +62,16 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
         isPending,
         background = isPending ? 'tertiary' : 'secondary',
         counterparty,
+        note,
         onPress
     } = props;
     const amountOrder = useTransactionHistoryAmountOrder();
 
-    const [primaryAmount, secondaryAmount] =
-        amountOrder === 'fiat' && formattedFiat !== null
-            ? [formattedFiat, formattedValue]
-            : [formattedValue, formattedFiat];
+    const [primaryAmount, secondaryAmount] = orderAmounts(
+        amountOrder,
+        formattedValue,
+        formattedFiat
+    );
 
     return (
         <Cell
@@ -96,6 +99,11 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
                     <Counterparty counterparty={counterparty} />
                     <Cell.Subvalue>{secondaryAmount}</Cell.Subvalue>
                 </Cell.Row>
+                {!!note && (
+                    <Cell.Row>
+                        <Cell.Subtitle numberOfLines={2}>{note}</Cell.Subtitle>
+                    </Cell.Row>
+                )}
             </Cell.Content>
         </Cell>
     );

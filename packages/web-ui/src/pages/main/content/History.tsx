@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 
-import type { ActivityItem } from '@safely/ux';
+import type { BtcHistoryItem } from '@safely/ux';
 
 import { HistoryList } from '../../../features';
 
 export type HistoryProps = {
     selectedActivityKey?: string;
-    onSelectActivity: (activity: ActivityItem) => void;
+    onSelectActivity: (activity: BtcHistoryItem) => void;
     onReceive: () => void;
     onNewActivity: () => void;
 };

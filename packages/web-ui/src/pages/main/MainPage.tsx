@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 
-import type { ActivityItem, BtcActivityItem } from '@safely/ux';
+import type { BtcHistoryItem, BtcActivityItem } from '@safely/ux';
 import {
     AccountLinkState,
     isBtcActivityItem,
@@ -99,7 +99,7 @@ export const MainPage: FC<MainPageProps> = props => {
         changeView({ kind: 'settings', section: 'devTools', tool: next });
 
     /* orders have no detail view on the web targets yet */
-    const selectActivity = (activity: ActivityItem): void =>
+    const selectActivity = (activity: BtcHistoryItem): void =>
         isBtcActivityItem(activity) ? setSelectedActivity(activity) : undefined;
 
     const home = hasPortfolio ? (

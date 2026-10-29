@@ -1,9 +1,30 @@
 import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
 import { sha512 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
 
 // The test harness is an "app": it installs its own `safelyCrypto` provider
 // (pure-JS noble) so domain tests that derive seeds have a working primitive.
 globalThis.safelyCrypto = {
     pbkdf2Sha512: (password, salt, iterations, keyLength) =>
         pbkdf2Async(sha512, password, salt, { c: iterations, dkLen: keyLength })
+};
+
+// Devnet portfolios derive a Flame view key on creation; the native SDK is not on the host.
+globalThis.flameSdk = {
+    viewKey: (seed, network) => Promise.resolve(`${network}view1${bytesToHex(seed.slice(0, 8))}`),
+    address: (viewKey, network, path) =>
+        Promise.resolve({
+            receivingAddress: `${viewKey}/${network}/${path.branch}/${path.index}/receiving`,
+            trackingAddress: `${viewKey}/${network}/${path.branch}/${path.index}`,
+            predicate: new Uint8Array(32)
+        }),
+    validateReceivingAddress: () => false,
+    memoMaxBytes: () => 8102,
+    decodeContracts: () =>
+        Promise.reject(new Error('flameSdk.decodeContracts is not available in tests')),
+    openNotes: () => Promise.reject(new Error('flameSdk.openNotes is not available in tests')),
+    buildTransfer: () =>
+        Promise.reject(new Error('flameSdk.buildTransfer is not available in tests')),
+    replaceProofs: () =>
+        Promise.reject(new Error('flameSdk.replaceProofs is not available in tests'))
 };

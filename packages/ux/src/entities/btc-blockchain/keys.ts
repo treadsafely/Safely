@@ -12,6 +12,7 @@ export const btcBlockchain = defineQueryKeys('btc-blockchain', {
 });
 
 export const utxo = defineQueryKeys('utxo', {
+    none: finalKey,
     wallet: mappedParams(
         (__: BtcWallet) => ({
             params: mappedParams(

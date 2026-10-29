@@ -17,7 +17,8 @@
         "watchOnly": "Просмотр",
         "testnet": "Testnet",
         "ledger": "Ledger",
-        "ledgerWallet": "Кошелёк Ledger {{number}}"
+        "ledgerWallet": "Кошелёк Ledger {{number}}",
+        "flameDevnet": "Demo"
     },
     "walletAlreadyAdded": {
         "title": "Вы уже добавили этот кошелёк как {{name}}",
@@ -74,6 +75,11 @@
         "maxHint": "Будет отправлен весь доступный баланс. Комиссия включена.",
         "remaining": "Остаток:",
         "pending": "Ожидается:",
+        "memo": {
+            "label": "Заметка",
+            "placeholder": "Необязательно",
+            "description": "Зашифрована. Прочитать её можете только вы и получатель."
+        },
         "addressBook": {
             "label": "Сохранить в адресную книгу",
             "placeholder": "Имя",
@@ -190,7 +196,7 @@
     },
     "qrScan": {
         "title": "Сканировать QR-код",
-        "subtitle": "Отсканируйте адрес BTC для продолжения.",
+        "subtitle": "Отсканируйте адрес кошелька для продолжения.",
         "addDevice": {
             "title": "Сканировать QR-код",
             "subtitle": "Откройте «Войти по QR-коду» на другом устройстве."
@@ -302,16 +308,20 @@
             "minutesAgo_one": "{{count}} минуту назад",
             "minutesAgo_few": "{{count}} минуты назад",
             "minutesAgo_many": "{{count}} минут назад",
+            "minutesAgo_other": "{{count}} минут назад",
             "hoursAgo_one": "{{count}} час назад",
             "hoursAgo_few": "{{count}} часа назад",
             "hoursAgo_many": "{{count}} часов назад",
+            "hoursAgo_other": "{{count}} часов назад",
             "yesterday": "Вчера",
             "daysAgo_one": "{{count}} день назад",
             "daysAgo_few": "{{count}} дня назад",
             "daysAgo_many": "{{count}} дней назад",
+            "daysAgo_other": "{{count}} дней назад",
             "weeksAgo_one": "{{count}} неделю назад",
             "weeksAgo_few": "{{count}} недели назад",
-            "weeksAgo_many": "{{count}} недель назад"
+            "weeksAgo_many": "{{count}} недель назад",
+            "weeksAgo_other": "{{count}} недель назад"
         },
         "groups": {
             "application": {
@@ -389,6 +399,7 @@
             "contactsCount_one": "{{count}} контакт",
             "contactsCount_few": "{{count}} контакта",
             "contactsCount_many": "{{count}} контактов",
+            "contactsCount_other": "{{count}} контактов",
             "continue": "Продолжить"
         },
         "deviceLinked": {
@@ -400,10 +411,12 @@
             "walletsCount_one": "{{count}} кошелёк",
             "walletsCount_few": "{{count}} кошелька",
             "walletsCount_many": "{{count}} кошельков",
+            "walletsCount_other": "{{count}} кошельков",
             "contacts": "Контакты",
             "contactsCount_one": "{{count}} контакт",
             "contactsCount_few": "{{count}} контакта",
             "contactsCount_many": "{{count}} контактов",
+            "contactsCount_other": "{{count}} контактов",
             "accountId": "Для дополнительной проверки сравните ID аккаунта на обоих устройствах: {{id}}",
             "accountIdCopied": "ID аккаунта скопирован",
             "unknownDevice": "Новое устройство",
@@ -460,6 +473,7 @@
         "continueWithLedger": "Продолжить с Ledger",
         "from": "От",
         "to": "Кому",
+        "memo": "Заметка",
         "amount": "Сумма",
         "allAvailableBalance": "Весь доступный баланс",
         "networkFee": {
@@ -490,6 +504,10 @@
             "default": "Проверьте данные и попробуйте снова",
             "btc": {
                 "dust": "Сумма перевода слишком мала."
+            },
+            "flame": {
+                "inputsSpent": "Ваш баланс изменился. Вернитесь назад и попробуйте снова.",
+                "statusUnknown": "Перевод мог уйти. Проверьте историю, прежде чем отправлять снова."
             }
         },
         "estimateError": {
@@ -498,6 +516,9 @@
             "btc": {
                 "outputsAreSpendingMoreThanInputs": "Недостаточно средств для суммы перевода и комиссии",
                 "insufficientFundsForFee": "Недостаточно средств для отправки указанной суммы и оплаты комиссии сети. Уменьшите сумму."
+            },
+            "flame": {
+                "insufficientBalance": "Недостаточно средств для суммы перевода и комиссии"
             }
         }
     },
@@ -511,7 +532,8 @@
             "unableToValidateToken": "Не удалось проверить токен",
             "invalidAmount": "Неверная сумма",
             "insufficientBalance": "Недостаточно средств",
-            "unrecognizedAmount": "Не удалось распознать сумму"
+            "unrecognizedAmount": "Не удалось распознать сумму",
+            "memoTooLong": "Слишком длинная заметка"
         }
     },
     "signIn": {
@@ -739,7 +761,8 @@
                 "title": "Настройки",
                 "options": {
                     "editAccount": "Редактировать аккаунт",
-                    "addressBook": "Адресная книга"
+                    "addressBook": "Адресная книга",
+                    "notifications": "Уведомления"
                 }
             },
             "application": {
@@ -869,6 +892,10 @@
             "received": "Получено",
             "recipient": "Получатель",
             "sender": "Отправитель",
+            "unknownSender": "Неизвестный отправитель",
+            "unknownRecipient": "Неизвестный получатель",
+            "unknown": "Неизвестно",
+            "memo": "Заметка",
             "fee": "Комиссия сети",
             "hash": "Транзакция",
             "openInExplorer": "Открыть в обозревателе",
@@ -887,6 +914,11 @@
                 "confirmed-long-ago": {
                     "title": "Подтверждено {{date}}",
                     "description": "Более 6 подтверждений"
+                },
+                "confirmed": {
+                    "title": "Подтверждено {{date}}",
+                    "titleUndated": "Подтверждено",
+                    "block": "Блок {{height}}"
                 }
             }
         },
@@ -930,7 +962,8 @@
         "errors": {
             "invalidAmount": "Некорректная сумма в коде",
             "unrecognized": "Нераспознанный ввод",
-            "unsupportedScheme": "Неподдерживаемый тип ввода"
+            "unsupportedScheme": "Неподдерживаемый тип ввода",
+            "unsupportedMemo": "Коды с заметкой не поддерживаются"
         }
     },
     "addressBook": {
@@ -1015,5 +1048,98 @@
         "title": "Юридическая информация",
         "privacyPolicy": "Политика приватности",
         "termsOfUse": "Условия использования"
+    },
+    "notifications": {
+        "title": "Уведомления",
+        "disabledBanner": {
+            "text": "Уведомления выключены.",
+            "action": "Настройки"
+        },
+        "device": {
+            "title": "Это устройство",
+            "push": {
+                "title": "Push-уведомления",
+                "subtitle": "Получать push-уведомления на этом устройстве."
+            }
+        },
+        "account": {
+            "title": "Аккаунт «{{name}}»",
+            "enabled": {
+                "title": "Уведомления аккаунта",
+                "subtitle": "Включить уведомления для кошельков этого аккаунта. Настройки синхронизируются между вашими привязанными устройствами."
+            },
+            "allWallets": {
+                "title": "Все кошельки",
+                "subtitle": "Получать уведомления по всем кошелькам, включая новые."
+            },
+            "selectedWallets": {
+                "title": "Выбранные кошельки",
+                "more": "{{names}} и ещё {{count}}"
+            },
+            "transactions": {
+                "title": "Транзакции",
+                "none": "Уведомления о транзакциях выключены."
+            }
+        },
+        "application": {
+            "title": "Приложение",
+            "news": {
+                "title": "Новости Safely",
+                "subtitle": "Получать описания релизов и обновления безопасности."
+            }
+        },
+        "transactions": {
+            "title": "Транзакции",
+            "incoming": "Входящие транзакции",
+            "outgoing": "Исходящие транзакции",
+            "events": {
+                "receivedDetected": {
+                    "title": "Обнаружена",
+                    "subtitle": "Когда поступают средства.",
+                    "summary": "Входящая обнаружена"
+                },
+                "receivedConfirmed": {
+                    "title": "Подтверждена",
+                    "subtitle": "После первого подтверждения.",
+                    "summary": "Входящая подтверждена"
+                },
+                "receivedFinalized": {
+                    "title": "Завершена",
+                    "subtitle": "После 6 подтверждений.",
+                    "summary": "Входящая завершена"
+                },
+                "sentBroadcast": {
+                    "title": "Отправлена",
+                    "subtitle": "Когда транзакция отправлена в сеть.",
+                    "summary": "Исходящая отправлена"
+                },
+                "sentConfirmed": {
+                    "title": "Подтверждена",
+                    "subtitle": "После первого подтверждения.",
+                    "summary": "Исходящая подтверждена"
+                },
+                "sentFinalized": {
+                    "title": "Завершена",
+                    "subtitle": "После 6 подтверждений.",
+                    "summary": "Исходящая завершена"
+                }
+            }
+        },
+        "wallets": {
+            "title": "Выбранные кошельки"
+        }
+    },
+    "importFlameDevnetWallet": {
+        "title": "Импорт Demo-кошелька",
+        "subtitle": "Этот кошелёк будет импортирован в ваш аккаунт «{{accountName}}».",
+        "subtitleNewAccount": "С этим кошельком будет создан новый аккаунт. Затем нужно будет задать код-пароль.",
+        "walletLabel": "Кошелёк",
+        "balanceLabel": "Баланс",
+        "addressLabel": "Адрес",
+        "devnetOnly": "Этот кошелёк работает только во Flame Demo — тестовой сети. Его монеты не имеют реальной ценности, никогда не отправляйте на него настоящие средства.",
+        "trustedSite": "Ссылка открыта с сайта <site>runflame.org</site>",
+        "importButton": "Импорт",
+        "imported": "Demo-кошелёк импортирован",
+        "alreadyImported": "Этот кошелёк уже импортирован"
     }
 }

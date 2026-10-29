@@ -20,3 +20,13 @@ export class BtcRecipient implements Recipient {
         return { address: this.address };
     }
 }
+
+export class FlameRecipient implements Recipient {
+    public readonly blockchain = BLOCKCHAIN_NAME.FLAME;
+
+    constructor(public readonly address: string) {}
+
+    public getDisplayData(): RecipientDisplayData {
+        return { address: this.address };
+    }
+}

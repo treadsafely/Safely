@@ -1,10 +1,28 @@
 import { vi } from 'vitest';
 
-import type { ISecretEncryptor, SSecretDecrypted, SSecretEncrypted } from '../../src';
+import type {
+    ISecureSecretEncryptor,
+    ISilentSecretEncryptor,
+    SSecretDecrypted,
+    SSecretEncrypted
+} from '../../src';
 import type { IMnemonic, IMnemonicAccessor } from '../../src/entities/mnemonic/mnemonic';
 import type { IMnemonicVault } from '../../src/entities/mnemonic/mnemonic-vault';
 
-export class MockSecretEncryptor implements ISecretEncryptor {
+export class MockSecureSecretEncryptor implements ISecureSecretEncryptor {
+    public readonly kind = 'secure';
+
+    public decrypt = vi
+        .fn()
+        .mockImplementation(async (s: SSecretEncrypted): Promise<SSecretDecrypted> => s);
+    public encrypt = vi
+        .fn()
+        .mockImplementation(async (s: SSecretDecrypted): Promise<SSecretEncrypted> => s);
+}
+
+export class MockSilentSecretEncryptor implements ISilentSecretEncryptor {
+    public readonly kind = 'silent';
+
     public decrypt = vi
         .fn()
         .mockImplementation(async (s: SSecretEncrypted): Promise<SSecretDecrypted> => s);

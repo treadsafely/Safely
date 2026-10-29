@@ -29,6 +29,16 @@ export function resolveRemoveWalletCopy(portfolio: Portfolio): RemoveWalletCopy 
         };
     }
 
+    if (portfolio.type === PortfolioType.FLAME_DEVNET) {
+        return {
+            titleKey: 'removeWallet.title',
+            subtitleKey: 'removeWallet.revealed.subtitle',
+            checkboxKey: 'removeWallet.revealed.checkbox',
+            buttonKey: 'removeWallet.removeButton',
+            hasBackUpLink: false
+        };
+    }
+
     const isRevealed = portfolio.secretRevealedStatus !== null;
 
     return {

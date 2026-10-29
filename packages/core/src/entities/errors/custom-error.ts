@@ -9,8 +9,14 @@ import { PortfolioAlreadyExistsError } from './portfolio-already-exists.error';
 import { PortfolioGenerationFailedError } from './portfolio-generation-failed.error';
 import { BtcInsufficientFundsForFeeError, BtcSendDustError } from '../../blockchain-api/btc/errors';
 import {
+    FlameInputsSpentError,
+    FlameInsufficientBalanceError,
+    FlameSendStatusUnknownError
+} from '../../blockchain-api/flame/errors';
+import {
     ParserInvalidAmountError,
     ParserUnrecognizedError,
+    ParserUnsupportedMemoError,
     ParserUnsupportedSchemeError
 } from '../../external-input/errors';
 
@@ -21,11 +27,15 @@ export const customErrors = {
     BtcSendDustError,
     BtcInsufficientFundsForFeeError,
     OutputsAreSpendingMoreThanInputsError,
+    FlameInsufficientBalanceError,
+    FlameInputsSpentError,
+    FlameSendStatusUnknownError,
     LinkingUnsafeProtocolError,
     LinkingFailedToOpenError,
     ReconnectFromAnotherAccountError,
     ParserInvalidAmountError,
     ParserUnrecognizedError,
+    ParserUnsupportedMemoError,
     ParserUnsupportedSchemeError,
     InvalidBlockchainAndTokenError
 } as const;

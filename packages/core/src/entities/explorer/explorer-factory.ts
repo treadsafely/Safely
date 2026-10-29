@@ -13,7 +13,7 @@ export class ExplorerFactory {
         networkType: PortfolioNetworkType
     ): BtcExplorer;
     public createExplorer(
-        blockchain: BLOCKCHAIN_NAME,
+        blockchain: BLOCKCHAIN_NAME.BTC,
         networkType: PortfolioNetworkType
     ): Explorer {
         switch (blockchain) {
