@@ -49,8 +49,9 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
                             color="constantWhite"
                             numberOfLines={1}
                             ellipsizeMode="middle"
-                            style={styles.address}
-                            skeletonWidth={address === undefined ? 120 : undefined}
+                            style={address === undefined ? undefined : styles.address}
+                            skeletonVariant="constantWhite"
+                            skeletonWidth={120}
                         >
                             {address}
                         </Text>
@@ -59,7 +60,7 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
             </Screen.Header>
             <View style={styles.balance}>
                 <View style={styles.amountRow}>
-                    <Text variant="displayL" color="constantWhite" skeleton>
+                    <Text variant="displayL" color="constantWhite" skeletonVariant="constantWhite">
                         {amount}
                     </Text>
                     <Text variant="bodyL" color="constantWhite" style={styles.secondary}>
@@ -71,8 +72,9 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
                         variant="bodyL"
                         color="constantWhite"
                         textAlign="center"
-                        style={styles.secondary}
-                        skeletonWidth={fiatAmount === undefined ? 64 : undefined}
+                        style={fiatAmount === undefined ? undefined : styles.secondary}
+                        skeletonVariant="constantWhite"
+                        skeletonWidth={64}
                     >
                         {fiatAmount}
                     </Text>

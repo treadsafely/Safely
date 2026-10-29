@@ -63,7 +63,10 @@ export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>) => {
     if (!rows) {
         return (
             <List>
-                <List.Title containerStyle={styles.titleContainer} skeleton />
+                <List.Title
+                    containerStyle={styles.titleContainer}
+                    skeletonVariant="transparentElement"
+                />
                 <List.Group style={styles.contentContainer} variant="separated">
                     <ActivityItemSkeleton />
                     <ActivityItemSkeleton />

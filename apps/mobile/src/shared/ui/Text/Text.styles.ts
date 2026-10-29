@@ -108,6 +108,9 @@ export const styles = StyleSheet.create(theme => ({
                 labelL: {
                     height: 24
                 },
+                bodyL: {
+                    height: 24
+                },
                 bodyM: {
                     height: 20
                 }
@@ -122,6 +125,10 @@ export const SKELETON_CONFIG = {
         width: 96
     },
     labelL: {
+        height: 16,
+        width: 64
+    },
+    bodyL: {
         height: 16,
         width: 64
     },

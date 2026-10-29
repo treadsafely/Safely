@@ -3,14 +3,14 @@ import { Text as RNText, View } from 'react-native';
 import type { UnistylesVariants } from 'react-native-unistyles';
 import { useUnistyles } from 'react-native-unistyles';
 
-import { Skeleton } from '../Skeleton';
+import { Skeleton, type SkeletonVariant } from '../Skeleton';
 import { styles } from './Text.styles';
 import { SKELETON_CONFIG } from './Text.styles';
 
 export type TextProps = RNTextProps &
     UnistylesVariants<typeof styles> & {
         skeleton?: boolean;
-        skeletonVariant?: 'transparentElement' | 'secondary';
+        skeletonVariant?: SkeletonVariant;
         skeletonWidth?: number;
     };
 

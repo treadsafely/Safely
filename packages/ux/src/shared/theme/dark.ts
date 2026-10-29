@@ -135,7 +135,9 @@ export const darkTheme = {
             hover: 'rgba(255, 255, 255, 0.04)',
             constant: {
                 white: 'rgba(255, 255, 255, 1)',
-                black: 'rgba(0, 0, 0, 1)'
+                black: 'rgba(0, 0, 0, 1)',
+                translucentWhite: 'rgba(255, 255, 255, 0.08)',
+                translucentWhitePulse: 'rgba(255, 255, 255, 0.12)'
             }
         }
     }
