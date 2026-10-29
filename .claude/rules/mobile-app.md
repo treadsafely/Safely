@@ -134,15 +134,20 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
   through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
-  only drops the https prefix (logged), never the app. The modal reads `testseed` through zod as a
-  string or `''` — a link repeating the key (query plus fragment) delivers an array. It parses the phrase
-  (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case); the flow is keyed by `testseed`, because a
+  only drops the https prefix (logged), never the app. The modal reads `testseed` and the optional
+  `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
+  delivers an array. It parses the phrase
+  (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
+  (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft
+  the link, and a bidi override or zero-width character would spoof the synced name — trimmed, cut
+  to `PORTFOLIO_NAME_MAX_LENGTH`, blank → the default name below). The name is read once when the flow mounts: a repeated link for the same phrase
+  leaves it as it is, so the confirmed name cannot change under a ticked checkbox. The flow is keyed by `testseed`, because a
   second link only updates the params of the open modal. The modal sits on top of whatever screen
   the user was on, onboarding included, and picks its branch once, by whether an account existed
   when it opened. **With no account** it shows the same confirmation with "a new account will be
-  created" copy and the name "Wallet 1"; Import replaces the modal with `OnboardingPasscodeScreen`
+  created" copy and the name "Wallet 1" (or the link's `walletName`); Import replaces the modal with `OnboardingPasscodeScreen`
   carrying a `flameDevnet` source (its own `MnemonicResource` copy — the modal closes its own on
-  unmount), and the account is created there with the devnet portfolio as its first, as for an
+  unmount) and `firstPortfolioName` (the name the confirmation showed), and the account is created there with the devnet portfolio as its first, as for an
   imported phrase. A link that arrives while a device sign-in is in the stack (`SignInScreen` in onboarding,
   `SignInModal` when adding an account) goes straight back:
   the device link could complete under the modal and add an account the branch does not know

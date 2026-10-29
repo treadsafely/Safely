@@ -302,16 +302,18 @@ describe('useCreateAccount (add)', () => {
                 firstPortfolio: {
                     kind: 'flameDevnet',
                     mnemonicAccessor: new MnemonicResource(mnemonic)
-                }
+                },
+                firstPortfolioName: 'Flame demo'
             });
         });
 
         const recorder = newAccount.transactions[0];
 
         const portfoliosSet = recorder.set.mock.calls.find(c => c[0] === 'portfolios');
-        const portfolios = portfoliosSet?.[1] as Array<{ type: string }>;
+        const portfolios = portfoliosSet?.[1] as Array<{ type: string; meta: { name: string } }>;
         expect(portfolios).toHaveLength(1);
         expect(portfolios[0].type).toBe(PortfolioType.FLAME_DEVNET);
+        expect(portfolios[0].meta.name).toBe('Flame demo');
 
         const nextInfoSet = recorder.set.mock.calls.find(c => c[0] === 'nextDerivingPortfolioInfo');
         expect(nextInfoSet?.[1]).toEqual({ index: 0, emoji: expect.any(String) });
