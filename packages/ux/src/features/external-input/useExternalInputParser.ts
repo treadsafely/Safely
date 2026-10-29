@@ -25,7 +25,8 @@ export function useExternalInputParser<
     const parseError = useParseError({
         ParserUnsupportedSchemeError: t('externalInput.errors.unsupportedScheme'),
         ParserUnrecognizedError: t('externalInput.errors.unrecognized'),
-        ParserInvalidAmountError: t('externalInput.errors.invalidAmount')
+        ParserInvalidAmountError: t('externalInput.errors.invalidAmount'),
+        ParserUnsupportedMemoError: t('externalInput.errors.unsupportedMemo')
     });
 
     return useCallback(

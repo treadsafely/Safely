@@ -76,12 +76,16 @@ private func uint64(_ value: String) throws -> UInt64 {
     return result
 }
 
+// No Data fields: Android cannot convert a typed array inside a record, and the two signatures stay the same.
+// Initial values only satisfy Swift: .required rejects a missing key, so none of them is ever used.
 struct TransferPlan: Record {
-    @Field var addresses: [String] = []
-    @Field var qtys: [String] = []
-    @Field var memos: [Data] = []
-    @Field var fee: String = ""
-    @Field var gas: String = ""
+    @Field(.required) var network: String = ""
+    @Field(.required) var branch: Int = 0
+    @Field(.required) var index: Int = 0
+    @Field(.required) var addresses: [String] = []
+    @Field(.required) var qtys: [String] = []
+    @Field(.required) var fee: String = ""
+    @Field(.required) var gas: String = ""
 }
 
 private func noteFailure(_ failure: NoteFailure) -> String {
@@ -159,16 +163,16 @@ public class SafelyFlameModule: Module {
         }
 
         // A confidential input is opened here, so its blindings never cross the bridge.
-        AsyncFunction("buildTransfer") { (seed: Data, networkName: String, branch: Int, index: Int, contracts: [Data], notes: [Data], proofs: [Data], plan: TransferPlan) -> [String: Any] in
+        AsyncFunction("buildTransfer") { (seed: Data, contracts: [Data], notes: [Data], proofs: [Data], memos: [Data], plan: TransferPlan) -> [String: Any] in
             outcome {
                 guard contracts.count == notes.count, contracts.count == proofs.count else {
                     throw invalidArgument("\(contracts.count) contracts for \(notes.count) notes and \(proofs.count) proofs")
                 }
-                guard plan.addresses.count == plan.qtys.count, plan.addresses.count == plan.memos.count else {
-                    throw invalidArgument("\(plan.addresses.count) addresses for \(plan.qtys.count) amounts and \(plan.memos.count) memos")
+                guard plan.addresses.count == plan.qtys.count, plan.addresses.count == memos.count else {
+                    throw invalidArgument("\(plan.addresses.count) addresses for \(plan.qtys.count) amounts and \(memos.count) memos")
                 }
-                let wallet = try Wallet(seed: seed, network: network(networkName), nextIndex: 0)
-                let path = KeyPath(branch: try uint32(branch), index: try uint32(index))
+                let wallet = try Wallet(seed: seed, network: network(plan.network), nextIndex: 0)
+                let path = KeyPath(branch: try uint32(plan.branch), index: try uint32(plan.index))
                 let inputs = try contracts.indices.map { i -> TransferInput in
                     let value = try FlameWallet.decodeContract(bytes: contracts[i]).value
                     var opening: Opening? = nil
@@ -178,7 +182,7 @@ public class SafelyFlameModule: Module {
                     return TransferInput(contract: contracts[i], proof: proofs[i], path: path, opening: opening)
                 }
                 let outputs = try plan.addresses.indices.map { i in
-                    TransferOutput(address: plan.addresses[i], qty: try uint64(plan.qtys[i]), flavor: nil, memo: plan.memos[i])
+                    TransferOutput(address: plan.addresses[i], qty: try uint64(plan.qtys[i]), flavor: nil, memo: memos[i])
                 }
                 let transfer = try wallet.buildTransfer(request: TransferRequest(
                     inputs: inputs,

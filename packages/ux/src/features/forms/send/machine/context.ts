@@ -37,7 +37,8 @@ export const DEFAULT_PARSED = {
 export const DEFAULT_ERRORS: SendFormErrors = {
     recipient: undefined,
     amount: undefined,
-    asset: undefined
+    asset: undefined,
+    memo: undefined
 };
 
 export function withResetDependentValues(values: SendFormValues): SendFormValues {
@@ -63,7 +64,8 @@ export function withResetDependentErrors(errors: SendFormErrors): SendFormErrors
     return {
         ...errors,
         amount: undefined,
-        asset: undefined
+        asset: undefined,
+        memo: undefined
     };
 }
 
@@ -188,7 +190,8 @@ export function buildInitialContext(input: SendFormMachineInput): SendFormMachin
         errors: {
             recipient: result.error,
             amount: undefined,
-            asset: undefined
+            asset: undefined,
+            memo: undefined
         },
         suggestion:
             validatorSuggestion ?? (draftSuggestionValid ? initialSuggestion : EMPTY_SUGGESTION)

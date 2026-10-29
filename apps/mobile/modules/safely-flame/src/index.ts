@@ -119,16 +119,16 @@ interface SafelyFlameNativeModule {
     ): Promise<NativeOutcome<NativeNoteOpening[]>>;
     buildTransfer(
         seed: Uint8Array,
-        network: FlameNetwork,
-        branch: number,
-        index: number,
         contracts: Uint8Array[],
         notes: Uint8Array[],
         proofs: Uint8Array[],
+        memos: Uint8Array[],
         plan: {
+            network: FlameNetwork;
+            branch: number;
+            index: number;
             addresses: string[];
             qtys: string[];
-            memos: Uint8Array[];
             fee: string;
             gas: string;
         }
@@ -266,16 +266,16 @@ export async function buildTransfer(
         return await unwrap(
             native.buildTransfer(
                 plainSeed,
-                network,
-                branch,
-                index,
                 plan.inputs.map(({ contract }) => toPlainUint8Array(contract)),
                 plan.inputs.map(({ note }) => (note ? toPlainUint8Array(note) : new Uint8Array(0))),
                 plan.inputs.map(({ proof }) => toPlainUint8Array(proof)),
+                plan.outputs.map(({ memo }) => toPlainUint8Array(memo)),
                 {
+                    network,
+                    branch,
+                    index,
                     addresses: plan.outputs.map(({ address }) => address),
                     qtys: plan.outputs.map(({ qty }) => qty),
-                    memos: plan.outputs.map(({ memo }) => toPlainUint8Array(memo)),
                     fee: plan.fee,
                     gas: plan.gas
                 }

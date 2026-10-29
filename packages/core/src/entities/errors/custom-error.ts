@@ -15,6 +15,7 @@ import {
 import {
     ParserInvalidAmountError,
     ParserUnrecognizedError,
+    ParserUnsupportedMemoError,
     ParserUnsupportedSchemeError
 } from '../../external-input/errors';
 
@@ -32,6 +33,7 @@ export const customErrors = {
     ReconnectFromAnotherAccountError,
     ParserInvalidAmountError,
     ParserUnrecognizedError,
+    ParserUnsupportedMemoError,
     ParserUnsupportedSchemeError,
     InvalidBlockchainAndTokenError
 } as const;

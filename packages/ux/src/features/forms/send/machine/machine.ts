@@ -2,7 +2,7 @@ import * as x from 'xstate';
 import { assertEvent, assign } from 'xstate';
 
 import type { Contact, CryptoAssetAmount } from '@safely/core';
-import { BLOCKCHAIN_NAME, clampFlameMemo } from '@safely/core';
+import { BLOCKCHAIN_NAME } from '@safely/core';
 
 import { SendFormError } from '../errors';
 import { SuggestionSource } from '../types';
@@ -35,6 +35,7 @@ import {
     resolveAmountDecimals,
     validateAmount
 } from '../validators/amount';
+import { validateMemo } from '../validators/memo';
 import { validateRecipientInput } from '../validators/recipient';
 
 function buildSendFormResult(context: SendFormMachineContext): SendFormResult | undefined {
@@ -269,7 +270,10 @@ export const createSendFormMachine = () =>
                 handleSetMemo: assign(({ context, event }) => {
                     assertEvent(event, 'SET_MEMO');
 
-                    return { values: { ...context.values, memo: clampFlameMemo(event.value) } };
+                    return {
+                        values: { ...context.values, memo: event.value },
+                        errors: { ...context.errors, memo: validateMemo(event.value) }
+                    };
                 }),
                 persistAmountInputType: ({ context, event }) => {
                     assertEvent(event, 'SET_AMOUNT_INPUT_TYPE');
@@ -653,7 +657,7 @@ export const createSendFormMachine = () =>
                                             target: 'idle'
                                         },
                                         NEXT: {
-                                            guard: 'isAmountStepValid',
+                                            guard: x.and(['isAmountStepValid', 'isMemoValid']),
                                             target: '#sendForm.submitted'
                                         }
                                     }
@@ -699,7 +703,7 @@ export const createSendFormMachine = () =>
                                             }
                                         ],
                                         NEXT: {
-                                            guard: 'isAmountStepValid',
+                                            guard: x.and(['isAmountStepValid', 'isMemoValid']),
                                             target: '#sendForm.submitted'
                                         }
                                     }

@@ -125,6 +125,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
     const recipientFeatures =
         recipientBlockchain && SEND_FORM_FEATURES_BY_CHAIN[recipientBlockchain];
     const memoSetter = recipientFeatures?.hasMemo ? setMemo : undefined;
+    const nextIfMemoValid = ctxErrors.memo ? undefined : goNext;
 
     return useMemo<SendFormView>(() => {
         if (snapshot.matches('restoring')) return { state: 'restoring' };
@@ -182,7 +183,11 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
                     amountInputType: ctxValues.amountInputType,
                     memo: ctxValues.memo
                 },
-                errors: { amount: ctxErrors.amount, asset: ctxErrors.asset },
+                errors: {
+                    amount: ctxErrors.amount,
+                    asset: ctxErrors.asset,
+                    memo: ctxErrors.memo
+                },
                 parsed: {
                     recipient: ctxParsedRecipient,
                     amount: ctxParsedAmount,
@@ -206,9 +211,14 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
 
             switch (status) {
                 case 'manual':
-                    return { ...base, status, enterMax: enterMaxIfAvailable, next: goNext };
+                    return {
+                        ...base,
+                        status,
+                        enterMax: enterMaxIfAvailable,
+                        next: nextIfMemoValid
+                    };
                 case 'max':
-                    return { ...base, status, exitMax, next: goNext };
+                    return { ...base, status, exitMax, next: nextIfMemoValid };
                 case 'idle':
                 case 'invalid':
                     return { ...base, status, enterMax: enterMaxIfAvailable };
@@ -239,6 +249,7 @@ export function useSendFormView(props: UseSendFormViewProps): SendFormView {
         setAmountInputType,
         setAsset,
         memoSetter,
+        nextIfMemoValid,
         enterMax,
         exitMax,
         goPrev,

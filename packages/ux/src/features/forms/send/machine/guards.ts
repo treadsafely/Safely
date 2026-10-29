@@ -26,6 +26,8 @@ export const isAmountStepValid = ({ context }: GuardArg): boolean =>
     !context.errors.amount &&
     !context.errors.asset;
 
+export const isMemoValid = ({ context }: GuardArg): boolean => !context.errors.memo;
+
 export const recipientHasMemo = ({ context }: GuardArg): boolean =>
     !!context.parsed.recipient &&
     SEND_FORM_FEATURES_BY_CHAIN[context.parsed.recipient.blockchain].hasMemo;
@@ -70,6 +72,7 @@ export const guards = {
     hasRecipientError,
     isRecipientStepValid,
     isAmountStepValid,
+    isMemoValid,
     recipientHasMemo,
     shouldCreateContact,
     canEnterMax,

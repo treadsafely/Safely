@@ -87,7 +87,8 @@ export function useOnboardingFlow() {
             accounts: { index: number; xpub: string; name: string }[]
         ) => {
             navigation.navigate('OnboardingPasscodeScreen', {
-                source: { kind: 'ledger', masterFingerprint, deviceModel, walletName, accounts },
+                source: { kind: 'ledger', masterFingerprint, deviceModel, accounts },
+                firstPortfolioName: walletName,
                 headerType: 'back'
             });
         },
@@ -95,7 +96,11 @@ export function useOnboardingFlow() {
     );
 
     const onPasscodeReady = useCallback(
-        async (passcode: string, source: AccountPortfolioSource | null) => {
+        async (
+            passcode: string,
+            source: AccountPortfolioSource | null,
+            firstPortfolioName?: string
+        ) => {
             await setPasscode(passcode);
 
             if (source) {
@@ -107,7 +112,11 @@ export function useOnboardingFlow() {
                         // don't ask for the password while setting app initially after first account creation during onboarding to provide smooth user experience
                         secureEncryptedStorage.UNSAFE_SKIP_SECURITY_CHECK_unlock();
 
-                        await createAccount({ secureEncryptedStorage, firstPortfolio: source });
+                        await createAccount({
+                            secureEncryptedStorage,
+                            firstPortfolio: source,
+                            firstPortfolioName
+                        });
                     });
                 } catch (error) {
                     errorToast(error);

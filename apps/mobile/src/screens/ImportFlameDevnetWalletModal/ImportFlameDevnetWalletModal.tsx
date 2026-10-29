@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { ellipsisMiddle, MnemonicResource, type PortfolioMeta } from '@safely/core';
 import {
     parseFlameDevnetSeedParam,
+    parseFlameDevnetWalletNameParam,
     SecurityCheckCancelledError,
     useErrorToast,
     useFirstPortfolioName,
@@ -46,10 +47,12 @@ import {
 
 import { styles } from './ImportFlameDevnetWalletModal.styles';
 
-type ImportFlameDevnetWalletModalProps = StaticScreenProps<{ testseed?: unknown } | undefined>;
+type ImportFlameDevnetWalletModalProps = StaticScreenProps<
+    { testseed?: unknown; walletName?: unknown } | undefined
+>;
 
-// a link that repeats `testseed` (query and fragment) arrives as an array
-const sTestseedParam = z.string().catch('');
+// a link that repeats a key (query and fragment) delivers an array
+const sStringParam = z.string().catch('');
 
 const DEVICE_LINK_ROUTES = new Set(['SignInScreen', 'SignInModal']);
 
@@ -210,16 +213,18 @@ const ImportFlameDevnetWalletView = (props: ImportFlameDevnetWalletViewProps) =>
 
 type ImportFlowProps = {
     mnemonicResource: MnemonicResource;
+    linkWalletName: string | undefined;
     hasLeftRef: RefObject<boolean>;
     leave: () => void;
 };
 
-const NewAccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlowProps) => {
+const NewAccountImportFlow = (props: ImportFlowProps) => {
+    const { mnemonicResource, linkWalletName, hasLeftRef, leave } = props;
     const { t } = useTranslation();
     const navigation = useNavigation();
     const firstPortfolioName = useFirstPortfolioName();
 
-    const continueToPasscode = () => {
+    const continueToPasscode = (meta: PortfolioMeta) => {
         if (hasLeftRef.current) return;
         hasLeftRef.current = true;
         navigation.dispatch(
@@ -228,6 +233,7 @@ const NewAccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlo
                     kind: 'flameDevnet',
                     mnemonicAccessor: new MnemonicResource(mnemonicResource.value)
                 },
+                firstPortfolioName: meta.name,
                 headerType: 'back'
             })
         );
@@ -236,7 +242,7 @@ const NewAccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlo
     return (
         <ImportFlameDevnetWalletView
             mnemonicResource={mnemonicResource}
-            walletName={firstPortfolioName}
+            walletName={linkWalletName ?? firstPortfolioName}
             subtitle={t('importFlameDevnetWallet.subtitleNewAccount')}
             isPending={false}
             onLeave={leave}
@@ -245,13 +251,14 @@ const NewAccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlo
     );
 };
 
-const AccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlowProps) => {
+const AccountImportFlow = (props: ImportFlowProps) => {
+    const { mnemonicResource, linkWalletName, hasLeftRef, leave } = props;
     const { t } = useTranslation();
     const navigation = useNavigation();
     const toast = useToast();
     const errorToast = useErrorToast(IMPORT_ERRORS);
     const accountName = useActiveAccountMeta().name;
-    const walletName = useNewPortfolioFallbackName();
+    const fallbackWalletName = useNewPortfolioFallbackName();
     // a snapshot: after this modal's own import the list holds the wallet too
     const duplicate = useRef(useExistingFlameDevnetPortfolio(mnemonicResource)).current;
     const { mutate: setActivePortfolio } = useSetActivePortfolio();
@@ -295,7 +302,7 @@ const AccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlowPr
     return (
         <ImportFlameDevnetWalletView
             mnemonicResource={mnemonicResource}
-            walletName={walletName}
+            walletName={linkWalletName ?? fallbackWalletName}
             subtitle={t('importFlameDevnetWallet.subtitle', { accountName })}
             isPending={isPending}
             onLeave={leave}
@@ -304,7 +311,15 @@ const AccountImportFlow = ({ mnemonicResource, hasLeftRef, leave }: ImportFlowPr
     );
 };
 
-const ImportFlameDevnetWalletFlow = ({ testseed }: { testseed: string }) => {
+type ImportFlameDevnetWalletFlowProps = {
+    testseed: string;
+    linkWalletName: string | undefined;
+};
+
+const ImportFlameDevnetWalletFlow = (props: ImportFlameDevnetWalletFlowProps) => {
+    const { testseed } = props;
+    // a repeated link for the same phrase must not rename the wallet under a ticked checkbox
+    const linkWalletName = useRef(props.linkWalletName).current;
     const mnemonicResource = useMemo(
         () => new MnemonicResource(parseFlameDevnetSeedParam(testseed)),
         [testseed]
@@ -347,12 +362,28 @@ const ImportFlameDevnetWalletFlow = ({ testseed }: { testseed: string }) => {
 
     const Flow = hadAccountOnOpen ? AccountImportFlow : NewAccountImportFlow;
 
-    return <Flow mnemonicResource={mnemonicResource} hasLeftRef={hasLeftRef} leave={leave} />;
+    return (
+        <Flow
+            mnemonicResource={mnemonicResource}
+            linkWalletName={linkWalletName}
+            hasLeftRef={hasLeftRef}
+            leave={leave}
+        />
+    );
 };
 
 export const ImportFlameDevnetWalletModal = (props: ImportFlameDevnetWalletModalProps) => {
-    const testseed = sTestseedParam.parse(props.route.params?.testseed);
+    const testseed = sStringParam.parse(props.route.params?.testseed);
+    const linkWalletName = parseFlameDevnetWalletNameParam(
+        sStringParam.parse(props.route.params?.walletName)
+    );
 
     // a second link updates the params of the open modal; a new phrase must start over
-    return <ImportFlameDevnetWalletFlow key={testseed} testseed={testseed} />;
+    return (
+        <ImportFlameDevnetWalletFlow
+            key={testseed}
+            testseed={testseed}
+            linkWalletName={linkWalletName}
+        />
+    );
 };

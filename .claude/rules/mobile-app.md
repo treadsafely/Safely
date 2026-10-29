@@ -80,12 +80,20 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   the mnemonic); `viewKey` returns the account's bech32f view key, and `address` and `openNotes`
   build a view wallet (`Wallet.fromViewKey`) from it. `buildTransfer` builds a spend wallet, opens
   each confidential input's note itself (the blindings never cross the bridge), then proves and signs;
-  binary inputs travel as three parallel arrays and the rest as one `TransferPlan` record (outputs as
-  parallel `addresses`/`qtys`/`memos`, an empty memo for none), because
-  Kotlin Expo functions take at most 8 arguments. `validateReceivingAddress` and `memoMaxBytes` need no
-  wallet and are synchronous (`Function`, not `AsyncFunction`), so the send form validates and
-  clamps without awaiting; the first still answers an `{ ok, … }` outcome, unwrapped in the facade.
-  Each async call builds its `Wallet` and drops it before returning (Kotlin
+  every binary value travels as a function argument of its own (`contracts`/`notes`/`proofs` per
+  input, `memos` per output, an empty memo for none) and the rest as one `TransferPlan` record
+  (network, path, parallel `addresses`/`qtys`, fee, gas; every field required, so a missing key
+  rejects the call instead of falling back to a default path), because Kotlin Expo functions take
+  at most 8 arguments. **Never put a `Uint8Array` inside a record:** on Android a record arrives as
+  a `ReadableNativeMap`, where a typed array is a plain map, and its `ByteArray` conversion fails
+  with `DynamicFromArray cannot be cast to byte[]`. A function argument is converted as a typed
+  array, alone or as an array of them (`List<ByteArray>`); a record or map field is not. iOS
+  converts both, so only Android breaks. The facade test asserts the plan holds no `Uint8Array` at
+  any depth; the bridge itself is mocked there, so only a device build exercises the conversion.
+  `validateReceivingAddress` and `memoMaxBytes` need no wallet and are synchronous (`Function`, not
+  `AsyncFunction`), so the send form validates and clamps without awaiting; the first still answers
+  an `{ ok, … }` outcome, unwrapped in the facade. Each async call builds its `Wallet` and drops it
+  before returning (Kotlin
   also zeroes its seed copy). Never log the seed or the view key — the view key reads every amount
   and memo. The library's `reason` is passed through as is — log it only through
   `filterSensitiveData`.
@@ -126,15 +134,20 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
   through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
-  only drops the https prefix (logged), never the app. The modal reads `testseed` through zod as a
-  string or `''` — a link repeating the key (query plus fragment) delivers an array. It parses the phrase
-  (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case); the flow is keyed by `testseed`, because a
+  only drops the https prefix (logged), never the app. The modal reads `testseed` and the optional
+  `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
+  delivers an array. It parses the phrase
+  (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
+  (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft
+  the link, and a bidi override or zero-width character would spoof the synced name — trimmed, cut
+  to `PORTFOLIO_NAME_MAX_LENGTH`, blank → the default name below). The name is read once when the flow mounts: a repeated link for the same phrase
+  leaves it as it is, so the confirmed name cannot change under a ticked checkbox. The flow is keyed by `testseed`, because a
   second link only updates the params of the open modal. The modal sits on top of whatever screen
   the user was on, onboarding included, and picks its branch once, by whether an account existed
   when it opened. **With no account** it shows the same confirmation with "a new account will be
-  created" copy and the name "Wallet 1"; Import replaces the modal with `OnboardingPasscodeScreen`
+  created" copy and the name "Wallet 1" (or the link's `walletName`); Import replaces the modal with `OnboardingPasscodeScreen`
   carrying a `flameDevnet` source (its own `MnemonicResource` copy — the modal closes its own on
-  unmount), and the account is created there with the devnet portfolio as its first, as for an
+  unmount) and `firstPortfolioName` (the name the confirmation showed), and the account is created there with the devnet portfolio as its first, as for an
   imported phrase. A link that arrives while a device sign-in is in the stack (`SignInScreen` in onboarding,
   `SignInModal` when adding an account) goes straight back:
   the device link could complete under the modal and add an account the branch does not know
@@ -160,8 +173,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`useImportFlameDevnetPortfolioFromSeed` → `useImportFlameDevnetPortfolio`). After an import or a
   duplicate it resets to the tabs. Cancel, close and a preview
   error always go back, so an onboarding step or an open flow underneath is kept. A link is
-  dispatched on top of the initial route (`initialState` is always set, so React Navigation never
-  reads the initial URL itself), so there is always something to go back to; the reset to
+  dispatched on top of the initial route (`initialState` is always set, so React Navigation discards
+  the initial URL — it still calls the linking options' `getInitialURL` on its first render, which
+  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getInitialURL()` and
+  delivers it like any other link, after unlock), so there is always something to go back to; the reset to
   `resolveStartRoute` (`@mobile/shared/navigation`) is only a fallback. `resolveStartRoute` is the one
   place the start route is decided — `useInitialNavigationState` and `useRestrictionGuard` read it;
   never hand-write that choice again (the restriction guard once sent an account without a passcode
@@ -312,8 +327,11 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   (`unsupportedFlameSdk`, where `validateReceivingAddress` answers `false` so BTC address detection
   keeps working) and nothing else — no flag, no filtering, so a synced devnet portfolio
   reaches the desktop UI as is.
-- Open: release builds with R8 have not been tried; JNA and the generated `com.flame.wallet` classes
-  will need keep rules before the module is used outside a dev-client.
+- Under R8 the module relies on two sets of consumer rules, nothing in `extraProguardRules`:
+  `@runflame/wallet-rn`'s keeps JNA and the generated `com.flame.wallet` classes (see
+  `android-minification.md`), and `expo-modules-core`'s keeps every `Record` with its field names,
+  which are the JS keys. A minified staging APK reads wallets and balances; `buildTransfer` on a
+  minified build is still to be confirmed by a send.
 
 ## UI
 

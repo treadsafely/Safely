@@ -216,7 +216,7 @@
     },
     "qrScan": {
         "title": "Scan QR code",
-        "subtitle": "Scan BTC address to continue.",
+        "subtitle": "Scan wallet address to continue.",
         "addDevice": {
             "title": "Scan QR code to add",
             "subtitle": "Scan the QR code shown in \"Link with QR\" on your other device."
@@ -535,7 +535,8 @@
             "unableToValidateToken": "Unable to validate token",
             "invalidAmount": "Invalid amount",
             "insufficientBalance": "Insufficient balance",
-            "unrecognizedAmount": "Couldn't recognize the amount"
+            "unrecognizedAmount": "Couldn't recognize the amount",
+            "memoTooLong": "Memo is too long"
         }
     },
     "signIn": {
@@ -971,7 +972,8 @@
         "errors": {
             "invalidAmount": "Invalid payment amount in the code",
             "unrecognized": "Unrecognized input",
-            "unsupportedScheme": "Unsupported input type"
+            "unsupportedScheme": "Unsupported input type",
+            "unsupportedMemo": "Codes with a memo are not supported"
         }
     },
     "addressBook": {

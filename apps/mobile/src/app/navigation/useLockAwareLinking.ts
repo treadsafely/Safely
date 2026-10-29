@@ -84,23 +84,8 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
             enabled: true,
             prefixes: resolveLinkingPrefixes(),
             getStateFromPath: (path, options) => getStateFromPath(fragmentToQuery(path), options),
-            async getInitialURL() {
-                const pendingUrl = pendingUrlRef.current;
-
-                if (pendingUrl !== null) {
-                    pendingUrlRef.current = null;
-
-                    return pendingUrl;
-                }
-
-                if (hasConsumedInitialUrlRef.current) {
-                    return null;
-                }
-
-                hasConsumedInitialUrlRef.current = true;
-
-                return await Linking.getInitialURL();
-            },
+            // called on the container's first render despite `initialState`, its result discarded: the effect above delivers the initial URL
+            getInitialURL: () => null,
             subscribe(listener) {
                 listenerRef.current = listener;
 

@@ -7,11 +7,12 @@ import { styles } from './MemoInput.styles';
 
 interface MemoInputProps {
     value: string;
+    error: string | undefined;
     onChangeText: (value: string) => void;
 }
 
 export const MemoInput = (props: MemoInputProps) => {
-    const { value, onChangeText } = props;
+    const { value, error, onChangeText } = props;
     const { t } = useTranslation();
 
     return (
@@ -25,9 +26,14 @@ export const MemoInput = (props: MemoInputProps) => {
                 withClearButton
                 multiline
                 autoCorrect={false}
+                errored={!!error}
                 style={styles.field}
             />
-            <Input.Description>{t('send.memo.description')}</Input.Description>
+            {error ? (
+                <Input.Description style={styles.error}>{t(error)}</Input.Description>
+            ) : (
+                <Input.Description>{t('send.memo.description')}</Input.Description>
+            )}
         </Input>
     );
 };

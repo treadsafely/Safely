@@ -106,7 +106,6 @@ export type AccountPortfolioSource =
           kind: 'ledger';
           masterFingerprint: string;
           deviceModel: string;
-          walletName: string;
           accounts: { index: number; xpub: string; name: string }[];
       };
 
@@ -197,7 +196,7 @@ async function buildFirstPortfolio(params: {
                 networkType: PortfolioNetworkType.MAINNET,
                 deviceModel: source.deviceModel,
                 accounts: source.accounts,
-                meta: { name: source.walletName, icon: id.getFallbackEmoji() }
+                meta: { name: portfolioName, icon: id.getFallbackEmoji() }
             });
             break;
         }
@@ -286,7 +285,7 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
     const factory = useAccountsFactory();
     const { mutateAsync: setActive } = useSetActiveAccount();
     const newAccountName = useNewAccountDefaultName();
-    const firstPortfolioName = useFirstPortfolioName();
+    const defaultFirstPortfolioName = useFirstPortfolioName();
     const updateSyncStorage = useAccountSyncStorageUpdate();
     const generateOwnMeta = useGenerateOwnSyncedDeviceMeta();
     const { deviceInfo, storage } = useAppContext();
@@ -299,6 +298,7 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
             name?: string;
             secureEncryptedStorage: ITreeStorage;
             firstPortfolio?: AccountPortfolioSource;
+            firstPortfolioName?: string;
         },
         unknown
     >({
@@ -321,7 +321,7 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
                     secureEncryptedStorage: params.secureEncryptedStorage,
                     silentSecretEncryptor: accountDataKey.encryptor(),
                     source: params.firstPortfolio,
-                    portfolioName: firstPortfolioName,
+                    portfolioName: params.firstPortfolioName ?? defaultFirstPortfolioName,
                     deviceName: deviceInfo.name,
                     logger
                 });

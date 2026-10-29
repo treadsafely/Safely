@@ -118,6 +118,7 @@ export interface SendFormErrors {
     recipient: string | undefined;
     amount: string | undefined;
     asset: string | undefined;
+    memo: string | undefined;
 }
 
 export enum SuggestionSource {

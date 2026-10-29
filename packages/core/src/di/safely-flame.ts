@@ -1,4 +1,7 @@
-export type FlameNetwork = 'mainnet' | 'testnet';
+export enum FlameNetwork {
+    MAINNET = 'mainnet',
+    TESTNET = 'testnet'
+}
 
 export interface FlameKeyPath {
     branch: number;

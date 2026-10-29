@@ -10,17 +10,18 @@ import { PasscodeSetup } from '@mobile/shared/ui';
 
 type OnboardingPasscodeScreenProps = StaticScreenProps<{
     source: AccountPortfolioSource | null;
+    firstPortfolioName?: string;
     headerType: PasscodeSetupHeaderType;
 }>;
 
 export const OnboardingPasscodeScreen = (props: OnboardingPasscodeScreenProps) => {
     const { t } = useTranslation();
-    const { source, headerType } = props.route.params;
+    const { source, firstPortfolioName, headerType } = props.route.params;
     const { onPasscodeReady } = useOnboardingFlow();
 
     const handleComplete = useCallback(
-        (passcode: string) => onPasscodeReady(passcode, source),
-        [onPasscodeReady, source]
+        (passcode: string) => onPasscodeReady(passcode, source, firstPortfolioName),
+        [onPasscodeReady, source, firstPortfolioName]
     );
 
     return (
