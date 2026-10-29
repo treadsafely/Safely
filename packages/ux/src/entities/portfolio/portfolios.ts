@@ -11,7 +11,7 @@ import type {
     Portfolio,
     PortfolioMeta,
     PortfolioWatchOnly,
-    ISecretEncryptor,
+    ISecureSecretEncryptor,
     IMnemonicVault,
     ITreeStorage
 } from '@safely/core';
@@ -42,12 +42,13 @@ import {
     useSecurityCheck,
     useAppContext,
     useLogger,
-    SecretEncryptor
+    BaseSecureSecretEncryptor,
+    AccountDataKey
 } from '../../shared';
 import { useSuspenseQuery } from '../../shared';
 import type { SActivePortfolioSchema, UseAccountSyncStorageUpdateOptions } from '../account';
 import { resolveActivePortfolio, useAccountSyncStorageUpdate } from '../account';
-import { useActiveAccountSyncStorageSlotUpdate } from '../account';
+import { useActiveAccount, useActiveAccountSyncStorageSlotUpdate } from '../account';
 import { useActiveAccountStoreSlot } from '../account';
 import {
     useActiveAccountLocalStorage,
@@ -122,8 +123,8 @@ export function useGeneratePortfolio() {
 
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 mnemonicAccessor,
-                encryptor: new SecretEncryptor(
-                    account.secretEncryptor,
+                encryptor: new BaseSecureSecretEncryptor(
+                    account.secureSecretEncryptor,
                     params.secureEncryptedStorage
                 ),
                 id,
@@ -175,13 +176,13 @@ export function useImportPortfolio() {
         Error,
         {
             mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
-            secretEncryptor: ISecretEncryptor;
+            secureSecretEncryptor: ISecureSecretEncryptor;
             meta: PortfolioMeta;
             networkType: PortfolioNetworkType;
         },
         unknown
     >({
-        async mutationFn({ mnemonicAccessor, secretEncryptor, meta, networkType }) {
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta, networkType }) {
             portfolioLogger.info('importing portfolio');
             await delay();
 
@@ -189,7 +190,7 @@ export function useImportPortfolio() {
 
             const portfolio = await PortfolioBip39.createSerializedPortfolio({
                 id,
-                encryptor: secretEncryptor,
+                encryptor: secureSecretEncryptor,
                 mnemonicAccessor,
                 meta,
                 options: {
@@ -265,6 +266,8 @@ export function useImportFlameDevnetPortfolio() {
     const { mutateAsync: addPortfolio } = useAddPortfolio({ showErrorToast: false });
     const { mutateAsync: setActivePortfolio } = useSetActivePortfolio();
     const portfolios = usePortfolios();
+    const account = useActiveAccount();
+    const { storage } = useAppContext();
     const logger = useLogger('portfolio');
 
     return useMutation<
@@ -272,18 +275,22 @@ export function useImportFlameDevnetPortfolio() {
         Error,
         {
             mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
-            secretEncryptor: ISecretEncryptor;
+            secureSecretEncryptor: ISecureSecretEncryptor;
             meta: PortfolioMeta;
         }
     >({
-        async mutationFn({ mnemonicAccessor, secretEncryptor, meta }) {
+        async mutationFn({ mnemonicAccessor, secureSecretEncryptor, meta }) {
             logger.info('importing devnet portfolio');
             const id = PortfolioIdFlameDevnet.create(mnemonicAccessor);
 
             if (!portfolios.some(p => p.id.isEq(id))) {
                 await addPortfolio(
                     await PortfolioFlameDevnet.createSerializedPortfolio({
-                        encryptor: secretEncryptor,
+                        secureSecretEncryptor,
+                        silentSecretEncryptor: new AccountDataKey(
+                            account,
+                            storage.sync
+                        ).encryptor(),
                         mnemonicAccessor,
                         meta,
                         logger

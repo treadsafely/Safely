@@ -109,6 +109,14 @@ Child keys are derived from the Master Key.
 - **Operational (SyncKey, IdentityKey)**: Stored in the Keychain or comparable secure storage and accessible to the 
   application without user interaction, because they are required for background synchronization and authenticated API 
   communication.
+- **Account data key:** A client-derived MasterKey key (section 1.2, domain `account-data-key`) that encrypts data in
+  synchronized state that the application must read without user interaction, with the payload format of section 4.2.
+  Every device of the account derives the same key, so data encrypted on one device opens on another. A device derives
+  it while the MasterKey is already unlocked when it creates the account; a device that holds the account without it
+  (onboarding, or an account created before the key existed) derives it once without a user-presence check. The key is
+  then cached in operational storage, inside the account's own storage node, so deleting the account removes it. It is
+  an operational key: it MUST NOT protect anything that can move funds or authorize account operations. Today it
+  encrypts the Flame view key.
 
 User presence MUST be enforced by the client application and is not an access-control property of the stored Keychain
 item. Therefore, the operating system does not independently prevent a malfunctioning or malicious client from

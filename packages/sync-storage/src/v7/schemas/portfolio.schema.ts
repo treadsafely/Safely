@@ -15,7 +15,7 @@ import {
 export const sPortfolioType = z.enum([...sPortfolioTypeV6.options, 'FLAME_DEVNET']);
 
 export const sFlameAccountChainItem = z.object({
-    viewKey: z.string(),
+    encryptedViewKey: z.string(),
     receivingAddress: z.string(),
     trackingAddress: z.string(),
     predicate: z.string()

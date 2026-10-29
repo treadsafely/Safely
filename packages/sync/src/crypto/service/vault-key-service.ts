@@ -1,33 +1,18 @@
-import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-
+import { SymmetricCipher } from './symmetric-cipher';
 import type { SecureEncryptedKeyRepository } from '../secure-encrypted-key-repository';
 
 export class VaultKeyService {
-    constructor(private readonly keyRepository: SecureEncryptedKeyRepository) {}
+    private readonly cipher: SymmetricCipher;
 
-    public async encrypt(data: Buffer): Promise<{ ciphertext: Buffer; nonce: Buffer }> {
-        const nonce = crypto.getRandomValues(new Uint8Array(24));
-
-        return await this.withVaultKey(key => {
-            const ciphertext = xchacha20poly1305(key, nonce).encrypt(data);
-            return { ciphertext: Buffer.from(ciphertext), nonce: Buffer.from(nonce) };
-        });
+    constructor(keyRepository: SecureEncryptedKeyRepository) {
+        this.cipher = new SymmetricCipher(() => keyRepository.getVaultKey());
     }
 
-    public async decrypt(ciphertext: Buffer, nonce: Buffer): Promise<Buffer> {
-        return await this.withVaultKey(key => {
-            const decrypted = xchacha20poly1305(key, nonce).decrypt(ciphertext);
-            return Buffer.from(decrypted);
-        });
+    public encrypt(data: Buffer): Promise<{ ciphertext: Buffer; nonce: Buffer }> {
+        return this.cipher.encrypt(data);
     }
 
-    private async withVaultKey<T>(operation: (key: Buffer) => T): Promise<T> {
-        const key = await this.keyRepository.getVaultKey();
-
-        try {
-            return operation(key);
-        } finally {
-            key.fill(0);
-        }
+    public decrypt(ciphertext: Buffer, nonce: Buffer): Promise<Buffer> {
+        return this.cipher.decrypt(ciphertext, nonce);
     }
 }

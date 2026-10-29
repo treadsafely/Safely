@@ -15,7 +15,7 @@ import {
     PortfolioWatchOnlyBtc,
     WatchOnlySource
 } from '@safely/core';
-import { OnboardingAbortedError } from '@safely/sync';
+import { MKDerivationDomain, OnboardingAbortedError } from '@safely/sync';
 
 import {
     useChangeAccountMeta,
@@ -187,6 +187,16 @@ describe('useCreateAccount (add)', () => {
 
         const analyticsSlot = recorder.slots.get('analyticsId');
         expect(analyticsSlot?.set).toHaveBeenCalled();
+
+        expect(newAccount.deriveKeyFromMasterKey).toHaveBeenCalledWith(
+            MKDerivationDomain.ACCOUNT_DATA_KEY,
+            expect.anything()
+        );
+        await expect(
+            appContext.storage.sync.encrypted
+                .child(['new-account-id', 'masterKeyDerived'])
+                .getItem(MKDerivationDomain.ACCOUNT_DATA_KEY)
+        ).resolves.not.toBeNull();
     });
 
     it('with firstPortfolio generated seeds portfolios + nextDerivingPortfolioInfo', async () => {

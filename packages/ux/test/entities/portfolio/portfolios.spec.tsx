@@ -22,7 +22,11 @@ import {
 } from '@safely/core';
 import type { SPortfolio } from '@safely/sync-storage';
 
-import { ClosableMnemonicAccessorVault, MockSecretEncryptor } from './portfolio-mocks';
+import {
+    ClosableMnemonicAccessorVault,
+    MockSecureSecretEncryptor,
+    MockSilentSecretEncryptor
+} from './portfolio-mocks';
 import * as accountState from '../../../src/entities/account/account-state';
 import { accountKey } from '../../../src/entities/account/keys';
 import {
@@ -36,7 +40,7 @@ import {
     useReorderPortfolios,
     useSetActivePortfolio
 } from '../../../src/entities/portfolio/portfolios';
-import { SecretEncryptor } from '../../../src/shared/security/storage';
+import { BaseSecureSecretEncryptor } from '../../../src/shared/security/storage';
 import type { MockSyncAccount } from '../../harness';
 import {
     createMockSyncAccount,
@@ -103,7 +107,7 @@ async function makeImportedPortfolio(
     mnemonic: string[],
     name = 'Imported'
 ): Promise<PortfolioBip39> {
-    const encryptor = new MockSecretEncryptor();
+    const encryptor = new MockSecureSecretEncryptor();
     const accessor = new ClosableMnemonicAccessorVault(mnemonic);
     const id = await PortfolioIdBip39Imported.create(accessor, PortfolioNetworkType.MAINNET);
     const serialized = await PortfolioBip39.createSerializedPortfolio({
@@ -113,7 +117,8 @@ async function makeImportedPortfolio(
         meta: { name, icon: PortfolioIdBip39Imported.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        encryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -132,12 +137,16 @@ async function makeDerivedPortfolio(
     });
     const serialized = await PortfolioBip39.createSerializedPortfolio({
         id,
-        encryptor: new SecretEncryptor(account.secretEncryptor, storage),
+        encryptor: new BaseSecureSecretEncryptor(account.secureSecretEncryptor, storage),
         mnemonicAccessor: accessor,
         meta: { name, icon: PortfolioIdBip39MasterKeyDerived.getFallbackEmoji(accessor) }
     });
     return PortfolioFactory.restorePortfolio(serialized, {
-        encryptor: new SecretEncryptor(account.secretEncryptor, storage),
+        secureSecretEncryptor: new BaseSecureSecretEncryptor(
+            account.secureSecretEncryptor,
+            storage
+        ),
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     }) as PortfolioBip39;
 }
@@ -325,14 +334,17 @@ describe('useImportPortfolio (add)', () => {
 
         const accessor = new ClosableMnemonicAccessorVault(MAINNET_MNEMONIC);
         const secureStorage = new InMemoryTreeStorage(['secure']);
-        const encryptor = new SecretEncryptor(account.secretEncryptor, secureStorage);
+        const encryptor = new BaseSecureSecretEncryptor(
+            account.secureSecretEncryptor,
+            secureStorage
+        );
 
         let mutationError: unknown;
         await act(async () => {
             try {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: encryptor,
+                    secureSecretEncryptor: encryptor,
                     meta: meta('Imported #1'),
                     networkType: PortfolioNetworkType.MAINNET
                 });
@@ -364,7 +376,10 @@ describe('useImportPortfolio (add)', () => {
             act(async () => {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: new SecretEncryptor(account.secretEncryptor, secureStorage),
+                    secureSecretEncryptor: new BaseSecureSecretEncryptor(
+                        account.secureSecretEncryptor,
+                        secureStorage
+                    ),
                     meta: meta('Dup'),
                     networkType: PortfolioNetworkType.MAINNET
                 });
@@ -395,7 +410,10 @@ describe('useImportPortfolio (add)', () => {
             try {
                 await result.current.mutateAsync({
                     mnemonicAccessor: accessor,
-                    secretEncryptor: new SecretEncryptor(account.secretEncryptor, secureStorage),
+                    secureSecretEncryptor: new BaseSecureSecretEncryptor(
+                        account.secureSecretEncryptor,
+                        secureStorage
+                    ),
                     meta: meta('Bad'),
                     networkType: PortfolioNetworkType.MAINNET
                 });

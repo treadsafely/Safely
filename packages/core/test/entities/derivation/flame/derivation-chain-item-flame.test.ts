@@ -1,6 +1,8 @@
 import { mnemonicToSeed } from '@scure/bip39';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SilentSecretEncryptor } from '@safely/sync';
+
 import type { ILedgerSessionPort, ISeedProducer, SafelyFlame } from '../../../../src';
 import {
     DerivationChainItemFlame,
@@ -11,7 +13,7 @@ import {
     PortfolioIdFlameDevnet,
     PortfolioNetworkType
 } from '../../../../src';
-import { ClosableMnemonicAccessorVault, MockSecretEncryptor } from '../../../utils/mocks';
+import { ClosableMnemonicAccessorVault, MockSecureSecretEncryptor } from '../../../utils/mocks';
 
 const ledgerSessionPort: ILedgerSessionPort = {
     withSession: () => {
@@ -25,6 +27,9 @@ const MNEMONIC =
 const bytes = (fill: number, length = 32) => new Uint8Array(length).fill(fill);
 
 const VIEW_KEY = 'testview1example';
+
+const createViewKeyEncryptor = (fill = 7) =>
+    new SilentSecretEncryptor(() => Promise.resolve(Buffer.alloc(32, fill)));
 
 function mockSafelyFlame() {
     const seeds: Uint8Array[] = [];
@@ -88,20 +93,23 @@ function mockSafelyFlame() {
 }
 
 async function createSerialized() {
-    const encryptor = new MockSecretEncryptor();
+    const encryptor = new MockSecureSecretEncryptor();
+    const viewKeyEncryptor = createViewKeyEncryptor();
     const accessor = new ClosableMnemonicAccessorVault(MNEMONIC);
     const serialized = await PortfolioFlameDevnet.createSerializedPortfolio({
-        encryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: viewKeyEncryptor,
         mnemonicAccessor: accessor,
         meta: { name: 'Devnet', icon: { type: 'emoji', value: '🙂' } }
     });
-    return { serialized, encryptor };
+    return { serialized, encryptor, viewKeyEncryptor };
 }
 
 async function createPortfolio() {
-    const { serialized, encryptor } = await createSerialized();
+    const { serialized, encryptor, viewKeyEncryptor } = await createSerialized();
     return PortfolioFactory.restorePortfolio(serialized, {
-        encryptor,
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: viewKeyEncryptor,
         ledgerSessionPort
     }) as PortfolioFlameDevnet;
 }
@@ -120,15 +128,17 @@ describe('DerivationChainItemFlame', () => {
         globalThis.flameSdk = previous;
     });
 
-    it('stores the view key of the BIP-39 seed in a new devnet portfolio', async () => {
-        const { serialized } = await createSerialized();
+    it('stores the encrypted view key of the BIP-39 seed in a new devnet portfolio', async () => {
+        const { serialized, viewKeyEncryptor } = await createSerialized();
 
-        expect(serialized.flame).toEqual({
-            viewKey: VIEW_KEY,
+        const { encryptedViewKey, ...addresses } = serialized.flame;
+        expect(addresses).toEqual({
             receivingAddress: 't1examplei1key',
             trackingAddress: 't1example',
             predicate: 'ab'.repeat(32)
         });
+        expect(JSON.stringify(serialized)).not.toContain(VIEW_KEY);
+        await expect(viewKeyEncryptor.decrypt(encryptedViewKey)).resolves.toBe(VIEW_KEY);
         expect(serialized.id).toEqual(PortfolioIdFlameDevnet.create({ value: MNEMONIC }).toJSON());
         expect(mocked.flame.viewKey).toHaveBeenCalledWith(
             expect.any(Uint8Array),
@@ -143,10 +153,10 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('restores the wallet from the stored address without calling native', async () => {
-        const { serialized, encryptor } = await createSerialized();
+        const { serialized, encryptor, viewKeyEncryptor } = await createSerialized();
         mocked.flame.address.mockClear();
 
-        const portfolio = PortfolioFlameDevnet.restore(encryptor, serialized);
+        const portfolio = PortfolioFlameDevnet.restore(encryptor, viewKeyEncryptor, serialized);
         const [wallet] = portfolio.flame.wallets;
 
         expect(wallet).toMatchObject({
@@ -161,8 +171,9 @@ describe('DerivationChainItemFlame', () => {
     });
 
     it('previews the wallet a seed would import, without a vault', async () => {
-        const { serialized, encryptor } = await createSerialized();
-        const [imported] = PortfolioFlameDevnet.restore(encryptor, serialized).flame.wallets;
+        const { serialized, encryptor, viewKeyEncryptor } = await createSerialized();
+        const [imported] = PortfolioFlameDevnet.restore(encryptor, viewKeyEncryptor, serialized)
+            .flame.wallets;
 
         const preview = await PortfolioFlameDevnet.createPreviewFlameWallet(
             new ClosableMnemonicAccessorVault(MNEMONIC)
@@ -175,6 +186,24 @@ describe('DerivationChainItemFlame', () => {
             trackingAddress: imported.trackingAddress,
             predicate: imported.predicate
         });
+    });
+
+    it('opens confidential notes in the preview with the derived view key', async () => {
+        const preview = await PortfolioFlameDevnet.createPreviewFlameWallet(
+            new ClosableMnemonicAccessorVault(MNEMONIC)
+        );
+
+        const amounts = await preview.readAmounts([
+            { id: 'opened', contract: bytes(2), note: bytes(4) }
+        ]);
+
+        expect(mocked.flame.openNotes).toHaveBeenCalledWith(
+            VIEW_KEY,
+            'testnet',
+            FLAME_RECEIVING_KEY_PATH,
+            expect.any(Array)
+        );
+        expect(amounts.get('opened')).toMatchObject({ status: 'counted', qty: 5n });
     });
 
     it('refuses to preview an invalid seed', async () => {
@@ -223,6 +252,20 @@ describe('DerivationChainItemFlame', () => {
             isNative: true
         });
         expect(amounts.get('missing')).toEqual({ status: 'unreadable' });
+    });
+
+    it('cannot open confidential notes with another account key', async () => {
+        const { serialized, encryptor } = await createSerialized();
+        const [wallet] = PortfolioFlameDevnet.restore(
+            encryptor,
+            createViewKeyEncryptor(8),
+            serialized
+        ).flame.wallets;
+
+        await expect(
+            wallet.readAmounts([{ id: 'opened', contract: bytes(2), note: bytes(4) }])
+        ).rejects.toThrow();
+        expect(mocked.flame.openNotes).not.toHaveBeenCalled();
     });
 
     it('does not reopen outputs it has already read', async () => {
@@ -369,7 +412,11 @@ describe('DerivationChainItemFlame', () => {
         mocked.flame.viewKey.mockRejectedValueOnce(new Error('native failure'));
 
         await expect(
-            DerivationChainItemFlame.createSChainItem(seedProducer, FlameNetwork.TESTNET)
+            DerivationChainItemFlame.createSChainItem(
+                seedProducer,
+                FlameNetwork.TESTNET,
+                createViewKeyEncryptor()
+            )
         ).rejects.toThrow('native failure');
 
         expect(seed.every(byte => byte === 0)).toBe(true);
@@ -405,6 +452,7 @@ describe('DerivationChainItemFlame', () => {
             ownerId: portfolio.id,
             network: FlameNetwork.TESTNET,
             sChainItem: portfolio.flame.toJSON(),
+            viewKeyEncryptor: createViewKeyEncryptor(),
             seedProducer: { getSeed: () => Promise.resolve(seed) }
         }).wallets;
         mocked.flame.buildTransfer.mockRejectedValueOnce(new Error('native failure'));

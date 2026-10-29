@@ -13,7 +13,7 @@ import {
     portfolioKeys,
     useImportFlameDevnetPortfolio,
     usePortfolios,
-    useUnlockableSecretEncryptorFactory
+    useUnlockableSecureSecretEncryptorFactory
 } from '../../entities';
 
 // a seed phrase in a link arrives quoted, and with `+` or `%20` between the words
@@ -73,16 +73,16 @@ export function useFlameDevnetWalletPreview(mnemonicResource: MnemonicResource, 
 
 export function useImportFlameDevnetPortfolioFromSeed() {
     const { mutateAsync: importFlameDevnetPortfolio } = useImportFlameDevnetPortfolio();
-    const createEncryptor = useUnlockableSecretEncryptorFactory();
+    const createEncryptor = useUnlockableSecureSecretEncryptorFactory();
 
     return useMutation<void, Error, { mnemonicResource: MnemonicResource; meta: PortfolioMeta }>({
         async mutationFn({ mnemonicResource, meta }) {
-            using secretEncryptor = createEncryptor();
-            await secretEncryptor.unlockEncryption();
+            using secureSecretEncryptor = createEncryptor();
+            await secureSecretEncryptor.unlockEncryption();
 
             await importFlameDevnetPortfolio({
                 mnemonicAccessor: mnemonicResource,
-                secretEncryptor,
+                secureSecretEncryptor,
                 meta
             });
         }

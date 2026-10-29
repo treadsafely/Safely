@@ -1,5 +1,7 @@
 export {
     type ISecretEncryptor,
+    type ISecureSecretEncryptor,
+    type ISilentSecretEncryptor,
     type SSecretDecrypted,
     type SSecretEncrypted,
     sSecretDecrypted,

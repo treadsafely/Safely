@@ -1,10 +1,6 @@
 import { vi } from 'vitest';
 
-import type {
-    ISecretEncryptor as ISyncSecretEncryptor,
-    ISyncAccount,
-    ITreeStorage
-} from '@safely/sync';
+import type { IVaultSecretEncryptor, ISyncAccount, ITreeStorage } from '@safely/sync';
 import type { SyncedStorageStructure } from '@safely/sync-storage';
 
 import type { DraftRecorder } from './draft-recorder';
@@ -26,7 +22,7 @@ export type MockSyncAccount = ISyncAccount<SyncedStorageStructure> & {
 const ZERO_ROOT_SEED_KEY = Buffer.alloc(32, 0);
 const ZERO_IK_PUB = Buffer.alloc(32, 0xaa);
 
-export function createPassthroughSyncEncryptor(): ISyncSecretEncryptor {
+export function createPassthroughSyncEncryptor(): IVaultSecretEncryptor {
     return {
         encrypt: vi.fn(async (s: string) => s),
         decrypt: vi.fn(async (s: string) => s)
@@ -86,12 +82,12 @@ export function createMockSyncAccount(opts: MockSyncAccountOptions = {}): MockSy
         }
     };
 
-    const secretEncryptor = createPassthroughSyncEncryptor();
+    const secureSecretEncryptor = createPassthroughSyncEncryptor();
 
     const account = {
         accountId,
         syncProvider,
-        secretEncryptor,
+        secureSecretEncryptor,
         connectToNewDevice: vi.fn(async (_: Buffer, __: ITreeStorage) => ({
             newDeviceIkPub: Buffer.from('BBBB', 'hex')
         })),

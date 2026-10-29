@@ -8,4 +8,4 @@ export { DerivationChainItemBtcLedger } from './btc/implementations/ledger/deriv
 export * from './flame/I-derivation-chain-item-flame';
 export * from './flame/I-flame-wallet';
 export { FlameWalletId } from './flame/flame-wallet-id';
-export { DerivationChainItemFlame } from './flame/derivation-chain-item-flame';
+export { DerivationChainItemFlame, ViewKeyFlameWallet } from './flame/derivation-chain-item-flame';

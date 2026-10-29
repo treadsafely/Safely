@@ -14,7 +14,8 @@ import { sPortfolioFlameDevnet } from '@safely/sync-storage';
 import { resolveRemoveWalletCopy } from '../../../src/features/portfolio-flow/remove-wallet-copy';
 import {
     ClosableMnemonicAccessorVault,
-    MockSecretEncryptor
+    MockSecureSecretEncryptor,
+    MockSilentSecretEncryptor
 } from '../../entities/portfolio/portfolio-mocks';
 
 const ledgerSessionPort: ILedgerSessionPort = {
@@ -30,7 +31,7 @@ const MAINNET_MNEMONIC =
 const ICON = { type: 'emoji', value: '🦊' } as const;
 
 async function makeBip39(options?: { revealedFromDevice: string }): Promise<Portfolio> {
-    const encryptor = new MockSecretEncryptor();
+    const encryptor = new MockSecureSecretEncryptor();
     const accessor = new ClosableMnemonicAccessorVault(MAINNET_MNEMONIC);
     const id = await PortfolioIdBip39Imported.create(accessor, PortfolioNetworkType.MAINNET);
     const serialized = await PortfolioBip39.createSerializedPortfolio({
@@ -41,7 +42,11 @@ async function makeBip39(options?: { revealedFromDevice: string }): Promise<Port
         options: options && { seedRevealedFromDevice: options.revealedFromDevice }
     });
 
-    return PortfolioFactory.restorePortfolio(serialized, { encryptor, ledgerSessionPort });
+    return PortfolioFactory.restorePortfolio(serialized, {
+        secureSecretEncryptor: encryptor,
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
+        ledgerSessionPort
+    });
 }
 
 function makeWatchOnly(): Portfolio {
@@ -67,7 +72,8 @@ function makeLedger(): Portfolio {
     });
 
     return PortfolioFactory.restorePortfolio(serialized, {
-        encryptor: new MockSecretEncryptor(),
+        secureSecretEncryptor: new MockSecureSecretEncryptor(),
+        silentSecretEncryptor: new MockSilentSecretEncryptor(),
         ledgerSessionPort
     });
 }
@@ -130,13 +136,17 @@ describe('resolveRemoveWalletCopy', () => {
                 meta: { name: 'Devnet', icon: ICON },
                 encryptedSecret: 'encrypted-devnet-mnemonic',
                 flame: {
-                    viewKey: 'view',
+                    encryptedViewKey: 'encrypted-view',
                     receivingAddress: 't1examplei1key',
                     trackingAddress: 't1example',
                     predicate: 'ab'.repeat(32)
                 }
             }),
-            { encryptor: new MockSecretEncryptor(), ledgerSessionPort }
+            {
+                secureSecretEncryptor: new MockSecureSecretEncryptor(),
+                silentSecretEncryptor: new MockSilentSecretEncryptor(),
+                ledgerSessionPort
+            }
         );
 
         expect(resolveRemoveWalletCopy(devnet)).toEqual({
