@@ -40,8 +40,8 @@ catalog:
 
 minimumReleaseAge: 5760
 minimumReleaseAgeExclude:
-  # Drop once 0.0.1-rc.45 is older than four days.
-  - '@runflame/wallet-rn@0.0.1-rc.45'
+  # Drop once 0.0.1-rc.46 is older than four days.
+  - '@runflame/wallet-rn@0.0.1-rc.46'
 
 # Already pnpm's default — stated explicitly because electron-forge refuses to
 # package unless `hoist-pattern` or `public-hoist-pattern` is set (or node-linker is
