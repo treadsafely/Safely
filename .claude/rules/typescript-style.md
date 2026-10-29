@@ -95,6 +95,15 @@ Use instead:
 In JSX the same applies: a chain of `cond ? <A/> : other ? <B/> : <C/>` becomes a lookup or a child
 component that returns early. Existing chains are not swept; don't add new ones.
 
+## A path that must not run throws, never returns stand-in data
+
+When a dependency has to be supplied but the caller guarantees it is never used — a callback a
+preview never calls, a port a read-only path never reaches — implement it with `throw new Error(…)`
+naming why it is unreachable, not with a mock value (a random key, an empty list, `0`). A stand-in
+value turns the day the guarantee breaks into silently wrong data; a throw turns it into an error at
+the call that broke it. If the path *is* reached, it is not a stand-in: give it a real
+implementation, or change the type so the dependency is not needed there at all.
+
 ## Equality
 
 `eqeqeq: smart` plus the local rule `iseq/no-strict-eq-when-isEq` (`eslint-rules/isEqPlugin.js`):

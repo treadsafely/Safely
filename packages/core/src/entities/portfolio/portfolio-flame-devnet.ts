@@ -5,10 +5,10 @@ import type { IPortfolioFlameDevnet } from './I-portfolio';
 import { PortfolioType } from './I-portfolio';
 import { PortfolioIdFlameDevnet } from './portfolio-id-flame-devnet';
 import type { PortfolioMeta } from './portfolio-meta';
-import type { ISecretEncryptor } from '../../di';
+import type { ISecureSecretEncryptor, ISilentSecretEncryptor } from '../../di';
 import { FLAME_DEVNET_NETWORK } from '../blockchain';
 import type { FlameWallet } from '../derivation';
-import { DerivationChainItemFlame } from '../derivation';
+import { DerivationChainItemFlame, ViewKeyFlameWallet } from '../derivation';
 import { InvalidMnemonicError, PortfolioGenerationFailedError } from '../errors';
 import type {
     IMnemonicAccessor,
@@ -21,11 +21,13 @@ import { BtcBip39SeedProducer } from '../seed';
 export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
     public static async createSerializedPortfolio({
         encryptor,
+        viewKeyEncryptor,
         mnemonicAccessor,
         meta,
         logger
     }: {
-        encryptor: ISecretEncryptor;
+        encryptor: ISecureSecretEncryptor;
+        viewKeyEncryptor: ISilentSecretEncryptor;
         mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
         meta: PortfolioMeta;
         logger?: Logger;
@@ -39,7 +41,8 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
 
             const flame = await DerivationChainItemFlame.createSChainItem(
                 new BtcBip39SeedProducer(mnemonicAccessor),
-                FLAME_DEVNET_NETWORK
+                FLAME_DEVNET_NETWORK,
+                viewKeyEncryptor
             );
             const { encryptedSecret } = await MnemonicVault.fromMnemonicAccessor(
                 encryptor,
@@ -72,17 +75,17 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
             validateMnemonic(MNEMONIC_TYPE.BIP39, mnemonicAccessor.value);
 
             const seedProducer = new BtcBip39SeedProducer(mnemonicAccessor);
-            const sChainItem = await DerivationChainItemFlame.createSChainItem(
+            const { viewKey, addresses } = await DerivationChainItemFlame.derive(
                 seedProducer,
                 FLAME_DEVNET_NETWORK
             );
-
-            return new DerivationChainItemFlame({
-                ownerId: PortfolioIdFlameDevnet.create(mnemonicAccessor),
-                network: FLAME_DEVNET_NETWORK,
-                sChainItem,
+            return new ViewKeyFlameWallet(
+                PortfolioIdFlameDevnet.create(mnemonicAccessor),
+                FLAME_DEVNET_NETWORK,
+                addresses,
+                () => Promise.resolve(viewKey),
                 seedProducer
-            }).wallets[0];
+            );
         } catch (error) {
             if (error instanceof InvalidMnemonicError) {
                 throw error;
@@ -92,7 +95,11 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
         }
     }
 
-    public static restore(encryptor: ISecretEncryptor, sPortfolio: SPortfolioFlameDevnet) {
+    public static restore(
+        encryptor: ISecureSecretEncryptor,
+        viewKeyEncryptor: ISilentSecretEncryptor,
+        sPortfolio: SPortfolioFlameDevnet
+    ) {
         const mnemonicVault = new MnemonicVault(encryptor, sPortfolio.encryptedSecret);
         const id = new PortfolioIdFlameDevnet(sPortfolio.id);
 
@@ -104,6 +111,7 @@ export class PortfolioFlameDevnet implements IPortfolioFlameDevnet {
                 ownerId: id,
                 network: FLAME_DEVNET_NETWORK,
                 sChainItem: sPortfolio.flame,
+                viewKeyEncryptor,
                 seedProducer: new BtcBip39SeedProducer(mnemonicVault)
             })
         });

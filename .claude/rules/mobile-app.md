@@ -169,15 +169,24 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup. While the import writes, `usePreventRemove` keeps the modal on screen
   (see the UI section below), since the write cannot be cancelled and would reset the stack after
   the user left.
-- `flame` holds `{ viewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
+- `flame` holds `{ encryptedViewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
   portfolio creation (`trackingAddress` is the receiving address's first half, as the SDK issues it)
   (the mnemonic is already in hand): the chain builds its `wallets` from them synchronously, so the
   address needs no native call at startup, and reads amounts with the view key, so the seed is never touched
   again for Flame. Like `SignableBtcWallet.sign`, a `FlameWallet` carries its own operations —
   `readAmounts` (opens the notes with the view key) and `buildTransfer` — so the estimator and the
-  transaction template take the wallet alone, never the chain. **The view key is stored in plaintext.** It sits only inside the E2EE snapshot, but on every device it is
-  readable without the passcode and reads every amount and memo — encrypting it is a planned,
-  separate change. The chain caches every read amount per output id, except an output read without
+  transaction template take the wallet alone, never the chain. **The view key is stored encrypted,
+  and reads without the passcode.** It reads every amount and memo, so it never sits in the CRDT
+  (regular MMKV storage) in the clear: `AccountDataKey.encryptor()` (`@safely/ux` `shared/security`)
+  seals it with the account data key (`MKDerivationDomain.ACCOUNT_DATA_KEY`, spec §1.4), a general
+  key for synced data that must read without the passcode. `useCreateAccount` derives it with the
+  store it already unlocked; for an account that lacks it — onboarded, or created before the key
+  existed — `AccountDataKey.get` derives it on first use through `UNSAFE_SKIP_SECURITY_CHECK_unlock`,
+  as the onramp credential does. It is cached in the `encrypted` scope under the account's node, so
+  deleting the account wipes it. Every device of the account derives the same key, so a
+  portfolio created on one opens on another with no prompt. `readAmounts`
+  decrypts the key only when there are confidential outputs and does not keep it. The preview,
+  which may run with no account yet, seals it with a throwaway in-memory key instead. The chain caches every read amount per output id, except an output read without
   its note (`missing`), whose contract failed to decode, or whose opening hit a native error (`error`):
   native code reports any per-item exception the same way, so a transient one would stick.
 - **Balance is one set, pending or not.** `useFlameWalletOutputs` calls the node's

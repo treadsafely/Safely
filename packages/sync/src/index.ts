@@ -15,7 +15,7 @@ export { ReconnectFromAnotherAccountError } from './device-manager/device-manage
 export { SyncError, OnboardingAbortedError } from './sync-error';
 
 export type { ISecretEncryptor, SSecretDecrypted, SSecretEncrypted } from './secret-encryptor';
-export { sSecretEncrypted, sSecretDecrypted } from './secret-encryptor';
+export { sSecretEncrypted, sSecretDecrypted, SilentSecretEncryptor } from './secret-encryptor';
 
 export { type IsomorphicEventSource } from './utils/sse-stream';
 export { waitForChange } from './utils/wait-for-change';

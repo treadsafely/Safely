@@ -5,6 +5,7 @@ import type { SFlameAccountChainItem } from '@safely/sync-storage';
 import { FlameWalletId } from './flame-wallet-id';
 import type { IDerivationChainItemFlame } from './I-derivation-chain-item-flame';
 import type { FlameOutputAmount, FlameOutputBytes, FlameWallet } from './I-flame-wallet';
+import type { ISilentSecretEncryptor } from '../../../di/I-secret-encryptor';
 import type {
     FlameBuiltTransfer,
     FlameNetwork,
@@ -44,73 +45,36 @@ function amountFromOpening(opening: FlameNoteOpening): FlameOutputAmount {
     }
 }
 
-export class DerivationChainItemFlame implements IDerivationChainItemFlame {
-    public static async createSChainItem(
-        seedProducer: ISeedProducer,
-        network: FlameNetwork
-    ): Promise<SFlameAccountChainItem> {
-        const seed = await seedProducer.getSeed();
-        let viewKey: string;
-        try {
-            viewKey = await globalThis.flameSdk.viewKey(seed, network);
-        } finally {
-            seed.fill(0);
-        }
+type FlameAddresses = Pick<
+    SFlameAccountChainItem,
+    'receivingAddress' | 'trackingAddress' | 'predicate'
+>;
 
-        const issued = await globalThis.flameSdk.address(
-            viewKey,
-            network,
-            FLAME_RECEIVING_KEY_PATH
-        );
-        return {
-            viewKey,
-            receivingAddress: issued.receivingAddress,
-            trackingAddress: issued.trackingAddress,
-            predicate: bytesToHex(issued.predicate)
-        };
-    }
+export class ViewKeyFlameWallet implements FlameWallet {
+    public readonly id: FlameWalletId;
 
-    public readonly network: FlameNetwork;
+    public readonly receivingAddress: string;
 
-    // TODO: stored in plaintext for now (reads every amount and memo); encrypt via ISecretEncryptor
-    private readonly viewKey: string;
+    public readonly trackingAddress: string;
 
-    public readonly wallets: FlameWallet[];
+    public readonly predicate: string;
 
     private readonly amountsCache = new Map<string, FlameOutputAmount>();
 
-    private readonly seedProducer: ISeedProducer;
-
-    constructor({
-        ownerId,
-        network,
-        sChainItem,
-        seedProducer
-    }: {
-        ownerId: Id;
-        network: FlameNetwork;
-        sChainItem: SFlameAccountChainItem;
-        seedProducer: ISeedProducer;
-    }) {
-        this.seedProducer = seedProducer;
-        this.network = network;
-        this.viewKey = sChainItem.viewKey;
-        this.wallets = [
-            {
-                id: new FlameWalletId(ownerId),
-                network,
-                receivingAddress: sChainItem.receivingAddress,
-                trackingAddress: sChainItem.trackingAddress,
-                predicate: sChainItem.predicate,
-                readAmounts: outputs => this.readAmounts(outputs),
-                buildTransfer: request => this.buildTransfer(request)
-            }
-        ];
+    constructor(
+        ownerId: Id,
+        public readonly network: FlameNetwork,
+        addresses: FlameAddresses,
+        private readonly getViewKey: () => Promise<string>,
+        private readonly seedProducer: ISeedProducer
+    ) {
+        this.id = new FlameWalletId(ownerId);
+        this.receivingAddress = addresses.receivingAddress;
+        this.trackingAddress = addresses.trackingAddress;
+        this.predicate = addresses.predicate;
     }
 
-    private async readAmounts(
-        outputs: FlameOutputBytes[]
-    ): Promise<Map<string, FlameOutputAmount>> {
+    public async readAmounts(outputs: FlameOutputBytes[]): Promise<Map<string, FlameOutputAmount>> {
         const uncached = outputs.filter(output => !this.amountsCache.has(output.id));
         const fresh = new Map<string, FlameOutputAmount>();
         const retryLater = new Set<string>();
@@ -152,7 +116,7 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
 
             if (confidential.length) {
                 const openings = await globalThis.flameSdk.openNotes(
-                    this.viewKey,
+                    await this.getViewKey(),
                     this.network,
                     FLAME_RECEIVING_KEY_PATH,
                     confidential.map(({ contract, note }) => ({ contract, note }))
@@ -183,7 +147,7 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
         );
     }
 
-    private async buildTransfer(request: FlameTransferRequest): Promise<FlameBuiltTransfer> {
+    public async buildTransfer(request: FlameTransferRequest): Promise<FlameBuiltTransfer> {
         const seed = await this.seedProducer.getSeed();
         try {
             return await globalThis.flameSdk.buildTransfer(
@@ -196,10 +160,81 @@ export class DerivationChainItemFlame implements IDerivationChainItemFlame {
             seed.fill(0);
         }
     }
+}
+
+export class DerivationChainItemFlame implements IDerivationChainItemFlame {
+    public static async createSChainItem(
+        seedProducer: ISeedProducer,
+        network: FlameNetwork,
+        viewKeyEncryptor: ISilentSecretEncryptor
+    ): Promise<SFlameAccountChainItem> {
+        const { viewKey, addresses } = await DerivationChainItemFlame.derive(seedProducer, network);
+        return { encryptedViewKey: await viewKeyEncryptor.encrypt(viewKey), ...addresses };
+    }
+
+    public static async derive(
+        seedProducer: ISeedProducer,
+        network: FlameNetwork
+    ): Promise<{ viewKey: string; addresses: FlameAddresses }> {
+        const seed = await seedProducer.getSeed();
+        let viewKey: string;
+        try {
+            viewKey = await globalThis.flameSdk.viewKey(seed, network);
+        } finally {
+            seed.fill(0);
+        }
+
+        const issued = await globalThis.flameSdk.address(
+            viewKey,
+            network,
+            FLAME_RECEIVING_KEY_PATH
+        );
+        return {
+            viewKey,
+            addresses: {
+                receivingAddress: issued.receivingAddress,
+                trackingAddress: issued.trackingAddress,
+                predicate: bytesToHex(issued.predicate)
+            }
+        };
+    }
+
+    public readonly network: FlameNetwork;
+
+    private readonly encryptedViewKey: string;
+
+    public readonly wallets: FlameWallet[];
+
+    constructor({
+        ownerId,
+        network,
+        sChainItem,
+        viewKeyEncryptor,
+        seedProducer
+    }: {
+        ownerId: Id;
+        network: FlameNetwork;
+        sChainItem: SFlameAccountChainItem;
+        viewKeyEncryptor: ISilentSecretEncryptor;
+        seedProducer: ISeedProducer;
+    }) {
+        const { encryptedViewKey, ...addresses } = sChainItem;
+        this.network = network;
+        this.encryptedViewKey = encryptedViewKey;
+        this.wallets = [
+            new ViewKeyFlameWallet(
+                ownerId,
+                network,
+                addresses,
+                () => viewKeyEncryptor.decrypt(encryptedViewKey),
+                seedProducer
+            )
+        ];
+    }
 
     public toJSON(): SFlameAccountChainItem {
         return {
-            viewKey: this.viewKey,
+            encryptedViewKey: this.encryptedViewKey,
             receivingAddress: this.wallets[0].receivingAddress,
             trackingAddress: this.wallets[0].trackingAddress,
             predicate: this.wallets[0].predicate

@@ -14,7 +14,7 @@ import { PortfolioType } from './I-portfolio';
 import type { PortfolioIdBip39 } from './portfolio-id-bip39';
 import { toPortfolioIdBip39 } from './portfolio-id-bip39';
 import type { PortfolioMeta } from './portfolio-meta';
-import type { ISecretEncryptor } from '../../di';
+import type { ISecureSecretEncryptor } from '../../di';
 import type { Id } from '../../utils';
 import { BtcWalletType } from '../blockchain';
 import { InvalidMnemonicError, PortfolioGenerationFailedError } from '../errors';
@@ -36,7 +36,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         logger,
         meta
     }: {
-        encryptor: ISecretEncryptor;
+        encryptor: ISecureSecretEncryptor;
         mnemonicAccessor: IMnemonicAccessor & IMnemonicVault;
         id: PortfolioIdBip39;
         meta: PortfolioMeta;
@@ -88,7 +88,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
         }
     }
 
-    public static restore(secretEncryptor: ISecretEncryptor, sPortfolio: SPortfolioBip39) {
+    public static restore(secretEncryptor: ISecureSecretEncryptor, sPortfolio: SPortfolioBip39) {
         const mnemonicVault = new MnemonicVault(secretEncryptor, sPortfolio.encryptedSecret);
         return new PortfolioBip39({
             id: toPortfolioIdBip39(sPortfolio.id),
@@ -220,7 +220,7 @@ export class PortfolioBip39 implements IPortfolioBip39 {
     }
 
     public async createReadOnlyCredential(
-        encryptor: ISecretEncryptor,
+        encryptor: ISecureSecretEncryptor,
         derivationIndex: number = this.derivations[0].index
     ): Promise<ReadOnlyCredential> {
         const vault = new MnemonicVault(encryptor, this.mnemonicVault.encryptedSecret);

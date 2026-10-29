@@ -59,7 +59,7 @@ const devnet = sPortfolioFlameDevnet.toJson({
     meta: { ...meta, name: 'Devnet' },
     encryptedSecret: 'encrypted-devnet-mnemonic',
     flame: {
-        viewKey: 'testview1example',
+        encryptedViewKey: 'encrypted-view-key',
         receivingAddress: 't1examplei1key',
         trackingAddress: 't1example',
         predicate: 'ab'.repeat(32)

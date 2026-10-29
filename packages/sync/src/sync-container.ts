@@ -17,7 +17,7 @@ import type { tDevicesLatest, tDevicesRest } from './device-manager/device-stora
 import { DevicesVersions } from './device-manager/device-storage-schema';
 import type { IStorage } from './I-storage';
 import type { Logger } from './logger';
-import { SecretEncryptor } from './secret-encryptor';
+import { SecureSecretEncryptor } from './secret-encryptor';
 import { SnapshotSender } from './sync-operations/snapshot-sender';
 import { SyncOperations } from './sync-operations/sync-operations';
 import { UpdateDecryptorService } from './update-encryptor/update-decryptor-service';
@@ -67,7 +67,7 @@ export type SyncContainer<Latest extends StorageVersion, Rest> = {
     snapshotApi: SnapshotsApi;
     snapshotSse: SnapshotsSse;
 
-    secretEncryptor: SecretEncryptor;
+    secretEncryptor: SecureSecretEncryptor;
 };
 
 export type SyncContainerConfig = {
@@ -166,7 +166,7 @@ export async function createSyncContainer<Latest extends StorageVersion, Rest>(o
         crdtController
     );
 
-    const secretEncryptor = new SecretEncryptor(keyServiceFactory);
+    const secretEncryptor = new SecureSecretEncryptor(keyServiceFactory);
 
     return {
         versions: opts.versions,

@@ -5,7 +5,7 @@ import type { SyncedStorageStructure } from '@safely/sync-storage';
 
 import { accountStore, accountStoreActions } from './account-store';
 import { AccountStoreTransform } from './account-store-transform';
-import { SecretEncryptor, useAppContext } from '../../../shared';
+import { AccountDataKey, BaseSecureSecretEncryptor, useAppContext } from '../../../shared';
 import { useLedgerSessionPort } from '../../ledger';
 
 type Account = ISyncAccount<SyncedStorageStructure>;
@@ -18,7 +18,11 @@ export function useAccountStoreTransformFactory() {
         (account: Account) =>
             new AccountStoreTransform(
                 () =>
-                    new SecretEncryptor(account.secretEncryptor, storage.sync.getSecureEncrypted()),
+                    new BaseSecureSecretEncryptor(
+                        account.secretEncryptor,
+                        storage.sync.getSecureEncrypted()
+                    ),
+                () => new AccountDataKey(account, storage.sync).encryptor(),
                 () => ledgerSessionPort
             ),
         [storage.sync, ledgerSessionPort]

@@ -21,7 +21,7 @@ import {
     useAddWatchOnlyPortfolio,
     useGeneratePortfolio,
     useImportPortfolio,
-    useUnlockableSecretEncryptorFactory
+    useUnlockableSecureSecretEncryptorFactory
 } from '../../entities';
 import { useAppContext } from '../../shared';
 
@@ -77,7 +77,7 @@ export function useAddPortfolioFromSource() {
     const { mutateAsync: importPortfolio } = useImportPortfolio();
     const { mutateAsync: generatePortfolio } = useGeneratePortfolio();
     const { mutateAsync: addWatchOnlyPortfolio } = useAddWatchOnlyPortfolio();
-    const createEncryptor = useUnlockableSecretEncryptorFactory();
+    const createEncryptor = useUnlockableSecureSecretEncryptorFactory();
     const {
         storage: {
             sync: { getSecureEncrypted }
