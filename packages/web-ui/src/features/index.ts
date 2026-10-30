@@ -1,4 +1,5 @@
 export * from './account';
+export * from './chart';
 export * from './add-wallet';
 export * from './contact';
 export * from './dev-tools';

@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type {
     FlameApi,
     FlameApiProof,
+    FlameApiTxStatus,
     FlameApiUnspentEntry,
     FlameOutputAmount,
     FlameWallet
@@ -15,7 +16,8 @@ import {
     FlameEstimator,
     FlameInputsSpentError,
     FlameInsufficientBalanceError,
-    FlameOutputs
+    FlameOutputs,
+    FlameSendStatusUnknownError
 } from '../../../src';
 
 const hex = (fill: string) => fill.repeat(64);
@@ -49,7 +51,10 @@ function setup(proofs?: (ids: string[]) => FlameApiProof[]) {
                 proofs?.(ids) ?? ids.map(() => ({ status: 'unspent' as const, proof: 'BwgJ' }))
             )
         ),
-        submitTx: vi.fn((_: string) => Promise.resolve(TXID))
+        submitTx: vi.fn((_: string) => Promise.resolve(TXID)),
+        txStatus: vi.fn((_: string): Promise<FlameApiTxStatus> =>
+            Promise.resolve({ status: 'unknown' })
+        )
     };
     const wallet = {
         id: { toString: () => 'wallet' },
@@ -62,7 +67,12 @@ function setup(proofs?: (ids: string[]) => FlameApiProof[]) {
         api as unknown as FlameApi,
         wallet as unknown as FlameWallet
     );
-    return { outputs, api, wallet, estimator };
+    const replaceProofs = vi
+        .spyOn(globalThis.flameSdk, 'replaceProofs')
+        .mockImplementation((blockTx, proofs) =>
+            Promise.resolve(Uint8Array.of(...blockTx, ...proofs.flatMap(proof => [...proof])))
+        );
+    return { outputs, api, wallet, estimator, replaceProofs };
 }
 
 describe('FlameEstimator', () => {
@@ -114,6 +124,10 @@ describe('FlameEstimator', () => {
 });
 
 describe('FlameTransactionTemplate', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     const estimate = (ctx: ReturnType<typeof setup>) =>
         ctx.estimator.estimate(
             { recipientAddress: RECIPIENT, amount: 5_000n, isMax: false, memo: 'gm ✓' },
@@ -150,18 +164,38 @@ describe('FlameTransactionTemplate', () => {
             fee: FLAME_TRANSFER_FEE,
             gas: FLAME_TRANSFER_GAS
         });
-        expect(ctx.api.submitTx).toHaveBeenCalledWith('AQID');
+        expect(ctx.replaceProofs).toHaveBeenCalledWith(Uint8Array.of(1, 2, 3), [
+            Uint8Array.of(7, 8, 9)
+        ]);
+        expect(ctx.api.submitTx).toHaveBeenCalledWith(
+            Buffer.from(Uint8Array.of(1, 2, 3, 7, 8, 9)).toString('base64')
+        );
     });
 
-    it('rebuilds once with fresh proofs when the mempool rejects', async () => {
+    it('refreshes the proofs after the build, which waits on the passcode', async () => {
+        let call = 0;
+        const ctx = setup(ids => ids.map(() => ({ status: 'unspent', proof: `AA${++call}` })));
+
+        await estimate(ctx).send();
+
+        expect(ctx.wallet.buildTransfer.mock.calls[0][0].inputs[0].proof).toEqual(
+            Uint8Array.from(Buffer.from('AA1', 'base64'))
+        );
+        expect(ctx.replaceProofs.mock.calls[0][1]).toEqual([
+            Uint8Array.from(Buffer.from('AA2', 'base64'))
+        ]);
+    });
+
+    it('resubmits with fresh proofs and builds once when the mempool rejects', async () => {
         const ctx = setup();
         ctx.api.submitTx.mockRejectedValueOnce(
             new FlameApiError('stale', 0, undefined, FLAME_RPC_ERROR_CODE.MEMPOOL_REJECTED)
         );
 
         await expect(estimate(ctx).send()).resolves.toMatchObject({ txId: TXID });
-        expect(ctx.api.proofs).toHaveBeenCalledTimes(2);
-        expect(ctx.wallet.buildTransfer).toHaveBeenCalledTimes(2);
+        expect(ctx.api.proofs).toHaveBeenCalledTimes(3);
+        expect(ctx.replaceProofs).toHaveBeenCalledTimes(2);
+        expect(ctx.wallet.buildTransfer).toHaveBeenCalledTimes(1);
     });
 
     it('gives up after the second mempool rejection', async () => {
@@ -176,6 +210,52 @@ describe('FlameTransactionTemplate', () => {
 
         await expect(estimate(ctx).send()).rejects.toBe(rejection);
         expect(ctx.api.submitTx).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports success when the mempool rejects a transfer it already holds', async () => {
+        const ctx = setup();
+        ctx.api.submitTx.mockRejectedValueOnce(
+            new FlameApiError('duplicate', 0, undefined, FLAME_RPC_ERROR_CODE.MEMPOOL_REJECTED)
+        );
+        ctx.api.txStatus.mockResolvedValueOnce({ status: 'mempool' });
+
+        await expect(estimate(ctx).send()).resolves.toMatchObject({ txId: '00'.repeat(32) });
+        expect(ctx.api.txStatus).toHaveBeenCalledWith('00'.repeat(32));
+        expect(ctx.api.submitTx).toHaveBeenCalledTimes(1);
+        expect(ctx.replaceProofs).toHaveBeenCalledTimes(1);
+    });
+
+    it('resubmits the same transfer after a network error the node never saw', async () => {
+        const ctx = setup();
+        ctx.api.submitTx.mockRejectedValueOnce(new Error('timeout'));
+
+        await expect(estimate(ctx).send()).resolves.toMatchObject({ txId: TXID });
+        expect(ctx.api.submitTx).toHaveBeenCalledTimes(2);
+        expect(ctx.wallet.buildTransfer).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports success when the response is lost but the node holds the transfer', async () => {
+        const ctx = setup();
+        ctx.api.submitTx.mockRejectedValueOnce(new Error('timeout'));
+        ctx.api.txStatus.mockResolvedValueOnce({ status: 'mempool' });
+
+        await expect(estimate(ctx).send()).resolves.toMatchObject({ txId: '00'.repeat(32) });
+        expect(ctx.api.txStatus).toHaveBeenCalledWith('00'.repeat(32));
+        expect(ctx.api.submitTx).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports an unknown status, not a failure, when the status cannot be read', async () => {
+        const ctx = setup();
+        ctx.api.submitTx.mockRejectedValueOnce(new Error('timeout'));
+        ctx.api.txStatus.mockRejectedValueOnce(new Error('offline'));
+
+        const error = await estimate(ctx)
+            .send()
+            .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(FlameSendStatusUnknownError);
+        expect((error as Error).message).toContain('00'.repeat(32));
+        expect(ctx.api.submitTx).toHaveBeenCalledTimes(1);
     });
 
     it('refuses to build when an input is no longer unspent', async () => {

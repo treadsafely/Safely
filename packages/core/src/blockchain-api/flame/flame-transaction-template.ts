@@ -1,12 +1,11 @@
 import type { Logger } from '@safely/sync';
 
-import { FlameInputsSpentError } from './errors';
+import { FlameInputsSpentError, FlameSendStatusUnknownError } from './errors';
 import { encodeFlameMemo } from './flame-memo';
 import type { FlameOutput } from './flame-outputs';
 import type { FlameEstimation } from './types';
-import type { FlameApi } from '../../api/flame';
-import { FLAME_RPC_ERROR_CODE, FlameApiError } from '../../api/flame';
-import type { FlameTransferOutput } from '../../di/safely-flame';
+import type { FlameApi, FlameApiTxStatus } from '../../api/flame';
+import type { FlameBuiltTransfer, FlameTransferOutput } from '../../di/safely-flame';
 import type { FlameAssetAmount, FlameWallet } from '../../entities';
 import { BLOCKCHAIN_NAME } from '../../entities/blockchain';
 import { ellipsisMiddle } from '../../utils';
@@ -83,46 +82,66 @@ export class FlameTransactionTemplate {
     }
 
     private async _send(): Promise<FlameSendResult> {
+        const built = await this.build();
+        const txId = Buffer.from(built.txid).toString('hex');
         for (let attempt = 1; ; attempt++) {
-            const blockTx = await this.build();
+            // The node admits only proofs against its current tip, and the build waits on the passcode
+            const blockTx = await globalThis.flameSdk.replaceProofs(
+                built.blockTx,
+                await this.fetchProofs()
+            );
             try {
-                const txId = await this.api.submitTx(Buffer.from(blockTx).toString('base64'));
-                return createSendResult(txId);
+                return createSendResult(
+                    await this.api.submitTx(Buffer.from(blockTx).toString('base64'))
+                );
             } catch (error) {
-                // Proofs outlive their tip by one block only, so a slow build is rejected as stale
-                const isStale =
-                    error instanceof FlameApiError &&
-                    error.rpcCode === FLAME_RPC_ERROR_CODE.MEMPOOL_REJECTED;
-                if (!isStale || attempt >= SUBMIT_ATTEMPTS) {
+                // A lost response or a duplicate submit still means the node holds the transfer
+                const status = await this.fetchStatus(txId);
+                if (status === 'mempool' || status === 'confirmed') {
+                    return createSendResult(txId);
+                }
+                if (status === null) {
+                    throw new FlameSendStatusUnknownError(txId, { cause: error });
+                }
+                if (attempt >= SUBMIT_ATTEMPTS) {
                     throw error;
                 }
-                this.logger?.warn('mempool rejected the transfer, rebuilding with fresh proofs');
+                this.logger?.warn('the node did not take the transfer, resubmitting', error);
             }
         }
     }
 
-    private async build(): Promise<Uint8Array> {
-        const proofs = await this.api.proofs(this.inputs.map(input => input.id));
-
-        const inputs = this.inputs.map((input, i) => {
-            const proof = proofs[i];
-            if (proof.status !== 'unspent') {
-                throw new FlameInputsSpentError();
-            }
-            return {
+    private async build(): Promise<FlameBuiltTransfer> {
+        const proofs = await this.fetchProofs();
+        return this.wallet.buildTransfer({
+            inputs: this.inputs.map((input, i) => ({
                 contract: input.bytes.contract,
                 note: input.bytes.note,
-                proof: Uint8Array.from(Buffer.from(proof.proof, 'base64'))
-            };
-        });
-
-        const built = await this.wallet.buildTransfer({
-            inputs,
+                proof: proofs[i]
+            })),
             outputs: this.outputs,
             fee: this.estimation.fee.amount.weiAmount,
             gas: FLAME_TRANSFER_GAS
         });
-        return built.blockTx;
+    }
+
+    private async fetchStatus(txId: string): Promise<FlameApiTxStatus['status'] | null> {
+        try {
+            return (await this.api.txStatus(txId)).status;
+        } catch (error) {
+            this.logger?.warn('transfer status unavailable', error);
+            return null;
+        }
+    }
+
+    private async fetchProofs(): Promise<Uint8Array[]> {
+        const proofs = await this.api.proofs(this.inputs.map(input => input.id));
+        return proofs.map(proof => {
+            if (proof.status !== 'unspent') {
+                throw new FlameInputsSpentError();
+            }
+            return Uint8Array.from(Buffer.from(proof.proof, 'base64'));
+        });
     }
 }
 

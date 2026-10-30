@@ -28,6 +28,7 @@ export const unsupportedFlameSdk: SafelyFlame = {
     decodeContracts: flameUnsupported,
     openNotes: flameUnsupported,
     buildTransfer: flameUnsupported,
+    replaceProofs: flameUnsupported,
     validateReceivingAddress: () => false,
     memoMaxBytes: flameUnsupportedSync
 };

@@ -1,6 +1,6 @@
 {
   "name": "@safely/desktop",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "private": true,
   "productName": "Safely",
   "type": "commonjs",
@@ -24,7 +24,7 @@
     "@safely/web-ui": "workspace:*",
     "@safely/xhr-event-source": "workspace:*",
     "@tanstack/react-query": "catalog:",
-    "@tanstack/react-router": "1.170.31",
+    "@tanstack/react-router": "1.170.45",
     "buffer": "6.0.3",
     "react": "catalog:",
     "react-dom": "catalog:",
