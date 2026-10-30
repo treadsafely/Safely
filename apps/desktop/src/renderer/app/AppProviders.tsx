@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LoggableStorage, TreeStorage, WebNumberFormatLocale } from '@safely/core';
 import type { IAppContext, Security } from '@safely/ux';
 import {
+    AnalyticsProvider,
     AppContext,
     createPersister,
     createQueryClient,
@@ -159,7 +160,9 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
                         <Suspense fallback={loader}>
                             {/* TODO(ledger): a real transport replaces the rejecting port. */}
                             <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>
-                                <SyncStorageProvider>{children}</SyncStorageProvider>
+                                <SyncStorageProvider>
+                                    <AnalyticsProvider>{children}</AnalyticsProvider>
+                                </SyncStorageProvider>
                             </LedgerSessionPortProvider>
                         </Suspense>
                     </ErrorBoundary>
