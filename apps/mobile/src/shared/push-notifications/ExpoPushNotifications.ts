@@ -39,6 +39,8 @@ export class ExpoPushNotifications implements IPushNotifications {
                 return;
             }
             this.handledTapId = response.notification.request.identifier;
+            // handledTapId resets on reloadAppAsync (erase all data), the native last response does not
+            Notifications.clearLastNotificationResponse();
 
             const url = response.notification.request.content.data?.url;
             if (typeof url === 'string' && url.startsWith(createURL('/'))) onUrl(url);

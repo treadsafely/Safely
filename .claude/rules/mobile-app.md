@@ -177,13 +177,19 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   error always go back, so an onboarding step or an open flow underneath is kept. A link is
   dispatched on top of the initial route (`initialState` is always set, so React Navigation discards
   the initial URL — it still calls the linking options' `getInitialURL` on its first render, which
-  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getInitialURL()` and
+  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getLinkingURL()` and
   delivers it like any other link, after unlock), so there is always something to go back to; the reset to
   `resolveStartRoute` (`@mobile/shared/navigation`) is only a fallback. `resolveStartRoute` is the one
   place the start route is decided — `useInitialNavigationState` and `useRestrictionGuard` read it;
   never hand-write that choice again (the restriction guard once sent an account without a passcode
   to `WelcomeScreen`, which throws on an account). The passcode-setup route itself is
-  `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup. While the import writes, `usePreventRemove` keeps the modal on screen
+  `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup.
+  Every URL `useLockAwareLinking` handles first clears expo-linking's native cache
+  (`clearInitialURL`), and a handled push tap clears `getLastNotificationResponse`: both outlive
+  `reloadAppAsync`, so erase all data would otherwise replay the last link (it reopened the devnet
+  import). RN's `Linking.getInitialURL()` reads the launch intent / `launchOptions`, which cannot be
+  cleared — don't go back to it. The cache is read before the subscriptions, since a push URL they
+  deliver clears it. While the import writes, `usePreventRemove` keeps the modal on screen
   (see the UI section below), since the write cannot be cancelled and would reset the stack after
   the user left.
 - `flame` holds `{ encryptedViewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
