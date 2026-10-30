@@ -57,6 +57,7 @@ import {
 } from '../account';
 import { useErrorToast } from '../errors';
 import { useReadOnlyCredentialCache } from '../exchange/useReadOnlyCredentialCache';
+import { getLedgerDerivationName } from '../ledger';
 import { useToast } from '../toast';
 
 const EMPTY_PORTFOLIOS: Portfolio[] = Object.freeze([]) as unknown as Portfolio[];
@@ -609,7 +610,7 @@ export function useAddLedgerPortfolio() {
                 deviceModel,
                 accounts: accounts.map(account => ({
                     ...account,
-                    name: t('portfolio.ledgerWallet', { number: account.index + 1 })
+                    name: getLedgerDerivationName(t, account.index)
                 })),
                 meta
             });
@@ -670,7 +671,7 @@ export function useUpdateLedgerDerivations() {
                             sLedgerDerivation.toJson({
                                 index: account.index,
                                 meta: {
-                                    name: t('portfolio.ledgerWallet', { number: account.index + 1 })
+                                    name: getLedgerDerivationName(t, account.index)
                                 },
                                 chains: { btc: { xpub: account.xpub } }
                             })

@@ -140,7 +140,7 @@ closed from outside. The steps _inside_ a flow stay local state: they follow asy
 refs, so a URL cannot own them.
 
 **A flow may live here; a platform-bound one may not.** The slices in
-`features/{add-wallet,wallet,account,contact,sync}` hold the controller hooks and the modal switches
+`features/{add-wallet,wallet,account,contact,sync,ledger}` hold the controller hooks and the modal switches
 that drive a scenario — local step state, `@safely/ux` mutations, and the modals of their own slice.
 What a flow here must **not** hold is a decision mobile takes too: which copy a destructive sheet
 shows, what sign-out deletes versus erases, whether an address is already watched, or the order of
@@ -190,12 +190,14 @@ differs in storage, in user presence and in how links open.
 Stubs for capabilities a target lacks are the app's too
 (`apps/desktop/src/renderer/platform/unsupported.ts`): what is missing differs per target, and a
 shared "unsupported" list would quietly define the extension's gaps as well. Desktop currently stubs
-Ledger, push and Flame (a rejecting `flameSdk` mock until desktop Flame support lands); the secret
-storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate
-around it — passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR
-scanning is split the same way: the three modals live in `src/features/qr-scan` here, everything
+push notifications and Flame (a rejecting `flameSdk` mock until desktop Flame support lands); the
+secret storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate around it —
+passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR scanning is split
+the same way: the three modals live in `src/features/qr-scan` here, everything
 that decides — the OS permission, the device list, the remembered source — in the app
-(`.claude/rules/desktop-qr.md`).
+(`.claude/rules/desktop-qr.md`). The Ledger is the inverse split: the whole flow lives in
+`src/features/ledger` here, because every step binds to `@safely/ux` hooks alone, and the app only
+supplies the transport (`.claude/rules/desktop-ledger.md`).
 
 **The security module is the app's, and the screens are this package's.** `pages/passcode`,
 `pages/lock` and `pages/main/settings/SecuritySettings` take props and render: a value, a length, an

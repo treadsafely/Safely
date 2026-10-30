@@ -1,17 +1,16 @@
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
 
-import { ellipsisMiddle } from '@safely/core';
 import type { SendFormInitialValues, SendFormResult, SendFormView } from '@safely/ux';
-import { useActivePortfolio, useLastSeen, useSendForm, useTranslate } from '@safely/ux';
+import { useLastSeen, useSendForm, useTranslate } from '@safely/ux';
 
 import { AmountStep } from './AmountStep';
 import { ConfirmStep } from './ConfirmStep';
 import { RecipientStep } from './RecipientStep';
 import { SendHeader } from './SendHeader';
-import { bodyStyles, popupStyles, subtitleStyles } from './SendModal.styles';
-import { PortfolioTypeBadge } from '../../entities';
-import { Modal, Text } from '../../shared';
+import { SendHeaderSubtitle } from './SendHeaderSubtitle';
+import { bodyStyles, popupStyles } from './SendModal.styles';
+import { Modal } from '../../shared';
 
 export type SendModalProps = {
     initialValues?: SendFormInitialValues;
@@ -24,7 +23,6 @@ function resolveNext(view: SendFormView): (() => void) | undefined {
 
 export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
     const t = useTranslate();
-    const portfolio = useActivePortfolio();
 
     const [result, setResult] = useState<SendFormResult | null>(null);
     const [isSent, setIsSent] = useState(false);
@@ -57,14 +55,11 @@ export const SendModal: FC<SendModalProps> = ({ initialValues, onClose }) => {
 
     const subtitle =
         fromMeta === undefined ? undefined : (
-            <span className={subtitleStyles}>
-                <Text variant="bodyM" tone="secondary">
-                    {recipient === undefined
-                        ? `${t('send.from')} ${fromMeta.name}`
-                        : `${fromMeta.name} → ${recipientAlias === undefined ? '' : `${recipientAlias} `}${ellipsisMiddle(recipient, 6)}`}
-                </Text>
-                <PortfolioTypeBadge type={portfolio.type} tone="warning" />
-            </span>
+            <SendHeaderSubtitle
+                fromName={fromMeta.name}
+                recipient={recipient}
+                recipientAlias={recipientAlias}
+            />
         );
 
     return (

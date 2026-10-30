@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
 import type { Portfolio } from '@safely/core';
-import { usePortfolios, useTranslate } from '@safely/ux';
+import { useActivePortfolioLedgerIndex, usePortfolios, useTranslate } from '@safely/ux';
 
 import { listStyles, popupStyles } from './SelectWalletModal.styles';
 import { WalletCell } from '../../entities';
@@ -9,7 +9,7 @@ import { List, Modal } from '../../shared';
 
 export type SelectWalletModalProps = {
     activePortfolioId: Portfolio['id'];
-    onSelect: (portfolio: Portfolio) => void;
+    onSelect: (portfolio: Portfolio, derivationIndex?: number) => void;
     onClose: () => void;
 };
 
@@ -18,6 +18,7 @@ export const SelectWalletModal: FC<SelectWalletModalProps> = props => {
 
     const t = useTranslate();
     const portfolios = usePortfolios();
+    const activeDerivationIndex = useActivePortfolioLedgerIndex();
 
     return (
         <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
@@ -33,7 +34,8 @@ export const SelectWalletModal: FC<SelectWalletModalProps> = props => {
                                 key={portfolio.id.toString()}
                                 portfolio={portfolio}
                                 isActive={portfolio.id.isEq(activePortfolioId)}
-                                onSelect={() => onSelect(portfolio)}
+                                activeDerivationIndex={activeDerivationIndex}
+                                onSelect={derivationIndex => onSelect(portfolio, derivationIndex)}
                             />
                         ))}
                     </List.Group>

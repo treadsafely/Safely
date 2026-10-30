@@ -24,6 +24,7 @@ import { Button, Icon, StepCard, Text, welcomeBackdrop } from '../../shared';
 export type WelcomePageProps = {
     onCreateWallet: () => void;
     onImportWallet: () => void;
+    onConnectLedger: () => void;
     onWatchAccount: () => void;
     onLinkWithQr: () => void;
     onOpenTerms: () => void;
@@ -38,6 +39,7 @@ export const WelcomePage: FC<WelcomePageProps> = props => {
     const {
         onCreateWallet,
         onImportWallet,
+        onConnectLedger,
         onWatchAccount,
         onLinkWithQr,
         onOpenTerms,
@@ -88,6 +90,15 @@ export const WelcomePage: FC<WelcomePageProps> = props => {
                                     onClick={onImportWallet}
                                 >
                                     {t('welcome.importWallet')}
+                                </Button>
+
+                                <Button
+                                    variant="secondary"
+                                    size="small"
+                                    isFullWidth
+                                    onClick={onConnectLedger}
+                                >
+                                    {t('moreOptions.connectLedger')}
                                 </Button>
 
                                 <Button

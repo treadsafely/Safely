@@ -110,8 +110,8 @@ the error message.
 
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
-`web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-secret-store.md`, `desktop-signing.md`,
-`testing.md`, `android-minification.md`.
+`web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-ledger.md`, `desktop-secret-store.md`,
+`desktop-signing.md`, `testing.md`, `android-minification.md`.
 
 `desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
 schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
