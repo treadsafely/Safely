@@ -510,7 +510,8 @@
                 "dust": "Transaction value is too small."
             },
             "flame": {
-                "inputsSpent": "Your balance has changed. Go back and try again."
+                "inputsSpent": "Your balance has changed. Go back and try again.",
+                "statusUnknown": "The transfer may have been sent. Check your history before sending again."
             }
         },
         "estimateError": {

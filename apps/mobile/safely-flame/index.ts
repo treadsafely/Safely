@@ -7,6 +7,7 @@ import {
     deriveViewKey,
     memoMaxBytes,
     openNotes,
+    replaceProofs,
     validateReceivingAddress
 } from '../modules/safely-flame/src';
 
@@ -58,7 +59,9 @@ export const flameSdk: SafelyFlame = {
             })),
             fee: request.fee.toString(),
             gas: request.gas.toString()
-        })
+        }),
+
+    replaceProofs
 };
 
 global.flameSdk = flameSdk;

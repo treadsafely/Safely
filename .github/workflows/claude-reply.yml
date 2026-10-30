@@ -32,7 +32,7 @@ jobs:
       DISABLE_TELEMETRY: '1'
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
@@ -61,7 +61,7 @@ jobs:
           echo "ROOT_COMMENT_ID=$ROOT_ID" >> "$GITHUB_ENV"
 
       - id: claude
-        uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967 # v1.0.252
+        uses: anthropics/claude-code-action@16f9f71ab9c490faf367f94dd294897edc25be33 # v1.0.261
         timeout-minutes: 9
         env:
           REPO_FULL: ${{ github.repository }}
