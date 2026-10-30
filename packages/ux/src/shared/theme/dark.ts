@@ -120,6 +120,9 @@ export const darkTheme = {
             bitcoin: 'rgba(247, 147, 26, 1)',
             flame: 'rgba(250, 70, 25, 1)'
         },
+        chart: {
+            line: 'rgba(247, 147, 26, 1)'
+        },
         wallet: {
             lightGray: 'rgba(110, 110, 115, 1)',
             red: 'rgba(255, 85, 85, 1)',

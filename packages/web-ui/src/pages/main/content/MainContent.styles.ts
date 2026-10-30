@@ -12,3 +12,8 @@ export const headerStyles = css({
     paddingBottom: '16',
     backgroundColor: 'background.primary'
 });
+
+export const chartStyles = css({
+    paddingInline: '8',
+    paddingBottom: '16'
+});

@@ -950,6 +950,7 @@
         }
     },
     "chart": {
+        "a11yLabel": "Price chart",
         "periods": {
             "1h": "1 h",
             "24h": "24 h",
