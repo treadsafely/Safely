@@ -11,6 +11,7 @@ import com.flame.wallet.TransferRequest
 import com.flame.wallet.Wallet
 import com.flame.wallet.decodeContract
 import com.flame.wallet.memoMaxBytes
+import com.flame.wallet.replaceProofs
 import com.flame.wallet.validateReceivingAddress
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -176,6 +177,10 @@ class SafelyFlameModule : Module() {
                     seed.fill(0)
                 }
             }
+        }
+
+        AsyncFunction("replaceProofs") { blockTx: ByteArray, proofs: List<ByteArray> ->
+            outcome { replaceProofs(blockTx, proofs) }
         }
 
         // An empty note stands for "the scan served none": the bridge has no optional list elements.

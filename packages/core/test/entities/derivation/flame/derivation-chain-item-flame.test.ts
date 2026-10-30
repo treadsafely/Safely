@@ -86,6 +86,7 @@ function mockSafelyFlame() {
             seeds.push(new Uint8Array(seed));
             return Promise.resolve({ txid: bytes(0x11), blockTx: bytes(0x22, 4) });
         }),
+        replaceProofs: vi.fn<SafelyFlame['replaceProofs']>(blockTx => Promise.resolve(blockTx)),
         validateReceivingAddress: vi.fn<SafelyFlame['validateReceivingAddress']>(() => true),
         memoMaxBytes: vi.fn<SafelyFlame['memoMaxBytes']>(() => 8102)
     };
