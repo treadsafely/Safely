@@ -5,8 +5,8 @@ import { encodeFlameMemo } from './flame-memo';
 import type { FlameOutput } from './flame-outputs';
 import type { FlameEstimation } from './types';
 import type { FlameApi, FlameApiTxStatus } from '../../api/flame';
-import type { FlameBuiltTransfer, FlameTransferOutput } from '../../di/safely-flame';
-import type { FlameAssetAmount, FlameWallet } from '../../entities';
+import type { FlameBuiltTransfer, FlameNetwork, FlameTransferOutput } from '../../di/safely-flame';
+import type { ExplorerFactory, FlameAssetAmount, FlameWallet } from '../../entities';
 import { BLOCKCHAIN_NAME } from '../../entities/blockchain';
 import { ellipsisMiddle } from '../../utils';
 
@@ -92,13 +92,14 @@ export class FlameTransactionTemplate {
             );
             try {
                 return createSendResult(
-                    await this.api.submitTx(Buffer.from(blockTx).toString('base64'))
+                    await this.api.submitTx(Buffer.from(blockTx).toString('base64')),
+                    this.wallet.network
                 );
             } catch (error) {
                 // A lost response or a duplicate submit still means the node holds the transfer
                 const status = await this.fetchStatus(txId);
                 if (status === 'mempool' || status === 'confirmed') {
-                    return createSendResult(txId);
+                    return createSendResult(txId, this.wallet.network);
                 }
                 if (status === null) {
                     throw new FlameSendStatusUnknownError(txId, { cause: error });
@@ -145,15 +146,18 @@ export class FlameTransactionTemplate {
     }
 }
 
-function createSendResult(txId: string): FlameSendResult {
+function createSendResult(txId: string, network: FlameNetwork): FlameSendResult {
     return {
         blockchain: BLOCKCHAIN_NAME.FLAME,
         txId,
         toString() {
             return ellipsisMiddle(txId, 6);
         },
-        toExplorerUrl() {
-            return null;
+        toExplorerUrl(explorerFactory: ExplorerFactory): string | null {
+            return (
+                explorerFactory.createExplorer(BLOCKCHAIN_NAME.FLAME, network)?.transaction(txId) ??
+                null
+            );
         }
     };
 }
@@ -162,5 +166,5 @@ export interface FlameSendResult {
     blockchain: BLOCKCHAIN_NAME.FLAME;
     txId: string;
     toString(): string;
-    toExplorerUrl(): null;
+    toExplorerUrl(explorerFactory: ExplorerFactory): string | null;
 }
