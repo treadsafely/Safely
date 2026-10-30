@@ -22,6 +22,14 @@ export const flagsSchema = z.looseObject({
 export type Flags = z.infer<typeof flagsSchema>;
 export type FlagKey = keyof typeof flagsSchema.shape;
 
+const flameChainConfigSchema = z.looseObject({
+    rpc_url: sHttpsUrl,
+    explorer_account_url: sHttpsUrl,
+    explorer_tx_url: sHttpsUrl
+});
+
+export type FlameChainConfig = z.infer<typeof flameChainConfigSchema>;
+
 export const bootConfigSchema = z.looseObject({
     blockchains: z.looseObject({
         bitcoin: z.looseObject({
@@ -42,8 +50,9 @@ export const bootConfigSchema = z.looseObject({
         }),
         flame: z
             .looseObject({
-                mainnet: z.looseObject({ rpc_url: z.string() }).optional(),
-                testnet: z.looseObject({ rpc_url: z.string() }).optional()
+                // a malformed entry disables Flame on that network instead of failing the whole boot config
+                mainnet: flameChainConfigSchema.optional().catch(undefined),
+                testnet: flameChainConfigSchema.optional().catch(undefined)
             })
             .optional()
     }),

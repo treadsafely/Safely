@@ -112,9 +112,10 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   every testnet rule (no market price, no contacts, no pushes) applies to it. Balance and history count
   only flames, the native flavor: the SDK says so per output (`isNative` on a decoded clear contract
   and on an opened note, kept in `FlameOutputAmount`), so the app holds no flavor constant of its own;
-  FLM has 8 decimals. The node URL is
-  `blockchains.flame.<network>.rpc_url` from the boot config; until the config serves it,
-  `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet.
+  FLM has 8 decimals. The node URL and the explorer links come from
+  `blockchains.flame.<network>` in the boot config, keyed by the wallet's `FlameNetwork` — so the
+  devnet node is served under `testnet`; a network the config does not serve has no node and no
+  explorer — `useFlameApi` returns `null`, the explorer link is hidden.
 - **No UI creates a devnet portfolio.** Mobile imports one from
   `https://link.safely.app/import-flame-devnet-wallet#testseed=<phrase>` (a Universal Link / Android
   App Link) or `safely://import-flame-devnet-wallet?testseed=<phrase>`. The https link opens the app
