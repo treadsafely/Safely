@@ -3,13 +3,9 @@ import type { StaticScreenProps } from '@react-navigation/native';
 import { CommonActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { useLedgerSession } from '@safely/ux';
+import { getLedgerModelName, useLedgerSession } from '@safely/ux';
 
-import {
-    getLedgerModelName,
-    LedgerStatusScreen,
-    useExitToConnectLedger
-} from '@mobile/features/ledger';
+import { LedgerStatusScreen, useExitToConnectLedger } from '@mobile/features/ledger';
 import { ExclamationmarkCircle96, Icon } from '@mobile/shared/ui';
 
 type LedgerPairingUnsuccessScreenProps = StaticScreenProps<{ isAppNotInstalled?: boolean }>;
@@ -18,16 +14,11 @@ export const LedgerPairingUnsuccessScreen = ({ route }: LedgerPairingUnsuccessSc
     const { t } = useTranslation();
     const navigation = useNavigation();
     const exitToConnect = useExitToConnectLedger();
-    const { getLedgerKit, sessionId, setSessionId, selectedDevice } = useLedgerSession();
+    const { disconnect, selectedDevice } = useLedgerSession();
     const device = getLedgerModelName(selectedDevice?.deviceModel.model);
 
     const handleRetry = async () => {
-        if (sessionId) {
-            await getLedgerKit()
-                .disconnect({ sessionId })
-                .catch(() => {});
-            setSessionId(null);
-        }
+        await disconnect();
 
         navigation.dispatch(CommonActions.navigate('LedgerDiscoveryModal'));
     };

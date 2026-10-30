@@ -72,6 +72,10 @@ for key in 'com.apple.security.device.microphone' 'com.apple.security.device.aud
     ! has "$work/app.plist" "$key" || fail "main binary carries $key — this app has no use for a microphone"
 done
 
+# USB, for the Ledger over WebHID: without it the sandbox refuses the HID device with no symptom but
+# an empty device list.
+has "$work/app.plist" 'com.apple.security.device.usb' || fail "main binary: no usb entitlement — a Ledger cannot be opened"
+
 # Helpers carry exactly the sandbox and its inheritance. The renderer runs in them, so anything more
 # is a path to the keychain group, and an inheriting helper with any other key is killed at launch.
 # Hence also the guard: a changed layout must not pass by leaving nothing to check.

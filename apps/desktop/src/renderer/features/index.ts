@@ -5,6 +5,7 @@ export {
     type EnableBiometryFlowProps,
     isBiometryUnlockEnabled
 } from './biometry';
+export { createLedgerTransport } from './ledger';
 export { useOnboardingFlow } from './onboarding';
 export {
     passcodePrompt,

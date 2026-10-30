@@ -95,6 +95,10 @@ export default defineConfig({
                 pulse: {
                     '0%, 100%': { opacity: '1' },
                     '50%': { opacity: '0.4' }
+                },
+                ring: {
+                    '0%': { transform: 'scale(0.6)', opacity: '0.32' },
+                    '100%': { transform: 'scale(1.4)', opacity: '0' }
                 }
             },
             recipes,

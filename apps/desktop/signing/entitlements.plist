@@ -37,5 +37,10 @@
          sandbox it inherits from here. -->
     <key>com.apple.security.device.camera</key>
     <true/>
+
+    <!-- The Ledger over WebHID. IOKit refuses a HID device to a sandboxed process without it, and
+         the processes Chromium opens the device from inherit this sandbox. -->
+    <key>com.apple.security.device.usb</key>
+    <true/>
 </dict>
 </plist>
