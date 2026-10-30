@@ -8,6 +8,7 @@ export * from './logger';
 export * from './api';
 export * from './errors';
 export * from './format';
+export * from './chart';
 export * from './i18n';
 export * from './storage';
 export * from './security';

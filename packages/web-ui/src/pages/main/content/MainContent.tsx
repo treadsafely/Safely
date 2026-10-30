@@ -7,8 +7,8 @@ import { useActivePortfolio } from '@safely/ux';
 import { Balance } from './Balance';
 import { Header } from './Header';
 import { History } from './History';
-import { headerStyles } from './MainContent.styles';
-import { NewTransactionsBubble, useNewTransactionsBubble } from '../../../features';
+import { chartStyles, headerStyles } from './MainContent.styles';
+import { Chart, NewTransactionsBubble, useNewTransactionsBubble } from '../../../features';
 
 export type MainContentProps = {
     selectedActivityKey?: string;
@@ -36,6 +36,10 @@ export const MainContent: FC<MainContentProps> = props => {
                 <Header />
                 <Balance onSend={onSend} onReceive={onReceive} onScan={onScan} />
                 <NewTransactionsBubble mode={bubble.mode} onClick={bubble.scrollToTop} />
+            </div>
+
+            <div className={chartStyles}>
+                <Chart />
             </div>
 
             <History
