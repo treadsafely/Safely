@@ -6,6 +6,7 @@ const native = {
     decodeContracts: vi.fn(),
     openNotes: vi.fn(),
     buildTransfer: vi.fn(),
+    replaceProofs: vi.fn(),
     validateReceivingAddress: vi.fn(),
     memoMaxBytes: vi.fn()
 };
@@ -33,6 +34,7 @@ describe('safely-flame facade', () => {
         native.decodeContracts.mockReset();
         native.openNotes.mockReset();
         native.buildTransfer.mockReset();
+        native.replaceProofs.mockReset();
         native.validateReceivingAddress.mockReset();
     });
 
@@ -311,6 +313,36 @@ describe('safely-flame facade', () => {
             await expect(
                 flameSdk.buildTransfer(SEED, 'testnet', PATH, request)
             ).rejects.toMatchObject({ kind: 'transfer', reason: 'inputs do not balance' });
+        });
+    });
+
+    describe('replaceProofs', () => {
+        it('passes the transfer and its proofs as plain arrays', async () => {
+            native.replaceProofs.mockResolvedValue({ ok: true, value: new Uint8Array([9]) });
+
+            await expect(
+                flameSdk.replaceProofs(Buffer.from([1]), [Buffer.from([2]), Buffer.from([3])])
+            ).resolves.toEqual(new Uint8Array([9]));
+
+            const [blockTx, proofs] = native.replaceProofs.mock.calls[0] as [
+                Uint8Array,
+                Uint8Array[]
+            ];
+            expect(blockTx.constructor).toBe(Uint8Array);
+            expect(proofs.map(p => p.constructor)).toEqual([Uint8Array, Uint8Array]);
+            expect(proofs).toEqual([new Uint8Array([2]), new Uint8Array([3])]);
+        });
+
+        it('turns a proof count mismatch into a FlameError', async () => {
+            native.replaceProofs.mockResolvedValue({
+                ok: false,
+                code: 'ERR_FLAME_INVALID_BYTES',
+                reason: 'invalid proofs: 0 proofs for 1 inputs'
+            });
+
+            await expect(flameSdk.replaceProofs(new Uint8Array([1]), [])).rejects.toBeInstanceOf(
+                FlameError
+            );
         });
     });
 });

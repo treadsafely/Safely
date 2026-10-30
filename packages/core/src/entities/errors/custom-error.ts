@@ -10,7 +10,8 @@ import { PortfolioGenerationFailedError } from './portfolio-generation-failed.er
 import { BtcInsufficientFundsForFeeError, BtcSendDustError } from '../../blockchain-api/btc/errors';
 import {
     FlameInputsSpentError,
-    FlameInsufficientBalanceError
+    FlameInsufficientBalanceError,
+    FlameSendStatusUnknownError
 } from '../../blockchain-api/flame/errors';
 import {
     ParserInvalidAmountError,
@@ -28,6 +29,7 @@ export const customErrors = {
     OutputsAreSpendingMoreThanInputsError,
     FlameInsufficientBalanceError,
     FlameInputsSpentError,
+    FlameSendStatusUnknownError,
     LinkingUnsafeProtocolError,
     LinkingFailedToOpenError,
     ReconnectFromAnotherAccountError,
