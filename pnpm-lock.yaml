@@ -200,10 +200,10 @@ importers:
     dependencies:
       '@ledgerhq/device-management-kit':
         specifier: 'catalog:'
-        version: 1.6.0(rxjs@7.8.2)
+        version: 1.11.0(rxjs@7.8.2)
       '@ledgerhq/device-transport-kit-web-hid':
         specifier: 1.2.3
-        version: 1.2.3(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(rxjs@7.8.2)
+        version: 1.2.3(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(rxjs@7.8.2)
       '@noble/hashes':
         specifier: 'catalog:'
         version: 2.2.0
@@ -10220,9 +10220,9 @@ snapshots:
       rxjs: 7.8.2
       uuid: 11.0.3
 
-  '@ledgerhq/device-transport-kit-web-hid@1.2.3(@ledgerhq/device-management-kit@1.6.0(rxjs@7.8.2))(rxjs@7.8.2)':
+  '@ledgerhq/device-transport-kit-web-hid@1.2.3(@ledgerhq/device-management-kit@1.11.0(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
-      '@ledgerhq/device-management-kit': 1.6.0(rxjs@7.8.2)
+      '@ledgerhq/device-management-kit': 1.11.0(rxjs@7.8.2)
       '@sentry/minimal': 6.19.7
       purify-ts: 2.1.0
       rxjs: 7.8.2
@@ -15192,7 +15192,6 @@ snapshots:
   prettier@3.2.5: {}
 
   prettier@3.9.10: {}
-
 
   pretty-format@27.5.1:
     dependencies:
