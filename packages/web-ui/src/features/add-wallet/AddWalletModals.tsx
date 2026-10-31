@@ -8,6 +8,7 @@ import type { useAddWalletFlow } from './useAddWalletFlow';
 import { WalletAlreadyAddedModal } from './WalletAlreadyAddedModal';
 import { WatchAccountModal } from './WatchAccountModal';
 import { CustomizeWalletModal } from '../../entities';
+import { LedgerModals } from '../ledger';
 
 export type AddWalletModalsProps = {
     flow: ReturnType<typeof useAddWalletFlow>;
@@ -20,6 +21,7 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
                 <AddWalletModal
                     onCreateNew={flow.startCreate}
                     onImportExisting={() => flow.openImport(PortfolioNetworkType.MAINNET)}
+                    onConnectLedger={flow.openLedger}
                     onWatchAccount={flow.openWatch}
                     onImportTestnet={() => flow.openImport(PortfolioNetworkType.TESTNET)}
                     onClose={flow.close}
@@ -34,6 +36,8 @@ export const AddWalletModals: FC<AddWalletModalsProps> = ({ flow }) => {
             );
         case 'watch':
             return <WatchAccountModal onSubmit={flow.onWatchInputReady} onBack={flow.open} />;
+        case 'ledger':
+            return <LedgerModals flow={flow.ledger} />;
         case 'duplicate':
             return (
                 flow.duplicate && (

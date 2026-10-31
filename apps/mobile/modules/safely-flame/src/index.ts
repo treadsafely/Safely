@@ -133,6 +133,7 @@ interface SafelyFlameNativeModule {
             gas: string;
         }
     ): Promise<NativeOutcome<FlameTransfer>>;
+    replaceProofs(blockTx: Uint8Array, proofs: Uint8Array[]): Promise<NativeOutcome<Uint8Array>>;
 }
 
 const native = requireNativeModule<SafelyFlameNativeModule>('SafelyFlame');
@@ -284,4 +285,8 @@ export async function buildTransfer(
     } finally {
         if (plainSeed !== seed) plainSeed.fill(0);
     }
+}
+
+export function replaceProofs(blockTx: Uint8Array, proofs: Uint8Array[]): Promise<Uint8Array> {
+    return unwrap(native.replaceProofs(toPlainUint8Array(blockTx), proofs.map(toPlainUint8Array)));
 }

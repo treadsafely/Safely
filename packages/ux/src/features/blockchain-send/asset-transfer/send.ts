@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { TransactionTemplate } from '@safely/core';
-import { BLOCKCHAIN_NAME, assertUnreachable } from '@safely/core';
+import { BLOCKCHAIN_NAME, FlameSendStatusUnknownError, assertUnreachable } from '@safely/core';
 
 import { BroadcastedBtcTx, flameBlockchain, useSetLastBroadcastedBtcTx } from '../../../entities';
 import type { SendChains } from '../send-chains';
@@ -50,6 +50,11 @@ export function useSendAssetTransfer() {
                     return;
                 default:
                     assertUnreachable(transactionTemplate);
+            }
+        },
+        async onError(error) {
+            if (error instanceof FlameSendStatusUnknownError) {
+                await queryClient.invalidateQueries({ queryKey: flameBlockchain.toKey() });
             }
         }
     });

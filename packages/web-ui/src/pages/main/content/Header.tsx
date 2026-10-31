@@ -1,23 +1,32 @@
 import type { FC } from 'react';
 
 import { ellipsisMiddle } from '@safely/core';
-import { useActiveBtcWallet, useActivePortfolio, useTranslate } from '@safely/ux';
+import {
+    useActiveBtcWallet,
+    useActivePortfolio,
+    useActivePortfolioLedgerIndex,
+    useActiveWalletMeta,
+    useTranslate
+} from '@safely/ux';
 
 import { addressStyles, rowStyles, titleStyles } from './Header.styles';
 import { PortfolioTypeBadge, WalletIcon } from '../../../entities';
-import { Text, useCopyToClipboard } from '../../../shared';
+import { Badge, Text, useCopyToClipboard } from '../../../shared';
 
 export const Header: FC = () => {
     const t = useTranslate();
     const wallet = useActiveBtcWallet();
     const portfolio = useActivePortfolio();
+    const walletMeta = useActiveWalletMeta();
+    const ledgerIndex = useActivePortfolioLedgerIndex();
     const { isCopied, copy } = useCopyToClipboard();
 
     return (
         <div className={rowStyles}>
             <div className={titleStyles}>
-                <WalletIcon icon={portfolio.meta.icon} size="medium" />
-                <Text variant="labelL">{portfolio.meta.name}</Text>
+                <WalletIcon icon={walletMeta.icon} size="medium" />
+                <Text variant="labelL">{walletMeta.name}</Text>
+                {ledgerIndex !== undefined && <Badge isUppercase>{ledgerIndex + 1}</Badge>}
                 <PortfolioTypeBadge type={portfolio.type} tone="warning" />
             </div>
 

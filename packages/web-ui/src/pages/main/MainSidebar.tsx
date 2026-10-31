@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import {
     useActivePortfolioEntitiesQuery,
     usePortfolios,
+    useReorderDerivations,
     useReorderPortfolios,
     useSetActivePortfolio,
     useTranslate
@@ -54,8 +55,12 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
     const t = useTranslate();
     const portfolios = usePortfolios();
     const { mutate: reorderPortfolios } = useReorderPortfolios();
+    const { mutate: reorderDerivations } = useReorderDerivations();
     const { mutate: setActivePortfolio } = useSetActivePortfolio();
-    const activePortfolioId = useActivePortfolioEntitiesQuery().data?.portfolio.id;
+    const activeEntities = useActivePortfolioEntitiesQuery().data;
+    const activePortfolioId = activeEntities?.portfolio.id;
+    const activeDerivationIndex =
+        activeEntities?.type === 'ledger' ? activeEntities.derivation.index : undefined;
 
     const byId = useMemo(
         () => new Map(portfolios.map(portfolio => [portfolio.id.toString(), portfolio])),
@@ -108,8 +113,15 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                                         activePortfolioId !== undefined &&
                                         portfolio.id.isEq(activePortfolioId)
                                     }
-                                    onSelect={() => {
-                                        setActivePortfolio({ id: portfolio.id });
+                                    activeDerivationIndex={activeDerivationIndex}
+                                    onReorderDerivations={(ledgerPortfolio, orderedDerivationIds) =>
+                                        reorderDerivations({
+                                            portfolio: ledgerPortfolio,
+                                            orderedDerivationIds
+                                        })
+                                    }
+                                    onSelect={derivationIndex => {
+                                        setActivePortfolio({ id: portfolio.id, derivationIndex });
                                         onSelectWallet();
                                     }}
                                 />

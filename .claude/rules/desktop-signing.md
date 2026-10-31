@@ -96,6 +96,8 @@ gets `entitlements.plist`, **everything nested** — helpers, frameworks, the ke
   unable to start, with nothing in our logs. `ElectronTeamID` is set in `extendInfo`, the group in
   `entitlements.plist`, and `verify-signature.sh` checks that the two agree.
 - `network.client` is the only network entitlement: the app never listens.
+- `device.usb` is for the Ledger over WebHID (`desktop-ledger.md`); `device.camera` for the QR
+  scanner. Both sit on the main plist and reach the helpers through inheritance.
 - osx-sign's `preAutoEntitlements` would insert the identifier, team and group keys; the plists
   already carry all three, so it changes nothing and the signed entitlements are exactly the files.
 
