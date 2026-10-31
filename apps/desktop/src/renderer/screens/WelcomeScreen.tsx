@@ -1,9 +1,10 @@
 import type { FC } from 'react';
 
-import { useBootConfig, useLinking, useTranslate } from '@safely/ux';
+import { useBootConfig, useLinking, useTrackOnboardingOpen, useTranslate } from '@safely/ux';
 import {
     BiometryCard,
     ImportWalletModal,
+    LedgerModals,
     PasscodeCard,
     SignInCard,
     SignInSuccessCard,
@@ -19,11 +20,14 @@ export const WelcomeScreen: FC = () => {
     const { openURL } = useLinking();
     const legal = useBootConfig().references.legal;
 
+    useTrackOnboardingOpen();
+
     return (
         <>
             <WelcomePage
                 onCreateWallet={onboarding.startCreate}
                 onImportWallet={onboarding.openImport}
+                onConnectLedger={onboarding.openLedger}
                 onWatchAccount={onboarding.openWatch}
                 onLinkWithQr={() => void onboarding.startSignIn()}
                 onOpenTerms={() => openURL(legal.terms_url)}
@@ -44,6 +48,10 @@ export const WelcomeScreen: FC = () => {
                     onSubmit={onboarding.onWatchInputReady}
                     onBack={onboarding.close}
                 />
+            )}
+
+            {onboarding.step === 'ledger' && (
+                <LedgerModals flow={onboarding.ledger} hasBackdrop={false} />
             )}
 
             {onboarding.step === 'signIn' && onboarding.connectionString !== undefined && (

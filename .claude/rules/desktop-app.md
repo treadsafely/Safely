@@ -37,8 +37,8 @@ stay: they are correct cross-platform behaviour, not dead code.
 Inside the renderer the layout is FSD, the same shape mobile uses: `shared` → `features` → `screens`
 → `app`, plus `platform/` (the Electron contract and its implementation) and two module-level
 singletons at the root, `logger.ts` and `i18n.ts`. `features/` holds one scenario per directory —
-`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan` — each with its own `keys.ts` where it
-needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
+`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan`, `ledger` — each with its own `keys.ts`
+where it needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
 the providers (the tree itself is described under "Routes" below). What is left here is what binds
 to this target: the wallet, account and contact flows live in `@safely/web-ui` (`web-ui.md` draws
 the line), `onboarding` stays because it navigates and because its
@@ -60,7 +60,9 @@ out of a `DesktopPlatform` implementation, whose shape this app declares itself
 `apps/mobile/src/app/AppContext.tsx` does the assembly. `@safely/web-ui` supplies the pure parts
 (`WebLinking`, the toast service, the logger/i18n factories); the stubs for what this target lacks
 are ours (`src/renderer/platform/unsupported.ts`), because the extension will lack a different set.
-The extension will repeat this wiring with its own platform.
+The Ledger transport is renderer code rather than a bridge member (`features/ledger`, WebHID runs in
+the page) and is built next to the query client in `AppProviders.tsx`, the way mobile builds its BLE
+kit in `AppContext.tsx`. The extension will repeat this wiring with its own platform.
 
 `AppProviders` also mounts `ErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
 `FatalErrorPage` as the fallback — restart and "send logs" (`platform.logs.share()`, the log folder
@@ -296,10 +298,11 @@ Do not weaken these without a threat-model note:
       privileged process.
     - Wildcards are legal here only because no request carries credentials (no cookies, no client
       certs). Do not introduce `credentials: 'include'` without revisiting this.
-- Permissions are denied by default. The **camera** is the one exception: granted to the top frame
-  for a video-only request, refused when the microphone is asked for alongside it, and HID (Ledger)
-  joins as its own branch when that lands. The check handler is looser than the request handler on
-  purpose — `desktop-qr.md` has both halves.
+- Permissions are denied by default. The **camera** is the one media exception: granted to the top
+  frame for a video-only request, refused when the microphone is asked for alongside it. The check
+  handler is looser than the request handler on purpose — `desktop-qr.md` has both halves. **HID**
+  is its own branch: the check handler opens `navigator.hid`, and the device permission handler
+  grants Ledger's vendor id and nothing else — `desktop-ledger.md`.
 - Fuses in `forge.config.ts` disable `RunAsNode`, the inspector and `NODE_OPTIONS`, and enable asar
   integrity validation.
 
@@ -402,6 +405,8 @@ the renderer only has a console transport there.
   entitlement plist — the helpers only inherit its sandbox (`desktop-signing.md`).
   `verify-signature.sh` gates the entitlement and the absence of a microphone one; `desktop-qr.md`
   says which of the three is actually load-bearing.
+- **The Ledger needs `com.apple.security.device.usb`** on the main entitlement plist, gated by
+  `verify-signature.sh` too; `desktop-ledger.md` has the WebHID side.
 - `package:mas` produces the sandboxed MAS app (`out/Safely-mas-arm64/`), `make:mas` wraps it into the
   **`.pkg` App Store Connect takes** and needs `SAFELY_INSTALLER_IDENTITY` for that. Signing is
   env-driven and listed at the top of `forge.config.ts`: `SAFELY_SIGN_IDENTITY` turns it on,
