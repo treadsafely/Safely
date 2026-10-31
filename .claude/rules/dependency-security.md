@@ -330,6 +330,9 @@ from EAS, never EAS pushing, because pushing needs a GitHub write token inside t
   `apps/mobile/scripts/release/` download that commit's artifacts, uploads them with `gh` and
   publishes the draft as a prerelease, which is what makes GitHub create the tag. Called after the
   draft, on a schedule twice an hour, and by hand; one draft per run.
+- Desktop needs no polling: `.github/workflows/desktop-testflight.yml` builds in GitHub itself, so on
+  `master` its `release` job attaches the `.pkg` and `desktop-dependencies.txt` to
+  `v<desktop version>-desktop` directly. `desktop-signing.md` has that pipeline.
 - **The two credentials never meet, and it is the workflow that guarantees it.** `gh` runs only in
   the steps holding `GH_TOKEN`; the download step gets `EXPO_TOKEN` and runs node through
   `env -u GH_TOKEN -u GITHUB_TOKEN`, so the process that talks to Expo and reads a third-party

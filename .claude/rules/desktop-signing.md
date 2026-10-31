@@ -143,17 +143,35 @@ packaging step can meet a relocked keychain halfway through.
 
 ## The TestFlight pipeline
 
-`.github/workflows/desktop-testflight.yml` runs on a push to `release/*` — a merge into a release
-branch is one — and by hand: Actions → Desktop TestFlight → Run workflow. Five jobs, split by what
-each may hold:
+`.github/workflows/desktop-testflight.yml` runs on a push to `release/*` or to `master` — a merge
+is one — and by hand: Actions → Desktop TestFlight → Run workflow. Seven jobs, split by what each
+may hold:
 
 | Job | Runner | Holds | Does |
 | --- | ------ | ----- | ---- |
+| `prepare` | `ubuntu-latest` | `github.token` | reads the desktop version; on `master` ends the run if `v<version>-desktop` is already published, otherwise marks the run as the release |
 | `allocate-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | reads the counter through the API and hands `n + 1` to `build` |
-| `build` | `macos-15` | the certificates and the profile | `make:mas`, `verify-signature.sh`, `pkgutil --check-signature`, hands the `.pkg` on as an artifact kept 3 days |
+| `build` | `macos-15` | the certificates and the profile | `make:mas`, `verify-signature.sh`, `pkgutil --check-signature`, lists the resolved production dependencies, hands the `.pkg` and that `desktop-dependencies.txt` on as an artifact kept 3 days |
 | `upload` | `macos-15` | the App Store Connect API key | `xcrun altool --validate-app`, then `--upload-app` |
+| `release` | `ubuntu-latest` | `github.token` | on `master` only, after `upload`, publishes the GitHub prerelease `v<desktop version>-desktop` on this commit with the `.pkg` and the dependency listing |
 | `record-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | advances the counter, only after `upload` succeeded |
-| `report` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts the outcome, whatever it was |
+| `report` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts the outcome, whatever it was — unless `prepare` found nothing to build |
+
+**A release branch is TestFlight only; the release is the merge into master**, the same shape as
+mobile's `release-draft.yml` + `release-assets.yml`. Publishing the release creates the tag
+`v<desktop version>-desktop` on the merge commit, with the package built from that very commit — not
+the release branch's, whose tree can differ once master has moved — so the last TestFlight build the
+testers see is the one the tag names. Master is built **once per desktop version**: `prepare` asks
+GitHub whether the release exists, and a dependabot or feature merge that leaves
+`apps/desktop/package.json` alone builds nothing, spends no macOS minutes and no build number, and
+posts nothing to Slack. Bumping the desktop version on a release branch is therefore what schedules a
+desktop release; a release branch that does not bump it ships mobile only. There is no check of the
+version against the branch name as mobile has: the branch is named after the mobile version, the two
+platforms version independently, and that is also why the tag carries the `-desktop` suffix — one
+`release/*` branch can carry mobile `2.2.1` and desktop `1.1.5` at once. The release stays a
+prerelease until the Mac App Store rollout, which is done by hand in App Store Connect. Mobile
+attaches through the polling `release-assets.yml`; desktop builds in CI, so it attaches its own
+assets directly. The listing mirrors mobile's `android-sdkDependencies.txt`.
 
 `macos-15` is arm64, the architecture the addon is built for. The upload calls `altool` directly
 rather than through a marketplace action: `apple-actions/upload-testflight-build` is a community
@@ -176,8 +194,8 @@ key, each on its own runner.
   build the chain), `APPLE_MAS_CERT_PASSWORD`, `APPLE_MAS_PROVISIONING_PROFILE` (base64);
 - upload: `ASC_API_KEY_P8`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`.
 
-**A push to `release/*` builds and uploads with no approval.** What decides what gets signed is
-therefore what can reach a release branch, and that is two repository rulesets, not the
+**A push to `release/*` or `master` builds and uploads with no approval.** What decides what gets
+signed is therefore what can reach those branches, and that is two repository rulesets, not the
 environment. "master & release" (`master`, `release/*`) requires a pull request with one approving
 review and forbids deletion and force pushes, admins bypassing. "Release" (`release/*`)
 **restricts creations**, bypassed only by the people who cut release branches — without it anyone
@@ -185,7 +203,7 @@ with write access creates `release/x` from any commit, a changed workflow includ
 That rule covers the mobile `release/<version>` branches as well, so whoever cuts those needs to be
 on its bypass list. The workflow's trigger is `release/*` and not `release/**` for the
 same reason: `*` stops at `/`, and a nested branch would build without the ruleset. The environment itself
-carries a deployment-branch rule of `release/*` and no reviewer. Approval per run was the
+carries deployment-branch rules for `release/*` and `master` and no reviewer. Approval per run was the
 alternative and was dropped: with the ruleset in place it would ask the same question twice. A
 branch dispatched by hand has to be added to the environment's branch rule too, or the run starts
 and dies reaching for a secret it cannot read.
@@ -208,6 +226,9 @@ the bundle id, not the certificate.
 
 ```
 gh api -X PUT repos/treadsafely/Safely/environments/desktop-release
+# Deployment branches: exactly the refs the workflow builds (or Settings → Environments → desktop-release).
+gh api -X POST repos/treadsafely/Safely/environments/desktop-release/deployment-branch-policies -f name='release/*' -f type=branch
+gh api -X POST repos/treadsafely/Safely/environments/desktop-release/deployment-branch-policies -f name=master -f type=branch
 base64 -i app.p12       | gh secret set APPLE_MAS_APP_CERT_P12       --env desktop-release
 base64 -i installer.p12 | gh secret set APPLE_MAS_INSTALLER_CERT_P12 --env desktop-release
 gh secret set APPLE_MAS_CERT_PASSWORD --env desktop-release
@@ -241,7 +262,10 @@ refuses it.
 
 **Retry a failed run with "Re-run all jobs", not "Re-run failed jobs".** The latter keeps the
 successful `allocate-build-number` and its number, which a newer run may have uploaded and recorded
-in the meantime; the Slack report for a failed build or upload says so.
+in the meantime; the Slack report for a failed build or upload says so. The one exception is
+`release` failing after a good upload: re-run that job alone — the number is spent and recorded, the
+package sits in the run's artifact for 3 days, and a full re-run would upload a second build for
+nothing.
 
 Two outcomes leave the counter behind a number Apple already holds, and the next run then fails
 validation as a duplicate build: `upload` failing after App Store Connect took the package (an

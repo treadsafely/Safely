@@ -1,18 +1,21 @@
 name: Desktop TestFlight
 
 # Builds the Mac App Store package, signs it with the distribution identities and uploads it to App
-# Store Connect, where TestFlight hands it to the internal testers. This pipeline is the only place
-# the distribution keys exist — no machine signs a store build locally — so the two jobs that touch
-# them are split by what they hold: `build` has the certificates and no API key, `upload` has the
-# API key and no certificates. `.claude/rules/desktop-signing.md` has the setup.
+# Store Connect, where TestFlight hands it to the internal testers; from master it also publishes the
+# GitHub release. This pipeline is the only place the distribution keys exist — no machine signs a
+# store build locally — so the two jobs that touch them are split by what they hold: `build` has the
+# certificates and no API key, `upload` has the API key and no certificates.
+# `.claude/rules/desktop-signing.md` has the setup.
 
 on:
-  # A merge into a release branch is a push to it, and it builds unattended: what may reach a
-  # release branch is decided by the ruleset on `release/*`, not by an approval here. The pattern
-  # matches the ruleset's exactly — `*` stops at `/`, so `release/**` would also build branches the
-  # ruleset does not protect. The `desktop-release` environment has to allow the ref too.
+  # A merge is a push, and it builds unattended: what may reach either branch is decided by the
+  # rulesets on `master` and `release/*`, not by an approval here. The pattern matches the ruleset's
+  # exactly — `*` stops at `/`, so `release/**` would also build branches the ruleset does not
+  # protect. The `desktop-release` environment has to allow both refs too. A release branch is
+  # TestFlight only; master is the release, once per desktop version — see `prepare`.
   push:
     branches:
+      - master
       - 'release/*'
   workflow_dispatch:
 
@@ -28,8 +31,59 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The same shape as mobile: a push to a release branch is a TestFlight build, the merge into master
+  # is the release. Master is built once per desktop version — the first push after the bump, which
+  # is that merge — so a dependabot or feature merge that leaves the version alone ends here, with no
+  # macOS minutes, no build number and no Slack post. A hand-dispatched run follows the same rule.
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+      release: ${{ steps.decide.outputs.release }}
+      version: ${{ steps.decide.outputs.version }}
+      tag: ${{ steps.decide.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Decide what this ref gets
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          version="$(jq -r .version apps/desktop/package.json)"
+          tag="v${version}-desktop"
+          build=true
+          release=false
+
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            # Only "not found" means no release yet; any other answer must not end in a second build.
+            if gh release view "$tag" > /dev/null 2> "$RUNNER_TEMP/gh.err"; then
+              echo "::notice::$tag is already published — master builds a desktop version once"
+              build=false
+            elif grep -q 'release not found' "$RUNNER_TEMP/gh.err"; then
+              release=true
+            else
+              cat "$RUNNER_TEMP/gh.err" >&2
+              exit 1
+            fi
+          fi
+
+          echo "Desktop $version on $GITHUB_REF_NAME: build=$build release=$release"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   # Never `${{ vars.* }}`: that context is fixed when the run is created, before a queued run's turn.
   allocate-build-number:
+    needs: prepare
+    if: needs.prepare.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -96,6 +150,24 @@ jobs:
       # `make` in one app does not run web-ui's codegen, and the renderer imports styled-system.
       - name: Generate styled-system
         run: pnpm --filter @safely/web-ui run codegen
+
+      # The release's record of what actually shipped — the macOS counterpart of mobile's
+      # android-sdkDependencies.txt. Resolved from the frozen lockfile just installed above.
+      - name: List resolved dependencies
+        env:
+          NUMBER: ${{ needs.allocate-build-number.outputs.number }}
+        run: |
+          set -euo pipefail
+          version="$(jq -r .version apps/desktop/package.json)"
+          {
+            echo "Safely desktop $version — build $NUMBER (${GITHUB_SHA:0:7})"
+            echo
+            echo "Electron:"
+            pnpm --filter @safely/desktop list electron --depth 0
+            echo
+            echo "Production dependencies:"
+            pnpm --filter @safely/desktop list --prod --depth Infinity
+          } > "$RUNNER_TEMP/desktop-dependencies.txt"
 
       - name: Import signing identities
         id: identity
@@ -187,7 +259,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ needs.allocate-build-number.outputs.artifact }}
-          path: ${{ runner.temp }}/Safely.pkg
+          path: |
+            ${{ runner.temp }}/Safely.pkg
+            ${{ runner.temp }}/desktop-dependencies.txt
           if-no-files-found: error
           retention-days: 3
 
@@ -245,6 +319,49 @@ jobs:
         if: always()
         run: rm -rf ~/.appstoreconnect
 
+  # The release, what release-draft.yml and release-assets.yml are for mobile: on master, after a
+  # successful upload, the GitHub prerelease `v<desktop version>-desktop` is published on this commit
+  # with the signed .pkg and the dependency listing. Its own tag, so it never collides with the
+  # mobile `v<version>` even when the numbers coincide — the platforms version independently. The
+  # build is produced here, not on EAS, so the assets attach directly instead of through a polling
+  # workflow. Publishing creates the tag; prerelease until the Mac App Store rollout, done by hand.
+  release:
+    needs: [prepare, allocate-build-number, build, upload]
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch the build artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.allocate-build-number.outputs.artifact }}
+          path: ${{ runner.temp }}/release
+
+      - name: Publish the desktop release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          NUMBER: ${{ needs.allocate-build-number.outputs.number }}
+        run: |
+          set -euo pipefail
+
+          stage="$RUNNER_TEMP/release"
+          pkg="$stage/Safely-$VERSION-b$NUMBER.pkg"
+          mv "$stage/Safely.pkg" "$pkg"
+
+          # The commit, not `master`: a branch name would let the tag land wherever master points.
+          gh release create "$TAG" "$pkg" "$stage/desktop-dependencies.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes "Desktop $VERSION (build $NUMBER) — ${GITHUB_SHA:0:7}, uploaded to TestFlight. Prerelease until the Mac App Store rollout." \
+            --prerelease
+
+          echo "::notice::$TAG published with the package and the dependency listing"
+
   # A separate job because writing a repository variable needs a token, and a token that can write
   # to the repository must sit in neither of the jobs above. Depending on `upload` is what makes a
   # number belong to a build App Store Connect has.
@@ -269,13 +386,16 @@ jobs:
           gh variable set DESKTOP_BUILD_NUMBER_MACOS --repo "$GITHUB_REPOSITORY" --body "$NUMBER"
           echo "DESKTOP_BUILD_NUMBER_MACOS is now $NUMBER"
 
-  # Runs whatever the other jobs did, so a crash is reported too. Separate job on ubuntu: the webhook
-  # is a repository secret, and it has no business sitting next to the certificates or the API key.
-  # It waits for the counter as well: a build that reached Apple with the counter left behind makes
-  # the next run fail as a duplicate, and that has to be said now, not discovered then.
+  # Runs whatever the other jobs did, so a crash is reported too — except when `prepare` found
+  # nothing to build: a merge into master that leaves the desktop version alone is not an event.
+  # Separate job on ubuntu: the webhook is a repository secret, and it has no business sitting next
+  # to the certificates or the API key. It waits for the counter as well: a build that reached Apple
+  # with the counter left behind makes the next run fail as a duplicate, and that has to be said now,
+  # not discovered then.
   report:
-    needs: [allocate-build-number, build, upload, record-build-number]
-    if: always()
+    needs: [prepare, allocate-build-number, build, upload, release, record-build-number]
+    # `!= 'false'`, not `== 'true'`: a failed `prepare` has no outputs and has to be reported too.
+    if: always() && needs.prepare.outputs.build != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -290,11 +410,14 @@ jobs:
       - name: Post the build status to Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PREPARE_RESULT: ${{ needs.prepare.result }}
           ALLOCATE_RESULT: ${{ needs.allocate-build-number.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           UPLOAD_RESULT: ${{ needs.upload.result }}
+          RELEASE_RESULT: ${{ needs.release.result }}
           RECORD_RESULT: ${{ needs.record-build-number.result }}
           BUILD_NUMBER: ${{ needs.allocate-build-number.outputs.number }}
+          TAG: ${{ needs.prepare.outputs.tag }}
           # Optional: the App Store Connect app id, which turns the link into its TestFlight page.
           ASC_APP_ID: ${{ vars.DESKTOP_ASC_APP_ID }}
         run: |
@@ -315,13 +438,22 @@ jobs:
 
           # App Store Connect refuses a build number it has seen, so every outcome where Apple may
           # hold this number but the counter does not says how to move the counter on.
-          if [ "$UPLOAD_RESULT" = "success" ] && [ "$RECORD_RESULT" = "success" ]; then
+          if [ "$PREPARE_RESULT" != "success" ]; then
+            status="❌ Desktop release check failed — see the run"
+            url="$run_url"
+          elif [ "$UPLOAD_RESULT" = "success" ] && [ "$RECORD_RESULT" = "success" ] && [ "$RELEASE_RESULT" = "success" ]; then
+            status="✅ Released $TAG (${BUILD_NUMBER:-?}) — uploaded to TestFlight, published on GitHub"
+            url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          elif [ "$UPLOAD_RESULT" = "success" ] && [ "$RECORD_RESULT" = "success" ] && [ "$RELEASE_RESULT" = "skipped" ]; then
             status="✅ Uploaded to TestFlight $version (${BUILD_NUMBER:-?})"
             if [ -n "${ASC_APP_ID:-}" ]; then
               url="https://appstoreconnect.apple.com/apps/$ASC_APP_ID/testflight/macos"
             else
               url="$run_url"
             fi
+          elif [ "$UPLOAD_RESULT" = "success" ] && [ "$RECORD_RESULT" = "success" ]; then
+            status="⚠️ Uploaded $version (${BUILD_NUMBER:-?}) to TestFlight, but publishing $TAG failed — re-run the failed job only; the package is kept 3 days"
+            url="$run_url"
           elif [ "$UPLOAD_RESULT" = "success" ]; then
             status="⚠️ Uploaded $version (${BUILD_NUMBER:-?}), but DESKTOP_BUILD_NUMBER_MACOS was not advanced — set it to ${BUILD_NUMBER:-?} before the next run"
             url="$run_url"
