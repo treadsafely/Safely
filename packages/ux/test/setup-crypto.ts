@@ -19,6 +19,8 @@ globalThis.flameSdk = {
     openNotes: () => Promise.reject(new Error('flameSdk.openNotes is not available in tests')),
     buildTransfer: () =>
         Promise.reject(new Error('flameSdk.buildTransfer is not available in tests')),
+    replaceProofs: () =>
+        Promise.reject(new Error('flameSdk.replaceProofs is not available in tests')),
     validateReceivingAddress: (address, network) => {
         const [tracking, encryption] = FLAME_RECEIVING_HRPS[network];
         return address.startsWith(tracking) && address.indexOf(encryption) > tracking.length;

@@ -2,7 +2,8 @@ import { useParseError } from '../../../shared';
 
 const SEND_ERROR_CONFIG = {
     BtcSendDustError: 'confirmation.sendError.btc.dust',
-    FlameInputsSpentError: 'confirmation.sendError.flame.inputsSpent'
+    FlameInputsSpentError: 'confirmation.sendError.flame.inputsSpent',
+    FlameSendStatusUnknownError: 'confirmation.sendError.flame.statusUnknown'
 } as const;
 
 const ESTIMATE_ERROR_CONFIG = {

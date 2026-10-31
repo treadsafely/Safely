@@ -2,12 +2,19 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import type { CryptoAssetAmount, Estimation, SendResult } from '@safely/core';
-import { btcBlockWaitingTimeMinutes, ellipsisMiddle } from '@safely/core';
+import {
+    btcBlockWaitingTimeMinutes,
+    ellipsisMiddle,
+    LedgerSigningCancelledError,
+    PortfolioType
+} from '@safely/core';
 import type { SendFormResult } from '@safely/ux';
 import {
     orderAmounts,
     useActiveBtcWallet,
     useActiveFiat,
+    useActivePortfolio,
+    useActivePortfolioLedgerIndex,
     useActiveWalletMeta,
     useAnalytics,
     useEstimateAssetTransfer,
@@ -36,7 +43,7 @@ import {
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
 import { AssetIcon, WalletIcon } from '../../entities';
-import { Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
+import { Badge, Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
 
 export type ConfirmStepProps = {
     result: SendFormResult;
@@ -124,6 +131,8 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const fiat = useActiveFiat();
     const walletMeta = useActiveWalletMeta();
     const wallet = useActiveBtcWallet();
+    const isLedger = useActivePortfolio().type === PortfolioType.LEDGER;
+    const ledgerIndex = useActivePortfolioLedgerIndex();
     const explorerFactory = useExplorerFactory();
     const { openURL } = useLinking();
     const analytics = useAnalytics();
@@ -162,6 +171,10 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                 fiatSymbol: fiat.id.symbol
             });
         } catch (error) {
+            if (error instanceof LedgerSigningCancelledError) {
+                return;
+            }
+
             setSendError(error);
             void analytics.trackSendFinish({
                 cryptoCurrency,
@@ -215,6 +228,9 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                 <TableCell.Value>
                                     <WalletIcon icon={walletMeta.icon} />
                                     {walletMeta.name}
+                                    {ledgerIndex !== undefined && (
+                                        <Badge isUppercase>{ledgerIndex + 1}</Badge>
+                                    )}
                                 </TableCell.Value>
                                 <TableCell.Label>
                                     {ellipsisMiddle(wallet.address, 6)}
@@ -374,7 +390,11 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                         disabled={transaction === undefined}
                         onClick={() => void handleSend()}
                     >
-                        {t('confirmation.slider.send')}
+                        {t(
+                            isLedger
+                                ? 'confirmation.continueWithLedger'
+                                : 'confirmation.slider.send'
+                        )}
                     </Button>
                 )}
             </Modal.Actions>

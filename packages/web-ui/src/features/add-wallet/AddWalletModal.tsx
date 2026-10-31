@@ -9,13 +9,15 @@ import { Cell, Icon, List, Modal } from '../../shared';
 export type AddWalletModalProps = {
     onCreateNew: () => void;
     onImportExisting: () => void;
+    onConnectLedger: () => void;
     onWatchAccount: () => void;
     onImportTestnet: () => void;
     onClose: () => void;
 };
 
 export const AddWalletModal: FC<AddWalletModalProps> = props => {
-    const { onCreateNew, onImportExisting, onWatchAccount, onImportTestnet } = props;
+    const { onCreateNew, onImportExisting, onConnectLedger, onWatchAccount, onImportTestnet } =
+        props;
 
     const t = useTranslate();
     const { devIsTestnetAllowed } = useAppContext();
@@ -56,6 +58,20 @@ export const AddWalletModal: FC<AddWalletModalProps> = props => {
                                 <Cell.Row>
                                     <Cell.Subtitle>
                                         {t('addWallet.importExisting.subtitle')}
+                                    </Cell.Subtitle>
+                                </Cell.Row>
+                            </Cell.Content>
+                            <Cell.Chevron />
+                        </Cell>
+
+                        <Cell onClick={onConnectLedger}>
+                            <Cell.Content>
+                                <Cell.Row>
+                                    <Cell.Title>{t('addWallet.connectLedger.title')}</Cell.Title>
+                                </Cell.Row>
+                                <Cell.Row>
+                                    <Cell.Subtitle>
+                                        {t('addWallet.connectLedger.subtitle')}
                                     </Cell.Subtitle>
                                 </Cell.Row>
                             </Cell.Content>

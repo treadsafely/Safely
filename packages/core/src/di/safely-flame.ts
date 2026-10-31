@@ -92,6 +92,7 @@ export interface SafelyFlame {
         path: FlameKeyPath,
         request: FlameTransferRequest
     ): Promise<FlameBuiltTransfer>;
+    replaceProofs(blockTx: Uint8Array, proofs: Uint8Array[]): Promise<Uint8Array>;
 }
 
 declare global {

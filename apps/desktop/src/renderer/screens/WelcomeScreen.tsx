@@ -4,6 +4,7 @@ import { useBootConfig, useLinking, useTrackOnboardingOpen, useTranslate } from 
 import {
     BiometryCard,
     ImportWalletModal,
+    LedgerModals,
     PasscodeCard,
     SignInCard,
     SignInSuccessCard,
@@ -26,6 +27,7 @@ export const WelcomeScreen: FC = () => {
             <WelcomePage
                 onCreateWallet={onboarding.startCreate}
                 onImportWallet={onboarding.openImport}
+                onConnectLedger={onboarding.openLedger}
                 onWatchAccount={onboarding.openWatch}
                 onLinkWithQr={() => void onboarding.startSignIn()}
                 onOpenTerms={() => openURL(legal.terms_url)}
@@ -46,6 +48,10 @@ export const WelcomeScreen: FC = () => {
                     onSubmit={onboarding.onWatchInputReady}
                     onBack={onboarding.close}
                 />
+            )}
+
+            {onboarding.step === 'ledger' && (
+                <LedgerModals flow={onboarding.ledger} hasBackdrop={false} />
             )}
 
             {onboarding.step === 'signIn' && onboarding.connectionString !== undefined && (

@@ -3,7 +3,11 @@ import { useCallback, useRef, useState } from 'react';
 
 import { MnemonicResource, PortfolioNetworkType } from '@safely/core';
 import { OnboardingAbortedError } from '@safely/sync';
-import type { IUnlockableSecuredEncryptedStorage, OnboardedAccount } from '@safely/ux';
+import type {
+    IUnlockableSecuredEncryptedStorage,
+    LedgerAccountsSelection,
+    OnboardedAccount
+} from '@safely/ux';
 import {
     useAccountConnectedCallback,
     useAppContext,
@@ -11,23 +15,28 @@ import {
     useCreateExistingAccountConnector,
     useErrorToast,
     useHasAccount,
+    useLedgerFirstPortfolio,
     useLoader,
     useToast,
     useTranslate
 } from '@safely/ux';
+import { useLedgerFlow } from '@safely/web-ui';
 
 import { ROUTE } from '../../shared';
 import { isBiometryAvailable } from '../biometry';
 import { usePasscode } from '../passcode';
 
 export type OnboardingStep =
-    'import' | 'watch' | 'signIn' | 'signInSuccess' | 'passcode' | 'biometry';
+    'import' | 'watch' | 'ledger' | 'signIn' | 'signInSuccess' | 'passcode' | 'biometry';
 
 type OnboardingSource =
     | { kind: 'generated' }
     | { kind: 'imported'; mnemonic: string[] }
     | { kind: 'watchOnly'; input: string }
+    | { kind: 'ledger'; selection: LedgerAccountsSelection }
     | { kind: 'signedIn' };
+
+const NO_PORTFOLIOS: never[] = [];
 
 export function useOnboardingFlow() {
     const navigate = useNavigate();
@@ -47,6 +56,7 @@ export function useOnboardingFlow() {
 
     const hasAccount = useHasAccount();
     const signIn = useCreateExistingAccountConnector();
+    const toLedgerFirstPortfolio = useLedgerFirstPortfolio();
     const signInStorage = useRef<IUnlockableSecuredEncryptedStorage | null>(null);
 
     const [step, setStep] = useState<OnboardingStep | null>(hasAccount ? 'passcode' : null);
@@ -71,6 +81,22 @@ export function useOnboardingFlow() {
         source.current = pending;
         setStep('passcode');
     }, []);
+
+    const ledger = useLedgerFlow({
+        portfolios: NO_PORTFOLIOS,
+        onExit: close,
+        onDone: close,
+        onAccountsSelected: useCallback(
+            (selection: LedgerAccountsSelection) => startPasscode({ kind: 'ledger', selection }),
+            [startPasscode]
+        )
+    });
+
+    const startLedger = ledger.start;
+    const openLedger = useCallback(() => {
+        startLedger();
+        setStep('ledger');
+    }, [startLedger]);
 
     const startCreate = useCallback(() => startPasscode({ kind: 'generated' }), [startPasscode]);
 
@@ -143,6 +169,11 @@ export function useOnboardingFlow() {
             return;
         }
 
+        if (pending?.kind === 'ledger') {
+            setStep('ledger');
+            return;
+        }
+
         setStep(pending?.kind === 'watchOnly' ? 'watch' : null);
     }, []);
 
@@ -178,13 +209,21 @@ export function useOnboardingFlow() {
                     return;
                 }
 
+                if (pending.kind === 'ledger') {
+                    await createAccount({
+                        secureEncryptedStorage,
+                        ...toLedgerFirstPortfolio(pending.selection)
+                    });
+                    return;
+                }
+
                 await createAccount({
                     secureEncryptedStorage,
                     firstPortfolio: { kind: 'generated' }
                 });
             });
         },
-        [withLoader, getSecureEncrypted, createAccount]
+        [withLoader, getSecureEncrypted, createAccount, toLedgerFirstPortfolio]
     );
 
     const createAndOpenMain = useCallback(async () => {
@@ -234,6 +273,7 @@ export function useOnboardingFlow() {
 
     return {
         step,
+        ledger,
         connectionString: signIn.data?.connectionString,
         inviterIkPubHex,
         close,
@@ -241,6 +281,7 @@ export function useOnboardingFlow() {
         onSignInSuccessContinue,
         openImport,
         openWatch,
+        openLedger,
         startCreate,
         onMnemonicReady,
         onWatchInputReady,

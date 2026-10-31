@@ -195,6 +195,12 @@ public class SafelyFlameModule: Module {
             }
         }
 
+        AsyncFunction("replaceProofs") { (blockTx: Data, proofs: [Data]) -> [String: Any] in
+            outcome {
+                try FlameWallet.replaceProofs(blockTx: blockTx, proofs: proofs)
+            }
+        }
+
         // An empty note stands for "the scan served none": the bridge has no optional array elements.
         AsyncFunction("openNotes") { (viewKey: String, networkName: String, branch: Int, index: Int, contracts: [Data], notes: [Data]) -> [String: Any] in
             outcome {

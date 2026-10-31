@@ -9,7 +9,7 @@ import {
     AppContext,
     createPersister,
     createQueryClient,
-    LedgerSessionPortProvider,
+    LedgerSessionProvider,
     NO_LOCKOUT,
     QueryProvider,
     SyncStorageProvider,
@@ -28,17 +28,14 @@ import {
 
 import {
     authenticateBiometry,
+    createLedgerTransport,
     isBiometryUnlockEnabled,
     passcodePrompt,
     qrScanPrompt
 } from '../features';
 import { fileTransport, logger } from '../logger';
 import { platform } from '../platform';
-import {
-    unsupportedLedgerSessionPort,
-    unsupportedLedgerTransport,
-    unsupportedPushNotifications
-} from '../platform/unsupported';
+import { unsupportedPushNotifications } from '../platform/unsupported';
 import { desktopLayerEncryptedStorage, desktopLayerSynchronousGlobalStorage } from '../shared';
 
 export interface AppProvidersProps {
@@ -69,6 +66,7 @@ const securityGate: Security = {
 };
 
 const queryClient = createQueryClient(logger);
+const ledgerTransport = createLedgerTransport(logger);
 const persister = createPersister(
     TreeStorage.root(platform.storage.REGULAR_DESKTOP_STORAGE_ONLY_APP_LEVEL_USE).child(
         'persister'
@@ -137,7 +135,7 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
             linking: new WebLinking(logger, url => platform.openExternalUrl(url)),
             i18n: { language, t },
             logger,
-            ledgerTransport: platform.ledgerTransport ?? unsupportedLedgerTransport,
+            ledgerTransport,
             pushNotifications: unsupportedPushNotifications,
             security: securityGate,
             clearAllData: async () => {
@@ -157,14 +155,13 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
                         logger={logger}
                         fallback={<FatalErrorPage onShareLogs={() => void platform.logs.share()} />}
                     >
-                        <Suspense fallback={loader}>
-                            {/* TODO(ledger): a real transport replaces the rejecting port. */}
-                            <LedgerSessionPortProvider port={unsupportedLedgerSessionPort}>
+                        <LedgerSessionProvider>
+                            <Suspense fallback={loader}>
                                 <SyncStorageProvider>
                                     <AnalyticsProvider>{children}</AnalyticsProvider>
                                 </SyncStorageProvider>
-                            </LedgerSessionPortProvider>
-                        </Suspense>
+                            </Suspense>
+                        </LedgerSessionProvider>
                     </ErrorBoundary>
                 </ScreenProtectionProvider>
                 <ToastViewport />
