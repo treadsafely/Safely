@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LoggableStorage, TreeStorage, WebNumberFormatLocale } from '@safely/core';
 import type { IAppContext, Security } from '@safely/ux';
 import {
+    AnalyticsProvider,
     AppContext,
     createPersister,
     createQueryClient,
@@ -156,7 +157,9 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
                     >
                         <LedgerSessionProvider>
                             <Suspense fallback={loader}>
-                                <SyncStorageProvider>{children}</SyncStorageProvider>
+                                <SyncStorageProvider>
+                                    <AnalyticsProvider>{children}</AnalyticsProvider>
+                                </SyncStorageProvider>
                             </Suspense>
                         </LedgerSessionProvider>
                     </ErrorBoundary>
