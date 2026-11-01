@@ -14,7 +14,7 @@ import type { DevConfig, MainLocation } from '@safely/web-ui';
 import { DevConfigProvider, LogsSection, MainPage } from '@safely/web-ui';
 
 import { toMainLocation, toMainRouteTarget } from './main-location';
-import { SecuritySection } from '../features';
+import { SecuritySection, useDeepLinks } from '../features';
 import { platform } from '../platform';
 import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
 
@@ -47,6 +47,8 @@ export const MainScreen: FC = () => {
 
         void navigate({ ...toMainRouteTarget(next), replace: isSameView });
     };
+
+    useDeepLinks(onNavigate);
 
     const isWalletSectionWithoutPortfolio =
         !hasPortfolio && location.view.kind === 'settings' && location.view.section === 'wallet';
