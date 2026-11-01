@@ -6,7 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'react-native';
 
-import { LoggableStorage } from '@safely/core';
+import { LoggableStorage, QrScanCancelledError } from '@safely/core';
 import type { AppStateStatus, IAppContext, Security } from '@safely/ux';
 import { AppContext, UnlockableSecuredEncryptedStorage } from '@safely/ux';
 
@@ -101,9 +101,10 @@ export const AppContextProvider: FC<PropsWithChildren> = ({ children }) => {
             },
             qrScanner: {
                 scan: options =>
-                    new Promise<string>(resolve => {
+                    new Promise<string>((resolve, reject) => {
                         navigationRef.navigate('QRScanModal', {
                             onSuccess: resolve,
+                            onClose: () => reject(new QrScanCancelledError()),
                             title: t(options?.titleTranslationKey ?? 'qrScan.title'),
                             subtitle: t(options?.subTranslationKey ?? 'qrScan.subtitle')
                         });

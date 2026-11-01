@@ -1,13 +1,5 @@
 import { create } from 'zustand';
 
-export class QrScanCancelledError extends Error {
-    constructor() {
-        super('QR scan cancelled');
-
-        this.name = 'QrScanCancelledError';
-    }
-}
-
 export type QrScanRequest = {
     title: string;
     subtitle?: string;
