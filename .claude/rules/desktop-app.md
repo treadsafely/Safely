@@ -37,8 +37,8 @@ stay: they are correct cross-platform behaviour, not dead code.
 Inside the renderer the layout is FSD, the same shape mobile uses: `shared` → `features` → `screens`
 → `app`, plus `platform/` (the Electron contract and its implementation) and two module-level
 singletons at the root, `logger.ts` and `i18n.ts`. `features/` holds one scenario per directory —
-`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan`, `ledger` — each with its own `keys.ts`
-where it needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
+`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan`, `ledger`, `deep-link` — each with its own
+`keys.ts` where it needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
 the providers (the tree itself is described under "Routes" below). What is left here is what binds
 to this target: the wallet, account and contact flows live in `@safely/web-ui` (`web-ui.md` draws
 the line), `onboarding` stays because it navigates and because its
@@ -200,8 +200,9 @@ would be served as a file — see below); the paths and the zod shapes of params
 
 `OnboardingGuard` on the root redirects to `/onboarding` while the account or the passcode is
 missing, and only in that direction (below). The `wallet` settings section without a portfolio
-redirects to `account` from `MainScreen` with `<Navigate replace>`. A deep link, once wired, becomes
-`router.navigate(toMainRouteTarget(location))` — the URL is data to parse, never a location to load.
+redirects to `account` from `MainScreen` with `<Navigate replace>`. A deep link is `MainScreen`'s
+`onNavigate` called with the `MainLocation` that `resolveDeepLink` parsed out of the URL — the URL
+is data to parse, never a location to load; "Deep links" below has the whole path.
 
 `AppLock` replaces the whole tree with the lock screen rather than hiding it: modals, toasts and the
 loader are portalled to `document.body`, so anything left mounted would paint over the lock. The
@@ -314,12 +315,50 @@ wallet keeps synced state — unreliable, and weakens CSP. The dev server is a d
 (`http://localhost:*`), so browser storage does not carry over between `start` and a packaged build;
 `src/main/paths.ts` keeps the dev profile in a separate `userData` directory for the same reason.
 
-Deep links are **not wired yet**: nothing calls `setAsDefaultProtocolClient`, there is no `open-url`
-listener and the bundle declares no URL type, so the OS never hands a `safely://` URL to the app.
-When they land they will arrive through `open-url` / argv — a different mechanism from this handler,
-which only serves requests made inside the app's session. Such a URL has a different host than the
-app origin and is refused by the navigation guard, so it has to be turned into a route, never
-navigated to.
+## Deep links
+
+Two kinds, the same two mobile handles, both arriving in main and nowhere else — on macOS a URL
+never comes through argv or `second-instance`:
+
+- `safely://…` through `app.on('open-url')`. The bundle declares the scheme with `protocols` in
+  `forge.config.ts` (`CFBundleURLTypes`), and macOS registers only what the Info.plist declares, so
+  `setAsDefaultProtocolClient` runs only when packaged and **`pnpm start` never receives a link** —
+  a `package:mas` build does, `open safely:///tab/updates` from a terminal drives it. The same
+  scheme serves the renderer (`app-protocol.ts`), which is a different mechanism: a link is a string
+  handed to the app, never a request the handler answers, and `safely://app/…` resolves to no route.
+- `https://link.safely.app/…` through `app.on('continue-activity')` with the type
+  `NSUserActivityTypeBrowsingWeb` and the URL in `details.webpageURL`. `will-continue-activity` is
+  not handled on purpose: AppKit calls `continue` regardless of its answer, which only decides who
+  draws the Handoff indicator. The entitlement is `com.apple.developer.associated-domains` on the
+  main plist — a **capability**, so the profiles have to grant it (`desktop-signing.md`) — and the
+  domain's `apple-app-site-association` has to list `3ZVCUSJU6R.com.safely.wallet-desktop` next to
+  the mobile app ID; Apple's CDN fetches the file within a day and devices re-check weekly, so a
+  change there is not visible at once. A link clicked in Safari on the same domain stays in Safari
+  by Apple's rule; one from Mail, Messages or Notes opens the app.
+
+`DeepLinkReceiver` (`src/main/deep-links.ts`) subscribes **before `ready`** — on a cold start the
+URL arrives before the window exists — and keeps one slot, last wins. It pushes nothing but a
+notification (`deepLink.received`, plus revealing the window); the renderer **pulls** the URL with
+`deepLinks.take()`, once when `MainScreen` mounts and once per notification, and the slot empties
+on the take. Pull rather than push because the renderer is often not listening when the link
+arrives — cold start, the lock screen, onboarding, a `reload()` — and the slot simply waits for the
+next `MainScreen`. That mount is also what makes it the counterpart of mobile's
+`useLockAwareLinking` with no `isLocked` plumbing at all: `AppLock` unmounts the tree while locked
+and `OnboardingGuard` keeps `MainScreen` off it until onboarded, so a link applies right after
+unlock, and one that arrived during onboarding applies when the flow itself reaches main — never
+before, which is how the biometry step would be skipped. The one state inside `MainScreen` that
+still has to wait is an open passcode prompt: `useDeepLinks` (`features/deep-link`) holds the
+parsed location until it closes, as mobile holds for `request !== null`.
+
+The path vocabulary is shared: `DEEP_LINK_PATHS` in `@safely/ux` (`shared/linking`) is mobile's
+`linking.path` tree built by `defineDeepLinkPaths`: a node's `segment` is what mobile declares, its
+`path` the full route `resolveDeepLink` maps onto a `MainView`, accepting `safely://tab/…`,
+`safely:///tab/…` and the https form alike. A path desktop has no screen for —
+`import-flame-devnet-wallet` until Flame lands — is ignored with a warning that **never includes
+the URL**: a link can carry a seed phrase in its fragment. `UNIVERSAL_LINK_HOST` there has to
+equal mobile's and the entitlement's (`mobile-app.md`).
+Not yet verified on a signed build: whether `continue-activity` fires in the MAS sandbox is what the
+first TestFlight build shows (the profile already carries Associated Domains).
 
 Closing the window ends the whole app — renderer, sync engine and main process. There is no
 `window-all-closed` handler, and Electron's default without one is to quit, on macOS as everywhere

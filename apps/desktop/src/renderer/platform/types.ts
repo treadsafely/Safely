@@ -3,7 +3,11 @@ import type { ILogFileStore } from '@safely/sync';
 import type { AppStateStatus } from '@safely/ux';
 
 import type { AppInfo } from '../../shared/app-info';
-import type { DesktopBiometryBridge, DesktopCameraBridge } from '../../shared/bridge';
+import type {
+    DesktopBiometryBridge,
+    DesktopCameraBridge,
+    DesktopDeepLinkBridge
+} from '../../shared/bridge';
 
 /**
  * What the renderer supplies to the shared UI — the app's own contract, not one `@safely/web-ui`
@@ -28,6 +32,8 @@ export interface DesktopPlatform {
     readonly biometry: DesktopBiometryBridge;
 
     readonly camera: DesktopCameraBridge;
+
+    readonly deepLinks: DesktopDeepLinkBridge;
 
     readonly logs: ILogFileStore;
 

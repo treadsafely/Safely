@@ -4,7 +4,13 @@ import path from 'node:path';
 
 import { configureAboutPanel } from './about-panel';
 import { readAppInfo } from './app-info';
-import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
+import {
+    APP_ORIGIN,
+    APP_SCHEME,
+    registerAppProtocol,
+    registerPrivilegedSchemes
+} from './app-protocol';
+import { DeepLinkReceiver } from './deep-links';
 import { registerIpcHandlers } from './ipc';
 import { logStore, mainLogger } from './logger';
 import { installApplicationMenu } from './menu';
@@ -21,6 +27,12 @@ const devServerUrl: string | undefined = MAIN_WINDOW_VITE_DEV_SERVER_URL;
 const allowedOrigins = devServerUrl ? [new URL(devServerUrl).origin, APP_ORIGIN] : [APP_ORIGIN];
 
 let mainWindow: BrowserWindow | null = null;
+
+const deepLinks = new DeepLinkReceiver(
+    mainLogger,
+    () => mainWindow,
+    () => revealMainWindow()
+);
 
 function notifyAppState(state: AppState): void {
     mainWindow?.webContents.send(IPC_CHANNEL.appState, state);
@@ -76,10 +88,11 @@ if (app.isPackaged && DEBUG_SWITCHES.some(flag => app.commandLine.hasSwitch(flag
     app.exit(1);
 }
 
-/* Both must happen before the app is ready. */
+/* All of these must happen before the app is ready. */
 useSeparateDevUserData();
 registerPrivilegedSchemes();
 app.enableSandbox();
+deepLinks.listen();
 
 if (!app.requestSingleInstanceLock()) {
     /* Two renderers would run two sync engines against the same storage. */
@@ -101,11 +114,16 @@ if (!app.requestSingleInstanceLock()) {
                 registerAppProtocol(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`));
             }
 
+            /* macOS registers only a scheme the Info.plist declares — `protocols` in forge.config.ts */
+            if (app.isPackaged) {
+                app.setAsDefaultProtocolClient(APP_SCHEME);
+            }
+
             hardenSession(devServerUrl);
             /* Before the handlers: an IPC call that arrives without a store must not be served. */
             createStores();
             logStore.cleanup();
-            registerIpcHandlers(() => mainWindow);
+            registerIpcHandlers(() => mainWindow, deepLinks);
 
             app.on('did-resign-active', () => notifyAppState('background'));
 

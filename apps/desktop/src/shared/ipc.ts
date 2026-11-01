@@ -8,6 +8,11 @@ export const IPC_CHANNEL = {
     windowContentProtection: 'safely:window:content-protection',
     openExternal: 'safely:shell:open-external',
 
+    deepLink: {
+        take: 'safely:deep-link:take',
+        received: 'safely:deep-link:received'
+    },
+
     logs: {
         append: 'safely:logs:append',
         read: 'safely:logs:read',
@@ -68,6 +73,9 @@ export const sStoreSetRequest = z.object({ key: sKey, value: sValue });
 export const sStorePrefixRequest = z.object({ prefix: sPrefix });
 
 export const sOpenExternalRequest = z.object({ url: z.string().max(2048) });
+
+export const DEEP_LINK_MAX_LENGTH = 2048;
+export const sDeepLinkUrl = z.string().max(DEEP_LINK_MAX_LENGTH).nullable();
 
 export const sLogAppendRequest = z.object({
     lines: z.array(z.string().max(64 * 1024)).max(1024)

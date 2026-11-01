@@ -32,7 +32,8 @@ cost: the record needs a name other than "Safely", which the iOS record holds, a
 be merged later — moving to a shared bundle id would mean a new app whose users lose their keychain
 items.
 
-Both profiles name team `3ZVCUSJU6R` and the explicit App ID `com.safely.wallet-desktop`.
+Both profiles name team `3ZVCUSJU6R` and the explicit App ID `com.safely.wallet-desktop`, with the
+Associated Domains capability on it (the universal-links entitlement below).
 
 | Profile | Signs with | Devices | Lives |
 | ------- | ---------- | ------- | ----- |
@@ -98,6 +99,11 @@ gets `entitlements.plist`, **everything nested** — helpers, frameworks, the ke
 - `network.client` is the only network entitlement: the app never listens.
 - `device.usb` is for the Ledger over WebHID (`desktop-ledger.md`); `device.camera` for the QR
   scanner. Both sit on the main plist and reach the helpers through inheritance.
+- **`com.apple.developer.associated-domains` (`applinks:link.safely.app`) is a capability, not a
+  sandbox key**: the App ID must have Associated Domains enabled and both profiles reissued after
+  that, or `amfid` kills a build carrying it at launch — the dev profile on each registered machine
+  and the `APPLE_MAS_PROVISIONING_PROFILE` secret, before anything with it reaches `release/*`.
+  `desktop-app.md`, "Deep links", has what it buys.
 - osx-sign's `preAutoEntitlements` would insert the identifier, team and group keys; the plists
   already carry all three, so it changes nothing and the signed entitlements are exactly the files.
 
