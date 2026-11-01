@@ -76,6 +76,12 @@ done
 # an empty device list.
 has "$work/app.plist" 'com.apple.security.device.usb' || fail "main binary: no usb entitlement — a Ledger cannot be opened"
 
+# Deep links. The URL type is what makes macOS hand a safely:// link to the app, and the
+# associated-domains entitlement what makes it hand over an https one; a build missing either
+# launches fine and simply never receives the link.
+has "$info" 'CFBundleURLTypes' || fail "Info.plist declares no URL type — a safely:// link would not open the app"
+has "$work/app.plist" 'com.apple.developer.associated-domains' || fail "main binary: no associated-domains entitlement — a universal link would not open the app"
+
 # Helpers carry exactly the sandbox and its inheritance. The renderer runs in them, so anything more
 # is a path to the keychain group, and an inheriting helper with any other key is killed at launch.
 # Hence also the guard: a changed layout must not pass by leaving nothing to check.

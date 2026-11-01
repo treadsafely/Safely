@@ -42,5 +42,14 @@
          the processes Chromium opens the device from inherit this sandbox. -->
     <key>com.apple.security.device.usb</key>
     <true/>
+
+    <!-- Universal links, on the host the mobile app claims (`UNIVERSAL_LINK_HOST` in
+         `apps/mobile/app.config.js` and in `src/renderer/features/deep-link/`). Unlike the device
+         keys above this is a capability: the App ID must grant Associated Domains and both profiles
+         must be reissued with it, or `amfid` kills the app at launch. -->
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:link.safely.app</string>
+    </array>
 </dict>
 </plist>

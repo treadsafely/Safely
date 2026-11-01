@@ -56,6 +56,9 @@ const config: ForgeConfig = {
         extraResource: ['native/keychain/build/Release/keychain.node'],
         appBundleId: 'com.safely.wallet-desktop',
         appCategoryType: 'public.app-category.finance',
+        /* `CFBundleURLTypes`: what makes macOS hand a `safely://` link to the app. The scheme is
+           `APP_SCHEME` in `src/main/app-protocol.ts`. */
+        protocols: [{ name: 'Safely', schemes: ['safely'] }],
         icon: 'assets/icon',
         buildVersion,
         /* Electron's own plist carries a generic one, which is what the macOS prompt would show. */
