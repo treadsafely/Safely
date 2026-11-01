@@ -1,6 +1,8 @@
 import { createStaticNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { DEEP_LINK_PATHS } from '@safely/ux';
+
 import { AddAccountSheet } from '@mobile/screens/AddAccountSheet';
 import { BiometryScreen } from '@mobile/screens/BiometryScreen';
 import { BtcTransactionScreen } from '@mobile/screens/BtcTransactionScreen';
@@ -79,7 +81,7 @@ export const RootStack = createNativeStackNavigator({
                 TabsNavigator: {
                     screen: TabsNavigator,
                     linking: {
-                        path: 'tab'
+                        path: DEEP_LINK_PATHS.tabs.segment
                     }
                 },
                 RestrictedFlow: RestrictedStack,
@@ -119,7 +121,7 @@ export const RootStack = createNativeStackNavigator({
                 ImportFlameDevnetWalletModal: {
                     screen: ImportFlameDevnetWalletModal,
                     linking: {
-                        path: 'import-flame-devnet-wallet'
+                        path: DEEP_LINK_PATHS.importFlameDevnetWallet.segment
                     }
                 }
             },

@@ -5,6 +5,9 @@ import {
 } from '@safely/core';
 import type { Logger } from '@safely/sync';
 
+export * from './deep-link-path';
+export * from './define-deep-link-paths';
+
 export enum LinkingProtocol {
     HTTPS = 'https:',
     MAILTO = 'mailto:',
