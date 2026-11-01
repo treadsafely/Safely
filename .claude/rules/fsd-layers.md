@@ -56,7 +56,7 @@ knows nothing about `features`; in mobile, `features` knows nothing about `scree
 - `apps/desktop/src/renderer/shared` — the route paths with their zod param/search shapes
   (`routes.ts`) and the structured storages (the `desktop` node of the regular and encrypted stores).
 - `apps/desktop/src/renderer/features` — one scenario per directory (`passcode`, `biometry`,
-  `app-lock`, `onboarding`, `qr-scan`, `ledger`), each owning its `keys.ts`: the controller hooks that turn a
+  `app-lock`, `onboarding`, `qr-scan`, `ledger`, `deep-link`), each owning its `keys.ts`: the controller hooks that turn a
   screen's callbacks into flows, plus the modals those flows own. Only the scenarios bound to this
   target are here — the rest are in `packages/web-ui/src/features`. Features may import each other;
   nothing here may import `screens/` or `app/`. Composing features into one capability is `app/`'s
