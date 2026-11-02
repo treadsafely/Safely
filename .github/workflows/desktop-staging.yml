@@ -1,0 +1,35 @@
+name: Desktop staging
+
+# A push to a release branch is a TestFlight build and nothing more; the release is the merge into
+# master (`desktop-release.yml`). The pipeline itself is `desktop-build.yml`.
+
+on:
+  # A merge into a release branch is a push to it, and it builds unattended: what may reach a release
+  # branch is decided by the ruleset on `release/*`, not by an approval here. The pattern matches the
+  # ruleset's exactly — `*` stops at `/`, so `release/**` would also build branches the ruleset does
+  # not protect. The `desktop-release` environment has to allow the ref too.
+  push:
+    branches:
+      - 'release/*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    # One counter for every run of both callers, so two must not read it before either has written it
+    # back. `queue: max` keeps every waiting pipeline instead of the default one, which a newer push
+    # replaced — a pending release included. desktop-signing.md has the rest.
+    concurrency:
+      group: desktop-build
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+    uses: ./.github/workflows/desktop-build.yml
+    with:
+      report-success: true
+    secrets:
+      BUILD_NUMBER_TOKEN: ${{ secrets.BUILD_NUMBER_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

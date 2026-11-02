@@ -1,31 +1,42 @@
-name: Desktop TestFlight
+name: Desktop build
 
 # Builds the Mac App Store package, signs it with the distribution identities and uploads it to App
-# Store Connect, where TestFlight hands it to the internal testers. This pipeline is the only place
-# the distribution keys exist — no machine signs a store build locally — so the two jobs that touch
-# them are split by what they hold: `build` has the certificates and no API key, `upload` has the
-# API key and no certificates. `.claude/rules/desktop-signing.md` has the setup.
+# Store Connect, where TestFlight hands it to the internal testers. Called by `desktop-staging.yml`
+# (a push to `release/*`) and `desktop-release.yml` (the merge of a release into master), never on
+# its own. This pipeline is the only place the distribution keys exist — no machine signs a store
+# build locally — so the two jobs that touch them are split by what they hold: `build` has the
+# certificates and no API key, `upload` has the API key and no certificates.
+# `.claude/rules/desktop-signing.md` has the setup.
+#
+# No `concurrency` here: each caller puts its `uses:` job into the `desktop-build` group, so a caller
+# that decides to build nothing never waits in the group or evicts a run pending in it.
 
 on:
-  # A merge into a release branch is a push to it, and it builds unattended: what may reach a
-  # release branch is decided by the ruleset on `release/*`, not by an approval here. The pattern
-  # matches the ruleset's exactly — `*` stops at `/`, so `release/**` would also build branches the
-  # ruleset does not protect. The `desktop-release` environment has to allow the ref too.
-  push:
-    branches:
-      - 'release/*'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      report-success:
+        # The release caller posts its own success, which names the GitHub release as well.
+        description: Post a Slack report for a fully successful run too, not only for a failure
+        type: boolean
+        default: true
+      release-tag:
+        # Set by the release caller, so a failure says which GitHub release it left unpublished.
+        description: The GitHub release this build is for; empty for a TestFlight-only build
+        type: string
+        default: ''
+    outputs:
+      number:
+        value: ${{ jobs.allocate-build-number.outputs.number }}
+      artifact:
+        value: ${{ jobs.allocate-build-number.outputs.artifact }}
+    secrets:
+      BUILD_NUMBER_TOKEN:
+        required: true
+      SLACK_WEBHOOK_URL:
+        required: false
 
 permissions:
   contents: read
-
-# One counter for every run, so two of them must not read it before either has written it back.
-# A running build is never cancelled, but GitHub keeps one pending run per group: a newer push
-# replaces the waiting one, so a burst of merges builds the running commit and the latest only.
-# The group only orders the runs; desktop-signing.md has why the counter is not read from `vars`.
-concurrency:
-  group: desktop-testflight
-  cancel-in-progress: false
 
 jobs:
   # Never `${{ vars.* }}`: that context is fixed when the run is created, before a queued run's turn.
@@ -96,6 +107,24 @@ jobs:
       # `make` in one app does not run web-ui's codegen, and the renderer imports styled-system.
       - name: Generate styled-system
         run: pnpm --filter @safely/web-ui run codegen
+
+      # The release's record of what actually shipped — the macOS counterpart of mobile's
+      # android-sdkDependencies.txt. Resolved from the frozen lockfile just installed above.
+      - name: List resolved dependencies
+        env:
+          NUMBER: ${{ needs.allocate-build-number.outputs.number }}
+        run: |
+          set -euo pipefail
+          version="$(jq -r .version apps/desktop/package.json)"
+          {
+            echo "Safely desktop $version — build $NUMBER (${GITHUB_SHA:0:7})"
+            echo
+            echo "Electron:"
+            pnpm --filter @safely/desktop list electron --depth 0
+            echo
+            echo "Production dependencies:"
+            pnpm --filter @safely/desktop list --prod --depth Infinity
+          } > "$RUNNER_TEMP/desktop-dependencies.txt"
 
       - name: Import signing identities
         id: identity
@@ -182,12 +211,14 @@ jobs:
           pkgutil --check-signature "${pkgs[0]}"
           cp "${pkgs[0]}" "$RUNNER_TEMP/Safely.pkg"
 
-      # The handover to `upload`. Short-lived: the package is useful only until App Store Connect has it.
+      # The handover to `upload` and to desktop-release.yml's `release`; 3 days to re-run the latter.
       - name: Store the package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ needs.allocate-build-number.outputs.artifact }}
-          path: ${{ runner.temp }}/Safely.pkg
+          path: |
+            ${{ runner.temp }}/Safely.pkg
+            ${{ runner.temp }}/desktop-dependencies.txt
           if-no-files-found: error
           retention-days: 3
 
@@ -275,43 +306,35 @@ jobs:
   # the next run fail as a duplicate, and that has to be said now, not discovered then.
   report:
     needs: [allocate-build-number, build, upload, record-build-number]
-    if: always()
+    if: >-
+      always() && (inputs.report-success || needs.upload.result != 'success'
+      || needs.record-build-number.result != 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     steps:
-      # Shallow checkout still carries HEAD, which is where the version and the subject come from.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # The Slack side is a Workflow Builder trigger, which consumes a flat JSON whose keys are the
-      # variables that workflow declares: header, status_string, artifact_url.
-      - name: Post the build status to Slack
+      - name: Compose the status
+        id: status
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           ALLOCATE_RESULT: ${{ needs.allocate-build-number.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           UPLOAD_RESULT: ${{ needs.upload.result }}
           RECORD_RESULT: ${{ needs.record-build-number.result }}
           BUILD_NUMBER: ${{ needs.allocate-build-number.outputs.number }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
           # Optional: the App Store Connect app id, which turns the link into its TestFlight page.
           ASC_APP_ID: ${{ vars.DESKTOP_ASC_APP_ID }}
         run: |
           set -euo pipefail
 
-          # Guards against an unresolved `${{ secrets.* }}` literal, and against an unset secret.
-          case "${SLACK_WEBHOOK_URL:-}" in
-            https://*) ;;
-            *)
-              echo "::warning::SLACK_WEBHOOK_URL is unset or not a URL — skipping the Slack report"
-              exit 0
-              ;;
-          esac
-
+          # Read here rather than passed from `build`: a job that failed before checkout still reports it.
           version="$(jq -r .version apps/desktop/package.json)"
-          subject="$(git log -1 --pretty=%s)"
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          url="$run_url"
 
           # App Store Connect refuses a build number it has seen, so every outcome where Apple may
           # hold this number but the counter does not says how to move the counter on.
@@ -319,40 +342,30 @@ jobs:
             status="✅ Uploaded to TestFlight $version (${BUILD_NUMBER:-?})"
             if [ -n "${ASC_APP_ID:-}" ]; then
               url="https://appstoreconnect.apple.com/apps/$ASC_APP_ID/testflight/macos"
-            else
-              url="$run_url"
             fi
           elif [ "$UPLOAD_RESULT" = "success" ]; then
             status="⚠️ Uploaded $version (${BUILD_NUMBER:-?}), but DESKTOP_BUILD_NUMBER_MACOS was not advanced — set it to ${BUILD_NUMBER:-?} before the next run"
-            url="$run_url"
+            if [ -n "$RELEASE_TAG" ]; then
+              status="$status; $RELEASE_TAG is not published — then Re-run failed jobs on this run"
+            fi
           elif [ "$BUILD_RESULT" = "success" ]; then
             status="❌ Desktop upload failed — if App Store Connect shows build ${BUILD_NUMBER:-?} anyway, set DESKTOP_BUILD_NUMBER_MACOS to it; retry with Re-run all jobs"
-            url="$run_url"
           elif [ "$ALLOCATE_RESULT" != "success" ]; then
             status="❌ Desktop build number could not be read — check BUILD_NUMBER_TOKEN and DESKTOP_BUILD_NUMBER_MACOS"
-            url="$run_url"
           else
             status="❌ Desktop build failed — retry with Re-run all jobs"
-            url="$run_url"
           fi
 
-          # jq builds the body so a commit subject carrying quotes or a backslash stays one string.
-          payload="$(jq -n \
-            --arg header "$GITHUB_REF_NAME <- $subject" \
-            --arg status_string "$status" \
-            --arg artifact_url "$url" \
-            '{header: $header, status_string: $status_string, artifact_url: $artifact_url}')"
-
-          echo "$payload"
-
-          # A reporting hiccup must not turn an uploaded build red.
-          code="$(printf '%s' "$payload" \
-            | curl -sS -o /dev/stderr -w '%{http_code}' \
-                -X POST -H 'Content-Type: application/json' --data @- \
-                "$SLACK_WEBHOOK_URL" || echo 000)"
-
-          if [ "$code" = "200" ]; then
-            echo "Slack report posted."
-          else
-            echo "::warning::Slack rejected the report (HTTP $code)"
+          if [ -n "$RELEASE_TAG" ] && [ "$UPLOAD_RESULT" != "success" ]; then
+            status="$status — $RELEASE_TAG is not published"
           fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Post the build status to Slack
+        uses: ./.github/actions/desktop-slack-report
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ steps.status.outputs.status }}
+          url: ${{ steps.status.outputs.url }}
