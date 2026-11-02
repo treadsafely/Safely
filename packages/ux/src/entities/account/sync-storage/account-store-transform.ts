@@ -70,6 +70,8 @@ export class AccountStoreTransform {
                 return this.notifications(
                     json as SyncedStorageSchema['notifications']
                 ) as AccountStoreData[K];
+            case 'chart':
+                return this.chart(json as SyncedStorageSchema['chart']) as AccountStoreData[K];
             default:
                 assertUnreachable(key);
         }
@@ -94,7 +96,8 @@ export class AccountStoreTransform {
             ),
             analyticsId: this.analyticsId(raw.analyticsId),
             amountDisplay: this.amountDisplay(raw.amountDisplay),
-            notifications: this.notifications(raw.notifications)
+            notifications: this.notifications(raw.notifications),
+            chart: this.chart(raw.chart)
         };
     }
 
@@ -168,6 +171,10 @@ export class AccountStoreTransform {
     private notifications(
         json: SyncedStorageSchema['notifications']
     ): AccountStoreData['notifications'] {
+        return json;
+    }
+
+    private chart(json: SyncedStorageSchema['chart']): AccountStoreData['chart'] {
         return json;
     }
 

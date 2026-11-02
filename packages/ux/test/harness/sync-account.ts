@@ -39,6 +39,7 @@ export function createMockSyncAccount(opts: MockSyncAccountOptions = {}): MockSy
         devicesMeta: null,
         nextDerivingPortfolioInfo: null,
         amountDisplay: {},
+        chart: {},
         ...opts.initial
     };
 
