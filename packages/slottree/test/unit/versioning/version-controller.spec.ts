@@ -144,7 +144,9 @@ describe('VersionController', () => {
 
         expect(root.v).not.toHaveProperty('1');
         expect(root.v['3']).toBeDefined();
-        expect(stripSlot(root.v[VERSION_DELETION_KEY])).toEqual({});
+        expect(stripSlot(root.v[VERSION_DELETION_KEY])).toEqual({
+            '1': { shouldBeDeletedAt: expiredAt }
+        });
     });
 
     it('recreates a physically deleted older version when a device needs it', () => {

@@ -130,21 +130,21 @@ export class VersionController {
         return true;
     }
 
-    public deleteVersionsUnusedByDevices(): void {
+    public deleteVersionsUnusedByDevices(): boolean {
         const usedVersions = this.usedDeviceVersions();
         const now = this.wallTime();
+        let changed = false;
 
         for (const version of this.versions) {
             const versionKey = this.versionKey(version);
             const versionSlot = this.get(version);
 
-            if (versionSlot === undefined || isTombstoneSlot(versionSlot)) {
-                this.deleteVersionDeletionMarker(versionKey);
+            if (usedVersions.has(version.version)) {
+                changed = this.deleteVersionDeletionMarker(versionKey) || changed;
                 continue;
             }
 
-            if (usedVersions.has(version.version)) {
-                this.deleteVersionDeletionMarker(versionKey);
+            if (versionSlot === undefined || isTombstoneSlot(versionSlot)) {
                 continue;
             }
 
@@ -155,14 +155,17 @@ export class VersionController {
                     versionKey,
                     now + VERSION_DELETION_GRACE_PERIOD_SECONDS
                 );
+                changed = true;
                 continue;
             }
 
             if (now >= shouldBeDeletedAt) {
                 this.delete(version);
-                this.deleteVersionDeletionMarker(versionKey);
+                changed = true;
             }
         }
+
+        return changed;
     }
 
     private latestVersion(): StorageVersion {
@@ -254,16 +257,19 @@ export class VersionController {
         );
     }
 
-    private deleteVersionDeletionMarker(versionKey: string): void {
+    private deleteVersionDeletionMarker(versionKey: string): boolean {
         const versionDeletion = this.root.v[VERSION_DELETION_KEY];
         if (!isContainerSlot(versionDeletion)) {
-            return;
+            return false;
         }
 
         const marker = versionDeletion.v[versionKey];
         if (marker !== undefined && !isTombstoneSlot(marker)) {
             versionDeletion.v[versionKey] = this.tombstoneFor();
+            return true;
         }
+
+        return false;
     }
 
     private usedDeviceVersions(): Set<number> {
