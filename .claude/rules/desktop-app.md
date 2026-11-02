@@ -4,7 +4,7 @@ paths:
     - 'apps/desktop/forge.config.ts'
     - 'apps/desktop/postcss.config.cjs'
     - 'apps/desktop/signing/**'
-    - '.github/workflows/desktop-testflight.yml'
+    - '.github/workflows/desktop-*.yml'
 ---
 
 # `apps/desktop` — Electron
@@ -421,7 +421,7 @@ the renderer only has a console transport there.
   `signing/verify-signature.sh` fails on both, and CI runs it as a gate. A development-signed
   download needs its quarantine flag removed by hand.
 - **The build number reaches the app twice, from one variable.** `SAFELY_BUILD_NUMBER` — CI passes
-  the counter it allocated (`../../.github/workflows/desktop-testflight.yml`) — becomes
+  the counter it allocated (`../../.github/workflows/desktop-build.yml`) — becomes
   `packagerConfig.buildVersion`, and macOS renders `Version 0.0.1 (42)` in the About panel out of
   Info.plist with no code involved; it is also a vite `define` in `vite.main.config.ts`, which
   `src/main/about-panel.ts` hands to `setAboutPanelOptions` so the panel is right in `pnpm start`
@@ -432,7 +432,7 @@ the renderer only has a console transport there.
   Electron's default menu, so a `Menu.setApplicationMenu` without `role: 'about'` silently removes
   it.
 - **Store builds are signed only in CI, with Mac App Distribution, and reach testers through
-  TestFlight** (`../../.github/workflows/desktop-testflight.yml`, `desktop-signing.md`); a
+  TestFlight** (`../../.github/workflows/desktop-build.yml`, `desktop-signing.md`); a
   developer signs a local build with their own development identity. Two consequences for anything
   that touches the build: CI proves the signature is well-formed and
   nothing more — whether securityd honours it is only visible when the app runs — and a change to

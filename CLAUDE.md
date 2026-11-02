@@ -53,10 +53,11 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   `make:<target>` pair per platform, while `forge.config.ts` holds everything platform-specific and
   refuses a target it does not support; Mac App Store (sandboxed) is the only one for now.
   `build:native` compiles the keychain addon (the package/make scripts run it first, `pnpm install`
-  never does). Store builds are signed only by the `Desktop TestFlight` workflow — a push to
-  `release/*` or `master`, or run by hand — which uploads them to App Store Connect for TestFlight
-  and, from `master`, publishes the GitHub release `v<desktop version>-desktop`; locally a developer
-  builds `package:mas` with their own development identity.
+  never does). Store builds are signed only by `.github/workflows/desktop-build.yml`, which uploads
+  them to App Store Connect for TestFlight and is called by `desktop-staging.yml` (a push to
+  `release/*`) and `desktop-release.yml` (a `release/*` merge into `master`, which also publishes
+  the GitHub release `v<desktop version>-desktop`); locally a developer builds `package:mas` with
+  their own development identity.
   `.claude/rules/desktop-signing.md` has the certificates, the environment, the `release/*` ruleset and what each job
   may hold
 - `packages/web-ui` generates `styled-system/` with `panda codegen`; its `compile`/`lint`/`test`

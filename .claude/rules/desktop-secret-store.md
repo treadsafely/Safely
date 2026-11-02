@@ -13,7 +13,7 @@ paths:
   - 'apps/desktop/vite.main.config.ts'
   - 'apps/desktop/forge.config.ts'
   - 'apps/desktop/signing/**'
-  - '.github/workflows/desktop-testflight.yml'
+  - '.github/workflows/desktop-*.yml'
 ---
 
 # The desktop secret store (macOS)
@@ -318,7 +318,7 @@ keychain addon included, that the hardened runtime is on, that a non–Developer
 embedded and unexpired, that the main binary carries `application-identifier`, the keychain group,
 the sandbox and an application group matching `ElectronTeamID`, that every helper carries exactly
 `app-sandbox` and `inherit`, and that `get-task-allow` is nowhere. CI runs it as a gate before every
-upload (`.github/workflows/desktop-testflight.yml`).
+upload (`.github/workflows/desktop-build.yml`).
 
 It cannot check that securityd honours any of it — a profile can be present, unexpired and still name
 the wrong App ID or omit this machine. That half is exercised by **launching the app** and writing
