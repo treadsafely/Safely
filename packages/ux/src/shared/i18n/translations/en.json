@@ -957,6 +957,9 @@
     },
     "chart": {
         "a11yLabel": "Price chart",
+        "title": "Bitcoin price",
+        "collapse": "Collapse",
+        "expand": "Show chart",
         "periods": {
             "1h": "1 h",
             "24h": "24 h",
