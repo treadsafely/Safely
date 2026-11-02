@@ -153,6 +153,7 @@ export class StorageImpl<T> implements SlotTree<T> {
 
             const propagation = new VersionPropagation(this.versions, this.protocol);
             propagation.propagateToOlderVersions(root);
+            controller.deleteVersionsUnusedByDevices();
         });
     }
 

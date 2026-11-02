@@ -172,6 +172,36 @@ describe('version garbage collection', () => {
         }
     );
 
+    it.each([false, true])(
+        'clears the v2 deletion marker immediately when adding an author after physical GC: %s',
+        collected => {
+            let now = initialTime;
+            const storage = createGcStorage({ nowSeconds: () => now });
+            if (collected) {
+                now = deletionDeadline;
+                storage.merge(storage.export());
+                expectCollected(storage);
+            }
+            const observer = vi.fn();
+            storage.onChange(observer);
+
+            storage.addAuthor(Buffer.from('v2-device'), 2);
+
+            const root = storage.exportSlot();
+            expect(stripSlot(root.v[VERSION_DELETION_KEY])).toEqual({});
+            expect(root.v['2']).toBeDefined();
+            expect(stripSlot(root.v[DEVICES_KEY])).toHaveProperty(
+                [Buffer.from('v2-device').toString('hex'), 'version'],
+                2
+            );
+            expect(observer).toHaveBeenCalledOnce();
+            expect(storage.get()).toEqual(latestData);
+            if (collected) {
+                expect(stripSlot(root.v['2'])).toEqual({ ...olderData, key3: true });
+            }
+        }
+    );
+
     it('uses the merged device registry to protect a version whose old marker has expired', () => {
         let now = initialTime;
         const clock = { nowSeconds: () => now };
