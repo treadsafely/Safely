@@ -9,19 +9,23 @@ import { syncedStorageV4 } from './v4/structure';
 import { syncedStorageV5 } from './v5/structure';
 import { syncedStorageV6 } from './v6/structure';
 import { syncedStorageV7 } from './v7/structure';
+import { syncedStorageV8 } from './v8/structure';
 
 export * from './actual-version';
 
 export const syncedStorageVersions = defineVersionHList(
     hCons(
-        syncedStorageV7,
+        syncedStorageV8,
         hCons(
-            syncedStorageV6,
+            syncedStorageV7,
             hCons(
-                syncedStorageV5,
+                syncedStorageV6,
                 hCons(
-                    syncedStorageV4,
-                    hCons(syncedStorageV3, hCons(syncedStorageV2, hCons(syncedStorageV1, hNil)))
+                    syncedStorageV5,
+                    hCons(
+                        syncedStorageV4,
+                        hCons(syncedStorageV3, hCons(syncedStorageV2, hCons(syncedStorageV1, hNil)))
+                    )
                 )
             )
         )
