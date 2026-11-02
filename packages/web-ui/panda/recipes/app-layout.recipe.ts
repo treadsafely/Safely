@@ -126,7 +126,11 @@ export const appLayoutRecipe = defineSlotRecipe({
         isFullScreen: {
             true: {
                 secondaryContent: { paddingTop: TITLE_BAR_HEIGHT },
-                content: { paddingTop: TITLE_BAR_HEIGHT },
+                content: {
+                    borderTopWidth: TITLE_BAR_HEIGHT,
+                    borderTopStyle: 'solid',
+                    borderTopColor: 'transparent'
+                },
                 panelContent: { paddingTop: TITLE_BAR_HEIGHT }
             }
         }

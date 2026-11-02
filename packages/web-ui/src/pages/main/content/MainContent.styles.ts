@@ -10,10 +10,15 @@ export const headerStyles = css({
     flexShrink: 0,
     paddingInline: '24',
     paddingBottom: '16',
+    borderBottomWidth: 'hairline',
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'other.transparentElement',
     backgroundColor: 'background.primary'
 });
 
 export const chartStyles = css({
     paddingInline: '8',
-    paddingBottom: '16'
+    borderBottomWidth: 'hairline',
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'other.transparentElement'
 });

@@ -117,6 +117,25 @@ export default defineConfig({
             color: 'text.primary',
             fontFamily: SYSTEM_FONT_STACK,
             WebkitFontSmoothing: 'antialiased'
+        },
+        '::-webkit-scrollbar': {
+            width: '10px',
+            height: '10px'
+        },
+        '::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent'
+        },
+        '::-webkit-scrollbar-thumb': {
+            borderRadius: 'full',
+            border: '2px solid transparent',
+            backgroundClip: 'padding-box',
+            backgroundColor: 'transparent'
+        },
+        ':hover::-webkit-scrollbar-thumb': {
+            backgroundColor: 'other.transparentElement'
+        },
+        '::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: 'icon.tertiary'
         }
     }
 });
