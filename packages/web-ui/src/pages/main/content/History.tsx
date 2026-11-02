@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import type { BtcHistoryItem } from '@safely/ux';
 
-import { HistoryList } from '../../../features';
+import { HistoryTable } from '../../../features';
 
 export type HistoryProps = {
     selectedActivityKey?: string;
@@ -15,7 +15,7 @@ export const History: FC<HistoryProps> = props => {
     const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
 
     return (
-        <HistoryList
+        <HistoryTable
             selectedActivityKey={selectedActivityKey}
             onSelectActivity={onSelectActivity}
             onReceive={onReceive}
