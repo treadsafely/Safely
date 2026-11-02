@@ -4,8 +4,19 @@ import { z } from 'zod';
 import type { StorageV1 } from './version-fixtures';
 import { identityPatch, type StorageV3, v1, v3 } from './version-fixtures';
 import type { StorageImpl } from '../../../src';
-import { createStorage, DEVICES_KEY, VERSION_DELETION_KEY } from '../../../src';
-import { createOriginContainer, SlotKind, type ContainerSlot } from '../../../src/core/slots';
+import {
+    createStorage,
+    createStorageFromSnapshot,
+    DEVICES_KEY,
+    VERSION_DELETION_KEY
+} from '../../../src';
+import { cborEncoder } from '../../../src/core/encoder/cbor/cbor-encoder';
+import {
+    createOriginContainer,
+    createTombstoneSlot,
+    SlotKind,
+    type ContainerSlot
+} from '../../../src/core/slots';
 import { slotFromJson, stripSlot } from '../../../src/core/slots/slot-json';
 import { patch } from '../../../src/core/versioning/patch';
 import { defineVersionHList, hCons, hNil } from '../../../src/core/versioning/version';
@@ -57,6 +68,115 @@ describe('version migration', () => {
         });
         expect(v3Slot.v.key3).toMatchObject({ v: false, t: 0, a: '' });
         expect(v3Slot.v.key4).toMatchObject({ v: 'v3', t: 0, a: '' });
+    });
+
+    it('restores a tombstoned latest version from the previous live version', () => {
+        const tombstoneTimestamp = 9_999_999_999;
+        const cleanupAuthor = Buffer.from('cleanup-device').toString('hex');
+        const root = createOriginContainer({
+            '1': slotFromJson({ key1: 42, key2: 'from-v1' }, 123, oldDeviceAuthor),
+            '2': createTombstoneSlot(tombstoneTimestamp - 1, cleanupAuthor),
+            '3': createTombstoneSlot(tombstoneTimestamp, cleanupAuthor)
+        });
+        const snapshot = cborEncoder.encode(root);
+        const options = {
+            authorId: Buffer.from('device-1'),
+            versions: v3,
+            clock: { nowSeconds: () => 1_000 }
+        };
+        const storage = createStorageFromSnapshot({ ...options, snapshot });
+        const expected = {
+            key1: 42,
+            label: 'from-v1',
+            key3: false,
+            key4: 'v3'
+        };
+
+        expect(storage.get()).toEqual(expected);
+
+        const restored = cborEncoder.decode(storage.export()).v['3'] as ContainerSlot;
+
+        expect(restored.s).toBe(SlotKind.Container);
+        expect(restored.t).toBe(123);
+        expect(restored.a).toBe(oldDeviceAuthor);
+        expect(restored.v.key1).toMatchObject({ v: 42, t: 123, a: oldDeviceAuthor });
+        expect(restored.v.label).toMatchObject({ v: 'from-v1', t: 123, a: oldDeviceAuthor });
+
+        const reopened = createStorageFromSnapshot({
+            ...options,
+            snapshot: storage.export()
+        });
+
+        expect(reopened.get()).toEqual(expected);
+    });
+
+    it('physically deletes an unused intermediate version without recreating it during projections', () => {
+        const root = createOriginContainer({
+            '1': slotFromJson({ key1: 42, key2: 'from-v1' }, 0, ''),
+            '2': slotFromJson({ key1: 42, key2: 'from-v1', key3: false }, 0, ''),
+            '3': slotFromJson({ key1: 42, label: 'from-v1', key3: false, key4: 'v3' }, 0, ''),
+            [DEVICES_KEY]: slotFromJson(
+                {
+                    [device1]: { version: 3 },
+                    [oldDeviceAuthor]: { version: 1 }
+                },
+                0,
+                ''
+            ),
+            [VERSION_DELETION_KEY]: slotFromJson({ '2': { shouldBeDeletedAt: 2_000 } }, 0, '')
+        });
+        const clock = { nowSeconds: () => 3_000 };
+        const latest = createStorageFromSnapshot({
+            authorId: Buffer.from('device-1'),
+            versions: v3,
+            snapshot: cborEncoder.encode(root),
+            clock
+        });
+
+        expect(cborEncoder.decode(latest.export()).v).not.toHaveProperty('2');
+
+        latest.transaction(draft => {
+            draft.set('label', 'from-v3');
+        });
+
+        expect(cborEncoder.decode(latest.export()).v).not.toHaveProperty('2');
+
+        const older = createStorageFromSnapshot({
+            authorId: Buffer.from('old-device'),
+            versions: v1,
+            snapshot: latest.export(),
+            clock
+        });
+
+        older.transaction(draft => {
+            draft.set('key1', 84);
+        });
+        latest.merge(older.export());
+
+        expect(latest.get().key1).toBe(84);
+        expect(cborEncoder.decode(latest.export()).v).not.toHaveProperty('2');
+
+        older.merge(latest.export());
+
+        expect(older.get()).toEqual({ key1: 84, key2: 'from-v3' });
+
+        const reopened = createStorageFromSnapshot({
+            authorId: Buffer.from('device-1'),
+            versions: v3,
+            snapshot: latest.export(),
+            clock
+        });
+
+        expect(reopened.get()).toEqual(latest.get());
+        expect(cborEncoder.decode(reopened.export()).v).not.toHaveProperty('2');
+
+        reopened.addAuthor(Buffer.from('device-v2'), 2);
+
+        expect(stripSlot(cborEncoder.decode(reopened.export()).v['2'])).toEqual({
+            key1: 84,
+            key2: 'from-v3',
+            key3: false
+        });
     });
 
     it('propagates latest updates to existing older versions', () => {

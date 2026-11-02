@@ -20,11 +20,6 @@ export const VERSION_DELETION_KEY = 'versionDeletion';
 export const VERSION_DELETION_GRACE_PERIOD_SECONDS = 90 * 24 * 60 * 60; // 90 days
 const SHOULD_BE_DELETED_AT_KEY = 'shouldBeDeletedAt';
 
-export type TombstoneStamp = {
-    timestamp: number;
-    author: string;
-};
-
 type VersionControllerProtocol = Pick<MergeProtocol, 'id' | 'tick'>;
 
 export class VersionController {
@@ -78,7 +73,10 @@ export class VersionController {
     }
 
     public delete(version: VersionSelector): void {
-        this.deleteWithStamp(version);
+        // A tombstone marks data as deleted, but removing an unused version only discards its
+        // schema representation. The data remains available in other versions. Using a tombstone
+        // here can interfere with recreating the version.
+        delete this.root.v[this.versionKey(version)];
     }
 
     public getDeviceVersion(authorId: string): number | undefined {
@@ -165,16 +163,6 @@ export class VersionController {
                 this.deleteVersionDeletionMarker(versionKey);
             }
         }
-    }
-
-    private deleteWithStamp(version: VersionSelector, stamp?: TombstoneStamp): void {
-        const key = this.versionKey(version);
-        const existing = this.root.v[key];
-        if (existing === undefined) {
-            return;
-        }
-
-        this.root.v[key] = this.tombstoneFor(stamp);
     }
 
     private latestVersion(): StorageVersion {
@@ -312,16 +300,7 @@ export class VersionController {
         version.schema.parse(stripSlot(projected));
     }
 
-    private tombstoneFor(stamp?: TombstoneStamp): Slot {
-        const resolved = stamp ?? this.createProtocolStamp();
-
-        return createTombstoneSlot(resolved.timestamp, resolved.author);
-    }
-
-    private createProtocolStamp(): TombstoneStamp {
-        return {
-            timestamp: this.protocol.tick(),
-            author: this.protocol.id
-        };
+    private tombstoneFor(): Slot {
+        return createTombstoneSlot(this.protocol.tick(), this.protocol.id);
     }
 }
