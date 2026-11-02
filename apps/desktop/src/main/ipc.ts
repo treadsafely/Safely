@@ -4,6 +4,7 @@ import type { ZodType } from 'zod';
 
 import { isBiometryAvailable, promptBiometry } from './biometry';
 import { getCameraAccessStatus, openCameraPrivacySettings, requestCameraAccess } from './camera';
+import type { DeepLinkReceiver } from './deep-links';
 import { fileTransport, logStore, mainLogger } from './logger';
 import type { StoreScope } from './store';
 import { clearStores, getStore } from './store';
@@ -48,11 +49,20 @@ function isTrustedSender(event: IpcMainInvokeEvent | IpcMainEvent): boolean {
     return event.senderFrame !== null && event.senderFrame.parent === null;
 }
 
-export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void {
+export function registerIpcHandlers(
+    getWindow: () => BrowserWindow | null,
+    deepLinks: DeepLinkReceiver
+): void {
     ipcMain.handle(IPC_CHANNEL.windowFullScreen, (event): boolean => {
         assertTrustedSender(event);
 
         return getWindow()?.isFullScreen() ?? false;
+    });
+
+    ipcMain.handle(IPC_CHANNEL.deepLink.take, (event): string | null => {
+        assertTrustedSender(event);
+
+        return deepLinks.take();
     });
 
     ipcMain.handle(IPC_CHANNEL.appReload, event => {

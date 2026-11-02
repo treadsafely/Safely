@@ -56,7 +56,7 @@ knows nothing about `features`; in mobile, `features` knows nothing about `scree
 - `apps/desktop/src/renderer/shared` — the route paths with their zod param/search shapes
   (`routes.ts`) and the structured storages (the `desktop` node of the regular and encrypted stores).
 - `apps/desktop/src/renderer/features` — one scenario per directory (`passcode`, `biometry`,
-  `app-lock`, `onboarding`, `qr-scan`, `ledger`), each owning its `keys.ts`: the controller hooks that turn a
+  `app-lock`, `onboarding`, `qr-scan`, `ledger`, `deep-link`), each owning its `keys.ts`: the controller hooks that turn a
   screen's callbacks into flows, plus the modals those flows own. Only the scenarios bound to this
   target are here — the rest are in `packages/web-ui/src/features`. Features may import each other;
   nothing here may import `screens/` or `app/`. Composing features into one capability is `app/`'s
@@ -76,15 +76,16 @@ should move down into `features` — don't move the import up.
 
 Every layer and every module inside it is re-exported through `index.ts` (`packages/ux/src/index.ts`
 → `shared`/`entities`/`features` → modules). Externally the `@safely/ux` package exposes the barrel
-plus four subpaths: `@safely/ux/assets/icons/*`, `@safely/ux/assets/images/*`, `@safely/ux/theme` and
-`@safely/ux/translations`. Inside the package, import a module through its `index.ts`, not through an
-internal file.
+plus five subpaths: `@safely/ux/assets/icons/*`, `@safely/ux/assets/images/*`, `@safely/ux/theme`,
+`@safely/ux/translations` and `@safely/ux/deep-link`. Inside the package, import a module through its
+`index.ts`, not through an internal file.
 
-`shared/theme` and `shared/i18n/translations` have their own subpaths because their consumers run
-outside React — the unistyles config and the i18next bootstrap in `apps/mobile`, the Panda config in
-`packages/web-ui` (plain node). Importing the barrel there would drag react and react-query into a
-build script or into module-init order, so keep both modules dependency-free: plain data, no imports
-beyond the JSON files.
+`shared/theme`, `shared/i18n/translations` and `shared/linking/deep-link.ts` have their own subpaths
+because their consumers run outside React — the unistyles config and the i18next bootstrap in
+`apps/mobile`, the Panda config in `packages/web-ui` (plain node), the Electron main process in
+`apps/desktop`. Importing the barrel there would drag react and react-query into a build script or
+into module-init order, so keep all three modules dependency-free: plain data, no imports beyond the
+JSON files.
 
 Mobile uses the `tsconfig.json` aliases for internal imports: `@mobile/shared`, `@mobile/entities`,
 `@mobile/features`, `@mobile/screens`, `@mobile/app` (and their `/*` variants). Relative paths are
