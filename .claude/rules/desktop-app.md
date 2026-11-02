@@ -355,8 +355,10 @@ The path vocabulary is shared: `DEEP_LINK_PATHS` in `@safely/ux` (`shared/linkin
 `path` the full route `resolveDeepLink` maps onto a `MainView`, accepting `safely://tab/…`,
 `safely:///tab/…` and the https form alike. A path desktop has no screen for —
 `import-flame-devnet-wallet` until Flame lands — is ignored with a warning that **never includes
-the URL**: a link can carry a seed phrase in its fragment. `UNIVERSAL_LINK_HOST` there has to
-equal mobile's and the entitlement's (`mobile-app.md`).
+the URL**: a link can carry a seed phrase in its fragment. The scheme and the host come from
+`@safely/ux` too (`APP_URL_SCHEME`, `UNIVERSAL_LINK_HOST`); main takes the scheme through the
+`@safely/ux/deep-link` subpath; the entitlement restates the host and `forge.config.ts` the scheme
+(`mobile-app.md`).
 Not yet verified on a signed build: whether `continue-activity` fires in the MAS sandbox is what the
 first TestFlight build shows (the profile already carries Associated Domains).
 

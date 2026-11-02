@@ -123,10 +123,11 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   `fragmentToQuery` in the linking options' `getStateFromPath` turns it back into the query React
   Navigation parses (it ignores a fragment). The app side is `ios.associatedDomains` and the
   `android.intentFilters` (`autoVerify`, every path of the host) in
-  `app.config.js`, all built from its `UNIVERSAL_LINK_HOST`, which also goes to
-  `extra.universalLinkHost` for `useLockAwareLinking` to read through `expo-constants` — change the
-  host there, in desktop's `UNIVERSAL_LINK_HOST` (`apps/desktop/src/renderer/features/deep-link/`)
-  and in `apps/desktop/signing/entitlements.plist`, nowhere else (`desktop-app.md`, "Deep links");
+  `app.config.js`. The scheme and the host are `APP_URL_SCHEME` and `UNIVERSAL_LINK_HOST` in
+  `@safely/ux` (`shared/linking/deep-link.ts`), which `useLockAwareLinking` and desktop read; a
+  manifest cannot import TS, so the host is restated in `app.config.js` and desktop's
+  `signing/entitlements.plist`, the scheme in `app.config.js` and desktop's `forge.config.ts` —
+  change a value in those three places, nowhere else (`desktop-app.md`, "Deep links");
   the domain must serve `/.well-known/apple-app-site-association` (app IDs `<team>.com.safely.wallet`
   and `<team>.com.safely.wallet-desktop`) and
   `/.well-known/assetlinks.json` (SHA-256 of the Play app-signing key and of the key EAS signs tester
@@ -136,9 +137,8 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   rebuild for the manifest, and a path the navigation does not know opens the app where it was.
   The `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
-  through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
-  only drops the https prefix (logged), never the app. The modal reads `testseed` and the optional
-  `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
+  through `useLockAwareLinking`, so it runs only after unlock. The modal reads `testseed` and the
+  optional `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
   delivers an array. It parses the phrase
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
   (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft

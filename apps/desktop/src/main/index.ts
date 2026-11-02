@@ -2,14 +2,11 @@ import type { BrowserWindow } from 'electron';
 import { app, powerMonitor } from 'electron';
 import path from 'node:path';
 
+import { APP_URL_SCHEME } from '@safely/ux/deep-link';
+
 import { configureAboutPanel } from './about-panel';
 import { readAppInfo } from './app-info';
-import {
-    APP_ORIGIN,
-    APP_SCHEME,
-    registerAppProtocol,
-    registerPrivilegedSchemes
-} from './app-protocol';
+import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
 import { DeepLinkReceiver } from './deep-links';
 import { registerIpcHandlers } from './ipc';
 import { logStore, mainLogger } from './logger';
@@ -116,7 +113,7 @@ if (!app.requestSingleInstanceLock()) {
 
             /* macOS registers only a scheme the Info.plist declares — `protocols` in forge.config.ts */
             if (app.isPackaged) {
-                app.setAsDefaultProtocolClient(APP_SCHEME);
+                app.setAsDefaultProtocolClient(APP_URL_SCHEME);
             }
 
             hardenSession(devServerUrl);

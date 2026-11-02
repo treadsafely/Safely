@@ -5,13 +5,16 @@ import {
 } from '@safely/core';
 import type { Logger } from '@safely/sync';
 
+import { APP_URL_SCHEME } from './deep-link';
+
+export * from './deep-link';
 export * from './deep-link-path';
 export * from './define-deep-link-paths';
 
 export enum LinkingProtocol {
     HTTPS = 'https:',
     MAILTO = 'mailto:',
-    SAFELY_SCHEME = 'safely:',
+    SAFELY_SCHEME = `${APP_URL_SCHEME}:`,
     TG_SCHEME = 'tg:'
 }
 

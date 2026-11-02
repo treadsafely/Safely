@@ -1,11 +1,8 @@
-import { DEEP_LINK_PATHS } from '@safely/ux';
+import { APP_URL_SCHEME, DEEP_LINK_PATHS, UNIVERSAL_LINK_HOST } from '@safely/ux';
 import type { MainLocation } from '@safely/web-ui';
 
-/* The host mobile claims (`apps/mobile/app.config.js`) and `signing/entitlements.plist` grants. */
-export const UNIVERSAL_LINK_HOST = 'link.safely.app';
-
 /* `safely://tab/updates` equals `safely:///tab/updates`: the first segment is a path, not a host. */
-const APP_LINK_PATH = /^safely:\/*([^?#]*)/i;
+const APP_LINK_PATH = new RegExp(`^${APP_URL_SCHEME}:/*([^?#]*)`, 'i');
 
 /* The routes of the shared tree desktop has a screen for; any other path is ignored. */
 const LOCATION_BY_PATH = new Map<string, MainLocation>([
