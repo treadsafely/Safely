@@ -875,6 +875,14 @@
         "title": "Safely",
         "versionCopied": "Application version copied"
     },
+    "relativeDate": {
+        "justNow": "Just now",
+        "minutesAgo_one": "{{count}} minute ago",
+        "minutesAgo_other": "{{count}} minutes ago",
+        "hoursAgo_one": "{{count}} hour ago",
+        "hoursAgo_other": "{{count}} hours ago",
+        "yesterdayAt": "Yesterday at {{time}}"
+    },
     "dateGroups": {
         "pending": "Pending",
         "today": "Today",
@@ -882,6 +890,9 @@
     },
     "history": {
         "title": "History",
+        "table": {
+            "pending": "Pending…"
+        },
         "bubble": {
             "one": "New transaction",
             "many": "New transactions"
