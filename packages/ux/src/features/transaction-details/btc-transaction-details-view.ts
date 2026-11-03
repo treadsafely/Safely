@@ -55,7 +55,6 @@ export function buildBtcTransactionDetailsView(
         ),
         counterpartyAddress,
         memo: null,
-        assetImage: transaction.value.asset.image,
         amountSign: isInitiator ? '−' : '+',
         primaryAmount: isFiatFirst ? formattedFiat : formattedValue,
         secondaryAmount: isFiatFirst
