@@ -298,6 +298,8 @@ exception, then dismiss it pointing at whichever landed. Never dismiss on its ow
   as one unit. Ignoring by bare `dependency-name` also suppresses security updates — only an `ignore`
   written with `update-types: version-update:semver-*` leaves those working. Dependabot does not read
   `minimumReleaseAge`, so its `cooldown` mirrors it by hand.
+- **`@noble/hashes` and `@noble/curves` are held on 2.2.0**, the last self-audited release of both;
+  every update type is ignored, so only a security update reaches them. Bump the pair together.
 - **Do not add a `gradle` ecosystem.** Measured: the dependency graph holds 1289 npm and 10 Actions
   packages and **zero Maven**, because GitHub does not read module `build.gradle` files. A Gradle
   entry would add update pull requests, not coverage. Android detection is the native gate's job

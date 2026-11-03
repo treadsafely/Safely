@@ -27,7 +27,6 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
     const pendingUrlRef = useRef<string | null>(null);
     const listenerRef = useRef<((url: string) => void) | null>(null);
     const isLockedRef = useRef(isLocked);
-    const hasConsumedInitialUrlRef = useRef(false);
 
     useEffect(() => {
         isLockedRef.current = isLocked;
@@ -35,6 +34,9 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
 
     useEffect(() => {
         const handleUrl = (url: string) => {
+            // the native cache survives reloadAppAsync (erase all data) and would replay this URL on the next mount
+            Linking.clearInitialURL();
+
             const listener = listenerRef.current;
 
             if (isLockedRef.current || listener === null) {
@@ -45,16 +47,13 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
 
             listener(url);
         };
+        // read before the subscriptions: a URL they deliver clears this cache
+        const initialUrl = Linking.getLinkingURL();
         const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
         const unsubscribePush = ExpoPushNotifications.subscribeToTappedUrls(handleUrl);
 
-        if (!hasConsumedInitialUrlRef.current) {
-            hasConsumedInitialUrlRef.current = true;
-            void Linking.getInitialURL().then(url => {
-                if (url !== null) {
-                    handleUrl(url);
-                }
-            });
+        if (initialUrl !== null) {
+            handleUrl(initialUrl);
         }
 
         return () => {

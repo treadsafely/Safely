@@ -42,6 +42,5 @@ export type BtcTransactionDetailsView = TransactionDetailsView & {
 
 export type FlameTransactionDetailsView = TransactionDetailsView & {
     secondaryAmount: null;
-    explorerUrl: null;
     hasFiatRateNote: false;
 };
