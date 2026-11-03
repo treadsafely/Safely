@@ -1,29 +1,39 @@
-import type { FC } from 'react';
+import type { ReactElement } from 'react';
 
-import type { BtcHistoryItem } from '@safely/ux';
-import { useBtcHistoryGroups, useBtcHistoryPolling } from '@safely/ux';
+import type { HistoryGroupView } from '@safely/ux';
 
 import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { groupStyles, listStyles, loaderStyles, sentinelStyles } from './HistoryList.styles';
 import { ActivityItem as ActivityItemView, ActivityItemSkeleton } from '../../entities';
-import { List, Skeleton, Spinner, useIsDocumentVisible, useOnVisible } from '../../shared';
+import { List, Skeleton, Spinner, useOnVisible } from '../../shared';
 
 const SKELETON_ROWS = [0, 1, 2];
 const PREFETCH_MARGIN = '400px';
 
-export type HistoryListProps = {
+export type HistoryListProps<TActivity> = {
+    groups: HistoryGroupView<TActivity>[] | undefined;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => unknown;
+    assetSymbol: string;
     selectedActivityKey?: string;
-    onSelectActivity: (activity: BtcHistoryItem) => void;
+    getActivityKey: (activity: TActivity) => string;
+    onSelectActivity: (activity: TActivity) => void;
     onReceive: () => void;
-    onNewActivity: () => void;
 };
 
-export const HistoryList: FC<HistoryListProps> = props => {
-    const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
-
-    const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useBtcHistoryGroups();
-
-    useBtcHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
+export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>): ReactElement => {
+    const {
+        groups,
+        hasNextPage,
+        isFetchingNextPage,
+        fetchNextPage,
+        assetSymbol,
+        selectedActivityKey,
+        getActivityKey,
+        onSelectActivity,
+        onReceive
+    } = props;
 
     const sentinelRef = useOnVisible(fetchNextPage, {
         isEnabled: hasNextPage && !isFetchingNextPage,
@@ -48,7 +58,7 @@ export const HistoryList: FC<HistoryListProps> = props => {
     }
 
     if (groups.length === 0) {
-        return <HistoryEmptyPlaceholder onReceive={onReceive} />;
+        return <HistoryEmptyPlaceholder assetSymbol={assetSymbol} onReceive={onReceive} />;
     }
 
     return (
@@ -61,7 +71,7 @@ export const HistoryList: FC<HistoryListProps> = props => {
                             <ActivityItemView
                                 key={key}
                                 {...row}
-                                isSelected={activity.key === selectedActivityKey}
+                                isSelected={getActivityKey(activity) === selectedActivityKey}
                                 onSelect={() => onSelectActivity(activity)}
                             />
                         ))}

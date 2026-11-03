@@ -1,4 +1,6 @@
 export { HistoryList, type HistoryListProps } from './HistoryList';
+export { BtcHistoryList, type BtcHistoryListProps } from './BtcHistoryList';
+export { FlameHistoryList, type FlameHistoryListProps } from './FlameHistoryList';
 export {
     HistoryEmptyPlaceholder,
     type HistoryEmptyPlaceholderProps
