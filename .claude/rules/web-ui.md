@@ -96,6 +96,22 @@ worked example: date headings are `List.Title variant="heading"`, rows sit in
 `List.Group variant="separated"` — which is also what gives each row its corner radius, so the row
 itself carries none — and the loading state is `Skeleton`, not five copies of one pulsing bar.
 
+**A screen region picks its chain from the active portfolio, never from a prop a page guesses.**
+A portfolio has one chain on the web targets — BTC, or Flame for a Demo wallet — so
+`MainContent`, `History`, `ReceiveModal` and `ConfirmStep` read `useActivePortfolioWallets()` /
+`useSendChains()` and branch once; the BTC-only hooks (`useActiveBtcWallet`, `useTotalBalance`,
+`useBtcReceiveInfo`, …) throw on a Demo wallet, so they are called only inside the BTC branch.
+The chain-specific pieces are paired: `BtcHistoryList`/`FlameHistoryList` over the generic
+`HistoryList`, `BtcTransactionDetails`/`FlameTransactionDetails` over `TransactionDetailsPanel`,
+with `SelectedActivity` (`features/transaction-details/types.ts`) as the union `MainPage` holds.
+An asset is drawn by `AssetLogo` (`entities/asset`), which knows that Flame has no image and
+renders `FlameLogo` instead — `AssetIcon` alone is for an asset that is known to have one.
+`ImportFlameDevnetWalletModal` (`features/flame-devnet`) is mobile's screen of the same name: the
+app hands it the raw link parameters and a `flow` — `account` imports into the active account,
+`onboarding` hands the phrase back for the first portfolio — and it owns only the markup and the
+trusted-site acknowledgement; the preview, the duplicate check and the import with its toasts are
+`useFlameDevnetImportPreview` / `useFlameDevnetAccountImport` in `@safely/ux`, which mobile reads too.
+
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
 the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. Both
 open by collapsing the outer slot's width while the inner one slides, so the outer slot stays
@@ -140,7 +156,7 @@ closed from outside. The steps _inside_ a flow stay local state: they follow asy
 refs, so a URL cannot own them.
 
 **A flow may live here; a platform-bound one may not.** The slices in
-`features/{add-wallet,wallet,account,contact,sync,ledger}` hold the controller hooks and the modal switches
+`features/{add-wallet,wallet,account,contact,sync,ledger,flame-devnet}` hold the controller hooks and the modal switches
 that drive a scenario — local step state, `@safely/ux` mutations, and the modals of their own slice.
 What a flow here must **not** hold is a decision mobile takes too: which copy a destructive sheet
 shows, what sign-out deletes versus erases, whether an address is already watched, or the order of
@@ -190,8 +206,8 @@ differs in storage, in user presence and in how links open.
 Stubs for capabilities a target lacks are the app's too
 (`apps/desktop/src/renderer/platform/unsupported.ts`): what is missing differs per target, and a
 shared "unsupported" list would quietly define the extension's gaps as well. Desktop currently stubs
-push notifications and Flame (a rejecting `flameSdk` mock until desktop Flame support lands); the
-secret storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate around it —
+push notifications; Flame is real (`apps/desktop/src/renderer/platform/flame.ts` over
+`@runflame/wallet-wasm`, `desktop-app.md`), and so is the secret storage (`.claude/rules/desktop-secret-store.md`) and so is the gate around it —
 passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR scanning is split
 the same way: the three modals live in `src/features/qr-scan` here, everything
 that decides — the OS permission, the device list, the remembered source — in the app
