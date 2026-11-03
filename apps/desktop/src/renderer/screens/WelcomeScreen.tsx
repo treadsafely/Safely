@@ -1,8 +1,10 @@
 import type { FC } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useBootConfig, useLinking, useTrackOnboardingOpen, useTranslate } from '@safely/ux';
 import {
     BiometryCard,
+    ImportFlameDevnetWalletModal,
     ImportWalletModal,
     LedgerModals,
     PasscodeCard,
@@ -12,7 +14,13 @@ import {
     WelcomePage
 } from '@safely/web-ui';
 
-import { EnableBiometryFlow, PasscodeSetupFlow, useOnboardingFlow } from '../features';
+import type { ImportFlameDevnetLink } from '../features';
+import {
+    EnableBiometryFlow,
+    PasscodeSetupFlow,
+    useDeepLinks,
+    useOnboardingFlow
+} from '../features';
 
 export const WelcomeScreen: FC = () => {
     const t = useTranslate();
@@ -21,6 +29,19 @@ export const WelcomeScreen: FC = () => {
     const legal = useBootConfig().references.legal;
 
     useTrackOnboardingOpen();
+
+    const [importLink, setImportLink] = useState<ImportFlameDevnetLink | null>(null);
+    useDeepLinks(target => {
+        if (target.kind === 'importFlameDevnetWallet') {
+            setImportLink(target);
+        }
+    }, onboarding.step === null);
+
+    useEffect(() => {
+        if (onboarding.step !== null) {
+            setImportLink(null);
+        }
+    }, [onboarding.step]);
 
     return (
         <>
@@ -33,6 +54,22 @@ export const WelcomeScreen: FC = () => {
                 onOpenTerms={() => openURL(legal.terms_url)}
                 onOpenPrivacy={() => openURL(legal.privacy_url)}
             />
+
+            {onboarding.step === null && importLink !== null && (
+                <ImportFlameDevnetWalletModal
+                    testseed={importLink.testseed}
+                    walletName={importLink.walletName}
+                    flow={{
+                        kind: 'onboarding',
+                        onCreateAccount: (mnemonic, walletName) => {
+                            setImportLink(null);
+                            onboarding.startFlameDevnet(mnemonic, walletName);
+                        }
+                    }}
+                    hasBackdrop={false}
+                    onClose={() => setImportLink(null)}
+                />
+            )}
 
             {onboarding.step === 'import' && (
                 <ImportWalletModal

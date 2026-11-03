@@ -134,13 +134,18 @@ export function useFlameDevnetAccountImport(
     const { mutate: setActivePortfolio } = useSetActivePortfolio();
     const { mutateAsync: importPortfolio, isPending } = useImportFlameDevnetPortfolioFromSeed();
 
+    const onDoneRef = useRef(onDone);
+    useEffect(() => {
+        onDoneRef.current = onDone;
+    });
+
     useEffect(() => {
         if (!duplicate) return;
 
         setActivePortfolio({ id: duplicate.id });
         toast({ message: t('importFlameDevnetWallet.alreadyImported') });
-        onDone();
-    }, [duplicate, setActivePortfolio, toast, t, onDone]);
+        onDoneRef.current();
+    }, [duplicate, setActivePortfolio, toast, t]);
 
     const importWallet = useCallback(
         async (meta: PortfolioMeta): Promise<void> => {

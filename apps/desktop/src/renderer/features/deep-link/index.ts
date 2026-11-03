@@ -1,2 +1,6 @@
-export { resolveDeepLink } from './resolve-deep-link';
+export {
+    resolveDeepLink,
+    type DeepLinkTarget,
+    type ImportFlameDevnetLink
+} from './resolve-deep-link';
 export { useDeepLinks } from './useDeepLinks';

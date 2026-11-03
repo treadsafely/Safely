@@ -5,7 +5,7 @@ export {
     type EnableBiometryFlowProps,
     isBiometryUnlockEnabled
 } from './biometry';
-export { useDeepLinks } from './deep-link';
+export { type DeepLinkTarget, type ImportFlameDevnetLink, useDeepLinks } from './deep-link';
 export { createLedgerTransport } from './ledger';
 export { useOnboardingFlow } from './onboarding';
 export {

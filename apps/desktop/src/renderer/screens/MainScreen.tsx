@@ -7,13 +7,19 @@ import {
     useSearch
 } from '@tanstack/react-router';
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
 import type { DevConfig, MainLocation } from '@safely/web-ui';
-import { DevConfigProvider, LogsSection, MainPage } from '@safely/web-ui';
+import {
+    DevConfigProvider,
+    ImportFlameDevnetWalletModal,
+    LogsSection,
+    MainPage
+} from '@safely/web-ui';
 
 import { toMainLocation, toMainRouteTarget } from './main-location';
+import type { ImportFlameDevnetLink } from '../features';
 import { SecuritySection, useDeepLinks } from '../features';
 import { platform } from '../platform';
 import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
@@ -48,7 +54,11 @@ export const MainScreen: FC = () => {
         void navigate({ ...toMainRouteTarget(next), replace: isSameView });
     };
 
-    useDeepLinks(onNavigate);
+    const [importLink, setImportLink] = useState<ImportFlameDevnetLink | null>(null);
+
+    useDeepLinks(target =>
+        target.kind === 'location' ? onNavigate(target.location) : setImportLink(target)
+    );
 
     const isWalletSectionWithoutPortfolio =
         !hasPortfolio && location.view.kind === 'settings' && location.view.section === 'wallet';
@@ -69,6 +79,15 @@ export const MainScreen: FC = () => {
                 security={<SecuritySection />}
                 logs={<LogsSection store={platform.logs} />}
             />
+
+            {importLink !== null && (
+                <ImportFlameDevnetWalletModal
+                    testseed={importLink.testseed}
+                    walletName={importLink.walletName}
+                    flow={{ kind: 'account' }}
+                    onClose={() => setImportLink(null)}
+                />
+            )}
         </DevConfigProvider>
     );
 };
