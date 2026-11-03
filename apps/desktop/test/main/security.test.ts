@@ -160,3 +160,24 @@ describe('session permissions', () => {
         expect(checkDevice({ deviceType: 'serial' })).toBe(false);
     });
 });
+
+describe('content security policy', () => {
+    it('admits WebAssembly and nothing else beyond the app scripts in production', async () => {
+        const { contentSecurityPolicy } = await import('../../src/main/security');
+
+        const policy = contentSecurityPolicy(undefined);
+
+        expect(policy).toContain("script-src 'self' 'wasm-unsafe-eval'");
+        expect(policy).not.toContain('unsafe-inline http');
+    });
+
+    it('keeps WebAssembly admitted next to the dev server exemptions', async () => {
+        const { contentSecurityPolicy } = await import('../../src/main/security');
+
+        const policy = contentSecurityPolicy('http://localhost:5173');
+
+        expect(policy).toContain(
+            "script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' http://localhost:5173"
+        );
+    });
+});

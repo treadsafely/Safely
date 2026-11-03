@@ -207,6 +207,9 @@ importers:
       '@noble/hashes':
         specifier: 'catalog:'
         version: 2.2.0
+      '@runflame/wallet-wasm':
+        specifier: 0.0.1-rc.46
+        version: 0.0.1-rc.46
       '@safely/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -2972,6 +2975,9 @@ packages:
 
   '@runflame/wallet-rn@0.0.1-rc.46':
     resolution: {integrity: sha512-WhJhEQjycXFowq9suDGAul903gd2iFDjh+0W3aVHj8+LR93U6SrZWhu9dikr0V2tUUJPRX0EnqgsPCc7bf9E5w==}
+
+  '@runflame/wallet-wasm@0.0.1-rc.46':
+    resolution: {integrity: sha512-JSChwUREoCncZVL1RB8daDz50umPnkaN2azEe1lSyPH32bIHPrJd/MYPfQ2yfBvGLkGCW7RmWuXm76+bQPORRQ==}
 
   '@scure/base@2.2.0':
     resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
@@ -11057,6 +11063,8 @@ snapshots:
   '@rtsao/scc@1.1.0': {}
 
   '@runflame/wallet-rn@0.0.1-rc.46': {}
+
+  '@runflame/wallet-wasm@0.0.1-rc.46': {}
 
   '@scure/base@2.2.0': {}
 
