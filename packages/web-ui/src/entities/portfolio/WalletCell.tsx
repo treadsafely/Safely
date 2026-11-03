@@ -3,7 +3,12 @@ import { useMemo } from 'react';
 
 import type { ILedgerDerivation, Portfolio, PortfolioLedger } from '@safely/core';
 import { PortfolioType } from '@safely/core';
-import { resolveBtcWallet, useBtcWalletFiatBalance, useNumberFormatter } from '@safely/ux';
+import {
+    resolvePortfolioWallets,
+    useBtcWalletFiatBalance,
+    useNumberFormatter,
+    usePortfolioTotalBalance
+} from '@safely/ux';
 import { cx } from '@safely/web-ui/styled-system/css';
 
 import { PortfolioTypeBadge } from './PortfolioTypeBadge';
@@ -56,7 +61,7 @@ const PlainWalletCell: FC<PlainWalletCellProps> = props => {
     const { portfolio, isActive, onSelect } = props;
 
     const formatter = useNumberFormatter();
-    const { data: balance } = useBtcWalletFiatBalance(resolveBtcWallet(portfolio));
+    const { data: balance } = usePortfolioTotalBalance(resolvePortfolioWallets(portfolio));
 
     return (
         <Cell isSelected={isActive} onClick={onSelect}>
