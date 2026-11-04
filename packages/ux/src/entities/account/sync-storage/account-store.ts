@@ -5,7 +5,6 @@ import type { Contact, FiatAsset, Portfolio } from '@safely/core';
 import type {
     SAccountMeta,
     SAmountDisplay,
-    SChart,
     SDevicesMeta,
     SDevicesArchive,
     SDevicesSyncState,
@@ -26,7 +25,6 @@ export type AccountStoreData = {
     analyticsId: string | null;
     amountDisplay: SAmountDisplay;
     notifications: SNotifications;
-    chart: SChart;
 };
 
 export const SYNCED_SLOT_KEYS = [
@@ -40,8 +38,7 @@ export const SYNCED_SLOT_KEYS = [
     'nextDerivingPortfolioInfo',
     'analyticsId',
     'amountDisplay',
-    'notifications',
-    'chart'
+    'notifications'
 ] as const satisfies readonly (keyof Omit<AccountStoreData, 'accountId'>)[];
 
 export type SyncedSlotKey = (typeof SYNCED_SLOT_KEYS)[number];
