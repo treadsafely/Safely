@@ -8,9 +8,11 @@ import { useTranslate } from '@safely/ux';
 import { fieldStyles, popupStyles } from './CustomizeWalletModal.styles';
 import { IconPicker } from './IconPicker';
 import { WalletIcon } from './WalletIcon';
-import { Button, Input, Modal } from '../../shared';
+import { Badge, Button, Input, Modal } from '../../shared';
 
 export type CustomizeWalletModalProps = {
+    title?: string;
+    tag?: number;
     defaultName: string;
     defaultIcon: PortfolioMetaIcon;
     onSave: (meta: Pick<PortfolioMeta, 'name' | 'icon'>) => void;
@@ -18,7 +20,7 @@ export type CustomizeWalletModalProps = {
 };
 
 export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
-    const { defaultName, defaultIcon, onSave, onClose } = props;
+    const { title, tag, defaultName, defaultIcon, onSave, onClose } = props;
 
     const t = useTranslate();
     const [name, setName] = useState(defaultName);
@@ -39,7 +41,7 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
                 </Modal.Header>
 
                 <Modal.Content hasFloatingClose={false}>
-                    <Modal.Title>{t('customizeWallet.title')}</Modal.Title>
+                    <Modal.Title>{title ?? t('customizeWallet.title')}</Modal.Title>
                     <Modal.Description>{t('customizeWallet.description')}</Modal.Description>
                 </Modal.Content>
 
@@ -50,12 +52,18 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
                             value={name}
                             placeholder={t('customizeWallet.namePlaceholder')}
                             onChange={event => setName(event.target.value)}
-                            trailing={<WalletIcon icon={icon} size="medium" />}
+                            trailing={
+                                tag === undefined ? (
+                                    <WalletIcon icon={icon} size="medium" />
+                                ) : (
+                                    <Badge>{tag}</Badge>
+                                )
+                            }
                         />
                     </Input>
                 </div>
 
-                <IconPicker icon={icon} onChange={setIcon} />
+                {tag === undefined && <IconPicker icon={icon} onChange={setIcon} />}
             </Modal.Popup>
         </Modal>
     );

@@ -1,5 +1,7 @@
 import { View } from 'react-native';
 
+import type { LedgerStep, LedgerStepStatus } from '@safely/ux';
+
 import {
     Checkmark16,
     CircularSpinner,
@@ -9,13 +11,6 @@ import {
 } from '@mobile/shared/ui';
 
 import { styles } from './LedgerSteps.styles';
-
-export type LedgerStepStatus = 'pending' | 'active' | 'done' | 'error';
-
-export type LedgerStep = {
-    label: string;
-    status: LedgerStepStatus;
-};
 
 const StepIndicator = ({ status }: { status: LedgerStepStatus }) => {
     switch (status) {

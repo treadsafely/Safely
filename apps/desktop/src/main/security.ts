@@ -1,4 +1,5 @@
 import type {
+    DevicePermissionHandlerHandlerDetails,
     MediaAccessPermissionRequest,
     OnHeadersReceivedListenerDetails,
     WebContents
@@ -12,6 +13,9 @@ import { session } from 'electron';
  */
 const API_HOST_PATTERN = 'https://*.safely.app';
 
+/* Ledger's USB vendor id, written out so the device kit stays out of the main bundle */
+const LEDGER_VENDOR_ID = 0x2c97;
+
 const BASE_POLICY = [
     "default-src 'none'",
     `img-src 'self' data: ${API_HOST_PATTERN}`,
@@ -23,8 +27,10 @@ const BASE_POLICY = [
     "object-src 'none'"
 ];
 
+const SCRIPT_SRC = "script-src 'self' 'wasm-unsafe-eval'";
+
 const productionPolicy = (): string =>
-    [...BASE_POLICY, "script-src 'self'", `connect-src 'self' ${API_HOST_PATTERN}`].join('; ');
+    [...BASE_POLICY, SCRIPT_SRC, `connect-src 'self' ${API_HOST_PATTERN}`].join('; ');
 
 /* Vite's dev server injects the react-refresh preamble inline and talks over a websocket. */
 const developmentPolicy = (devServerUrl: string): string => {
@@ -32,7 +38,7 @@ const developmentPolicy = (devServerUrl: string): string => {
 
     return [
         ...BASE_POLICY,
-        `script-src 'self' 'unsafe-inline' ${origin}`,
+        `${SCRIPT_SRC} 'unsafe-inline' ${origin}`,
         `connect-src 'self' ${API_HOST_PATTERN} ${origin} ws://${host}`
     ].join('; ');
 };
@@ -120,9 +126,7 @@ export function hardenSession(devServerUrl: string | undefined): void {
         callback({});
     });
 
-    /* The camera for the QR scanner is the only device granted, and only to the top frame. HID
-       (Ledger) joins it as its own branch when that lands. Sanitized clipboard *writes* are the
-       copy buttons; `clipboard-read` stays denied, so the renderer never sees what the user copied. */
+    /* camera (top frame only) and sanitized clipboard writes; clipboard-read stays denied, HID is decided by the device handler below */
     session.defaultSession.setPermissionRequestHandler(
         (_contents, permission, callback, details) => {
             if (permission === 'clipboard-sanitized-write') {
@@ -134,16 +138,22 @@ export function hardenSession(devServerUrl: string | undefined): void {
         }
     );
 
-    /* Chromium runs this check for `media` with no media type at all, and a `false` there also hides
-       the device labels the source picker lists; capture stays gated by the request handler above. */
+    /* a false for `media` with no type hides the source picker's device labels; `hid` only unlocks navigator.hid */
     session.defaultSession.setPermissionCheckHandler(
         (_contents, permission, _origin, details) =>
             permission === 'clipboard-sanitized-write' ||
+            permission === 'hid' ||
             (permission === 'media' &&
                 details.mediaType !== 'audio' &&
                 details.mediaType !== 'unknown')
     );
+
+    /* a Ledger is granted outright: getDevices() lists it on plug-in, Electron has no HID picker anyway */
+    session.defaultSession.setDevicePermissionHandler(isLedgerDevice);
 }
+
+const isLedgerDevice = (details: DevicePermissionHandlerHandlerDetails): boolean =>
+    details.deviceType === 'hid' && details.device.vendorId === LEDGER_VENDOR_ID;
 
 const isCameraOnly = (details: MediaAccessPermissionRequest): boolean =>
     details.isMainFrame &&

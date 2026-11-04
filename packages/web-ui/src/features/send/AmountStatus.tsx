@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { useActiveWalletBtcBalance, useNumberFormatter, useTranslate } from '@safely/ux';
+import { useNumberFormatter, useSendChains, useTranslate } from '@safely/ux';
 import InformationCircle12 from '@safely/ux/assets/icons/12/information-circle-12.svg?react';
 
 import {
@@ -23,8 +23,7 @@ export const AmountStatus: FC<AmountStatusProps> = props => {
 
     const t = useTranslate();
     const formatter = useNumberFormatter();
-    const { data: balance } = useActiveWalletBtcBalance();
-    const pending = balance?.pending;
+    const pending = useSendChains().btc?.pendingBalance;
     const hasPending = pending?.relativeAmount.gt(0) ?? false;
 
     if (amountError !== undefined) {

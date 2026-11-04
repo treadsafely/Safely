@@ -1,2 +1,8 @@
 export { ActivityAvatar, type ActivityAvatarProps } from './ActivityAvatar';
-export { ActivityItem, ActivityItemSkeleton, type ActivityItemProps } from './ActivityItem';
+export {
+    ActivityTableRow,
+    ActivityTableRowSkeleton,
+    type ActivityDirection,
+    type ActivityTableRowProps
+} from './ActivityTableRow';
+export { CounterpartyLabel, type CounterpartyLabelProps } from './CounterpartyLabel';

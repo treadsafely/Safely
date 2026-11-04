@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { type BtcAssetAmount, ellipsisMiddle, type LedgerAccount } from '@safely/core';
-import { useFormattedAmount } from '@safely/ux';
+import { getLedgerDerivationName, useFormattedAmount } from '@safely/ux';
 
 import { LedgerDerivationRow } from '@mobile/features/ledger';
 import { Checkbox } from '@mobile/shared/ui';
@@ -42,11 +42,7 @@ export const LedgerAccountCell = (props: LedgerAccountCellProps) => {
     return (
         <LedgerDerivationRow
             index={account.index}
-            title={
-                isSkeleton
-                    ? undefined
-                    : (name ?? t('portfolio.ledgerWallet', { number: account.index + 1 }))
-            }
+            title={isSkeleton ? undefined : (name ?? getLedgerDerivationName(t, account.index))}
             subtitle={subtitle}
             isSubtitleLoading={isBalanceLoading}
             isSkeleton={isSkeleton}

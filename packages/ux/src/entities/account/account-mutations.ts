@@ -7,7 +7,7 @@ import type {
     ISilentSecretEncryptor,
     ITreeStorage
 } from '@safely/core';
-import { deriveAnalyticsAccountUuid, MnemonicResource } from '@safely/core';
+import { deriveAnalyticsAccountUuid, MnemonicResource, QrScanCancelledError } from '@safely/core';
 import {
     PortfolioBip39,
     PortfolioFlameDevnet,
@@ -551,6 +551,11 @@ export function useConnectAccountToNewDevice() {
             scopedLogger.info('new device connected');
         },
         onError(error) {
+            if (error instanceof QrScanCancelledError) {
+                scopedLogger.info('connecting new device cancelled at the QR scan');
+                return;
+            }
+
             scopedLogger.error('connecting new device failed', error);
             errorToast(error);
         }

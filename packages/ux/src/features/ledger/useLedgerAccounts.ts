@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { BtcNetwork, LedgerController, ledgerAccountToBtcWallet } from '@safely/core';
 
@@ -7,11 +7,11 @@ import { ledgerKeys } from './keys';
 import { useLedgerSession } from './LedgerSessionProvider';
 import { useAccountlessBtcConfirmedBalances } from '../../entities/btc-blockchain';
 
-const ACCOUNT_COUNT = 10;
+export const LEDGER_ACCOUNT_COUNT = 10;
 const DERIVATIONS_SEARCH_TIMEOUT = 20_000;
 
 export const useLedgerAccounts = () => {
-    const { getLedgerKit, sessionId, setSessionId, selectedDevice } = useLedgerSession();
+    const { getLedgerKit, disconnect, sessionId, selectedDevice } = useLedgerSession();
 
     const { data, isError } = useQuery({
         queryKey: ledgerKeys.accounts(selectedDevice?.id).toKey(),
@@ -21,7 +21,7 @@ export const useLedgerAccounts = () => {
         queryFn: async () => {
             const ledger = new LedgerController(getLedgerKit(), sessionId ?? '');
 
-            const accounts = await ledger.discoverAccounts({ count: ACCOUNT_COUNT });
+            const accounts = await ledger.discoverAccounts({ count: LEDGER_ACCOUNT_COUNT });
             const masterFingerprint = await ledger.getMasterFingerprint();
 
             return { accounts, masterFingerprint };
@@ -52,16 +52,12 @@ export const useLedgerAccounts = () => {
         return () => clearTimeout(id);
     }, [isLoading]);
 
-    const retry = useCallback(async (): Promise<boolean> => {
-        if (sessionId) {
-            await getLedgerKit()
-                .disconnect({ sessionId })
-                .catch(() => {});
-            setSessionId(null);
-        }
-
-        return false;
-    }, [sessionId, getLedgerKit, setSessionId]);
-
-    return { accounts, balances, masterFingerprint, retry, isLoading, isError, isTimedOut };
+    return {
+        accounts,
+        balances,
+        masterFingerprint,
+        retry: disconnect,
+        isDerived: accounts.length > 0,
+        isFailed: isError || isTimedOut
+    };
 };

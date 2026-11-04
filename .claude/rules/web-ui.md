@@ -91,17 +91,36 @@ local `css()` covers only what no primitive owns: container padding, a scroll se
 A local style that restates a recipe slot is a defect, not a shortcut: the copy stops matching the
 recipe at the first design change, and nothing in lint or CI compares them. When the design needs a
 look the primitive lacks, the variant goes into the recipe (`panda/recipes/*.recipe.ts` — and into
-`staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history list is the
-worked example: date headings are `List.Title variant="heading"`, rows sit in
-`List.Group variant="separated"` — which is also what gives each row its corner radius, so the row
-itself carries none — and the loading state is `Skeleton`, not five copies of one pulsing bar.
+`staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history table is
+the worked example of the one case a local `css()` is right: a flat grid row
+(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own column
+template and hover/selected states — while its loading state is still `Skeleton`, not five copies
+of one pulsing bar.
+
+**A screen region picks its chain from the active portfolio, never from a prop a page guesses.**
+A portfolio has one chain on the web targets — BTC, or Flame for a Demo wallet — so
+`MainContent`, `History`, `ReceiveModal` and `ConfirmStep` read `useActivePortfolioWallets()` /
+`useSendChains()` and branch once; the BTC-only hooks (`useActiveBtcWallet`, `useTotalBalance`,
+`useBtcReceiveInfo`, …) throw on a Demo wallet, so they are called only inside the BTC branch.
+The chain-specific pieces are paired: `BtcHistoryTable`/`FlameHistoryTable` over the generic
+`HistoryTable`, `BtcTransactionDetails`/`FlameTransactionDetails` over `TransactionDetailsPanel`,
+with `SelectedActivity` (`features/transaction-details/types.ts`) as the union `MainPage` holds.
+An asset is drawn by `AssetLogo` (`entities/asset`), which knows that Flame has no image and
+renders `FlameLogo` instead — `AssetIcon` alone is for an asset that is known to have one.
+`ImportFlameDevnetWalletModal` (`features/flame-devnet`) is mobile's screen of the same name: the
+app hands it the raw link parameters and a `flow` — `account` imports into the active account,
+`onboarding` hands the phrase back for the first portfolio — and it owns only the markup and the
+trusted-site acknowledgement; the preview, the duplicate check and the import with its toasts are
+`useFlameDevnetImportPreview` / `useFlameDevnetAccountImport` in `@safely/ux`, which mobile reads too.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
-the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. Both
-open by collapsing the outer slot's width while the inner one slides, so the outer slot stays
-mounted and the page decides what the inner one contains — the transaction panel is a sibling of
-`AppLayout.Content`, which is why the selected activity lives in `MainPage` and reaches the list as
-a prop rather than being opened by it.
+the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The
+left one opens by collapsing the outer slot's width while the inner one slides. The right one is an
+overlay: the outer slot is an absolute layer over the content that never takes pointer events, and
+the inner one slides in over it with a shadow, so opening the detail view never reflows the chart
+or the table. Either way the outer slot stays mounted and the page decides what the inner one
+contains — the transaction panel is a sibling of `AppLayout.Content`, which is why the selected
+activity lives in `MainPage` and reaches the list as a prop rather than being opened by it.
 
 ## Base UI conventions
 
@@ -140,7 +159,7 @@ closed from outside. The steps _inside_ a flow stay local state: they follow asy
 refs, so a URL cannot own them.
 
 **A flow may live here; a platform-bound one may not.** The slices in
-`features/{add-wallet,wallet,account,contact,sync}` hold the controller hooks and the modal switches
+`features/{add-wallet,wallet,account,contact,sync,ledger,flame-devnet}` hold the controller hooks and the modal switches
 that drive a scenario — local step state, `@safely/ux` mutations, and the modals of their own slice.
 What a flow here must **not** hold is a decision mobile takes too: which copy a destructive sheet
 shows, what sign-out deletes versus erases, whether an address is already watched, or the order of
@@ -190,12 +209,14 @@ differs in storage, in user presence and in how links open.
 Stubs for capabilities a target lacks are the app's too
 (`apps/desktop/src/renderer/platform/unsupported.ts`): what is missing differs per target, and a
 shared "unsupported" list would quietly define the extension's gaps as well. Desktop currently stubs
-Ledger, push and Flame (a rejecting `flameSdk` mock until desktop Flame support lands); the secret
-storage is real (`.claude/rules/desktop-secret-store.md`) and so is the gate
-around it — passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR
-scanning is split the same way: the three modals live in `src/features/qr-scan` here, everything
+push notifications; Flame is real (`apps/desktop/src/renderer/platform/flame.ts` over
+`@runflame/wallet-wasm`, `desktop-app.md`), as are the secret storage (`.claude/rules/desktop-secret-store.md`) and the gate around it —
+passcode plus Touch ID, implemented in `apps/desktop/src/renderer/features/`. QR scanning is split
+the same way: the three modals live in `src/features/qr-scan` here, everything
 that decides — the OS permission, the device list, the remembered source — in the app
-(`.claude/rules/desktop-qr.md`).
+(`.claude/rules/desktop-qr.md`). The Ledger is the inverse split: the whole flow lives in
+`src/features/ledger` here, because every step binds to `@safely/ux` hooks alone, and the app only
+supplies the transport (`.claude/rules/desktop-ledger.md`).
 
 **The security module is the app's, and the screens are this package's.** `pages/passcode`,
 `pages/lock` and `pages/main/settings/SecuritySettings` take props and render: a value, a length, an

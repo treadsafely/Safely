@@ -632,13 +632,19 @@
                         "title": "Turn on Bluetooth.",
                         "description": "Allow access when prompted."
                     },
+                    "usb": {
+                        "title": "Plug in your Ledger.",
+                        "description": "Connect your Ledger to your computer using a USB cable."
+                    },
                     "unlock": {
                         "title": "Unlock your Ledger.",
-                        "description": "Make sure it's unlocked and nearby."
+                        "description": "Make sure it's unlocked and nearby.",
+                        "descriptionUsb": "Enter your PIN to unlock your device."
                     },
                     "import": {
                         "title": "Connect and import accounts.",
-                        "description": "We'll look for activity in any accounts you might have used."
+                        "description": "We'll look for activity in any accounts you might have used.",
+                        "descriptionUsb": "We'll look for any accounts you might have used."
                     }
                 }
             },
@@ -657,11 +663,13 @@
                 "notFound": "No devices found",
                 "locationDisabled": "Turn on Location in your device settings to find your Ledger",
                 "title": "Looking for devices…",
-                "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with."
+                "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with.",
+                "titleUsb": "Connect your Ledger",
+                "subtitleUsb": "Connect your Ledger to your computer using a USB cable and unlock your device."
             },
             "pairing": {
                 "title": "Pairing with Ledger {{device}}",
-                "subtitle": "Continue on your Ledger device",
+                "subtitle": "Continue on your Ledger device.",
                 "steps": {
                     "connect": "Complete the steps on your Ledger",
                     "openApp": "Open the Bitcoin app"
@@ -674,6 +682,7 @@
             "pairingUnsuccess": {
                 "title": "Pairing unsuccessful",
                 "subtitle": "Make sure your {{device}} is close to your mobile phone and try again.",
+                "subtitleUsb": "Make sure your {{device}} is unlocked and connected to this computer, then try again.",
                 "appNotInstalled": "Install the Bitcoin app on your {{device}} via Ledger Wallet and try again.",
                 "retry": "Retry pairing"
             },
@@ -869,6 +878,14 @@
         "title": "Safely",
         "versionCopied": "Application version copied"
     },
+    "relativeDate": {
+        "justNow": "Just now",
+        "minutesAgo_one": "{{count}} minute ago",
+        "minutesAgo_other": "{{count}} minutes ago",
+        "hoursAgo_one": "{{count}} hour ago",
+        "hoursAgo_other": "{{count}} hours ago",
+        "yesterdayAt": "Yesterday at {{time}}"
+    },
     "dateGroups": {
         "pending": "Pending",
         "today": "Today",
@@ -876,14 +893,16 @@
     },
     "history": {
         "title": "History",
+        "table": {
+            "pending": "Pending…"
+        },
         "bubble": {
             "one": "New transaction",
             "many": "New transactions"
         },
         "empty": {
             "title": "Transaction history",
-            "subtitle": "Your transactions will appear here.",
-            "receive": "Receive BTC"
+            "subtitle": "Your transactions will appear here."
         },
         "transactionInfo": {
             "sending": "Sending",
@@ -950,6 +969,10 @@
         }
     },
     "chart": {
+        "a11yLabel": "Price chart",
+        "title": "Bitcoin price",
+        "collapse": "Collapse",
+        "expand": "Show chart",
         "periods": {
             "1h": "1 h",
             "24h": "24 h",

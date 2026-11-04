@@ -18,6 +18,11 @@ const SIGNED_DELAY_MS = 1_000;
 const SCAN_TIMEOUT_MS = 30_000;
 const CONNECT_TIMEOUT_MS = 30_000;
 
+export const SIGNING_CONNECT_STEP = 0;
+export const SIGNING_OPEN_APP_STEP = 1;
+export const SIGNING_APPROVE_STEP = 2;
+export const SIGNING_DONE_STEP = 3;
+
 export const LEDGER_FAILURE_STATES = ['failed', 'wrongDevice', 'unsupportedApp'];
 
 export type LedgerSigningInput = {
@@ -72,7 +77,7 @@ export const ledgerSigningMachine = setup({
     context: ({ input }) => ({
         ...input,
         selectedDevice: null,
-        step: 0,
+        step: SIGNING_CONNECT_STEP,
         result: undefined,
         error: undefined
     }),
@@ -85,7 +90,11 @@ export const ledgerSigningMachine = setup({
             always: [{ guard: 'hasLiveSession', target: 'openingApp' }, { target: 'scanning' }]
         },
         scanning: {
-            entry: assign({ step: () => 0, error: () => undefined, result: () => undefined }),
+            entry: assign({
+                step: () => SIGNING_CONNECT_STEP,
+                error: () => undefined,
+                result: () => undefined
+            }),
             invoke: {
                 src: 'scanLedgerDevices',
                 input: ({ context }) => ({
@@ -125,7 +134,7 @@ export const ledgerSigningMachine = setup({
             }
         },
         openingApp: {
-            entry: assign({ step: () => 1 }),
+            entry: assign({ step: () => SIGNING_OPEN_APP_STEP }),
             invoke: {
                 src: 'openBitcoinApp',
                 input: ({ context }) => ({
@@ -142,7 +151,7 @@ export const ledgerSigningMachine = setup({
             }
         },
         checkingApp: {
-            entry: assign({ step: () => 1 }),
+            entry: assign({ step: () => SIGNING_OPEN_APP_STEP }),
             invoke: {
                 src: 'checkLedgerAppVersion',
                 input: ({ context }) => ({
@@ -160,7 +169,7 @@ export const ledgerSigningMachine = setup({
             }
         },
         verifying: {
-            entry: assign({ step: () => 1 }),
+            entry: assign({ step: () => SIGNING_OPEN_APP_STEP }),
             invoke: {
                 src: 'verifyLedgerFingerprint',
                 input: ({ context }) => ({
@@ -179,7 +188,7 @@ export const ledgerSigningMachine = setup({
             }
         },
         signing: {
-            entry: assign({ step: () => 2 }),
+            entry: assign({ step: () => SIGNING_APPROVE_STEP }),
             invoke: {
                 src: 'runLedgerSession',
                 input: ({ context }) => ({
@@ -188,7 +197,10 @@ export const ledgerSigningMachine = setup({
                     run: context.run
                 }),
                 onDone: {
-                    actions: assign({ result: ({ event }) => event.output, step: () => 3 }),
+                    actions: assign({
+                        result: ({ event }) => event.output,
+                        step: () => SIGNING_DONE_STEP
+                    }),
                     target: 'signed'
                 },
                 onError: {

@@ -1,10 +1,8 @@
 export { LedgerStatusScreen } from './components/LedgerStatusScreen';
 export { LedgerDerivationRow } from './components/LedgerDerivationRow';
-export { LedgerSteps, type LedgerStep, type LedgerStepStatus } from './components/LedgerSteps';
+export { LedgerSteps } from './components/LedgerSteps';
 export { getBluetoothState } from './getBluetoothState';
 export { BleManagerProvider, useBleManager } from './BleManagerProvider';
 export { getLedgerImage } from './getLedgerImage';
-export { getLedgerModelName } from './getLedgerModelName';
-export { getLedgerWalletName } from './getLedgerWalletName';
 export { getSignalLevel, type SignalLevel } from './getSignalLevel';
 export { useExitToConnectLedger } from './useExitToConnectLedger';

@@ -13,6 +13,7 @@ import {
     PortfolioNetworkType,
     PortfolioType,
     PortfolioWatchOnlyBtc,
+    QrScanCancelledError,
     WatchOnlySource
 } from '@safely/core';
 import { MKDerivationDomain, OnboardingAbortedError } from '@safely/sync';
@@ -796,6 +797,40 @@ describe('useConnectAccountToNewDevice (add device)', () => {
 
         expect((caught as Error)?.message).toBe('nope');
         expect(toastShow).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
+
+    it('rejects a cancelled scan without a toast and without connecting', async () => {
+        const account = createMockSyncAccount();
+        setupAccountState({ account });
+        setupSyncedDevice();
+
+        const qrScan = vi.fn(async () => {
+            throw new QrScanCancelledError();
+        });
+        const toastShow = vi.fn();
+        const appContext = createTestAppContext({ qrScan, toastShow });
+
+        const { result } = renderHookWithProviders(() => useConnectAccountToNewDevice(), {
+            appContext
+        });
+
+        let caught: unknown;
+        await act(async () => {
+            try {
+                await result.current.mutateAsync({
+                    secureEncryptedStorage: appContext.storage.sync
+                        .encrypted as unknown as Parameters<
+                        typeof result.current.mutateAsync
+                    >[0]['secureEncryptedStorage']
+                });
+            } catch (e) {
+                caught = e;
+            }
+        });
+
+        expect(caught).toBeInstanceOf(QrScanCancelledError);
+        expect(account.connectToNewDevice).not.toHaveBeenCalled();
+        expect(toastShow).not.toHaveBeenCalled();
     });
 });
 

@@ -17,6 +17,7 @@ import {
     useActiveWalletMeta,
     useAnalytics,
     useAppContext,
+    isSendEstimateEnabled,
     useEstimateAssetTransfer,
     useNumberFormatter,
     selectSendChain,
@@ -39,7 +40,6 @@ import {
     Wallet,
     TransactionCell
 } from './components';
-import { IS_ESTIMATE_ENABLED_BY_CHAIN } from './ConfirmationScreen.chains';
 import { styles } from './ConfirmationScreen.styles';
 import type { ConfirmationState } from './ConfirmationScreen.types';
 
@@ -59,7 +59,7 @@ export const ConfirmationScreen = (props: ConfirmationScreenProps) => {
 
     const { data: txTemplate, error: estimateQueryError } = useEstimateAssetTransfer(
         confirmationResult,
-        { enabled: IS_ESTIMATE_ENABLED_BY_CHAIN[blockchain](confirmationState.type) }
+        { enabled: isSendEstimateEnabled(blockchain, confirmationState.type) }
     );
     const estimateError = confirmationState.type === 'idle' ? estimateQueryError : null;
     const { mutateAsync: send, data: sendResult } = useSendAssetTransfer();
