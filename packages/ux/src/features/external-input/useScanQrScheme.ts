@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { ExternalInputScheme, ExternalInputSchemeName } from '@safely/core';
+import { QrScanCancelledError } from '@safely/core';
 
 import { useExternalInputParser } from './useExternalInputParser';
 import { useAppContext, useLogger } from '../../shared';
@@ -28,6 +29,12 @@ export function useScanQrScheme(options: UseScanQrSchemeOptions): () => void {
                     onResult(result);
                 }
             })
-            .catch((error: unknown) => logger.warn('qr scan failed', { message: String(error) }));
+            .catch((error: unknown) => {
+                if (error instanceof QrScanCancelledError) {
+                    return;
+                }
+
+                logger.warn('qr scan failed', { message: String(error) });
+            });
     }, [qrScanner, scannerOptions, parse, onResult, logger]);
 }

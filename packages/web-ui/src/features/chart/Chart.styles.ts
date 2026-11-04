@@ -4,33 +4,57 @@ export const rootStyles = css({
     display: 'flex',
     flexDirection: 'column',
     gap: '12',
-    padding: '16',
-    borderRadius: 'md',
-    background: 'background.secondary'
+    paddingInline: '16',
+    paddingTop: '12',
+    paddingBottom: '16'
+});
+
+export const rootCollapsedStyles = css({
+    paddingBottom: '12'
 });
 
 export const headerStyles = css({
     display: 'flex',
-    alignItems: 'baseline',
+    flexDirection: 'column',
+    gap: '2'
+});
+
+export const headerRowStyles = css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: '8'
 });
 
-export const priceStyles = css({
-    lineHeight: '1'
+export const priceGroupStyles = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8'
 });
 
-export const symbolStyles = css({
-    lineHeight: '1'
+export const controlsStyles = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4'
 });
 
-export const diffWrapStyles = css({
-    marginLeft: 'auto'
+export const collapseToggleStyles = css({
+    paddingBlock: '2',
+    paddingLeft: '16',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    textStyle: 'bodyM',
+    color: 'text.tertiary',
+    whiteSpace: 'nowrap',
+    transition: 'color 0.12s',
+    _hover: { color: 'text.secondary' }
 });
 
 export const diffBadgeStyles = css({
     display: 'inline-flex',
     alignItems: 'center',
-    borderRadius: 'xs',
+    borderRadius: 'xss',
     paddingBlock: '2',
     paddingInline: '6',
     textStyle: 'bodyM',
@@ -54,25 +78,27 @@ export const diffBadgeFadedStyles = css({
 
 export const periodsStyles = css({
     display: 'flex',
+    alignItems: 'center',
     gap: '4'
 });
 
 export const periodButtonStyles = css({
-    flex: '1',
-    minWidth: '0',
-    paddingBlock: '6',
+    paddingBlock: '2',
     paddingInline: '8',
-    borderRadius: 'sm',
+    borderRadius: 'xss',
+    borderWidth: 'hairline',
+    borderStyle: 'solid',
+    borderColor: 'transparent',
     cursor: 'pointer',
-    border: 'none',
     background: 'transparent',
-    color: 'text.tertiary',
+    color: 'text.primary',
     textStyle: 'bodyM',
-    transition: 'background 0.12s, color 0.12s',
+    whiteSpace: 'nowrap',
+    transition: 'background 0.12s, border-color 0.12s',
     _hover: { background: 'other.hover' },
     '&[data-pressed]': {
-        background: 'background.tertiary',
-        color: 'text.primary'
+        background: 'background.secondary',
+        borderColor: 'other.transparentElement'
     }
 });
 
@@ -121,7 +147,7 @@ export const crosshairLineStyles = css({
 
 export const dotStyles = css({
     fill: 'chart.line',
-    stroke: 'background.secondary',
+    stroke: 'background.primary',
     strokeWidth: '2'
 });
 
@@ -149,7 +175,7 @@ export const liveDotStyles = css({
     background: 'chart.line',
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none',
-    boxShadow: '0 0 0 3px var(--colors-background-secondary)'
+    boxShadow: '0 0 0 3px var(--colors-background-primary)'
 });
 
 export const ticksStyles = css({
@@ -241,7 +267,5 @@ export const skeletonStyles = css({
     width: 'full',
     aspectRatio: '7 / 2',
     minHeight: '132px',
-    maxHeight: '260px',
-    borderRadius: 'md',
-    background: 'background.tertiary'
+    maxHeight: '260px'
 });

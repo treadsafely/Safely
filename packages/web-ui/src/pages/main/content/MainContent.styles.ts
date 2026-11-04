@@ -8,12 +8,16 @@ export const headerStyles = css({
     flexDirection: 'column',
     gap: '8',
     flexShrink: 0,
-    paddingInline: '24',
+    paddingInline: '16',
     paddingBottom: '16',
+    borderBottomWidth: 'hairline',
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'other.transparentElement',
     backgroundColor: 'background.primary'
 });
 
 export const chartStyles = css({
-    paddingInline: '8',
-    paddingBottom: '16'
+    borderBottomWidth: 'hairline',
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'other.transparentElement'
 });

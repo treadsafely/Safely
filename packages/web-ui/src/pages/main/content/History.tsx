@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import type { FlameHistoryItem } from '@safely/core';
 import type { BtcHistoryItem, PortfolioWallets } from '@safely/ux';
 
-import { BtcHistoryList, FlameHistoryList } from '../../../features';
+import { BtcHistoryTable, FlameHistoryTable } from '../../../features';
 
 export type HistoryProps = {
     wallets: PortfolioWallets;
@@ -26,7 +26,7 @@ export const History: FC<HistoryProps> = props => {
 
     if (wallets.flame !== null) {
         return (
-            <FlameHistoryList
+            <FlameHistoryTable
                 selectedActivityKey={selectedActivityKey}
                 onSelectActivity={onSelectFlameActivity}
                 onReceive={onReceive}
@@ -36,7 +36,7 @@ export const History: FC<HistoryProps> = props => {
     }
 
     return (
-        <BtcHistoryList
+        <BtcHistoryTable
             selectedActivityKey={selectedActivityKey}
             onSelectActivity={onSelectBtcActivity}
             onReceive={onReceive}

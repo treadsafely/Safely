@@ -95,10 +95,6 @@ export default defineConfig({
                 pulse: {
                     '0%, 100%': { opacity: '1' },
                     '50%': { opacity: '0.4' }
-                },
-                ring: {
-                    '0%': { transform: 'scale(0.6)', opacity: '0.32' },
-                    '100%': { transform: 'scale(1.4)', opacity: '0' }
                 }
             },
             recipes,
@@ -117,6 +113,25 @@ export default defineConfig({
             color: 'text.primary',
             fontFamily: SYSTEM_FONT_STACK,
             WebkitFontSmoothing: 'antialiased'
+        },
+        '::-webkit-scrollbar': {
+            width: '10px',
+            height: '10px'
+        },
+        '::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent'
+        },
+        '::-webkit-scrollbar-thumb': {
+            borderRadius: 'full',
+            border: '2px solid transparent',
+            backgroundClip: 'padding-box',
+            backgroundColor: 'transparent'
+        },
+        ':hover::-webkit-scrollbar-thumb': {
+            backgroundColor: 'other.transparentElement'
+        },
+        '::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: 'icon.tertiary'
         }
     }
 });

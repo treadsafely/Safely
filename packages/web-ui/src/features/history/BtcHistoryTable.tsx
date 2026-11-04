@@ -1,13 +1,14 @@
 import type { FC } from 'react';
 
-import { BTC_ASSET } from '@safely/core';
+import { assertUnreachable, BTC_ASSET } from '@safely/core';
 import type { BtcHistoryItem } from '@safely/ux';
 import { useBtcHistoryGroups, useBtcHistoryPolling } from '@safely/ux';
 
-import { HistoryList } from './HistoryList';
+import { HistoryTable } from './HistoryTable';
+import type { ActivityDirection } from '../../entities';
 import { useIsDocumentVisible } from '../../shared';
 
-export type BtcHistoryListProps = {
+export type BtcHistoryTableProps = {
     selectedActivityKey?: string;
     onSelectActivity: (activity: BtcHistoryItem) => void;
     onReceive: () => void;
@@ -16,7 +17,20 @@ export type BtcHistoryListProps = {
 
 const activityKey = (activity: BtcHistoryItem): string => activity.key;
 
-export const BtcHistoryList: FC<BtcHistoryListProps> = props => {
+const activityTimestamp = (activity: BtcHistoryItem): number => activity.timestamp;
+
+function activityDirection(activity: BtcHistoryItem): ActivityDirection {
+    switch (activity.type) {
+        case 'transaction':
+            return activity.transaction.isInitiator ? 'out' : 'in';
+        case 'order':
+            return activity.order.type === 'offramp' ? 'out' : 'in';
+        default:
+            return assertUnreachable(activity as never);
+    }
+}
+
+export const BtcHistoryTable: FC<BtcHistoryTableProps> = props => {
     const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
 
     const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useBtcHistoryGroups();
@@ -24,7 +38,7 @@ export const BtcHistoryList: FC<BtcHistoryListProps> = props => {
     useBtcHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
 
     return (
-        <HistoryList
+        <HistoryTable
             groups={groups}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
@@ -32,6 +46,8 @@ export const BtcHistoryList: FC<BtcHistoryListProps> = props => {
             assetSymbol={BTC_ASSET.symbol}
             selectedActivityKey={selectedActivityKey}
             getActivityKey={activityKey}
+            getTimestamp={activityTimestamp}
+            getDirection={activityDirection}
             onSelectActivity={onSelectActivity}
             onReceive={onReceive}
         />

@@ -4,10 +4,11 @@ import type { FlameHistoryItem } from '@safely/core';
 import { FLAME_ASSET } from '@safely/core';
 import { useFlameHistoryGroups, useFlameHistoryPolling } from '@safely/ux';
 
-import { HistoryList } from './HistoryList';
+import { HistoryTable } from './HistoryTable';
+import type { ActivityDirection } from '../../entities';
 import { useIsDocumentVisible } from '../../shared';
 
-export type FlameHistoryListProps = {
+export type FlameHistoryTableProps = {
     selectedActivityKey?: string;
     onSelectActivity: (activity: FlameHistoryItem) => void;
     onReceive: () => void;
@@ -16,7 +17,12 @@ export type FlameHistoryListProps = {
 
 const activityKey = (activity: FlameHistoryItem): string => activity.txid;
 
-export const FlameHistoryList: FC<FlameHistoryListProps> = props => {
+const activityTimestamp = (activity: FlameHistoryItem): number | null => activity.timestamp;
+
+const activityDirection = (activity: FlameHistoryItem): ActivityDirection =>
+    activity.isInitiator ? 'out' : 'in';
+
+export const FlameHistoryTable: FC<FlameHistoryTableProps> = props => {
     const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
 
     const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useFlameHistoryGroups();
@@ -24,7 +30,7 @@ export const FlameHistoryList: FC<FlameHistoryListProps> = props => {
     useFlameHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
 
     return (
-        <HistoryList
+        <HistoryTable
             groups={groups}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
@@ -32,6 +38,8 @@ export const FlameHistoryList: FC<FlameHistoryListProps> = props => {
             assetSymbol={FLAME_ASSET.symbol}
             selectedActivityKey={selectedActivityKey}
             getActivityKey={activityKey}
+            getTimestamp={activityTimestamp}
+            getDirection={activityDirection}
             onSelectActivity={onSelectActivity}
             onReceive={onReceive}
         />
