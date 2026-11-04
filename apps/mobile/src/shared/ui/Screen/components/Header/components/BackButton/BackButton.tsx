@@ -6,14 +6,16 @@ import { Button } from '@mobile/shared/ui/Screen/components/Header/components/Bu
 
 type BackButtonProps = {
     type?: 'rounded' | 'translucent';
+    onPress?: () => void;
 };
 
-export const BackButton = (props: BackButtonProps) => {
-    const { type } = props;
+export const BackButton = ({ type, onPress }: BackButtonProps) => {
     const navigation = useContext(NavigationContext);
 
+    const handleBack = onPress ?? (() => navigation?.goBack());
+
     return (
-        <Button type={type} onPress={() => navigation?.goBack()}>
+        <Button type={type} onPress={handleBack}>
             <Icon icon={ArrowLeft16} />
         </Button>
     );

@@ -951,6 +951,22 @@ export function resolveBtcWallets(
     }
 }
 
+export function resolveAccountBtcWallets(portfolios: Portfolio[]): BtcWalletReadOnly[] {
+    return portfolios.flatMap(portfolio => {
+        switch (portfolio.type) {
+            case PortfolioType.BIP39:
+            case PortfolioType.LEDGER:
+                return resolveBtcWallets(portfolio);
+            case PortfolioType.WATCH_ONLY:
+                return [portfolio.wallet];
+            case PortfolioType.FLAME_DEVNET:
+                return [];
+            default:
+                return assertUnreachable(portfolio);
+        }
+    });
+}
+
 export function getPortfolioDisplayName(meta: PortfolioMeta): string {
     if (meta.icon.type === 'emoji') {
         return `${meta.icon.value} ${meta.name}`;
