@@ -370,7 +370,7 @@ applies right after unlock and a route that arrived during onboarding applies wh
 reaches main — never before, which is how the biometry step would be skipped. The modal receives
 the phrase and the name as the raw link parameters and parses them itself with the `@safely/ux`
 parsers mobile uses; the link puts them in the query or the fragment, and `resolveDeepLink` reads
-both, as mobile's `fragmentToQuery` does.
+both through `fragmentToQuery` from `@safely/ux`, the same helper mobile's linking options apply.
 
 The path vocabulary is shared: `DEEP_LINK_PATHS` in `@safely/ux` (`shared/linking`) is mobile's
 `linking.path` tree built by `defineDeepLinkPaths`: a node's `segment` is what mobile declares, its

@@ -120,8 +120,9 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   App Link) or `safely://import-flame-devnet-wallet?testseed=<phrase>`. The https link opens the app
   when it is installed and otherwise loads the page on `link.safely.app`, which sends the user to the
   store; the phrase rides in the fragment so that page's server never receives it, and
-  `fragmentToQuery` in the linking options' `getStateFromPath` turns it back into the query React
-  Navigation parses (it ignores a fragment). The app side is `ios.associatedDomains` and the
+  `fragmentToQuery` (`@safely/ux`, `shared/linking`, which desktop's `resolveDeepLink` reads too) in
+  the linking options' `getStateFromPath` turns it back into the query React Navigation parses (it
+  ignores a fragment). The app side is `ios.associatedDomains` and the
   `android.intentFilters` (`autoVerify`, every path of the host) in
   `app.config.js`. The scheme and the host are `APP_URL_SCHEME` and `UNIVERSAL_LINK_HOST` in
   `@safely/ux` (`shared/linking/deep-link.ts`), which `useLockAwareLinking` and desktop read; a

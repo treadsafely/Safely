@@ -3,9 +3,8 @@ import { getStateFromPath } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { UNIVERSAL_LINK_HOST } from '@safely/ux';
+import { fragmentToQuery, UNIVERSAL_LINK_HOST } from '@safely/ux';
 
-import { fragmentToQuery } from '@mobile/shared/navigation';
 import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
 
 export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamListBase> {

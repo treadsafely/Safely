@@ -9,6 +9,7 @@ import { APP_URL_SCHEME } from './deep-link';
 
 export * from './deep-link';
 export * from './deep-link-path';
+export * from './fragment-to-query';
 export * from './define-deep-link-paths';
 
 export enum LinkingProtocol {

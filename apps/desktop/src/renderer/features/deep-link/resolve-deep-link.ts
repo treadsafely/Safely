@@ -1,4 +1,4 @@
-import { APP_URL_SCHEME, DEEP_LINK_PATHS, UNIVERSAL_LINK_HOST } from '@safely/ux';
+import { APP_URL_SCHEME, DEEP_LINK_PATHS, fragmentToQuery, UNIVERSAL_LINK_HOST } from '@safely/ux';
 import type { MainLocation } from '@safely/web-ui';
 
 export type ImportFlameDevnetLink = {
@@ -31,9 +31,7 @@ export function resolveDeepLink(url: string): DeepLinkTarget | null {
 }
 
 function resolveImportFlameDevnetWallet(url: string): DeepLinkTarget | null {
-    const [beforeFragment = '', fragment = ''] = url.split('#', 2);
-    const query = beforeFragment.split('?', 2)[1] ?? '';
-    const params = new URLSearchParams(`${query}&${fragment}`);
+    const params = new URLSearchParams(fragmentToQuery(url).split('?', 2)[1] ?? '');
     const testseed = params.get('testseed');
 
     if (testseed === null || testseed === '') {
