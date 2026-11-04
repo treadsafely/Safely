@@ -113,11 +113,11 @@ app hands it the raw link parameters and a `flow` — `account` imports into the
 trusted-site acknowledgement; the preview, the duplicate check and the import with its toasts are
 `useFlameDevnetImportPreview` / `useFlameDevnetAccountImport` in `@safely/ux`, which mobile reads too.
 
-The wallet sidebar scrolls as one `AppLayout.Sidebar`, so the rows of both lists keep one width
-whether or not a scrollbar is present; the strip under the title bar and the navigation group at the
-bottom are sticky and carry the sidebar background, so a long wallet list slides under them instead
-of under the window controls, and the navigation never leaves the screen. The title bar stays a
-transparent drag region above the sidebar, which is why the sidebar isolates its own z-indexes.
+`AppLayout.Sidebar` itself never scrolls: in `MainSidebar` the wallet list is the scroll container
+(the same shape as the settings sidebar's list), with the title-bar offset above it and the
+navigation group below it outside the scroll. So a long wallet list slides under the title strip
+instead of under the window controls, the navigation never leaves the screen, and the scrollbar
+spans the list alone.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
 the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The

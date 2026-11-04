@@ -19,7 +19,7 @@ import {
     draggingListStyles,
     draggingStyles,
     navigationStyles,
-    titleStripStyles,
+    sidebarStyles,
     walletListStyles,
     walletRowStyles,
     walletsStyles
@@ -92,9 +92,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
     const isWalletView = !isUpdatesOpen && !isSafetyOpen && !isSettingsOpen;
 
     return (
-        <AppLayout.Sidebar>
-            <div className={titleStripStyles} />
-
+        <AppLayout.Sidebar className={sidebarStyles}>
             <List className={walletsStyles}>
                 <List.Group
                     variant="separated"
