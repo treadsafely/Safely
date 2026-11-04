@@ -1,6 +1,5 @@
 export * from './activity-display';
 export * from './amount-display';
-export * from './chart-display';
 export * from './forms';
 export * from './ledger';
 export * from './history';

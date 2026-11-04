@@ -6,7 +6,7 @@ import {
     CHART_CONFIG,
     ChartPeriod,
     useChart,
-    useChartCollapsed,
+    useChartCollapsedQuery,
     useChartPeriodQuery,
     useSetChartCollapsed,
     useSetChartPeriod
@@ -24,7 +24,7 @@ export const Chart: FC = () => {
     const asset = BTC_ASSET;
     const { data: period = ChartPeriod.ONE_MONTH } = useChartPeriodQuery();
     const { mutate: setPeriod } = useSetChartPeriod();
-    const isCollapsed = useChartCollapsed();
+    const { data: isCollapsed = false } = useChartCollapsedQuery();
     const { mutate: setCollapsed } = useSetChartCollapsed();
     const [active, setActive] = useState<ChartActive | null>(null);
 

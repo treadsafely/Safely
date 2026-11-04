@@ -36,7 +36,7 @@ change the spec and the code together, never the code alone.
   call and is not a core encryptor: a domain consumer never takes it directly.
 - slottree's cbor encoding is deterministic: changing the encoding or field order changes merge
   results and hashes. That is a new format version, not an in-place edit.
-- User-state schemas are versioned: `packages/sync-storage/src/v1` … `v8`, and `actual-version.ts`
+- User-state schemas are versioned: `packages/sync-storage/src/v1` … `v7`, and `actual-version.ts`
   re-exports the newest one. A new field or a different shape means a new version plus a migration
   plus migration tests (`packages/sync-storage/test/v<N>/`, through the public slottree API: build a
   snapshot with the previous version list, open it with `syncedStorageVersions`, check both
