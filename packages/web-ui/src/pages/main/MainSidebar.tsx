@@ -18,9 +18,11 @@ import { cx } from '@safely/web-ui/styled-system/css';
 import {
     draggingListStyles,
     draggingStyles,
-    sidebarStyles,
+    navigationStyles,
+    titleStripStyles,
     walletListStyles,
-    walletRowStyles
+    walletRowStyles,
+    walletsStyles
 } from './MainSidebar.styles';
 import { WalletCell } from '../../entities';
 import { AppLayout, Cell, ColorDot, Icon, List, useReorderList } from '../../shared';
@@ -90,8 +92,10 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
     const isWalletView = !isUpdatesOpen && !isSafetyOpen && !isSettingsOpen;
 
     return (
-        <AppLayout.Sidebar className={sidebarStyles}>
-            <List>
+        <AppLayout.Sidebar>
+            <div className={titleStripStyles} />
+
+            <List className={walletsStyles}>
                 <List.Group
                     variant="separated"
                     className={cx(walletListStyles, isReordering && draggingListStyles)}
@@ -131,7 +135,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                 </List.Group>
             </List>
 
-            <List>
+            <List className={navigationStyles}>
                 <List.Group variant="separated">
                     <Cell onClick={onAddWallet}>
                         <Cell.Leading>

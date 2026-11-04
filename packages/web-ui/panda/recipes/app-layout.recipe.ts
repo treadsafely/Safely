@@ -39,11 +39,11 @@ export const appLayoutRecipe = defineSlotRecipe({
             height: TITLE_BAR_HEIGHT
         },
         sidebar: {
+            isolation: 'isolate',
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0,
             width: SIDEBAR_WIDTH,
-            paddingTop: TITLE_BAR_HEIGHT,
             overflowY: 'auto',
             borderRightWidth: 'hairline',
             borderRightStyle: 'solid',
