@@ -12,6 +12,7 @@ export type FlameTransactionDetailsContext = KnownCounterparties & {
     numberFormatter: NumberFormatter;
     showFullSentAmount: boolean;
     status: TransactionStatusView;
+    explorerUrl: string | null;
 };
 
 export function buildFlameTransactionDetailsView(
@@ -29,7 +30,7 @@ export function buildFlameTransactionDetailsView(
         memo: activity.memo,
         status: context.status,
         fee: { formattedFiat: null, formattedValue: fee.format(context.numberFormatter) },
-        explorerUrl: null,
+        explorerUrl: context.explorerUrl,
         hasFiatRateNote: false
     };
 }
