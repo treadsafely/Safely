@@ -1,8 +1,9 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
+import type { FlameHistoryItem } from '@safely/core';
 import type { BtcHistoryItem } from '@safely/ux';
-import { useActivePortfolio } from '@safely/ux';
+import { useActivePortfolio, useActivePortfolioWallets } from '@safely/ux';
 
 import { Balance } from './Balance';
 import { Header } from './Header';
@@ -15,16 +16,25 @@ export type MainContentProps = {
     onSend: () => void;
     onReceive: () => void;
     onScan: () => void;
-    onSelectActivity: (activity: BtcHistoryItem) => void;
+    onSelectBtcActivity: (activity: BtcHistoryItem) => void;
+    onSelectFlameActivity: (activity: FlameHistoryItem) => void;
     onPortfolioChange: () => void;
 };
 
 export const MainContent: FC<MainContentProps> = props => {
-    const { selectedActivityKey, onSend, onReceive, onScan, onSelectActivity, onPortfolioChange } =
-        props;
+    const {
+        selectedActivityKey,
+        onSend,
+        onReceive,
+        onScan,
+        onSelectBtcActivity,
+        onSelectFlameActivity,
+        onPortfolioChange
+    } = props;
 
     const bubble = useNewTransactionsBubble();
     const portfolioId = useActivePortfolio().id.toString();
+    const wallets = useActivePortfolioWallets();
 
     useEffect(() => onPortfolioChange(), [portfolioId, onPortfolioChange]);
 
@@ -38,13 +48,17 @@ export const MainContent: FC<MainContentProps> = props => {
                 <NewTransactionsBubble mode={bubble.mode} onClick={bubble.scrollToTop} />
             </div>
 
-            <div className={chartStyles}>
-                <Chart />
-            </div>
+            {wallets.btc !== null && (
+                <div className={chartStyles}>
+                    <Chart />
+                </div>
+            )}
 
             <History
+                wallets={wallets}
                 selectedActivityKey={selectedActivityKey}
-                onSelectActivity={onSelectActivity}
+                onSelectBtcActivity={onSelectBtcActivity}
+                onSelectFlameActivity={onSelectFlameActivity}
                 onReceive={onReceive}
                 onNewActivity={bubble.show}
             />

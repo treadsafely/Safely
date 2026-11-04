@@ -1,61 +1,39 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
-import type { MainLocation } from '@safely/web-ui';
-
+import type { DeepLinkTarget } from './resolve-deep-link';
 import { resolveDeepLink } from './resolve-deep-link';
 import { logger } from '../../logger';
 import { platform } from '../../platform';
 import { usePasscodePromptStore } from '../passcode';
 
-export function useDeepLinks(onNavigate: (location: MainLocation) => void): void {
+export function useDeepLinks(onLink: (target: DeepLinkTarget) => void, isEnabled = true): void {
     const isPromptOpen = usePasscodePromptStore(state => state.request !== null);
-    const onNavigateRef = useRef(onNavigate);
-    const heldRef = useRef<MainLocation | null>(null);
+    const isReady = isEnabled && !isPromptOpen;
 
-    useEffect(() => {
-        onNavigateRef.current = onNavigate;
-    });
+    const pull = useEffectEvent(async () => {
+        const url = await platform.deepLinks.take();
 
-    useEffect(() => {
-        const open = (url: string): void => {
-            const location = resolveDeepLink(url);
-
-            if (location === null) {
-                logger.warn('deep link ignored: not a route of this app');
-                return;
-            }
-
-            if (usePasscodePromptStore.getState().request !== null) {
-                heldRef.current = location;
-                return;
-            }
-
-            onNavigateRef.current(location);
-        };
-
-        const take = (): void => {
-            void platform.deepLinks.take().then(url => {
-                if (url !== null) {
-                    open(url);
-                }
-            });
-        };
-
-        const unsubscribe = platform.deepLinks.onReceived(take);
-
-        take();
-
-        return unsubscribe;
-    }, []);
-
-    useEffect(() => {
-        const held = heldRef.current;
-
-        if (isPromptOpen || held === null) {
+        if (url === null) {
             return;
         }
 
-        heldRef.current = null;
-        onNavigateRef.current(held);
-    }, [isPromptOpen]);
+        const target = resolveDeepLink(url);
+
+        if (target === null) {
+            logger.warn('deep link ignored: not a route of this app');
+            return;
+        }
+
+        onLink(target);
+    });
+
+    useEffect(() => {
+        if (!isReady) {
+            return;
+        }
+
+        void pull();
+
+        return platform.deepLinks.onReceived(() => void pull());
+    }, [isReady]);
 }

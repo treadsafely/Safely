@@ -14,19 +14,13 @@ import { ellipsisMiddle, MnemonicResource, type PortfolioMeta } from '@safely/co
 import {
     parseFlameDevnetSeedParam,
     parseFlameDevnetWalletNameParam,
-    SecurityCheckCancelledError,
-    useErrorToast,
     useFirstPortfolioName,
-    useFlameDevnetWalletPreview,
-    useFlameWalletOutputs,
+    useFlameDevnetAccountImport,
+    useFlameDevnetImportPreview,
     useHasAccount,
     useActiveAccountMeta,
-    useExistingFlameDevnetPortfolio,
-    useImportFlameDevnetPortfolioFromSeed,
     useNewPortfolioFallbackName,
-    useNumberFormatter,
-    useSetActivePortfolio,
-    useToast
+    useNumberFormatter
 } from '@safely/ux';
 
 import { PortfolioName } from '@mobile/entities/portfolio';
@@ -56,11 +50,6 @@ const sStringParam = z.string().catch('');
 
 const DEVICE_LINK_ROUTES = new Set(['SignInScreen', 'SignInModal']);
 
-const IMPORT_ERRORS = {
-    InvalidMnemonicError: 'importWalletScreen.errors.invalidMnemonic',
-    PortfolioGenerationFailedError: 'importWalletScreen.errors.failedToGenerate'
-};
-
 type ImportFlameDevnetWalletViewProps = {
     mnemonicResource: MnemonicResource;
     walletName: string;
@@ -75,22 +64,12 @@ const ImportFlameDevnetWalletView = (props: ImportFlameDevnetWalletViewProps) =>
 
     const { t } = useTranslation();
     const formatter = useNumberFormatter();
-    const errorToast = useErrorToast(IMPORT_ERRORS);
     const [isFromTrustedSite, setIsFromTrustedSite] = useState(false);
-
-    const { meta, walletQuery } = useFlameDevnetWalletPreview(mnemonicResource, walletName);
-    const wallet = walletQuery.data ?? null;
-    const balance = useFlameWalletOutputs(wallet).data?.balance;
-
-    const shownErrorRef = useRef<unknown>(null);
-    useEffect(() => {
-        const { error } = walletQuery;
-        if (!error || shownErrorRef.current === error) return;
-
-        shownErrorRef.current = error;
-        errorToast(error);
-        onLeave();
-    }, [walletQuery, errorToast, onLeave]);
+    const { meta, wallet, balance } = useFlameDevnetImportPreview(
+        mnemonicResource,
+        walletName,
+        onLeave
+    );
 
     const handleLeave = () => {
         if (!isPending) onLeave();
@@ -255,49 +234,29 @@ const AccountImportFlow = (props: ImportFlowProps) => {
     const { mnemonicResource, linkWalletName, hasLeftRef, leave } = props;
     const { t } = useTranslation();
     const navigation = useNavigation();
-    const toast = useToast();
-    const errorToast = useErrorToast(IMPORT_ERRORS);
     const accountName = useActiveAccountMeta().name;
     const fallbackWalletName = useNewPortfolioFallbackName();
-    // a snapshot: after this modal's own import the list holds the wallet too
-    const duplicate = useRef(useExistingFlameDevnetPortfolio(mnemonicResource)).current;
-    const { mutate: setActivePortfolio } = useSetActivePortfolio();
-    const { mutateAsync: importFlameDevnetPortfolio, isPending } =
-        useImportFlameDevnetPortfolioFromSeed();
+    const isImportDoneRef = useRef(false);
 
     const resetToTabs = useCallback(() => {
+        if (hasLeftRef.current) return;
+
         hasLeftRef.current = true;
+        isImportDoneRef.current = true;
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'TabsNavigator' }] }));
     }, [hasLeftRef, navigation]);
 
-    const isImportDoneRef = useRef(false);
+    const { isDuplicate, isPending, importWallet } = useFlameDevnetAccountImport(
+        mnemonicResource,
+        resetToTabs
+    );
+
     // the success reset fires before `isPending` drops, so it is let through here
     usePreventRemove(isPending, ({ data }) => {
         if (isImportDoneRef.current) navigation.dispatch(data.action);
     });
 
-    useEffect(() => {
-        if (!duplicate || hasLeftRef.current) return;
-
-        setActivePortfolio({ id: duplicate.id });
-        toast({ message: t('importFlameDevnetWallet.alreadyImported') });
-        resetToTabs();
-    }, [duplicate, hasLeftRef, setActivePortfolio, toast, t, resetToTabs]);
-
-    const handleImport = async (meta: PortfolioMeta) => {
-        try {
-            await importFlameDevnetPortfolio({ mnemonicResource, meta });
-            isImportDoneRef.current = true;
-            toast({ message: t('importFlameDevnetWallet.imported') });
-            resetToTabs();
-        } catch (error) {
-            if (!(error instanceof SecurityCheckCancelledError)) {
-                errorToast(error);
-            }
-        }
-    };
-
-    if (duplicate) return null;
+    if (isDuplicate) return null;
 
     return (
         <ImportFlameDevnetWalletView
@@ -306,7 +265,7 @@ const AccountImportFlow = (props: ImportFlowProps) => {
             subtitle={t('importFlameDevnetWallet.subtitle', { accountName })}
             isPending={isPending}
             onLeave={leave}
-            onImport={handleImport}
+            onImport={importWallet}
         />
     );
 };

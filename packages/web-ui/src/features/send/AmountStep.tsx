@@ -24,9 +24,10 @@ import {
     suffixStyles,
     valuesStyles
 } from './AmountStep.styles';
+import { MemoInput } from './MemoInput';
 import { PendingFundsModal } from './PendingFundsModal';
 import { useAmountInput } from './useAmountInput';
-import { AssetIcon } from '../../entities';
+import { AssetLogo } from '../../entities';
 import { Icon, Text, useDisclosure } from '../../shared';
 
 const ASSET_ICON_SIZE = 32;
@@ -81,71 +82,83 @@ export const AmountStep: FC<AmountStepProps> = ({ view }) => {
     const symbol = inputType === 'fiat' ? fiat.id.symbol : (asset?.symbol ?? '');
 
     return (
-        <div className={fieldStyles}>
-            <Text variant="bodyM" tone="tertiary" className={labelStyles}>
-                {t('send.amount')}
-            </Text>
+        <>
+            <div className={fieldStyles}>
+                <Text variant="bodyM" tone="tertiary" className={labelStyles}>
+                    {t('send.amount')}
+                </Text>
 
-            <div
-                className={boxStyles}
-                data-invalid={amountError !== undefined ? '' : undefined}
-                onMouseDown={handleBoxMouseDown}
-            >
-                <div className={valuesStyles}>
-                    <div className={amountRowStyles}>
-                        {isMax && <span className={approximateStyles}>≈</span>}
+                <div
+                    className={boxStyles}
+                    data-invalid={amountError !== undefined ? '' : undefined}
+                    onMouseDown={handleBoxMouseDown}
+                >
+                    <div className={valuesStyles}>
+                        <div className={amountRowStyles}>
+                            {isMax && <span className={approximateStyles}>≈</span>}
 
-                        <input
-                            ref={input.inputRef}
-                            autoFocus
-                            className={amountInputStyles}
-                            value={input.value}
-                            placeholder="0"
-                            inputMode="decimal"
-                            autoComplete="off"
-                            onChange={input.onChange}
-                            onPaste={input.onPaste}
-                            onFocus={() => 'exitMax' in view && view.exitMax()}
-                            onKeyDown={handleKeyDown}
-                        />
+                            <input
+                                ref={input.inputRef}
+                                autoFocus
+                                className={amountInputStyles}
+                                value={input.value}
+                                placeholder="0"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                onChange={input.onChange}
+                                onPaste={input.onPaste}
+                                onFocus={() => 'exitMax' in view && view.exitMax()}
+                                onKeyDown={handleKeyDown}
+                            />
 
-                        <span className={suffixStyles}>{symbol}</span>
+                            <span className={suffixStyles}>{symbol}</span>
+                        </div>
+
+                        {alternativeAmount !== null && (
+                            <button
+                                type="button"
+                                className={alternativeStyles}
+                                disabled={!hasPrice}
+                                onClick={() =>
+                                    view.setAmountInputType(
+                                        inputType === 'fiat' ? 'crypto' : 'fiat'
+                                    )
+                                }
+                            >
+                                {alternativeAmount}
+                                {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
+                            </button>
+                        )}
                     </div>
 
-                    {alternativeAmount !== null && (
-                        <button
-                            type="button"
-                            className={alternativeStyles}
-                            disabled={!hasPrice}
-                            onClick={() =>
-                                view.setAmountInputType(inputType === 'fiat' ? 'crypto' : 'fiat')
-                            }
-                        >
-                            {alternativeAmount}
-                            {hasPrice && <Icon asset={SwapVertical20} tone="secondary" />}
+                    {asset !== undefined && <AssetLogo asset={asset} size={ASSET_ICON_SIZE} />}
+                </div>
+
+                <div className={statusRowStyles}>
+                    <AmountStatus
+                        isMax={isMax}
+                        amountError={amountError}
+                        remainingBalance={remainingBalance}
+                        onShowPending={pendingFunds.onOpen}
+                    />
+
+                    {enterMax !== undefined && view.isMaxAvailable && (
+                        <button type="button" className={maxStyles} onClick={enterMax}>
+                            {t('send.max')}
                         </button>
                     )}
                 </div>
-
-                {asset !== undefined && <AssetIcon image={asset.image} size={ASSET_ICON_SIZE} />}
             </div>
 
-            <div className={statusRowStyles}>
-                <AmountStatus
-                    isMax={isMax}
-                    amountError={amountError}
-                    remainingBalance={remainingBalance}
-                    onShowPending={pendingFunds.onOpen}
+            {view.setMemo !== undefined && (
+                <MemoInput
+                    value={view.values.memo}
+                    error={view.errors.memo}
+                    onChange={view.setMemo}
                 />
-
-                {enterMax !== undefined && view.isMaxAvailable && (
-                    <button type="button" className={maxStyles} onClick={enterMax}>
-                        {t('send.max')}
-                    </button>
-                )}
-            </div>
+            )}
 
             {pendingFunds.isOpen && <PendingFundsModal onClose={pendingFunds.onClose} />}
-        </div>
+        </>
     );
 };

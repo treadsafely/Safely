@@ -18,6 +18,7 @@
     "@ledgerhq/device-management-kit": "catalog:",
     "@ledgerhq/device-transport-kit-web-hid": "1.2.3",
     "@noble/hashes": "catalog:",
+    "@runflame/wallet-wasm": "0.0.1-rc.46",
     "@safely/core": "workspace:*",
     "@safely/sync": "workspace:*",
     "@safely/ux": "workspace:*",

@@ -1,54 +1,63 @@
-import type { FC } from 'react';
+import type { ReactElement } from 'react';
 
-import { assertUnreachable } from '@safely/core';
-import type { BtcHistoryItem } from '@safely/ux';
-import {
-    useBtcHistoryGroups,
-    useBtcHistoryPolling,
-    useRelativeDateLabel,
-    useTranslate
-} from '@safely/ux';
+import type { HistoryGroupView } from '@safely/ux';
+import { useRelativeDateLabel, useTranslate } from '@safely/ux';
 
 import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { loaderStyles, sentinelStyles, tableStyles } from './HistoryTable.styles';
 import type { ActivityDirection } from '../../entities';
 import { ActivityTableRow, ActivityTableRowSkeleton } from '../../entities';
-import { Spinner, useIsDocumentVisible, useOnVisible } from '../../shared';
+import { Spinner, useOnVisible } from '../../shared';
 
 const SKELETON_ROWS = [0, 1, 2];
 const PREFETCH_MARGIN = '400px';
 
-function resolveActivityDirection(activity: BtcHistoryItem): ActivityDirection {
-    switch (activity.type) {
-        case 'transaction':
-            return activity.transaction.isInitiator ? 'out' : 'in';
-        case 'order':
-            return activity.order.type === 'offramp' ? 'out' : 'in';
-        default:
-            return assertUnreachable(activity as never);
-    }
-}
-
-export type HistoryTableProps = {
+export type HistoryTableProps<TActivity> = {
+    groups: HistoryGroupView<TActivity>[] | undefined;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => unknown;
+    assetSymbol: string;
     selectedActivityKey?: string;
-    onSelectActivity: (activity: BtcHistoryItem) => void;
+    getActivityKey: (activity: TActivity) => string;
+    getTimestamp: (activity: TActivity) => number | null;
+    getDirection: (activity: TActivity) => ActivityDirection;
+    onSelectActivity: (activity: TActivity) => void;
     onReceive: () => void;
-    onNewActivity: () => void;
 };
 
-export const HistoryTable: FC<HistoryTableProps> = props => {
-    const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
+export const HistoryTable = <TActivity,>(props: HistoryTableProps<TActivity>): ReactElement => {
+    const {
+        groups,
+        hasNextPage,
+        isFetchingNextPage,
+        fetchNextPage,
+        assetSymbol,
+        selectedActivityKey,
+        getActivityKey,
+        getTimestamp,
+        getDirection,
+        onSelectActivity,
+        onReceive
+    } = props;
 
     const t = useTranslate();
     const dateLabel = useRelativeDateLabel();
-    const { groups, fetchNextPage, hasNextPage, isFetchingNextPage } = useBtcHistoryGroups();
-
-    useBtcHistoryPolling({ isEnabled: useIsDocumentVisible(), onNewActivity });
 
     const sentinelRef = useOnVisible(fetchNextPage, {
         isEnabled: hasNextPage && !isFetchingNextPage,
         rootMargin: PREFETCH_MARGIN
     });
+
+    const resolveDateLabel = (activity: TActivity, isPending: boolean): string => {
+        if (isPending) {
+            return t('history.table.pending');
+        }
+
+        const timestamp = getTimestamp(activity);
+
+        return timestamp === null ? '' : dateLabel(timestamp);
+    };
 
     if (!groups) {
         return (
@@ -61,7 +70,7 @@ export const HistoryTable: FC<HistoryTableProps> = props => {
     }
 
     if (groups.length === 0) {
-        return <HistoryEmptyPlaceholder onReceive={onReceive} />;
+        return <HistoryEmptyPlaceholder assetSymbol={assetSymbol} onReceive={onReceive} />;
     }
 
     return (
@@ -77,13 +86,9 @@ export const HistoryTable: FC<HistoryTableProps> = props => {
                         valueTone={row.valueTone}
                         formattedFiat={row.formattedFiat}
                         counterparty={row.counterparty}
-                        dateLabel={
-                            row.isPending
-                                ? t('history.table.pending')
-                                : dateLabel(row.activity.timestamp)
-                        }
-                        direction={resolveActivityDirection(row.activity)}
-                        isSelected={row.activity.key === selectedActivityKey}
+                        dateLabel={resolveDateLabel(row.activity, row.isPending)}
+                        direction={getDirection(row.activity)}
+                        isSelected={getActivityKey(row.activity) === selectedActivityKey}
                         onSelect={() => onSelectActivity(row.activity)}
                     />
                 ))}

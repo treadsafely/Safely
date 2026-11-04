@@ -32,6 +32,7 @@ export type OnboardingStep =
 type OnboardingSource =
     | { kind: 'generated' }
     | { kind: 'imported'; mnemonic: string[] }
+    | { kind: 'flameDevnet'; mnemonic: string[]; walletName: string }
     | { kind: 'watchOnly'; input: string }
     | { kind: 'ledger'; selection: LedgerAccountsSelection }
     | { kind: 'signedIn' };
@@ -102,6 +103,12 @@ export function useOnboardingFlow() {
 
     const onMnemonicReady = useCallback(
         (mnemonic: string[]) => startPasscode({ kind: 'imported', mnemonic }),
+        [startPasscode]
+    );
+
+    const startFlameDevnet = useCallback(
+        (mnemonic: string[], walletName: string) =>
+            startPasscode({ kind: 'flameDevnet', mnemonic, walletName }),
         [startPasscode]
     );
 
@@ -197,6 +204,18 @@ export function useOnboardingFlow() {
                     return;
                 }
 
+                if (pending.kind === 'flameDevnet') {
+                    using mnemonicAccessor = new MnemonicResource(pending.mnemonic);
+
+                    await createAccount({
+                        secureEncryptedStorage,
+                        firstPortfolio: { kind: 'flameDevnet', mnemonicAccessor },
+                        firstPortfolioName: pending.walletName
+                    });
+
+                    return;
+                }
+
                 if (pending.kind === 'watchOnly') {
                     await createAccount({
                         secureEncryptedStorage,
@@ -283,6 +302,7 @@ export function useOnboardingFlow() {
         openWatch,
         openLedger,
         startCreate,
+        startFlameDevnet,
         onMnemonicReady,
         onWatchInputReady,
         onPasscodeComplete,

@@ -1,23 +1,44 @@
 import type { FC } from 'react';
 
-import type { BtcHistoryItem } from '@safely/ux';
+import type { FlameHistoryItem } from '@safely/core';
+import type { BtcHistoryItem, PortfolioWallets } from '@safely/ux';
 
-import { HistoryTable } from '../../../features';
+import { BtcHistoryTable, FlameHistoryTable } from '../../../features';
 
 export type HistoryProps = {
+    wallets: PortfolioWallets;
     selectedActivityKey?: string;
-    onSelectActivity: (activity: BtcHistoryItem) => void;
+    onSelectBtcActivity: (activity: BtcHistoryItem) => void;
+    onSelectFlameActivity: (activity: FlameHistoryItem) => void;
     onReceive: () => void;
     onNewActivity: () => void;
 };
 
 export const History: FC<HistoryProps> = props => {
-    const { selectedActivityKey, onSelectActivity, onReceive, onNewActivity } = props;
+    const {
+        wallets,
+        selectedActivityKey,
+        onSelectBtcActivity,
+        onSelectFlameActivity,
+        onReceive,
+        onNewActivity
+    } = props;
+
+    if (wallets.flame !== null) {
+        return (
+            <FlameHistoryTable
+                selectedActivityKey={selectedActivityKey}
+                onSelectActivity={onSelectFlameActivity}
+                onReceive={onReceive}
+                onNewActivity={onNewActivity}
+            />
+        );
+    }
 
     return (
-        <HistoryTable
+        <BtcHistoryTable
             selectedActivityKey={selectedActivityKey}
-            onSelectActivity={onSelectActivity}
+            onSelectActivity={onSelectBtcActivity}
             onReceive={onReceive}
             onNewActivity={onNewActivity}
         />

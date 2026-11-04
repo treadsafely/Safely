@@ -3,6 +3,7 @@ export * from './chart';
 export * from './add-wallet';
 export * from './contact';
 export * from './dev-tools';
+export * from './flame-devnet';
 export * from './history';
 export * from './ledger';
 export * from './onboarding';

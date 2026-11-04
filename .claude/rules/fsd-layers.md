@@ -45,7 +45,7 @@ knows nothing about `features`; in mobile, `features` knows nothing about `scree
   (`apps/desktop/src/renderer/platform/types.ts`).
 - `packages/web-ui/src/features` — a scenario shared by the web targets: the presentational modals of
   the slice plus the controller hook and the modal switch that drive them (`add-wallet`, `wallet`,
-  `account`, `contact`, `sync`, `ledger`). A flow belongs here only while it binds to nothing but `@safely/ux`
+  `account`, `contact`, `sync`, `ledger`, `flame-devnet`). A flow belongs here only while it binds to nothing but `@safely/ux`
   contracts; see `web-ui.md`. A slice with no modals belongs here too when it reads a `@safely/ux`
   query and composes an entity into a screen region (`history`, `transaction-details`): it takes
   callbacks for everything that leaves it, so the page still owns where a click goes.
