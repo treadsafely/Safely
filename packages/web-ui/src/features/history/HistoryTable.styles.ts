@@ -1,13 +1,9 @@
 import { css } from '@safely/web-ui/styled-system/css';
 
-export const listStyles = css({
+export const tableStyles = css({
     display: 'flex',
     flexDirection: 'column',
-    width: '100%'
-});
-
-export const groupStyles = css({
-    paddingInline: '8',
+    width: '100%',
     paddingBottom: '8'
 });
 
@@ -19,6 +15,6 @@ export const sentinelStyles = css({
 export const loaderStyles = css({
     display: 'flex',
     justifyContent: 'center',
-    paddingBottom: '16',
+    paddingBlock: '16',
     color: 'icon.tertiary'
 });

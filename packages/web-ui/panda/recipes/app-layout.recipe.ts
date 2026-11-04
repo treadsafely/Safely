@@ -78,15 +78,17 @@ export const appLayoutRecipe = defineSlotRecipe({
             flexDirection: 'column',
             flex: '1',
             minWidth: '0',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            scrollbarGutter: 'stable both-edges'
         },
         panel: {
-            position: 'relative',
-            flexShrink: 0,
+            position: 'absolute',
+            top: '0',
+            right: '0',
+            bottom: '0',
+            zIndex: 1,
             width: PANEL_WIDTH,
-            overflow: 'hidden',
-            transition: 'width 200ms ease',
-            _motionReduce: { transition: 'none' }
+            pointerEvents: 'none'
         },
         panelContent: {
             position: 'absolute',
@@ -101,6 +103,8 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderLeftStyle: 'solid',
             borderLeftColor: 'other.transparentElement',
             backgroundColor: 'background.primary',
+            boxShadow: '-16px 0 48px 0 rgba(0, 0, 0, 0.36)',
+            pointerEvents: 'auto',
             transition: 'transform 200ms ease',
             _motionReduce: { transition: 'none' }
         }
@@ -119,14 +123,17 @@ export const appLayoutRecipe = defineSlotRecipe({
         },
         isPanelOpen: {
             false: {
-                panel: { width: '0' },
-                panelContent: { transform: 'translateX(100%)' }
+                panelContent: { transform: 'translateX(100%)', pointerEvents: 'none' }
             }
         },
         isFullScreen: {
             true: {
                 secondaryContent: { paddingTop: TITLE_BAR_HEIGHT },
-                content: { paddingTop: TITLE_BAR_HEIGHT },
+                content: {
+                    borderTopWidth: TITLE_BAR_HEIGHT,
+                    borderTopStyle: 'solid',
+                    borderTopColor: 'transparent'
+                },
                 panelContent: { paddingTop: TITLE_BAR_HEIGHT }
             }
         }

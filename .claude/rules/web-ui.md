@@ -91,17 +91,20 @@ local `css()` covers only what no primitive owns: container padding, a scroll se
 A local style that restates a recipe slot is a defect, not a shortcut: the copy stops matching the
 recipe at the first design change, and nothing in lint or CI compares them. When the design needs a
 look the primitive lacks, the variant goes into the recipe (`panda/recipes/*.recipe.ts` — and into
-`staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history list is the
-worked example: date headings are `List.Title variant="heading"`, rows sit in
-`List.Group variant="separated"` — which is also what gives each row its corner radius, so the row
-itself carries none — and the loading state is `Skeleton`, not five copies of one pulsing bar.
+`staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history table is
+the worked example of the one case a local `css()` is right: a flat grid row
+(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own column
+template and hover/selected states — while its loading state is still `Skeleton`, not five copies
+of one pulsing bar.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
-the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. Both
-open by collapsing the outer slot's width while the inner one slides, so the outer slot stays
-mounted and the page decides what the inner one contains — the transaction panel is a sibling of
-`AppLayout.Content`, which is why the selected activity lives in `MainPage` and reaches the list as
-a prop rather than being opened by it.
+the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The
+left one opens by collapsing the outer slot's width while the inner one slides. The right one is an
+overlay: the outer slot is an absolute layer over the content that never takes pointer events, and
+the inner one slides in over it with a shadow, so opening the detail view never reflows the chart
+or the table. Either way the outer slot stays mounted and the page decides what the inner one
+contains — the transaction panel is a sibling of `AppLayout.Content`, which is why the selected
+activity lives in `MainPage` and reaches the list as a prop rather than being opened by it.
 
 ## Base UI conventions
 

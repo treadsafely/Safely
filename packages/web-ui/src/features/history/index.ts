@@ -1,4 +1,4 @@
-export { HistoryList, type HistoryListProps } from './HistoryList';
+export { HistoryTable, type HistoryTableProps } from './HistoryTable';
 export {
     HistoryEmptyPlaceholder,
     type HistoryEmptyPlaceholderProps
