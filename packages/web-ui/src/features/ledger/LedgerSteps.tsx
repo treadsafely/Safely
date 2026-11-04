@@ -14,7 +14,7 @@ export type LedgerStepsProps = {
 const StepIndicator: FC<{ status: LedgerStepStatus }> = ({ status }) => {
     switch (status) {
         case 'active':
-            return <Spinner size={16} />;
+            return <Spinner size={12} />;
         case 'done':
             return <Icon asset={Checkmark16} tone="accentGreen" />;
         case 'error':

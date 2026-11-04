@@ -634,15 +634,17 @@
                     },
                     "usb": {
                         "title": "Plug in your Ledger.",
-                        "description": "Connect it to this computer with a USB cable."
+                        "description": "Connect your Ledger to your computer using a USB cable."
                     },
                     "unlock": {
                         "title": "Unlock your Ledger.",
-                        "description": "Make sure it's unlocked and nearby."
+                        "description": "Make sure it's unlocked and nearby.",
+                        "descriptionUsb": "Enter your PIN to unlock your device."
                     },
                     "import": {
                         "title": "Connect and import accounts.",
-                        "description": "We'll look for activity in any accounts you might have used."
+                        "description": "We'll look for activity in any accounts you might have used.",
+                        "descriptionUsb": "We'll look for any accounts you might have used."
                     }
                 }
             },
@@ -662,11 +664,12 @@
                 "locationDisabled": "Turn on Location in your device settings to find your Ledger",
                 "title": "Looking for devices…",
                 "subtitle": "Make sure your Ledger is unlocked and close to the mobile phone you want to pair with.",
-                "subtitleUsb": "Make sure your Ledger is unlocked and connected to this computer."
+                "titleUsb": "Connect your Ledger",
+                "subtitleUsb": "Connect your Ledger to your computer using a USB cable and unlock your device."
             },
             "pairing": {
                 "title": "Pairing with Ledger {{device}}",
-                "subtitle": "Continue on your Ledger device",
+                "subtitle": "Continue on your Ledger device.",
                 "steps": {
                     "connect": "Complete the steps on your Ledger",
                     "openApp": "Open the Bitcoin app"

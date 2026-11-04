@@ -76,6 +76,7 @@ export const LedgerModals: FC<LedgerModalsProps> = ({ flow, hasBackdrop = true }
                             : t('addWallet.connectLedger.pairingUnsuccess.subtitleUsb', { device })
                     }
                     buttonLabel={t('addWallet.connectLedger.pairingUnsuccess.retry')}
+                    buttonVariant="secondary"
                     onButtonClick={() => void flow.retryPairing()}
                     onBack={flow.backToConnect}
                 />

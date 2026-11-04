@@ -21,13 +21,11 @@ export const rowStyles = css({
 
 export const numberStyles = css({
     flexShrink: 0,
-    width: '20px',
-    textAlign: 'right'
+    width: '14px'
 });
 
 export const textStyles = css({
     display: 'flex',
     flexDirection: 'column',
-    gap: '2',
     minWidth: '0'
 });
