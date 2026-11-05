@@ -20,11 +20,6 @@ export const VERSION_DELETION_KEY = 'versionDeletion';
 export const VERSION_DELETION_GRACE_PERIOD_SECONDS = 90 * 24 * 60 * 60; // 90 days
 const SHOULD_BE_DELETED_AT_KEY = 'shouldBeDeletedAt';
 
-export type TombstoneStamp = {
-    timestamp: number;
-    author: string;
-};
-
 type VersionControllerProtocol = Pick<MergeProtocol, 'id' | 'tick'>;
 
 export class VersionController {
@@ -78,7 +73,10 @@ export class VersionController {
     }
 
     public delete(version: VersionSelector): void {
-        this.deleteWithStamp(version);
+        // A tombstone marks data as deleted, but removing an unused version only discards its
+        // schema representation. The data remains available in other versions. Using a tombstone
+        // here can interfere with recreating the version.
+        delete this.root.v[this.versionKey(version)];
     }
 
     public getDeviceVersion(authorId: string): number | undefined {
@@ -132,21 +130,21 @@ export class VersionController {
         return true;
     }
 
-    public deleteVersionsUnusedByDevices(): void {
+    public deleteVersionsUnusedByDevices(): boolean {
         const usedVersions = this.usedDeviceVersions();
         const now = this.wallTime();
+        let changed = false;
 
         for (const version of this.versions) {
             const versionKey = this.versionKey(version);
             const versionSlot = this.get(version);
 
-            if (versionSlot === undefined || isTombstoneSlot(versionSlot)) {
-                this.deleteVersionDeletionMarker(versionKey);
+            if (usedVersions.has(version.version)) {
+                changed = this.deleteVersionDeletionMarker(versionKey) || changed;
                 continue;
             }
 
-            if (usedVersions.has(version.version)) {
-                this.deleteVersionDeletionMarker(versionKey);
+            if (versionSlot === undefined || isTombstoneSlot(versionSlot)) {
                 continue;
             }
 
@@ -157,24 +155,17 @@ export class VersionController {
                     versionKey,
                     now + VERSION_DELETION_GRACE_PERIOD_SECONDS
                 );
+                changed = true;
                 continue;
             }
 
             if (now >= shouldBeDeletedAt) {
                 this.delete(version);
-                this.deleteVersionDeletionMarker(versionKey);
+                changed = true;
             }
         }
-    }
 
-    private deleteWithStamp(version: VersionSelector, stamp?: TombstoneStamp): void {
-        const key = this.versionKey(version);
-        const existing = this.root.v[key];
-        if (existing === undefined) {
-            return;
-        }
-
-        this.root.v[key] = this.tombstoneFor(stamp);
+        return changed;
     }
 
     private latestVersion(): StorageVersion {
@@ -266,16 +257,19 @@ export class VersionController {
         );
     }
 
-    private deleteVersionDeletionMarker(versionKey: string): void {
+    private deleteVersionDeletionMarker(versionKey: string): boolean {
         const versionDeletion = this.root.v[VERSION_DELETION_KEY];
         if (!isContainerSlot(versionDeletion)) {
-            return;
+            return false;
         }
 
         const marker = versionDeletion.v[versionKey];
         if (marker !== undefined && !isTombstoneSlot(marker)) {
             versionDeletion.v[versionKey] = this.tombstoneFor();
+            return true;
         }
+
+        return false;
     }
 
     private usedDeviceVersions(): Set<number> {
@@ -312,16 +306,7 @@ export class VersionController {
         version.schema.parse(stripSlot(projected));
     }
 
-    private tombstoneFor(stamp?: TombstoneStamp): Slot {
-        const resolved = stamp ?? this.createProtocolStamp();
-
-        return createTombstoneSlot(resolved.timestamp, resolved.author);
-    }
-
-    private createProtocolStamp(): TombstoneStamp {
-        return {
-            timestamp: this.protocol.tick(),
-            author: this.protocol.id
-        };
+    private tombstoneFor(): Slot {
+        return createTombstoneSlot(this.protocol.tick(), this.protocol.id);
     }
 }

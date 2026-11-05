@@ -4,6 +4,7 @@ import { createOriginContainer, isContainerSlot } from './slots';
 import { cloneDeep, stripSlot } from './slots/slot-json';
 import { validateSlot } from './slots/slot-validation';
 import type { StorageVersion } from './versioning/version';
+import { VersionController } from './versioning/version-controller';
 import { VersionPropagation } from './versioning/version-propagation';
 import type { Draft } from './write';
 import { createDraft, selectJsonStorage } from './write';
@@ -41,6 +42,13 @@ export class WorkingStorageRoot {
 
         const before = cloneDeep(this.root);
         const stats = protocol.merge(this.root, incoming);
+
+        const controller = new VersionController(this.root, this.versions, protocol, {
+            nowSeconds: () => protocol.wallTime()
+        });
+        if (controller.deleteVersionsUnusedByDevices()) {
+            stats.updated += 1;
+        }
 
         const propagation = new VersionPropagation(this.versions, protocol);
         propagation.propagateChangedOlderVersionsToNewer(before, this.root);

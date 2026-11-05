@@ -10,9 +10,7 @@ import {
 import { MergeProtocol } from '../../../src/core/merge-protocol';
 import {
     createOriginContainer,
-    createTombstoneSlot,
     isContainerSlot,
-    isTombstoneSlot,
     type ContainerSlot
 } from '../../../src/core/slots';
 import { slotFromJson, stripSlot } from '../../../src/core/slots/slot-json';
@@ -45,11 +43,8 @@ describe('VersionController', () => {
 
         controller.delete(1);
 
-        expect(controller.get(1)).toMatchObject({
-            t: 200,
-            a: 'cleanup-device'
-        });
-        expect(isTombstoneSlot(controller.get(1))).toBe(true);
+        expect(controller.get(1)).toBeUndefined();
+        expect(root.v).not.toHaveProperty('1');
     });
 
     it('creates the latest version from initial data', () => {
@@ -147,20 +142,17 @@ describe('VersionController', () => {
 
         controller.deleteVersionsUnusedByDevices();
 
-        expect(isTombstoneSlot(root.v['1'])).toBe(true);
-        expect(root.v['1']).toMatchObject({
-            t: 200,
-            a: 'cleanup-device'
-        });
+        expect(root.v).not.toHaveProperty('1');
         expect(root.v['3']).toBeDefined();
-        expect(stripSlot(root.v[VERSION_DELETION_KEY])).toEqual({});
+        expect(stripSlot(root.v[VERSION_DELETION_KEY])).toEqual({
+            '1': { shouldBeDeletedAt: expiredAt }
+        });
     });
 
-    it('recreates older versions with clocks that beat prior tombstones', () => {
+    it('recreates a physically deleted older version when a device needs it', () => {
         const versions = hListToRuntimeArray(v3);
-        const tombstoneTimestamp = 9_999_999_999;
         const root = createOriginContainer({
-            '1': createTombstoneSlot(tombstoneTimestamp, 'cleanup-device'),
+            '1': slotFromJson({ key1: 0, key2: 'old-value' }, 0, ''),
             '3': slotFromJson(
                 { key1: 42, label: 'latest-value', key3: true, key4: 'v3' },
                 10,
@@ -177,6 +169,9 @@ describe('VersionController', () => {
         });
         const protocol = new MergeProtocol('recreate-device');
         protocol.observeTree(root);
+        new VersionController(root, versions, protocol).delete(1);
+
+        expect(root.v).not.toHaveProperty('1');
 
         new VersionPropagation(versions, protocol).propagateToOlderVersions(root);
 
@@ -186,8 +181,8 @@ describe('VersionController', () => {
             throw new Error('Expected v1 to be recreated as a container');
         }
 
-        expect(recreated.t).toBeGreaterThan(tombstoneTimestamp);
-        expect(recreated.a).toBe('recreate-device');
+        expect(recreated.t).toBe(10);
+        expect(recreated.a).toBe('latest-device');
         expect(stripSlot(recreated)).toEqual({
             key1: 42,
             key2: 'latest-value'

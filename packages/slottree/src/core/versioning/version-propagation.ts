@@ -1,6 +1,6 @@
 import type { MergeProtocol } from '../merge-protocol';
 import type { ContainerSlot, Slot } from '../slots';
-import { isContainerSlot, isTombstoneSlot, SlotKind } from '../slots';
+import { isContainerSlot, SlotKind } from '../slots';
 import type { StorageVersion } from './version';
 import { DEVICES_KEY } from './version-controller';
 import { stripSlot } from '../slots/slot-json';
@@ -142,20 +142,10 @@ export class VersionPropagation {
             return target;
         }
 
-        if (options.createMissing) {
-            root.v[String(version.version)] = isTombstoneSlot(target)
-                ? this.recreateVersionOverTombstone(projected)
-                : projected;
+        if (options.createMissing && target === undefined) {
+            root.v[String(version.version)] = projected;
         }
 
-        return projected;
-    }
-
-    private recreateVersionOverTombstone(projected: ContainerSlot): ContainerSlot {
-        // New versions created with origin stamp, but in order to win against tombstone
-        // it is required to provide stamp greater than the one from tombstone
-        projected.t = this.protocol.tick();
-        projected.a = this.protocol.id;
         return projected;
     }
 
