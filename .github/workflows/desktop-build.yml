@@ -34,6 +34,20 @@ on:
         required: true
       SLACK_WEBHOOK_URL:
         required: false
+      APPLE_MAS_APP_CERT_P12:
+        required: true
+      APPLE_MAS_INSTALLER_CERT_P12:
+        required: true
+      APPLE_MAS_CERT_PASSWORD:
+        required: true
+      APPLE_MAS_PROVISIONING_PROFILE:
+        required: true
+      ASC_API_KEY_P8:
+        required: true
+      ASC_API_KEY_ID:
+        required: true
+      ASC_API_ISSUER_ID:
+        required: true
 
 permissions:
   contents: read
