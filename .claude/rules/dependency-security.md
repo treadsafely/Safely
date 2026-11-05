@@ -281,8 +281,8 @@ version: `latest` is 2.0.2, itself vulnerable, and Metro's `^1.0.2` resolves 1.2
 the 1.x line, published under the `legacy` tag. So an override cannot close them — closing them
 means forcing Metro across a major, not a version bump.
 
-The JavaScript registry holds `node-forge` and `braces`, both waiting on a patched release that npm
-does not have yet. The `image-size` pair left it through Metro rather than image-size: the fix only
+`node-forge` left the registry on 2026-10-31: 1.4.2 cleared `minimumReleaseAge` and the existing
+`node-forge@1` override picked it up. The `image-size` pair left it through Metro rather than image-size: the fix only
 exists in image-size 2.x, while metro 0.84.5 dropped the dependency for its own parser. The metro-\*
 packages pin each other exactly, so a bare `metro@0.84` override would mix two families; the
 `@react-native/*>metro*` overrides are scoped per parent and exact, landing on the family
@@ -332,6 +332,9 @@ from EAS, never EAS pushing, because pushing needs a GitHub write token inside t
   `apps/mobile/scripts/release/` download that commit's artifacts, uploads them with `gh` and
   publishes the draft as a prerelease, which is what makes GitHub create the tag. Called after the
   draft, on a schedule twice an hour, and by hand; one draft per run.
+- Desktop needs no polling: `.github/workflows/desktop-build.yml` builds in GitHub itself, so
+  `desktop-release.yml`'s `release` job attaches the `.pkg` and `desktop-dependencies.txt` to
+  `v<desktop version>-desktop` directly. `desktop-signing.md` has that pipeline.
 - **The two credentials never meet, and it is the workflow that guarantees it.** `gh` runs only in
   the steps holding `GH_TOKEN`; the download step gets `EXPO_TOKEN` and runs node through
   `env -u GH_TOKEN -u GITHUB_TOKEN`, so the process that talks to Expo and reads a third-party

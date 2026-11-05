@@ -13,15 +13,17 @@ import {
     useErrorToast,
     useNewPortfolioFallbackName,
     usePortfolios,
+    useSaveLedgerAccounts,
     useSetActivePortfolio
 } from '@safely/ux';
 
 import type { DisclosureProps } from '../../shared';
 import { useDisclosure } from '../../shared';
+import { useLedgerFlow } from '../ledger';
 
 export type AddWalletDraft = PortfolioMeta;
 
-export type AddWalletStep = 'menu' | 'import' | 'watch' | 'duplicate' | 'customize';
+export type AddWalletStep = 'menu' | 'import' | 'watch' | 'ledger' | 'duplicate' | 'customize';
 
 type AddWalletSource =
     | { kind: 'generated' }
@@ -48,17 +50,32 @@ export function useAddWalletFlow(props: DisclosureProps) {
 
     const step: AddWalletStep | null = isOpen ? (innerStep ?? 'menu') : null;
 
+    const open = useCallback(() => {
+        setInnerStep(null);
+        onOpen();
+    }, [onOpen]);
+
+    const showDuplicate = useCallback((portfolio: Portfolio) => {
+        setDuplicate(portfolio);
+        setInnerStep('duplicate');
+    }, []);
+
+    const ledger = useLedgerFlow({
+        portfolios,
+        onExit: open,
+        onDone: onClose,
+        onDuplicate: showDuplicate,
+        saveAccounts: useSaveLedgerAccounts()
+    });
+    const resetLedger = ledger.reset;
+
     useEffect(() => {
         source.current = null;
         setDraft(null);
         setDuplicate(null);
         setInnerStep(null);
-    }, [isOpen]);
-
-    const open = useCallback(() => {
-        setInnerStep(null);
-        onOpen();
-    }, [onOpen]);
+        resetLedger();
+    }, [isOpen, resetLedger]);
 
     const openImport = useCallback((network: PortfolioNetworkType) => {
         networkType.current = network;
@@ -67,10 +84,11 @@ export function useAddWalletFlow(props: DisclosureProps) {
 
     const openWatch = useCallback(() => setInnerStep('watch'), []);
 
-    const showDuplicate = useCallback((portfolio: Portfolio) => {
-        setDuplicate(portfolio);
-        setInnerStep('duplicate');
-    }, []);
+    const startLedger = ledger.start;
+    const openLedger = useCallback(() => {
+        startLedger();
+        setInnerStep('ledger');
+    }, [startLedger]);
 
     const startCreate = useCallback(() => {
         source.current = { kind: 'generated' };
@@ -211,10 +229,12 @@ export function useAddWalletFlow(props: DisclosureProps) {
         step,
         draft,
         duplicate,
+        ledger,
         open,
         close: onClose,
         openImport,
         openWatch,
+        openLedger,
         startCreate,
         onMnemonicReady,
         onWatchInputReady,

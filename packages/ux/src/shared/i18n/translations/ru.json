@@ -628,13 +628,19 @@
                         "title": "Включите Bluetooth.",
                         "description": "Разрешите доступ при запросе."
                     },
+                    "usb": {
+                        "title": "Подключите Ledger.",
+                        "description": "Подключите Ledger к компьютеру USB-кабелем."
+                    },
                     "unlock": {
                         "title": "Разблокируйте Ledger.",
-                        "description": "Убедитесь, что он разблокирован и находится рядом."
+                        "description": "Убедитесь, что он разблокирован и находится рядом.",
+                        "descriptionUsb": "Введите PIN-код, чтобы разблокировать устройство."
                     },
                     "import": {
                         "title": "Подключите и импортируйте аккаунты.",
-                        "description": "Мы найдём активность в аккаунтах, которые вы могли использовать."
+                        "description": "Мы найдём активность в аккаунтах, которые вы могли использовать.",
+                        "descriptionUsb": "Мы найдём аккаунты, которые вы могли использовать."
                     }
                 }
             },
@@ -652,12 +658,14 @@
             "discovery": {
                 "title": "Выберите Ledger",
                 "subtitle": "Выберите ближайший Ledger, чтобы начать сопряжение.",
+                "titleUsb": "Подключите Ledger",
+                "subtitleUsb": "Подключите Ledger к компьютеру USB-кабелем и разблокируйте устройство.",
                 "notFound": "Устройства не найдены",
                 "locationDisabled": "Включите геолокацию в настройках устройства, чтобы найти Ledger"
             },
             "pairing": {
                 "title": "Сопряжение с Ledger {{device}}",
-                "subtitle": "Продолжите на устройстве Ledger",
+                "subtitle": "Продолжите на устройстве Ledger.",
                 "steps": {
                     "connect": "Выполните шаги на Ledger",
                     "openApp": "Откройте приложение Bitcoin"
@@ -670,6 +678,7 @@
             "pairingUnsuccess": {
                 "title": "Сопряжение не удалось",
                 "subtitle": "Убедитесь, что {{device}} находится рядом с телефоном, и попробуйте снова.",
+                "subtitleUsb": "Убедитесь, что {{device}} разблокирован и подключён к этому компьютеру, и попробуйте снова.",
                 "appNotInstalled": "Установите приложение Bitcoin на {{device}} через Ledger Wallet и попробуйте снова.",
                 "retry": "Повторить сопряжение"
             },
@@ -869,6 +878,18 @@
         "title": "Safely",
         "versionCopied": "Версия скопирована"
     },
+    "relativeDate": {
+        "justNow": "Только что",
+        "minutesAgo_one": "{{count}} минуту назад",
+        "minutesAgo_few": "{{count}} минуты назад",
+        "minutesAgo_many": "{{count}} минут назад",
+        "minutesAgo_other": "{{count}} минут назад",
+        "hoursAgo_one": "{{count}} час назад",
+        "hoursAgo_few": "{{count}} часа назад",
+        "hoursAgo_many": "{{count}} часов назад",
+        "hoursAgo_other": "{{count}} часов назад",
+        "yesterdayAt": "Вчера в {{time}}"
+    },
     "dateGroups": {
         "pending": "Обрабатывается",
         "today": "Сегодня",
@@ -876,14 +897,16 @@
     },
     "history": {
         "title": "История",
+        "table": {
+            "pending": "Обрабатывается…"
+        },
         "bubble": {
             "one": "Новая транзакция",
             "many": "Новые транзакции"
         },
         "empty": {
             "title": "История транзакций",
-            "subtitle": "Ваши транзакции появятся здесь.",
-            "receive": "Получить BTC"
+            "subtitle": "Ваши транзакции появятся здесь."
         },
         "transactionInfo": {
             "sending": "Отправляется",
@@ -1034,6 +1057,10 @@
         "cannotRemoveLast": "Нельзя удалить последний кошелёк. Отключите Ledger целиком."
     },
     "chart": {
+        "a11yLabel": "График цены",
+        "title": "Цена биткоина",
+        "collapse": "Свернуть",
+        "expand": "Показать график",
         "periods": {
             "1h": "1 ч",
             "24h": "24 ч",

@@ -1,27 +1,11 @@
 import type { LinkingOptions, ParamListBase } from '@react-navigation/native';
 import { getStateFromPath } from '@react-navigation/native';
-import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { useEffect, useMemo, useRef } from 'react';
-import { z } from 'zod';
 
-import { logger } from '@mobile/shared/logger';
-import { fragmentToQuery } from '@mobile/shared/navigation';
+import { fragmentToQuery, UNIVERSAL_LINK_HOST } from '@safely/ux';
+
 import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
-
-const sUniversalLinkExtra = z.object({ universalLinkHost: z.string().min(1) });
-
-function resolveLinkingPrefixes(): string[] {
-    const extra = sUniversalLinkExtra.safeParse(Constants.expoConfig?.extra);
-
-    if (!extra.success) {
-        logger.error('linking.universal_link_host_missing');
-
-        return [Linking.createURL('/')];
-    }
-
-    return [Linking.createURL('/'), `https://${extra.data.universalLinkHost}`];
-}
 
 export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamListBase> {
     const pendingUrlRef = useRef<string | null>(null);
@@ -81,7 +65,8 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
     return useMemo(
         () => ({
             enabled: true,
-            prefixes: resolveLinkingPrefixes(),
+            // the scheme stays `createURL`: the dev client opens `exp+safely://`, not `safely://`
+            prefixes: [Linking.createURL('/'), `https://${UNIVERSAL_LINK_HOST}`],
             getStateFromPath: (path, options) => getStateFromPath(fragmentToQuery(path), options),
             // called on the container's first render despite `initialState`, its result discarded: the effect above delivers the initial URL
             getInitialURL: () => null,

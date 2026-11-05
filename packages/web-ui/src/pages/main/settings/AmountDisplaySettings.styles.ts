@@ -1,11 +1,9 @@
 import { css } from '@safely/web-ui/styled-system/css';
 
 export const previewStyles = css({
-    padding: '32',
-    backgroundColor: 'background.secondary'
-});
-
-export const previewCardStyles = css({
+    borderWidth: 'hairline',
+    borderStyle: 'solid',
+    borderColor: 'other.transparentElement',
     borderRadius: 'sm',
-    overflow: 'hidden'
+    backgroundColor: 'background.primary'
 });

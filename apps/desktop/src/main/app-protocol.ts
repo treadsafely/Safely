@@ -2,6 +2,8 @@ import { net, protocol } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { APP_URL_SCHEME } from '@safely/ux/deep-link';
+
 import { contentSecurityPolicy } from './security';
 
 /**
@@ -13,9 +15,7 @@ import { contentSecurityPolicy } from './security';
  * `open-url` / argv. A deep link therefore has a different host than `APP_ORIGIN` and is blocked
  * by the navigation guard — it must be turned into a route, never navigated to.
  */
-export const APP_SCHEME = 'safely';
-
-export const APP_ORIGIN = `${APP_SCHEME}://app`;
+export const APP_ORIGIN = `${APP_URL_SCHEME}://app`;
 
 const APP_HOST = new URL(APP_ORIGIN).host;
 
@@ -25,7 +25,7 @@ export const appUrl = (pathname: string): string => `${APP_ORIGIN}${pathname}`;
 export function registerPrivilegedSchemes(): void {
     protocol.registerSchemesAsPrivileged([
         {
-            scheme: APP_SCHEME,
+            scheme: APP_URL_SCHEME,
             privileges: {
                 standard: true,
                 secure: true,
@@ -42,7 +42,7 @@ export function registerAppProtocol(rendererDir: string): void {
        protocol handler do not necessarily pass through it. */
     const policy = contentSecurityPolicy(undefined);
 
-    protocol.handle(APP_SCHEME, async request => {
+    protocol.handle(APP_URL_SCHEME, async request => {
         const { host, pathname } = new URL(request.url);
 
         if (host !== APP_HOST) {

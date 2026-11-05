@@ -8,12 +8,16 @@ import {
     useDeletePortfolio,
     useErrorToast,
     useLoader,
+    usePortfolios,
+    useSaveLedgerAccounts,
     useSetActivePortfolio,
     useToast,
     useTranslate
 } from '@safely/ux';
 
-export type WalletStep = 'select' | 'edit' | 'reveal' | 'remove';
+import { useLedgerFlow } from '../ledger';
+
+export type WalletStep = 'select' | 'edit' | 'reveal' | 'remove' | 'findMore';
 
 export function useWalletFlow() {
     const toast = useToast();
@@ -23,21 +27,39 @@ export function useWalletFlow() {
     const { mutateAsync: deletePortfolio } = useDeletePortfolio();
     const { mutateAsync: setActivePortfolio } = useSetActivePortfolio();
     const { mutateAsync: changePortfolioMeta } = useChangePortfolioMeta();
+    const portfolios = usePortfolios();
     const portfolio = useActivePortfolioEntitiesQuery()?.data?.portfolio ?? null;
 
     const [step, setStep] = useState<WalletStep | null>(null);
 
     const close = useCallback(() => setStep(null), []);
 
+    const ledger = useLedgerFlow({
+        portfolios,
+        onExit: close,
+        onDone: close,
+        saveAccounts: useSaveLedgerAccounts()
+    });
+
     const openSelect = useCallback(() => setStep('select'), []);
     const openEdit = useCallback(() => setStep('edit'), []);
     const openReveal = useCallback(() => setStep('reveal'), []);
     const openRemove = useCallback(() => setStep('remove'), []);
 
+    const startLedger = ledger.start;
+    const openFindMore = useCallback(() => {
+        if (portfolio === null) {
+            return;
+        }
+
+        startLedger(portfolio.id.toString());
+        setStep('findMore');
+    }, [portfolio, startLedger]);
+
     const select = useCallback(
-        async (id: Parameters<typeof setActivePortfolio>[0]['id']) => {
+        async (id: Parameters<typeof setActivePortfolio>[0]['id'], derivationIndex?: number) => {
             close();
-            await setActivePortfolio({ id });
+            await setActivePortfolio({ id, derivationIndex });
         },
         [close, setActivePortfolio]
     );
@@ -79,11 +101,13 @@ export function useWalletFlow() {
     return {
         step,
         portfolio,
+        ledger,
         close,
         openSelect,
         openEdit,
         openReveal,
         openRemove,
+        openFindMore,
         select,
         saveMeta,
         remove

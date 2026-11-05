@@ -2,12 +2,23 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import type { CryptoAssetAmount, Estimation, SendResult } from '@safely/core';
-import { btcBlockWaitingTimeMinutes, ellipsisMiddle } from '@safely/core';
-import type { SendFormResult } from '@safely/ux';
 import {
+    BLOCKCHAIN_NAME,
+    btcBlockWaitingTimeMinutes,
+    ellipsisMiddle,
+    LedgerSigningCancelledError,
+    PortfolioType
+} from '@safely/core';
+import type { SendConfirmationStatus, SendFormResult } from '@safely/ux';
+import {
+    isSendEstimateEnabled,
     orderAmounts,
-    useActiveBtcWallet,
+    selectSendChain,
+    useActiveFiat,
+    useActivePortfolio,
+    useActivePortfolioLedgerIndex,
     useActiveWalletMeta,
+    useAnalytics,
     useEstimateAssetTransfer,
     useExplorerFactory,
     useFiatEquivalent,
@@ -16,6 +27,7 @@ import {
     useParseEstimateError,
     useParseSendError,
     useSendAssetTransfer,
+    useSendChains,
     useTranslate
 } from '@safely/ux';
 import Copy16 from '@safely/ux/assets/icons/16/copy-16.svg?react';
@@ -29,12 +41,13 @@ import {
     heroStyles,
     iconSlotStyles,
     listStyles,
+    memoStyles,
     successIconStyles,
     successStyles
 } from './ConfirmStep.styles';
 import { RecipientName } from './RecipientName';
-import { AssetIcon, WalletIcon } from '../../entities';
-import { Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
+import { AssetLogo, WalletIcon } from '../../entities';
+import { Badge, Button, Icon, List, Modal, Skeleton, TableCell, Text } from '../../shared';
 
 export type ConfirmStepProps = {
     result: SendFormResult;
@@ -104,6 +117,73 @@ const AmountValue: FC<{ result: SendFormResult; maxAmount: CryptoAssetAmount | u
     );
 };
 
+function resolveStatus(state: {
+    sendResult: SendResult | null;
+    isSending: boolean;
+    sendError: unknown;
+}): SendConfirmationStatus {
+    if (state.sendResult !== null) return 'success';
+    if (state.isSending) return 'sending';
+    if (state.sendError !== null) return 'error';
+
+    return 'idle';
+}
+
+const RecipientCell: FC<{ result: SendFormResult }> = ({ result }) => {
+    const t = useTranslate();
+    const { recipient, recipientMeta } = result;
+
+    return (
+        <TableCell>
+            <TableCell.Column width="label">
+                <TableCell.Label>{t('confirmation.to')}</TableCell.Label>
+            </TableCell.Column>
+            <TableCell.Column>
+                {recipientMeta === undefined ? (
+                    <TableCell.Value>{ellipsisMiddle(recipient.address, 6)}</TableCell.Value>
+                ) : (
+                    <>
+                        <TableCell.Value>
+                            <RecipientName
+                                portfolioMeta={
+                                    recipientMeta.kind === 'portfolio'
+                                        ? recipientMeta.meta
+                                        : undefined
+                                }
+                                contactMeta={
+                                    recipientMeta.kind === 'contact'
+                                        ? recipientMeta.meta
+                                        : undefined
+                                }
+                            />
+                        </TableCell.Value>
+                        <TableCell.Label>{ellipsisMiddle(recipient.address, 6)}</TableCell.Label>
+                    </>
+                )}
+            </TableCell.Column>
+        </TableCell>
+    );
+};
+
+const MemoCell: FC<{ result: SendFormResult }> = ({ result }) => {
+    const t = useTranslate();
+
+    if (result.blockchain !== BLOCKCHAIN_NAME.FLAME || result.memo === '') {
+        return null;
+    }
+
+    return (
+        <TableCell>
+            <TableCell.Column width="label">
+                <TableCell.Label>{t('confirmation.memo')}</TableCell.Label>
+            </TableCell.Column>
+            <TableCell.Column>
+                <TableCell.Value className={memoStyles}>{result.memo}</TableCell.Value>
+            </TableCell.Column>
+        </TableCell>
+    );
+};
+
 const ErrorBlock: FC<{ title: string; message: string }> = ({ title, message }) => (
     <div className={errorBlockStyles}>
         <Text variant="labelL" tone="accentRed">
@@ -119,18 +199,23 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { result, onSent, onClose } = props;
 
     const t = useTranslate();
+    const fiat = useActiveFiat();
     const walletMeta = useActiveWalletMeta();
-    const wallet = useActiveBtcWallet();
+    const fromAddress = selectSendChain(useSendChains(), result.blockchain)?.address ?? '';
+    const isLedger = useActivePortfolio().type === PortfolioType.LEDGER;
+    const ledgerIndex = useActivePortfolioLedgerIndex();
     const explorerFactory = useExplorerFactory();
     const { openURL } = useLinking();
+    const analytics = useAnalytics();
 
     const [sendError, setSendError] = useState<unknown>(null);
     const [sendResult, setSendResult] = useState<SendResult | null>(null);
 
-    const { data: transaction, error: estimationError } = useEstimateAssetTransfer(result, {
-        enabled: sendResult === null
-    });
     const { mutateAsync: send, isPending: isSending } = useSendAssetTransfer();
+    const status = resolveStatus({ sendResult, isSending, sendError });
+    const { data: transaction, error: estimationError } = useEstimateAssetTransfer(result, {
+        enabled: isSendEstimateEnabled(result.blockchain, status)
+    });
 
     const parseSendError = useParseSendError();
     const parseEstimateError = useParseEstimateError();
@@ -144,13 +229,31 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const handleSend = async (): Promise<void> => {
         setSendError(null);
 
+        const fiatAmount = result.amount.fiatAssetAmount?.amount.toNumber() ?? 0;
+        const cryptoCurrency = result.amount.cryptoAssetAmount.asset.symbol;
+
         try {
             const broadcasted = await send(transaction);
 
             setSendResult(broadcasted);
             onSent();
+            void analytics.trackSendFinish({
+                cryptoCurrency,
+                fiatAmount,
+                fiatSymbol: fiat.id.symbol
+            });
         } catch (error) {
+            if (error instanceof LedgerSigningCancelledError) {
+                return;
+            }
+
             setSendError(error);
+            void analytics.trackSendFinish({
+                cryptoCurrency,
+                fiatAmount,
+                fiatSymbol: fiat.id.symbol,
+                error
+            });
         }
     };
 
@@ -160,10 +263,7 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                 {sendResult === null && (
                     <div className={heroStyles}>
                         <div className={iconSlotStyles}>
-                            <AssetIcon
-                                image={result.amount.cryptoAssetAmount.asset.image}
-                                size={72}
-                            />
+                            <AssetLogo asset={result.amount.cryptoAssetAmount.asset} size={72} />
                         </div>
                         <Text variant="titleM">
                             {t('confirmation.title', {
@@ -197,45 +297,17 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                                 <TableCell.Value>
                                     <WalletIcon icon={walletMeta.icon} />
                                     {walletMeta.name}
+                                    {ledgerIndex !== undefined && (
+                                        <Badge isUppercase>{ledgerIndex + 1}</Badge>
+                                    )}
                                 </TableCell.Value>
-                                <TableCell.Label>
-                                    {ellipsisMiddle(wallet.address, 6)}
-                                </TableCell.Label>
+                                <TableCell.Label>{ellipsisMiddle(fromAddress, 6)}</TableCell.Label>
                             </TableCell.Column>
                         </TableCell>
 
-                        <TableCell>
-                            <TableCell.Column width="label">
-                                <TableCell.Label>{t('confirmation.to')}</TableCell.Label>
-                            </TableCell.Column>
-                            <TableCell.Column>
-                                {result.recipientMeta === undefined ? (
-                                    <TableCell.Value>
-                                        {ellipsisMiddle(result.recipient.address, 6)}
-                                    </TableCell.Value>
-                                ) : (
-                                    <>
-                                        <TableCell.Value>
-                                            <RecipientName
-                                                portfolioMeta={
-                                                    result.recipientMeta.kind === 'portfolio'
-                                                        ? result.recipientMeta.meta
-                                                        : undefined
-                                                }
-                                                contactMeta={
-                                                    result.recipientMeta.kind === 'contact'
-                                                        ? result.recipientMeta.meta
-                                                        : undefined
-                                                }
-                                            />
-                                        </TableCell.Value>
-                                        <TableCell.Label>
-                                            {ellipsisMiddle(result.recipient.address, 6)}
-                                        </TableCell.Label>
-                                    </>
-                                )}
-                            </TableCell.Column>
-                        </TableCell>
+                        <RecipientCell result={result} />
+
+                        <MemoCell result={result} />
                     </List.Group>
 
                     <List.Group variant="divided">
@@ -356,7 +428,11 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
                         disabled={transaction === undefined}
                         onClick={() => void handleSend()}
                     >
-                        {t('confirmation.slider.send')}
+                        {t(
+                            isLedger
+                                ? 'confirmation.continueWithLedger'
+                                : 'confirmation.slider.send'
+                        )}
                     </Button>
                 )}
             </Modal.Actions>

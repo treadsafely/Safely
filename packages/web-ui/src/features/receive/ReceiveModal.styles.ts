@@ -53,6 +53,8 @@ export const addressStyles = css({
     cursor: 'pointer'
 });
 
+export const addressRestStyles = css({ color: 'text.secondary' });
+
 export const copiedStyles = css({
     position: 'absolute',
     bottom: '12',

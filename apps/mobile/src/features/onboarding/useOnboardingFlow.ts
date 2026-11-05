@@ -9,7 +9,7 @@ import {
     type PortfolioMetaIcon,
     type PortfolioNetworkType
 } from '@safely/core';
-import type { AccountPortfolioSource } from '@safely/ux';
+import type { AccountPortfolioSource, LedgerFirstPortfolio } from '@safely/ux';
 import { useAppContext, useCreateAccount, useErrorToast, useLoader } from '@safely/ux';
 
 // TODO IMPORT Discuss with Max what to do with this
@@ -80,15 +80,10 @@ export function useOnboardingFlow() {
     );
 
     const onLedgerReady = useCallback(
-        (
-            masterFingerprint: string,
-            deviceModel: string,
-            walletName: string,
-            accounts: { index: number; xpub: string; name: string }[]
-        ) => {
+        ({ firstPortfolio, firstPortfolioName }: LedgerFirstPortfolio) => {
             navigation.navigate('OnboardingPasscodeScreen', {
-                source: { kind: 'ledger', masterFingerprint, deviceModel, accounts },
-                firstPortfolioName: walletName,
+                source: firstPortfolio,
+                firstPortfolioName,
                 headerType: 'back'
             });
         },

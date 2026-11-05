@@ -6,7 +6,7 @@ const DRAG_THRESHOLD_PX = 4;
 const SETTLE_MS = 180;
 const SETTLE_TRANSITION = `transform ${SETTLE_MS}ms ease`;
 
-type ItemRect = {
+export type ItemRect = {
     id: string;
     top: number;
     height: number;
@@ -25,6 +25,7 @@ export type ReorderItemProps = {
     style: CSSProperties;
     isDragging: boolean;
     onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
+    onPointerDownCapture: () => void;
     onClickCapture: (event: { stopPropagation: () => void }) => void;
 };
 
@@ -39,8 +40,8 @@ export type UseReorderListReturn = {
     getItemProps: (id: string) => ReorderItemProps;
 };
 
-function moveItem(ids: string[], fromIndex: number, toIndex: number): string[] {
-    const next = [...ids];
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+    const next = [...items];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
 
@@ -63,12 +64,68 @@ function resolveGap(rects: ItemRect[]): number {
     return Math.max(0, rects[1].top - (rects[0].top + rects[0].height));
 }
 
-function resolveTargetIndex(rects: ItemRect[], fromIndex: number, offset: number): number {
-    const dragged = rects[fromIndex];
-    const center = dragged.top + offset + dragged.height / 2;
+function resolveLiveTops(rects: ItemRect[], fromIndex: number, toIndex: number): number[] {
+    const gap = resolveGap(rects);
+    const order = moveItem(
+        rects.map((_, index) => index),
+        fromIndex,
+        toIndex
+    );
+    const tops = new Array<number>(rects.length);
+    let top = rects[0]?.top ?? 0;
 
-    return rects.filter((rect, index) => index !== fromIndex && center > rect.top + rect.height / 2)
-        .length;
+    order.forEach(index => {
+        tops[index] = top;
+        top += rects[index].height + gap;
+    });
+
+    return tops;
+}
+
+export function resolveTargetIndex(
+    rects: ItemRect[],
+    fromIndex: number,
+    toIndex: number,
+    offset: number
+): number {
+    const dragged = rects[fromIndex];
+    const draggedTop = dragged.top + offset;
+    const draggedBottom = draggedTop + dragged.height;
+    const order = moveItem(
+        rects.map((_, index) => index),
+        fromIndex,
+        toIndex
+    );
+    const tops = resolveLiveTops(rects, fromIndex, toIndex);
+    const midpointAt = (slot: number): number => {
+        const index = order[slot];
+
+        return tops[index] + rects[index].height / 2;
+    };
+
+    let target = toIndex;
+
+    for (let slot = toIndex + 1; slot < rects.length; slot++) {
+        if (draggedBottom > midpointAt(slot)) {
+            target = slot;
+        } else {
+            break;
+        }
+    }
+
+    if (target !== toIndex) {
+        return target;
+    }
+
+    for (let slot = toIndex - 1; slot >= 0; slot--) {
+        if (draggedTop < midpointAt(slot)) {
+            target = slot;
+        } else {
+            break;
+        }
+    }
+
+    return target;
 }
 
 function resolveRestingOffset(rects: ItemRect[], fromIndex: number, toIndex: number): number {
@@ -162,7 +219,12 @@ export function useReorderList({ ids, onReorder }: UseReorderListParams): UseReo
                 return {
                     ...current,
                     offset,
-                    toIndex: resolveTargetIndex(rects.current, current.fromIndex, offset)
+                    toIndex: resolveTargetIndex(
+                        rects.current,
+                        current.fromIndex,
+                        current.toIndex,
+                        offset
+                    )
                 };
             });
         };
@@ -265,6 +327,9 @@ export function useReorderList({ ids, onReorder }: UseReorderListParams): UseReo
                 },
                 isDragging: drag?.id === id,
                 onPointerDown: event => handlePointerDown(id, event),
+                onPointerDownCapture: () => {
+                    hasMoved.current = false;
+                },
                 onClickCapture: event => {
                     if (hasMoved.current) {
                         event.stopPropagation();
