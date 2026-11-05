@@ -28,7 +28,7 @@ runs:
       run: |
         set -euo pipefail
 
-        # Guards against an unresolved `${{ secrets.* }}` literal, and against an unset secret.
+        # Guards against an unresolved secrets expression passed through verbatim, and against an unset secret.
         case "${SLACK_WEBHOOK_URL:-}" in
           https://*) ;;
           *)

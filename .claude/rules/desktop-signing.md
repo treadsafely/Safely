@@ -169,9 +169,18 @@ Three workflows. `desktop-build.yml` is the pipeline and runs only when called (
 | release | `report` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts the release, a failed `release`, a failed `prepare`, or a version bump that came with no release pull request; a failed or cancelled pipeline is reported by the pipeline itself, naming the unpublished tag |
 
 The Slack post itself is the composite action `.github/actions/desktop-slack-report`, shared by both
-`report` jobs. A caller passes `BUILD_NUMBER_TOKEN` and `SLACK_WEBHOOK_URL` explicitly rather than
-`secrets: inherit`; the environment secrets reach `build` and `upload` through their own
-`environment:`, which is matched against the caller's ref.
+`report` jobs. A caller passes every secret by name rather than `secrets: inherit` — the two
+repository secrets and the seven `desktop-release` ones — and `desktop-build.yml` declares each
+under `workflow_call.secrets`, so a caller that drops one fails validation instead of building. The
+environment secrets are resolved by the called job's own `environment:`, which is matched against
+the caller's ref, but **only when the caller has passed them by name**: an environment secret the
+caller does not pass is an empty string in the called workflow, with no error anywhere. That is
+how every run from the split of the workflows (2026-11-02) to 2026-11-05 failed in `Import signing
+identities` with `SecKeychainItemImport: One or more parameters passed to a function were not
+valid` — `security import` of an empty file — while the environment held all seven secrets. The
+composite action also has a limit of its own: the runner evaluates `${{ … }}` inside a `run:`
+block, comments included, and a composite action has no `secrets` context, so a literal `secrets.*`
+in a shell comment there fails the template validation of the whole `report` job.
 
 **A release branch is TestFlight only; the release is the merge into master**, the same shape as
 mobile's `release-draft.yml` + `release-assets.yml`. Publishing the release creates the tag
