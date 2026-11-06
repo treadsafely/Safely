@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 
 import { SPACE } from '@safely/core';
 import type { ActivityRowView } from '@safely/ux';
@@ -9,6 +9,7 @@ import { cx } from '@safely/web-ui/styled-system/css';
 
 import {
     cellStyles,
+    columnsStyles,
     endCellStyles,
     gridStyles,
     interactiveStyles,
@@ -26,9 +27,24 @@ export type ActivityTableRowProps = Pick<
 > & {
     dateLabel: string;
     direction: ActivityDirection;
-    isCompact?: boolean;
     isSelected?: boolean;
     onSelect?: () => void;
+};
+
+export type ActivityTableGridProps = {
+    isCompact?: boolean;
+    className?: string;
+    children: ReactNode;
+};
+
+export const ActivityTableGrid: FC<ActivityTableGridProps> = props => {
+    const { isCompact, className, children } = props;
+
+    return (
+        <div className={cx(columnsStyles, className)} data-compact={isCompact || undefined}>
+            {children}
+        </div>
+    );
 };
 
 const DIRECTION_ICONS: Record<ActivityDirection, IconAsset> = {
@@ -46,7 +62,6 @@ export const ActivityTableRow: FC<ActivityTableRowProps> = props => {
         counterparty,
         dateLabel,
         direction,
-        isCompact,
         isSelected,
         onSelect
     } = props;
@@ -64,7 +79,7 @@ export const ActivityTableRow: FC<ActivityTableRowProps> = props => {
                 {dateLabel}
             </Text>
             <span className={typeStyles}>
-                <Icon asset={DIRECTION_ICONS[direction]} tone="primary" />
+                <Icon asset={DIRECTION_ICONS[direction]} tone="tertiary" />
                 <Text variant="bodyM" isTruncated>
                     {title}
                 </Text>
@@ -82,21 +97,14 @@ export const ActivityTableRow: FC<ActivityTableRowProps> = props => {
         </>
     );
 
-    const compact = isCompact || undefined;
-
     if (onSelect === undefined) {
-        return (
-            <div className={gridStyles} data-compact={compact}>
-                {cells}
-            </div>
-        );
+        return <div className={gridStyles}>{cells}</div>;
     }
 
     return (
         <button
             type="button"
             className={cx(gridStyles, interactiveStyles)}
-            data-compact={compact}
             data-selected={isSelected || undefined}
             onClick={onSelect}
         >

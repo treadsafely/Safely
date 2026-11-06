@@ -6,7 +6,7 @@ import { useRelativeDateLabel, useTranslate } from '@safely/ux';
 import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { loaderStyles, sentinelStyles, tableStyles } from './HistoryTable.styles';
 import type { ActivityDirection } from '../../entities';
-import { ActivityTableRow, ActivityTableRowSkeleton } from '../../entities';
+import { ActivityTableGrid, ActivityTableRow, ActivityTableRowSkeleton } from '../../entities';
 import { Spinner, useOnVisible } from '../../shared';
 
 const SKELETON_ROWS = [0, 1, 2];
@@ -61,11 +61,11 @@ export const HistoryTable = <TActivity,>(props: HistoryTableProps<TActivity>): R
 
     if (!groups) {
         return (
-            <div className={tableStyles}>
+            <ActivityTableGrid className={tableStyles}>
                 {SKELETON_ROWS.map(row => (
                     <ActivityTableRowSkeleton key={row} />
                 ))}
-            </div>
+            </ActivityTableGrid>
         );
     }
 
@@ -74,7 +74,7 @@ export const HistoryTable = <TActivity,>(props: HistoryTableProps<TActivity>): R
     }
 
     return (
-        <div className={tableStyles}>
+        <ActivityTableGrid className={tableStyles}>
             {groups
                 .flatMap(group => group.rows)
                 .map(row => (
@@ -100,6 +100,6 @@ export const HistoryTable = <TActivity,>(props: HistoryTableProps<TActivity>): R
                     <Spinner />
                 </div>
             )}
-        </div>
+        </ActivityTableGrid>
     );
 };

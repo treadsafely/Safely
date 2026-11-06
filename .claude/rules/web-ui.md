@@ -93,9 +93,12 @@ recipe at the first design change, and nothing in lint or CI compares them. When
 look the primitive lacks, the variant goes into the recipe (`panda/recipes/*.recipe.ts` — and into
 `staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history table is
 the worked example of the one case a local `css()` is right: a flat grid row
-(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own column
-template and hover/selected states — while its loading state is still `Skeleton`, not five copies
-of one pulsing bar.
+(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own
+hover/selected states — while its loading state is still `Skeleton`, not five copies of one
+pulsing bar. The column template lives on `ActivityTableGrid`, the container, and a row is a
+`subgrid` spanning it: that is what lets the date column be `minmax(172px, max-content)` and still
+align across rows, since `max-content` is resolved over the whole table. A row rendered alone (the
+amount-display preview) is wrapped in that container too, or it collapses into one column.
 
 **A screen region picks its chain from the active portfolio, never from a prop a page guesses.**
 A portfolio has one chain on the web targets — BTC, or Flame for a Demo wallet — so
