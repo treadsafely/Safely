@@ -13,7 +13,6 @@ import {
     fieldStyles,
     inputStyles,
     labelStyles,
-    pickedInputStyles,
     mirrorStyles,
     pickedRowStyles,
     recognisedNameStyles,
@@ -114,7 +113,8 @@ export const AddressInput: FC<AddressInputProps> = props => {
                         <textarea
                             ref={inputRef}
                             rows={1}
-                            className={`${inputStyles} ${pickedInputStyles}`}
+                            className={inputStyles}
+                            data-picked=""
                             value={shortAddress}
                             spellCheck={false}
                             onChange={event =>
