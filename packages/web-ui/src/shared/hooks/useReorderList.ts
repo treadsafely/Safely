@@ -20,6 +20,11 @@ type DragState = {
     isReleasing: boolean;
 };
 
+export type DragBounds = {
+    top: number;
+    bottom: number;
+};
+
 export type ReorderItemProps = {
     ref: (node: HTMLDivElement | null) => void;
     style: CSSProperties;
@@ -54,6 +59,32 @@ function measure(ids: string[], nodes: Map<string, HTMLDivElement>): ItemRect[] 
 
         return { id, top: rect?.top ?? 0, height: rect?.height ?? 0 };
     });
+}
+
+const CLIPPING_OVERFLOW = new Set(['auto', 'scroll', 'hidden']);
+
+function resolveBounds(rects: ItemRect[], node: HTMLDivElement | undefined): DragBounds {
+    const last = rects[rects.length - 1];
+    let top = rects[0]?.top ?? 0;
+    let bottom = last === undefined ? top : last.top + last.height;
+
+    for (let el = node?.parentElement; el !== null && el !== undefined; el = el.parentElement) {
+        if (CLIPPING_OVERFLOW.has(getComputedStyle(el).overflowY)) {
+            const rect = el.getBoundingClientRect();
+
+            top = Math.max(top, rect.top);
+            bottom = Math.min(bottom, rect.bottom);
+        }
+    }
+
+    return { top, bottom };
+}
+
+export function clampOffset(dragged: ItemRect, bounds: DragBounds, offset: number): number {
+    const min = bounds.top - dragged.top;
+    const max = Math.max(min, bounds.bottom - dragged.height - dragged.top);
+
+    return Math.min(max, Math.max(min, offset));
 }
 
 function resolveGap(rects: ItemRect[]): number {
@@ -165,6 +196,7 @@ export function useReorderList({ ids, onReorder }: UseReorderListParams): UseReo
     const key = ids.join('|');
     const nodes = useRef(new Map<string, HTMLDivElement>());
     const rects = useRef<ItemRect[]>([]);
+    const bounds = useRef<DragBounds>({ top: 0, bottom: 0 });
     const origin = useRef(0);
     const hasMoved = useRef(false);
     const isSettlingRef = useRef(false);
@@ -208,13 +240,19 @@ export function useReorderList({ ids, onReorder }: UseReorderListParams): UseReo
                     return current;
                 }
 
-                const offset = event.clientY - origin.current;
+                const pointerOffset = event.clientY - origin.current;
 
-                if (!hasMoved.current && Math.abs(offset) < DRAG_THRESHOLD_PX) {
+                if (!hasMoved.current && Math.abs(pointerOffset) < DRAG_THRESHOLD_PX) {
                     return current;
                 }
 
                 hasMoved.current = true;
+
+                const offset = clampOffset(
+                    rects.current[current.fromIndex],
+                    bounds.current,
+                    pointerOffset
+                );
 
                 return {
                     ...current,
@@ -299,6 +337,7 @@ export function useReorderList({ ids, onReorder }: UseReorderListParams): UseReo
             }
 
             rects.current = measure(latest.current.orderedIds, nodes.current);
+            bounds.current = resolveBounds(rects.current, nodes.current.get(id));
             origin.current = event.clientY;
             hasMoved.current = false;
             setDrag({ id, fromIndex, toIndex: fromIndex, offset: 0, isReleasing: false });
