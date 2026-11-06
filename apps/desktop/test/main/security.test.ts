@@ -161,6 +161,57 @@ describe('session permissions', () => {
     });
 });
 
+describe('cors rewrite', () => {
+    type HeadersListener = (
+        details: {
+            url: string;
+            method: string;
+            statusLine: string;
+            resourceType: string;
+            responseHeaders: Record<string, string[]>;
+        },
+        callback: (response: { responseHeaders?: Record<string, string[]> }) => void
+    ) => void;
+
+    const preflight = async (url: string): Promise<Record<string, string[]>> => {
+        vi.clearAllMocks();
+        vi.resetModules();
+
+        const { hardenSession } = await import('../../src/main/security');
+
+        hardenSession(undefined);
+
+        const listener = onHeadersReceived.mock.calls[0]?.[0] as HeadersListener;
+        let headers: Record<string, string[]> = {};
+
+        listener(
+            {
+                url,
+                method: 'OPTIONS',
+                statusLine: 'HTTP/1.1 204 No Content',
+                resourceType: 'xhr',
+                responseHeaders: {}
+            },
+            response => {
+                headers = response.responseHeaders ?? {};
+            }
+        );
+
+        return headers;
+    };
+
+    it('allows every custom header the api clients send on a preflight', async () => {
+        const headers = await preflight('https://analytics.safely.app/v1/events');
+        const allowed = headers['access-control-allow-headers']?.[0]?.split(', ') ?? [];
+
+        expect(allowed).toEqual(expect.arrayContaining(['authorization', 'x-project-token']));
+    });
+
+    it('leaves a foreign host untouched', async () => {
+        expect(await preflight('https://analytics.twitter.com/i/adsct')).toEqual({});
+    });
+});
+
 describe('content security policy', () => {
     it('admits WebAssembly and nothing else beyond the app scripts in production', async () => {
         const { contentSecurityPolicy } = await import('../../src/main/security');
