@@ -4,7 +4,7 @@ import { useTranslate } from '@safely/ux';
 import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 import { cx } from '@safely/web-ui/styled-system/css';
 
-import { bodyStyles, popupStyles, shadowStyles } from './StepCard.styles';
+import { bodyStyles, popupStyles, shadowStyles, trailingStyles } from './StepCard.styles';
 import { Button } from '../Button';
 import { Icon } from '../Icon';
 import { Modal } from '../Modal';
@@ -45,7 +45,7 @@ export const StepCard: FC<StepCardProps> = props => {
                             </Button>
                         )}
 
-                        {trailing}
+                        {trailing !== undefined && <div className={trailingStyles}>{trailing}</div>}
                     </Modal.Header>
                 )}
 

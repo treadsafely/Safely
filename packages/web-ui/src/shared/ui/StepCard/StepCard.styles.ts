@@ -4,6 +4,8 @@ export const popupStyles = css({ width: '600px', minHeight: '600px' });
 
 export const shadowStyles = css({ boxShadow: '0 16px 32px 0 rgba(0, 0, 0, 0.16)' });
 
+export const trailingStyles = css({ marginLeft: 'auto' });
+
 export const bodyStyles = css({
     display: 'flex',
     flexDirection: 'column',
