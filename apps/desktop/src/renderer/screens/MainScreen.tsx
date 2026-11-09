@@ -7,7 +7,7 @@ import {
     useSearch
 } from '@tanstack/react-router';
 import type { FC } from 'react';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 
 import { useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
 import type { DevConfig, MainLocation } from '@safely/web-ui';
@@ -24,7 +24,7 @@ import { SecuritySection, useDeepLinks } from '../features';
 import { platform } from '../platform';
 import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
 
-export const MainScreen: FC = () => {
+const MainScreenContent: FC = () => {
     const { hasWindowControls, isFullScreen } = useRouteContext({ from: '__root__' });
     const navigate = useNavigate();
     const hasPortfolio = useHasPortfolio();
@@ -91,3 +91,9 @@ export const MainScreen: FC = () => {
         </DevConfigProvider>
     );
 };
+
+export const MainScreen: FC = () => (
+    <Suspense fallback={null}>
+        <MainScreenContent />
+    </Suspense>
+);

@@ -225,6 +225,19 @@ loader are portalled to `document.body`, so anything left mounted would paint ov
 state (an open flow's inner step), not the location; after unlock the user is back on the same route
 with the same `?modal=`.
 
+`MainScreen` owns a `Suspense` with no fallback below the route component, and it sits there on
+purpose. The first `MainScreen` after onboarding suspends on data the persister has never held, and
+the only boundary above it is the router's own — the root match's, or one per match once a
+`pendingComponent` / `defaultPendingComponent` exists — which is reconciled across routes: the
+welcome tree is then hidden, not unmounted, and React hides a suspended tree by `display: none` on
+its top-most host nodes only, so the welcome card, a modal portalled from inside the page's root
+`div`, kept painting on a blank window for as long as the main data took (SAF-831). A boundary
+under the route component is mounted fresh with the component-type change, so the welcome tree is
+deleted and the window stays on `background.primary` until main renders. Do not move it to a router
+pending component: that reintroduces the shared boundary. A transition cannot hold the previous
+screen either — the router's store is read through `useSyncExternalStore`, which renders every
+navigation synchronously.
+
 **The passcode flow lives in `src/renderer/features/`**, one feature per factor and per scenario:
 `passcode` (hooks, lockout, the prompt store, `PasscodeSetupFlow`, `ChangePasscodeFlow`), `biometry`
 and `app-lock` (`AppLock` plus the lock-screen toggle). It is the counterpart of mobile's
