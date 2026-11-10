@@ -103,7 +103,10 @@ export const SecurityScreen = () => {
                                     onPress={handleLockScreenToggle}
                                 />
                             </Cell>
-                            <Cell onPress={handleChangePasscode}>
+                            <Cell
+                                testID={TEST_ID.security.changePasscode}
+                                onPress={handleChangePasscode}
+                            >
                                 <Cell.Content>
                                     <Cell.Row>
                                         <Cell.Title>

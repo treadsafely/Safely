@@ -242,7 +242,7 @@ jobs:
   # Runs on the APK from build_android (no separate e2e build).
   # The flows are a chain — each starts from the state the previous one left
   # (onboarding -> add wallets -> recovery phrase -> import wallet -> send ->
-  # lock screen -> wipe + onboarding import), so the order below matters
+  # lock screen -> sign out + onboarding import), so the order below matters
   # (keep in sync with .maestro/config.yaml). The flows read MAESTRO_SEED_PHRASE /
   # MAESTRO_IMPORTED_WALLET_ADDRESS / MAESTRO_WATCH_ONLY_ADDRESS /
   # MAESTRO_RECIPIENT_ADDRESS from the EAS

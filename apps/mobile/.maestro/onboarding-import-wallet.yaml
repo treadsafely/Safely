@@ -1,6 +1,11 @@
-# Step 8 (last) of the e2e chain: first-run import from the welcome screen —
-# the path a user restoring a wallet on a new phone takes. Wipes app data,
-# so it must stay last: nothing after it can rely on the previous state.
+# Step 8 (last) of the e2e chain: sign out of the (only) account, then do a
+# first-run import from the welcome screen — the path a user restoring a
+# wallet on a new phone takes.
+#
+# Starts from the state app-lock finished in: lock screen enabled, passcode 5678.
+# Signing out of the last account erases all app data and reloads the app;
+# if anything survives, the welcome screen crashes ("opened with an existing
+# account") and this flow fails. Must stay last.
 appId: com.safely.wallet
 name: onboarding-import-wallet
 tags:
@@ -8,9 +13,67 @@ tags:
     - onboarding
     - import
 ---
-- launchApp:
-      clearState: true
+# Relaunch WITHOUT clearState — signing out is part of the test.
+- launchApp
 
+# Home renders under the lock overlay, so wait for it, then unlock if locked.
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+- runFlow:
+      when:
+          visible:
+              id: 'lockScreen.screen'
+      commands:
+          - tapOn:
+                text: '5'
+                childOf:
+                    id: 'lockScreen.screen'
+          - tapOn:
+                text: '6'
+                childOf:
+                    id: 'lockScreen.screen'
+          - tapOn:
+                text: '7'
+                childOf:
+                    id: 'lockScreen.screen'
+          - tapOn:
+                text: '8'
+                childOf:
+                    id: 'lockScreen.screen'
+- extendedWaitUntil:
+      notVisible:
+          id: 'lockScreen.screen'
+      timeout: 15000
+
+# Settings -> "Sign out of <account>" -> confirm.
+- tapOn:
+      id: 'home.settingsButton'
+- scrollUntilVisible:
+      element:
+          id: 'settings.signOutAccount'
+      direction: DOWN
+      timeout: 15000
+- tapOn:
+      id: 'settings.signOutAccount'
+- extendedWaitUntil:
+      visible:
+          id: 'signOutAccount.confirmButton'
+      timeout: 15000
+- waitForAnimationToEnd
+# Without linked devices the sheet asks to tick "I understand" first.
+- runFlow:
+      when:
+          visible:
+              id: 'signOutAccount.checkbox'
+      commands:
+          - tapOn:
+                id: 'signOutAccount.checkbox'
+- tapOn:
+      id: 'signOutAccount.confirmButton'
+
+# All data is erased and the app reloads into onboarding.
 - extendedWaitUntil:
       visible:
           id: 'welcome.importWallet'

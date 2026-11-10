@@ -4,6 +4,8 @@
 #
 # Remembers the generated wallet's receive address, reveals its phrase,
 # imports the phrase as a new wallet and expects the same receive address.
+# Then removes that restored wallet again and checks it is gone from the
+# wallet list — so the chain does not carry a duplicate wallet further.
 # (A generated wallet has a master-key-derived id, so re-importing its phrase
 # is not detected as a duplicate — it is added as a separate imported wallet,
 # which becomes the active one.)
@@ -125,11 +127,16 @@ tags:
 - tapOn:
       id: 'importWallet.continueButton'
 
-# Customize step: the name is prefilled, just save.
+# Customize step: give the restored wallet a recognizable name,
+# used below to check that removing it really removes it.
 - extendedWaitUntil:
       visible:
-          id: 'customizeWallet.saveButton'
+          id: 'customizeWallet.nameInput'
       timeout: 15000
+- tapOn:
+      id: 'customizeWallet.nameInput'
+- eraseText: 50
+- inputText: 'E2E Restored'
 - tapOn:
       id: 'customizeWallet.saveButton'
 
@@ -175,3 +182,85 @@ tags:
 - assertVisible:
       id: 'receive.address'
       text: ${output.generatedAddress}
+
+# ---- Remove the restored wallet ----
+- launchApp
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+# It is the active one: its name is in the home header.
+- assertVisible: 'E2E Restored'
+
+# Settings -> current wallet -> "Remove wallet" -> confirm sheet.
+- tapOn:
+      id: 'home.settingsButton'
+- extendedWaitUntil:
+      visible:
+          id: 'settings.currentWallet'
+      timeout: 15000
+- tapOn:
+      id: 'settings.currentWallet'
+- scrollUntilVisible:
+      element:
+          id: 'walletSettings.removeWallet'
+      direction: DOWN
+      timeout: 15000
+- tapOn:
+      id: 'walletSettings.removeWallet'
+- extendedWaitUntil:
+      visible:
+          id: 'removeWallet.confirmButton'
+      timeout: 15000
+- waitForAnimationToEnd
+# The "I understand" checkbox is shown only for some wallet states.
+- runFlow:
+      when:
+          visible:
+              id: 'removeWallet.checkbox'
+      commands:
+          - tapOn:
+                id: 'removeWallet.checkbox'
+- tapOn:
+      id: 'removeWallet.confirmButton'
+
+# Removing a wallet requires passcode verification.
+- extendedWaitUntil:
+      visible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
+
+# Navigation resets to home with another wallet active.
+- extendedWaitUntil:
+      notVisible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- extendedWaitUntil:
+      visible:
+          id: 'home.walletSelector'
+      timeout: 30000
+
+# The removed wallet must be gone from the wallet list.
+- tapOn:
+      id: 'home.walletSelector'
+- extendedWaitUntil:
+      visible:
+          id: 'accounts.addWallet'
+      timeout: 15000
+- assertNotVisible: 'E2E Restored'

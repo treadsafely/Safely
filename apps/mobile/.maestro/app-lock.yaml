@@ -1,7 +1,9 @@
-# Step 7 of the e2e chain: the lock screen survives an app restart.
+# Step 7 of the e2e chain: lock screen + passcode change survive an app restart.
 # Starts from any onboarded state (passcode 1234, biometry skipped).
-# Leaves the lock screen ENABLED — the next flow (onboarding-import-wallet)
-# wipes the app with clearState, so nothing after it is affected.
+#
+# Leaves the lock screen ENABLED and the passcode changed to 5678 — the next
+# flow (onboarding-import-wallet) unlocks with 5678 and then signs out,
+# which wipes everything.
 appId: com.safely.wallet
 name: app-lock
 tags:
@@ -54,13 +56,83 @@ tags:
       text: '4'
       childOf:
           id: 'passcodeVerification.screen'
-
-# Let the verification close and the setting get persisted before killing the app.
 - extendedWaitUntil:
       notVisible:
           id: 'passcodeVerification.screen'
       timeout: 15000
 - waitForAnimationToEnd
+
+# Change passcode 1234 -> 5678: verify the current one, then enter + re-enter the new one.
+- tapOn:
+      id: 'security.changePasscode'
+- extendedWaitUntil:
+      visible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
+- extendedWaitUntil:
+      visible:
+          id: 'changePasscode.screen'
+      timeout: 15000
+- waitForAnimationToEnd
+- tapOn:
+      text: '5'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '6'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '7'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '8'
+      childOf:
+          id: 'changePasscode.screen'
+# Let the "enter" -> "re-enter" transition settle before typing again.
+- waitForAnimationToEnd
+- tapOn:
+      text: '5'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '6'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '7'
+      childOf:
+          id: 'changePasscode.screen'
+- tapOn:
+      text: '8'
+      childOf:
+          id: 'changePasscode.screen'
+# On success the screen closes back to Security.
+- extendedWaitUntil:
+      notVisible:
+          id: 'changePasscode.screen'
+      timeout: 15000
+- extendedWaitUntil:
+      visible:
+          id: 'security.lockScreenSwitch'
+      timeout: 15000
 
 # Cold start: the lock screen must be shown before anything else.
 # Note: the lock overlay is drawn on top of the navigation tree, so home
@@ -72,30 +144,8 @@ tags:
           id: 'lockScreen.screen'
       timeout: 60000
 
-# A wrong passcode keeps the app locked (1 failed attempt — lockout starts after 3).
+# The OLD passcode must no longer work (1 failed attempt — lockout starts after 3).
 # Digits are scoped to the lock screen so they never hit text on home underneath.
-- tapOn:
-      text: '0'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '0'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '0'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '0'
-      childOf:
-          id: 'lockScreen.screen'
-# Error shake + input reset take ~300ms.
-- waitForAnimationToEnd
-- assertVisible:
-      id: 'lockScreen.screen'
-
-# The correct passcode unlocks: the overlay goes away and home is usable.
 - tapOn:
       text: '1'
       childOf:
@@ -112,7 +162,28 @@ tags:
       text: '4'
       childOf:
           id: 'lockScreen.screen'
+# Error shake + input reset take ~300ms.
+- waitForAnimationToEnd
+- assertVisible:
+      id: 'lockScreen.screen'
 
+# The NEW passcode unlocks: the overlay goes away and home is usable.
+- tapOn:
+      text: '5'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '6'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '7'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '8'
+      childOf:
+          id: 'lockScreen.screen'
 - extendedWaitUntil:
       notVisible:
           id: 'lockScreen.screen'

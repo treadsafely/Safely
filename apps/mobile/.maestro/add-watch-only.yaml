@@ -50,6 +50,23 @@ tags:
           id: 'home.settingsButton'
       timeout: 60000
 
+# A watch-only wallet has no keys: Send must open the watch-only hint,
+# never the send form.
+- tapOn:
+      id: 'home.sendButton'
+- extendedWaitUntil:
+      visible:
+          id: 'watchOnlySheet.screen'
+      timeout: 15000
+- assertNotVisible:
+      id: 'send.addressInput'
+- tapOn:
+      id: 'watchOnlySheet.okButton'
+- extendedWaitUntil:
+      notVisible:
+          id: 'watchOnlySheet.screen'
+      timeout: 15000
+
 # Verify the watch-only wallet tracks exactly the address we entered:
 # the receive screen must display MAESTRO_WATCH_ONLY_ADDRESS.
 - tapOn:

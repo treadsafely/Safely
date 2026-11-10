@@ -35,16 +35,34 @@ export const TEST_ID = {
     },
     settings: {
         currentWallet: 'settings.currentWallet',
-        security: 'settings.security'
+        security: 'settings.security',
+        signOutAccount: 'settings.signOutAccount'
+    },
+    signOutAccount: {
+        checkbox: 'signOutAccount.checkbox',
+        confirmButton: 'signOutAccount.confirmButton'
     },
     security: {
-        lockScreenSwitch: 'security.lockScreenSwitch'
+        lockScreenSwitch: 'security.lockScreenSwitch',
+        changePasscode: 'security.changePasscode'
+    },
+    changePasscode: {
+        screen: 'changePasscode.screen'
     },
     lockScreen: {
         screen: 'lockScreen.screen'
     },
     walletSettings: {
-        recoveryPhrase: 'walletSettings.recoveryPhrase'
+        recoveryPhrase: 'walletSettings.recoveryPhrase',
+        removeWallet: 'walletSettings.removeWallet'
+    },
+    removeWallet: {
+        checkbox: 'removeWallet.checkbox',
+        confirmButton: 'removeWallet.confirmButton'
+    },
+    watchOnlySheet: {
+        screen: 'watchOnlySheet.screen',
+        okButton: 'watchOnlySheet.okButton'
     },
     recovery: {
         revealButton: 'recovery.revealButton',
@@ -76,6 +94,7 @@ export const TEST_ID = {
         error: 'importWallet.error'
     },
     customizeWallet: {
+        nameInput: 'customizeWallet.nameInput',
         saveButton: 'customizeWallet.saveButton'
     },
     passcodeVerification: {

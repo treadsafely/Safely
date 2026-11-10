@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PortfolioType } from '@safely/core';
 import { useActivePortfolio } from '@safely/ux';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { Cell, Text } from '@mobile/shared/ui';
 
 import { styles } from './RemovePortfolioButton.styles';
@@ -30,7 +31,12 @@ export const RemovePortfolioButton = (props: RemovePortfolioButtonProps) => {
     );
 
     return (
-        <Cell showDivider={showDivider} background="accentRed" onPress={handleDeletePortfolio}>
+        <Cell
+            testID={TEST_ID.walletSettings.removeWallet}
+            showDivider={showDivider}
+            background="accentRed"
+            onPress={handleDeletePortfolio}
+        >
             <Cell.Content>
                 <Cell.Row style={styles.row}>
                     <Text variant="labelL" textAlign="center" style={styles.text}>
