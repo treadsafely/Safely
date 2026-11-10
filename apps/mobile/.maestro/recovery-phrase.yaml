@@ -1,9 +1,12 @@
 # Step 3 of the e2e chain: the recovery phrase shown to the user must restore
-# exactly the wallet it belongs to. Starts from the state create-wallet
-# finished in: the freshly generated wallet is the active one, passcode 1234.
+# the wallet it belongs to. Starts from the state create-wallet finished in:
+# the freshly generated wallet is the active one, passcode 1234.
 #
-# Reveals the phrase, reads all 12 words, then imports them back and expects
-# the "wallet already added" screen — i.e. the phrase derives the same wallet.
+# Remembers the generated wallet's receive address, reveals its phrase,
+# imports the phrase as a new wallet and expects the same receive address.
+# (A generated wallet has a master-key-derived id, so re-importing its phrase
+# is not detected as a duplicate — it is added as a separate imported wallet,
+# which becomes the active one.)
 appId: com.safely.wallet
 name: recovery-phrase
 tags:
@@ -13,6 +16,24 @@ tags:
 # Relaunch WITHOUT clearState — we continue on top of the previous flow's state.
 - launchApp
 
+- extendedWaitUntil:
+      visible:
+          id: 'home.receiveButton'
+      timeout: 60000
+
+# Remember the generated wallet's receive address.
+- tapOn:
+      id: 'home.receiveButton'
+- extendedWaitUntil:
+      visible:
+          id: 'receive.address'
+      timeout: 15000
+- copyTextFrom:
+      id: 'receive.address'
+- evalScript: ${output.generatedAddress = maestro.copiedText.trim()}
+
+# Restart to drop the receive modal.
+- launchApp
 - extendedWaitUntil:
       visible:
           id: 'home.settingsButton'
@@ -42,15 +63,26 @@ tags:
       id: 'recovery.revealButton'
 
 # Decrypting the mnemonic requires passcode verification.
-- runFlow:
-      when:
-          visible:
-              id: 'passcodeVerification.screen'
-      commands:
-          - tapOn: '1'
-          - tapOn: '2'
-          - tapOn: '3'
-          - tapOn: '4'
+- extendedWaitUntil:
+      visible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
 
 - extendedWaitUntil:
       visible:
@@ -66,8 +98,8 @@ tags:
           - copyTextFrom:
                 id: ${'recovery.word.' + output.wordIndex}
           - evalScript:
-                ${output.recoveryPhrase = (output.recoveryPhrase + ' ' + maestro.copiedText).trim();
-                output.wordIndex = output.wordIndex + 1}
+                ${output.recoveryPhrase = (output.recoveryPhrase + ' ' +
+                maestro.copiedText.trim()).trim(); output.wordIndex = output.wordIndex + 1}
 - assertTrue: ${output.recoveryPhrase.split(' ').length === 12}
 
 # Restart to drop the settings modals and get back to home.
@@ -93,15 +125,53 @@ tags:
 - tapOn:
       id: 'importWallet.continueButton'
 
-# Same wallet -> duplicate detected before customize/passcode.
+# Customize step: the name is prefilled, just save.
 - extendedWaitUntil:
       visible:
-          id: 'walletAlreadyAdded.screen'
-      timeout: 30000
+          id: 'customizeWallet.saveButton'
+      timeout: 15000
 - tapOn:
-      id: 'walletAlreadyAdded.openButton'
+      id: 'customizeWallet.saveButton'
 
+# Encrypting the imported secret requires passcode verification.
 - extendedWaitUntil:
       visible:
-          id: 'home.settingsButton'
-      timeout: 30000
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
+
+# Import, then navigation resets to home with the imported wallet active.
+- extendedWaitUntil:
+      notVisible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- extendedWaitUntil:
+      visible:
+          id: 'home.receiveButton'
+      timeout: 60000
+
+# The phrase must derive the very same receive address.
+- tapOn:
+      id: 'home.receiveButton'
+- extendedWaitUntil:
+      visible:
+          id: 'receive.address'
+      timeout: 15000
+- assertVisible:
+      id: 'receive.address'
+      text: ${output.generatedAddress}

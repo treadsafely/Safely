@@ -81,6 +81,10 @@ tags:
 # Note: a pending tx from a previous run (< ~1 block ago) would also match;
 # the list is sorted newest-first and scrolls to the new tx, so this is
 # acceptable for a smoke check.
+- extendedWaitUntil:
+      visible:
+          id: 'home.asset.btc'
+      timeout: 30000
 - tapOn:
       id: 'home.asset.btc'
 - extendedWaitUntil:

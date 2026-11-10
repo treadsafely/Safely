@@ -47,9 +47,17 @@ tags:
 - assertNotVisible:
       id: 'customizeWallet.saveButton'
 
-# Clear the field (95 chars typed) and enter the real phrase;
-# editing the input resets the error.
-- eraseText: 150
+# Go back and reopen the screen to get an empty field — more reliable than
+# erasing text in the masked native input.
+- tapOn:
+      id: 'importWallet.backButton'
+- tapOn:
+      id: 'addWallet.importExisting'
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.continueButton'
+      timeout: 15000
+- waitForAnimationToEnd
 - assertNotVisible:
       id: 'importWallet.error'
 - inputText: ${MAESTRO_SEED_PHRASE}

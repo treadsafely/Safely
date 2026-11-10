@@ -8,7 +8,6 @@ import { View } from 'react-native';
 import type { Portfolio, PortfolioMeta } from '@safely/core';
 import { getPortfolioDisplayName, useChangePortfolioMeta, useSetActivePortfolio } from '@safely/ux';
 
-import { TEST_ID } from '@mobile/shared/constants';
 import { Button, Screen, Text } from '@mobile/shared/ui';
 
 import { styles } from './WalletAlreadyAddedScreen.styles';
@@ -64,7 +63,7 @@ export const WalletAlreadyAddedScreen = (props: WalletAlreadyAddedScreenProps) =
                 <Screen.Header.BackButton />
             </Screen.Header>
             <Screen>
-                <View style={styles.container} testID={TEST_ID.walletAlreadyAdded.screen}>
+                <View style={styles.container}>
                     <View style={styles.centerBlock}>
                         <Text variant="titleM" textAlign="center">
                             {t('walletAlreadyAdded.title', { name: walletDisplayName })}
@@ -75,12 +74,7 @@ export const WalletAlreadyAddedScreen = (props: WalletAlreadyAddedScreenProps) =
                     </View>
 
                     <View style={styles.buttons}>
-                        <Button
-                            testID={TEST_ID.walletAlreadyAdded.openButton}
-                            type="primary"
-                            size="large"
-                            onPress={handleOpen}
-                        >
+                        <Button type="primary" size="large" onPress={handleOpen}>
                             {t('walletAlreadyAdded.open')}
                         </Button>
                         <Button type="secondary" size="large" onPress={handleEdit}>

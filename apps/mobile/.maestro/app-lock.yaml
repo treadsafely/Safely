@@ -38,10 +38,22 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
 
 # Let the verification close and the setting get persisted before killing the app.
 - extendedWaitUntil:
@@ -51,6 +63,9 @@ tags:
 - waitForAnimationToEnd
 
 # Cold start: the lock screen must be shown before anything else.
+# Note: the lock overlay is drawn on top of the navigation tree, so home
+# elements underneath stay in the view hierarchy — assert on the lock screen
+# itself, not on the absence of home elements.
 - launchApp
 - extendedWaitUntil:
       visible:
@@ -58,26 +73,49 @@ tags:
       timeout: 60000
 
 # A wrong passcode keeps the app locked (1 failed attempt — lockout starts after 3).
-- tapOn: '0'
-- tapOn: '0'
-- tapOn: '0'
-- tapOn: '0'
+# Digits are scoped to the lock screen so they never hit text on home underneath.
+- tapOn:
+      text: '0'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '0'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '0'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '0'
+      childOf:
+          id: 'lockScreen.screen'
 # Error shake + input reset take ~300ms.
 - waitForAnimationToEnd
 - assertVisible:
       id: 'lockScreen.screen'
-- assertNotVisible:
-      id: 'home.settingsButton'
 
-# The correct passcode unlocks.
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+# The correct passcode unlocks: the overlay goes away and home is usable.
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'lockScreen.screen'
 
 - extendedWaitUntil:
-      visible:
-          id: 'home.settingsButton'
-      timeout: 30000
-- assertNotVisible:
-      id: 'lockScreen.screen'
+      notVisible:
+          id: 'lockScreen.screen'
+      timeout: 15000
+- assertVisible:
+      id: 'home.settingsButton'

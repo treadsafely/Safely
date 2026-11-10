@@ -51,10 +51,6 @@ export const TEST_ID = {
         /** 1-based, matches the number shown next to the word */
         word: (index: number) => `recovery.word.${index}`
     },
-    walletAlreadyAdded: {
-        screen: 'walletAlreadyAdded.screen',
-        openButton: 'walletAlreadyAdded.openButton'
-    },
     receive: {
         address: 'receive.address'
     },
@@ -75,6 +71,7 @@ export const TEST_ID = {
         cancelXpubButton: 'watchOnly.cancelXpubButton'
     },
     importWallet: {
+        backButton: 'importWallet.backButton',
         continueButton: 'importWallet.continueButton',
         error: 'importWallet.error'
     },
