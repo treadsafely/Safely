@@ -16,7 +16,9 @@
     "test:all": "pnpm run test:js && pnpm run test:ios && pnpm run test:android",
     "test:js": "vitest run",
     "test:ios": "cd modules/safely-crypto/ios && swift test && cd ../../safely-push-content/ios && swift test",
-    "test:android": "cd modules/safely-crypto/android/host-test && ./gradlew test && cd ../../../safely-push-content/android/host-test && ./gradlew test"
+    "test:android": "cd modules/safely-crypto/android/host-test && ./gradlew test && cd ../../../safely-push-content/android/host-test && ./gradlew test",
+    "e2e": "maestro test .maestro",
+    "e2e:no-send": "maestro test .maestro --exclude-tags send"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^1.2.0",
