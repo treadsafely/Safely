@@ -84,7 +84,12 @@ tags:
 - tapOn: '4'
 
 # Import + initial sync, then navigation resets to home
-# with the imported wallet active.
+# with the imported wallet active. Home stays in the hierarchy under the
+# modals, so wait for the customize screen to go away first.
+- extendedWaitUntil:
+      notVisible:
+          id: 'customizeWallet.saveButton'
+      timeout: 60000
 - extendedWaitUntil:
       visible:
           id: 'home.settingsButton'

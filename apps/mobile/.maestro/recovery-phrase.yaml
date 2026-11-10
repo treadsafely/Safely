@@ -163,14 +163,21 @@ tags:
           id: 'passcodeVerification.screen'
 
 # Import, then navigation resets to home with the imported wallet active.
+# Home stays in the hierarchy under the modals, so wait for the customize
+# screen to go away, then for the restored wallet's name in the home header —
+# otherwise the receive check below could run against the generated wallet
+# (which has the same address) and pass even if the import failed.
 - extendedWaitUntil:
       notVisible:
           id: 'passcodeVerification.screen'
       timeout: 15000
 - extendedWaitUntil:
-      visible:
-          id: 'home.receiveButton'
+      notVisible:
+          id: 'customizeWallet.saveButton'
       timeout: 60000
+- extendedWaitUntil:
+      visible: 'E2E Restored'
+      timeout: 15000
 
 # The phrase must derive the very same receive address.
 - tapOn:
@@ -252,9 +259,12 @@ tags:
           id: 'passcodeVerification.screen'
       timeout: 15000
 - extendedWaitUntil:
-      visible:
-          id: 'home.walletSelector'
+      notVisible:
+          id: 'removeWallet.confirmButton'
       timeout: 30000
+- extendedWaitUntil:
+      notVisible: 'E2E Restored'
+      timeout: 15000
 
 # The removed wallet must be gone from the wallet list.
 - tapOn:

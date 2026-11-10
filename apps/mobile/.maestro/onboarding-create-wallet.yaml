@@ -35,13 +35,34 @@ tags:
 - tapOn: '3'
 - tapOn: '4'
 
-- runFlow:
-      when:
-          visible:
-              id: 'biometry.skip'
+# Account creation runs behind a loader, then the optional biometry and
+# notifications prompts (either may be skipped by the app, e.g. when the
+# notification permission is already decided). Poll for them every ~2s.
+- repeat:
+      times: 30
+      while:
+          notVisible:
+              id: 'home.settingsButton'
       commands:
-          - tapOn:
-                id: 'biometry.skip'
+          - runFlow:
+                when:
+                    visible:
+                        id: 'biometry.skip'
+                commands:
+                    - tapOn:
+                          id: 'biometry.skip'
+          - runFlow:
+                when:
+                    visible:
+                        id: 'onboarding.notificationsLater'
+                commands:
+                    - tapOn:
+                          id: 'onboarding.notificationsLater'
+          - extendedWaitUntil:
+                visible:
+                    id: 'home.settingsButton'
+                timeout: 2000
+                optional: true
 
 # We should now be on the home tab.
 - extendedWaitUntil:

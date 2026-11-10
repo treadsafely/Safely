@@ -16,35 +16,36 @@ tags:
 # Relaunch WITHOUT clearState — signing out is part of the test.
 - launchApp
 
-# Home renders under the lock overlay, so wait for it, then unlock if locked.
+# app-lock left the lock screen enabled, so a cold start must show it.
+# Wait for it explicitly: a conditional check right after launch could run
+# before the overlay is drawn and then tap "through" it.
 - extendedWaitUntil:
       visible:
-          id: 'home.settingsButton'
+          id: 'lockScreen.screen'
       timeout: 60000
-- runFlow:
-      when:
-          visible:
-              id: 'lockScreen.screen'
-      commands:
-          - tapOn:
-                text: '5'
-                childOf:
-                    id: 'lockScreen.screen'
-          - tapOn:
-                text: '6'
-                childOf:
-                    id: 'lockScreen.screen'
-          - tapOn:
-                text: '7'
-                childOf:
-                    id: 'lockScreen.screen'
-          - tapOn:
-                text: '8'
-                childOf:
-                    id: 'lockScreen.screen'
+- tapOn:
+      text: '5'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '6'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '7'
+      childOf:
+          id: 'lockScreen.screen'
+- tapOn:
+      text: '8'
+      childOf:
+          id: 'lockScreen.screen'
 - extendedWaitUntil:
       notVisible:
           id: 'lockScreen.screen'
+      timeout: 15000
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
       timeout: 15000
 
 # Settings -> "Sign out of <account>" -> confirm.
