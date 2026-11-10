@@ -6,6 +6,9 @@
  * so matching by visible text is locale-fragile.
  */
 export const TEST_ID = {
+    onboarding: {
+        notificationsLater: 'onboarding.notificationsLater'
+    },
     welcome: {
         createWallet: 'welcome.createWallet',
         importWallet: 'welcome.importWallet',
@@ -20,7 +23,37 @@ export const TEST_ID = {
         settingsButton: 'home.settingsButton',
         walletSelector: 'home.walletSelector',
         sendButton: 'home.sendButton',
-        receiveButton: 'home.receiveButton'
+        receiveButton: 'home.receiveButton',
+        asset: {
+            btc: 'home.asset.btc',
+            flame: 'home.asset.flame'
+        }
+    },
+    history: {
+        item: 'history.item',
+        pendingItem: 'history.pendingItem'
+    },
+    settings: {
+        currentWallet: 'settings.currentWallet',
+        security: 'settings.security'
+    },
+    security: {
+        lockScreenSwitch: 'security.lockScreenSwitch'
+    },
+    lockScreen: {
+        screen: 'lockScreen.screen'
+    },
+    walletSettings: {
+        recoveryPhrase: 'walletSettings.recoveryPhrase'
+    },
+    recovery: {
+        revealButton: 'recovery.revealButton',
+        /** 1-based, matches the number shown next to the word */
+        word: (index: number) => `recovery.word.${index}`
+    },
+    walletAlreadyAdded: {
+        screen: 'walletAlreadyAdded.screen',
+        openButton: 'walletAlreadyAdded.openButton'
     },
     receive: {
         address: 'receive.address'
@@ -42,7 +75,8 @@ export const TEST_ID = {
         cancelXpubButton: 'watchOnly.cancelXpubButton'
     },
     importWallet: {
-        continueButton: 'importWallet.continueButton'
+        continueButton: 'importWallet.continueButton',
+        error: 'importWallet.error'
     },
     customizeWallet: {
         saveButton: 'customizeWallet.saveButton'

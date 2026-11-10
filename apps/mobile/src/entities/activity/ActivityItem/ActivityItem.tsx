@@ -16,6 +16,7 @@ export type ActivityItemProps = Omit<ActivityRowView, 'key' | 'activity'> & {
     background?: CellContainerProps['background'];
     note?: string | null;
     onPress?: () => void;
+    testID?: string;
 };
 
 const Counterparty = ({ counterparty }: { counterparty: ActivityCounterparty }) => {
@@ -63,7 +64,8 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
         background = isPending ? 'tertiary' : 'secondary',
         counterparty,
         note,
-        onPress
+        onPress,
+        testID
     } = props;
     const amountOrder = useTransactionHistoryAmountOrder();
 
@@ -75,6 +77,7 @@ export const ActivityItem = memo((props: ActivityItemProps) => {
 
     return (
         <Cell
+            testID={testID}
             containerStyle={styles.border}
             background={background}
             showDivider={false}

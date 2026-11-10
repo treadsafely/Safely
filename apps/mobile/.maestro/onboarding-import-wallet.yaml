@@ -1,0 +1,86 @@
+# Step 8 (last) of the e2e chain: first-run import from the welcome screen —
+# the path a user restoring a wallet on a new phone takes. Wipes app data,
+# so it must stay last: nothing after it can rely on the previous state.
+appId: com.safely.wallet
+name: onboarding-import-wallet
+tags:
+    - smoke
+    - onboarding
+    - import
+---
+- launchApp:
+      clearState: true
+
+- extendedWaitUntil:
+      visible:
+          id: 'welcome.importWallet'
+      timeout: 60000
+- tapOn:
+      id: 'welcome.importWallet'
+
+# The seed input autofocuses ~400ms after the screen gets focus.
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.continueButton'
+      timeout: 15000
+- waitForAnimationToEnd
+- inputText: ${MAESTRO_SEED_PHRASE}
+- tapOn:
+      id: 'importWallet.continueButton'
+
+# Passcode setup: enter + re-enter.
+- waitForAnimationToEnd
+- tapOn: '1'
+- tapOn: '2'
+- tapOn: '3'
+- tapOn: '4'
+- waitForAnimationToEnd
+- tapOn: '1'
+- tapOn: '2'
+- tapOn: '3'
+- tapOn: '4'
+
+# Account creation runs behind a loader (import derives + syncs, so it can take
+# a while), then the optional biometry / notifications prompts. Poll for them
+# every ~2s instead of a fixed wait, since either may be skipped by the app.
+- repeat:
+      times: 30
+      while:
+          notVisible:
+              id: 'home.settingsButton'
+      commands:
+          - runFlow:
+                when:
+                    visible:
+                        id: 'biometry.skip'
+                commands:
+                    - tapOn:
+                          id: 'biometry.skip'
+          - runFlow:
+                when:
+                    visible:
+                        id: 'onboarding.notificationsLater'
+                commands:
+                    - tapOn:
+                          id: 'onboarding.notificationsLater'
+          - extendedWaitUntil:
+                visible:
+                    id: 'home.settingsButton'
+                timeout: 2000
+                optional: true
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+
+# The imported wallet must be the one derived from MAESTRO_SEED_PHRASE.
+- tapOn:
+      id: 'home.receiveButton'
+- extendedWaitUntil:
+      visible:
+          id: 'receive.address'
+      timeout: 15000
+- assertVisible:
+      id: 'receive.address'
+      text: ${MAESTRO_IMPORTED_WALLET_ADDRESS}

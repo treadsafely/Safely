@@ -1,4 +1,4 @@
-# Step 3 of the e2e chain: adds a watch-only wallet for MAESTRO_WATCH_ONLY_ADDRESS.
+# Step 4 of the e2e chain: adds a watch-only wallet for MAESTRO_WATCH_ONLY_ADDRESS.
 # Starts from the state create-wallet finished in (any onboarded state works —
 # the flow only needs a wallet on the home screen and passcode 1234).
 appId: com.safely.wallet

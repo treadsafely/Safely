@@ -1,0 +1,107 @@
+# Step 3 of the e2e chain: the recovery phrase shown to the user must restore
+# exactly the wallet it belongs to. Starts from the state create-wallet
+# finished in: the freshly generated wallet is the active one, passcode 1234.
+#
+# Reveals the phrase, reads all 12 words, then imports them back and expects
+# the "wallet already added" screen — i.e. the phrase derives the same wallet.
+appId: com.safely.wallet
+name: recovery-phrase
+tags:
+    - smoke
+    - recovery
+---
+# Relaunch WITHOUT clearState — we continue on top of the previous flow's state.
+- launchApp
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+
+# Settings -> current wallet -> "Recovery phrase" -> confirm sheet -> reveal.
+- tapOn:
+      id: 'home.settingsButton'
+- extendedWaitUntil:
+      visible:
+          id: 'settings.currentWallet'
+      timeout: 15000
+- tapOn:
+      id: 'settings.currentWallet'
+- extendedWaitUntil:
+      visible:
+          id: 'walletSettings.recoveryPhrase'
+      timeout: 15000
+- tapOn:
+      id: 'walletSettings.recoveryPhrase'
+- extendedWaitUntil:
+      visible:
+          id: 'recovery.revealButton'
+      timeout: 15000
+- waitForAnimationToEnd
+- tapOn:
+      id: 'recovery.revealButton'
+
+# Decrypting the mnemonic requires passcode verification.
+- runFlow:
+      when:
+          visible:
+              id: 'passcodeVerification.screen'
+      commands:
+          - tapOn: '1'
+          - tapOn: '2'
+          - tapOn: '3'
+          - tapOn: '4'
+
+- extendedWaitUntil:
+      visible:
+          id: 'recovery.word.12'
+      timeout: 15000
+
+# Read the words one by one (recovery.word.1 .. recovery.word.12)
+# and join them into output.recoveryPhrase.
+- evalScript: ${output.recoveryPhrase = ''; output.wordIndex = 1}
+- repeat:
+      times: 12
+      commands:
+          - copyTextFrom:
+                id: ${'recovery.word.' + output.wordIndex}
+          - evalScript:
+                ${output.recoveryPhrase = (output.recoveryPhrase + ' ' + maestro.copiedText).trim();
+                output.wordIndex = output.wordIndex + 1}
+- assertTrue: ${output.recoveryPhrase.split(' ').length === 12}
+
+# Restart to drop the settings modals and get back to home.
+- launchApp
+- extendedWaitUntil:
+      visible:
+          id: 'home.walletSelector'
+      timeout: 60000
+
+# Wallet selector popup -> "Add wallet" -> "Import existing" with the revealed phrase.
+- tapOn:
+      id: 'home.walletSelector'
+- tapOn:
+      id: 'accounts.addWallet'
+- tapOn:
+      id: 'addWallet.importExisting'
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.continueButton'
+      timeout: 15000
+- waitForAnimationToEnd
+- inputText: ${output.recoveryPhrase}
+- tapOn:
+      id: 'importWallet.continueButton'
+
+# Same wallet -> duplicate detected before customize/passcode.
+- extendedWaitUntil:
+      visible:
+          id: 'walletAlreadyAdded.screen'
+      timeout: 30000
+- tapOn:
+      id: 'walletAlreadyAdded.openButton'
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 30000

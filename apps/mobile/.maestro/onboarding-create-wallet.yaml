@@ -1,5 +1,6 @@
 # Step 1 of the e2e chain (see executionOrder in config.yaml):
-# onboarding -> create-wallet -> add-watch-only -> import-wallet -> send-asset.
+# onboarding -> create-wallet -> recovery-phrase -> add-watch-only ->
+# import-wallet -> send-asset -> app-lock -> onboarding-import-wallet.
 # Each flow starts from the state the previous one finished in.
 appId: com.safely.wallet
 name: onboarding-create-wallet

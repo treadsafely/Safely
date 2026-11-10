@@ -100,7 +100,11 @@ export const SeedPhraseImportForm = ({ onMnemonicReady }: SeedPhraseImportFormPr
                             sensitive
                         />
                         {error && (
-                            <Text variant="bodyM" color="accentRed">
+                            <Text
+                                testID={TEST_ID.importWallet.error}
+                                variant="bodyM"
+                                color="accentRed"
+                            >
                                 {error}
                             </Text>
                         )}

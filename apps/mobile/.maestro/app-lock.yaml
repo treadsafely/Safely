@@ -1,0 +1,83 @@
+# Step 7 of the e2e chain: the lock screen survives an app restart.
+# Starts from any onboarded state (passcode 1234, biometry skipped).
+# Leaves the lock screen ENABLED — the next flow (onboarding-import-wallet)
+# wipes the app with clearState, so nothing after it is affected.
+appId: com.safely.wallet
+name: app-lock
+tags:
+    - smoke
+    - security
+---
+# Relaunch WITHOUT clearState — we continue on top of the previous flow's state.
+- launchApp
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+
+# Settings -> Security -> enable "Lock screen".
+- tapOn:
+      id: 'home.settingsButton'
+- scrollUntilVisible:
+      element:
+          id: 'settings.security'
+      direction: DOWN
+      timeout: 15000
+- tapOn:
+      id: 'settings.security'
+- extendedWaitUntil:
+      visible:
+          id: 'security.lockScreenSwitch'
+      timeout: 15000
+- tapOn:
+      id: 'security.lockScreenSwitch'
+
+# Toggling the setting requires passcode verification.
+- extendedWaitUntil:
+      visible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- tapOn: '1'
+- tapOn: '2'
+- tapOn: '3'
+- tapOn: '4'
+
+# Let the verification close and the setting get persisted before killing the app.
+- extendedWaitUntil:
+      notVisible:
+          id: 'passcodeVerification.screen'
+      timeout: 15000
+- waitForAnimationToEnd
+
+# Cold start: the lock screen must be shown before anything else.
+- launchApp
+- extendedWaitUntil:
+      visible:
+          id: 'lockScreen.screen'
+      timeout: 60000
+
+# A wrong passcode keeps the app locked (1 failed attempt — lockout starts after 3).
+- tapOn: '0'
+- tapOn: '0'
+- tapOn: '0'
+- tapOn: '0'
+# Error shake + input reset take ~300ms.
+- waitForAnimationToEnd
+- assertVisible:
+      id: 'lockScreen.screen'
+- assertNotVisible:
+      id: 'home.settingsButton'
+
+# The correct passcode unlocks.
+- tapOn: '1'
+- tapOn: '2'
+- tapOn: '3'
+- tapOn: '4'
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 30000
+- assertNotVisible:
+      id: 'lockScreen.screen'

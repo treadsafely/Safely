@@ -1,4 +1,4 @@
-# Step 4 of the e2e chain: imports a wallet from MAESTRO_SEED_PHRASE.
+# Step 5 of the e2e chain: imports a wallet from MAESTRO_SEED_PHRASE.
 # Needs an onboarded state: a wallet on the home screen, passcode 1234,
 # biometry skipped. Must run right before send-asset — the imported wallet
 # becomes the active one, and send-asset sends from the active wallet.
@@ -31,6 +31,27 @@ tags:
           id: 'importWallet.continueButton'
       timeout: 15000
 - waitForAnimationToEnd
+
+# Negative check first: 12 valid BIP39 words with a broken checksum
+# ("abandon" x12 — the valid phrase ends with "about") must be rejected
+# with an error, and the form must stay on screen.
+- inputText:
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon
+      abandon'
+- tapOn:
+      id: 'importWallet.continueButton'
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.error'
+      timeout: 10000
+- assertNotVisible:
+      id: 'customizeWallet.saveButton'
+
+# Clear the field (95 chars typed) and enter the real phrase;
+# editing the input resets the error.
+- eraseText: 150
+- assertNotVisible:
+      id: 'importWallet.error'
 - inputText: ${MAESTRO_SEED_PHRASE}
 
 - tapOn:

@@ -6,6 +6,7 @@ import { useAppState } from '@safely/ux';
 
 import { usePasscodeVerification } from '@mobile/entities/security';
 import { authenticateBiometry, getBiometryIcon, useBiometryQuery } from '@mobile/features/biometry';
+import { TEST_ID } from '@mobile/shared/constants';
 import { LockoutContent, PasscodeView, Screen, Text } from '@mobile/shared/ui';
 
 import { LogOutConfirmSheet } from './LogOutConfirmSheet';
@@ -102,6 +103,7 @@ export const LockContent = ({ onUnlock }: LockContentProps) => {
                 </Screen.Header>
 
                 <PasscodeView
+                    testID={TEST_ID.lockScreen.screen}
                     title={t('lockScreen.title')}
                     numberOfDigits={digitsAmount}
                     value={inputValue}

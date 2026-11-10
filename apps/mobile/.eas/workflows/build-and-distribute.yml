@@ -241,9 +241,11 @@ jobs:
 
   # Runs on the APK from build_android (no separate e2e build).
   # The flows are a chain — each starts from the state the previous one left
-  # (onboarding -> add wallets -> import wallet -> send), so the order below
-  # matters. The flows read MAESTRO_SEED_PHRASE / MAESTRO_IMPORTED_WALLET_ADDRESS /
-  # MAESTRO_WATCH_ONLY_ADDRESS / MAESTRO_RECIPIENT_ADDRESS from the EAS
+  # (onboarding -> add wallets -> recovery phrase -> import wallet -> send ->
+  # lock screen -> wipe + onboarding import), so the order below matters
+  # (keep in sync with .maestro/config.yaml). The flows read MAESTRO_SEED_PHRASE /
+  # MAESTRO_IMPORTED_WALLET_ADDRESS / MAESTRO_WATCH_ONLY_ADDRESS /
+  # MAESTRO_RECIPIENT_ADDRESS from the EAS
   # environment (Maestro exposes MAESTRO_-prefixed env vars to flows).
   e2e_android:
     name: E2E (Maestro, Android)
@@ -255,9 +257,12 @@ jobs:
         [
           '.maestro/onboarding-create-wallet.yaml',
           '.maestro/create-wallet.yaml',
+          '.maestro/recovery-phrase.yaml',
           '.maestro/add-watch-only.yaml',
           '.maestro/import-wallet.yaml',
           '.maestro/send-asset.yaml',
+          '.maestro/app-lock.yaml',
+          '.maestro/onboarding-import-wallet.yaml',
         ]
 
   # Aggregates TestFlight + Android build + e2e results into a Slack message.

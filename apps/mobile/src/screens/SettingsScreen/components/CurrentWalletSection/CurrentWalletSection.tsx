@@ -6,6 +6,7 @@ import { PortfolioType } from '@safely/core';
 import { useActivePortfolio } from '@safely/ux';
 
 import { PortfolioName } from '@mobile/entities/portfolio';
+import { TEST_ID } from '@mobile/shared/constants';
 import { Button, Cell, List } from '@mobile/shared/ui';
 
 import { styles } from './CurrentWalletSection.styles';
@@ -26,6 +27,7 @@ export const CurrentWalletSection = () => {
             </List.Title>
             <List.Group variant="divided">
                 <Cell
+                    testID={TEST_ID.settings.currentWallet}
                     onPress={() =>
                         navigation.navigate('SettingsModal', { screen: 'WalletSettingsModal' })
                     }
