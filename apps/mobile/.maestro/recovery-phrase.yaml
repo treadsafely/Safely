@@ -34,11 +34,13 @@ tags:
 - evalScript: ${output.generatedAddress = maestro.copiedText.trim()}
 
 # Close the receive modal (cheaper than a cold restart).
+# Home stays in the hierarchy under modals, so wait for the modal to go away
+# rather than for home to be "visible".
 - tapOn:
       id: 'receive.closeButton'
 - extendedWaitUntil:
-      visible:
-          id: 'home.settingsButton'
+      notVisible:
+          id: 'receive.address'
       timeout: 15000
 
 # Settings -> current wallet -> "Recovery phrase" -> confirm sheet -> reveal.
@@ -105,24 +107,31 @@ tags:
 - assertTrue: ${output.recoveryPhrase.split(' ').length === 12}
 
 # Close the phrase sheet -> back from wallet settings -> close settings.
-# (The reveal confirm sheet closes itself once we navigate away from it.)
+# Screens underneath stay in the hierarchy, so before each tap wait for the
+# screen on top to disappear. The reveal confirm sheet closes itself (with an
+# animation) once wallet settings regains focus.
 - tapOn:
       id: 'recovery.closeButton'
 - extendedWaitUntil:
-      visible:
-          id: 'walletSettings.backButton'
+      notVisible:
+          id: 'recovery.word.1'
       timeout: 15000
+- extendedWaitUntil:
+      notVisible:
+          id: 'recovery.revealButton'
+      timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
       id: 'walletSettings.backButton'
 - extendedWaitUntil:
-      visible:
-          id: 'settings.closeButton'
+      notVisible:
+          id: 'walletSettings.recoveryPhrase'
       timeout: 15000
 - tapOn:
       id: 'settings.closeButton'
 - extendedWaitUntil:
-      visible:
-          id: 'home.walletSelector'
+      notVisible:
+          id: 'settings.currentWallet'
       timeout: 15000
 
 # Wallet selector popup -> "Add wallet" -> "Import existing" with the revealed phrase.
@@ -142,7 +151,7 @@ tags:
       id: 'importWallet.continueButton'
 
 # Customize step: give the restored wallet a recognizable name,
-# used below to check that removing it really removes it.
+# used below to make sure the receive check runs against it.
 - extendedWaitUntil:
       visible:
           id: 'customizeWallet.nameInput'
