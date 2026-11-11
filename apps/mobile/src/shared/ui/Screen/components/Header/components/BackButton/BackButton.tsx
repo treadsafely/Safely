@@ -6,14 +6,15 @@ import { Button } from '@mobile/shared/ui/Screen/components/Header/components/Bu
 
 type BackButtonProps = {
     type?: 'rounded' | 'translucent';
+    testID?: string;
 };
 
 export const BackButton = (props: BackButtonProps) => {
-    const { type } = props;
+    const { type, testID } = props;
     const navigation = useContext(NavigationContext);
 
     return (
-        <Button type={type} onPress={() => navigation?.goBack()}>
+        <Button type={type} testID={testID} onPress={() => navigation?.goBack()}>
             <Icon icon={ArrowLeft16} />
         </Button>
     );

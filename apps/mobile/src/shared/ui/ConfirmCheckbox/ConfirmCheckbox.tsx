@@ -7,13 +7,14 @@ interface ConfirmCheckboxProps {
     text: string;
     isChecked: boolean;
     onToggle: () => void;
+    testID?: string;
 }
 
 export const ConfirmCheckbox = (props: ConfirmCheckboxProps) => {
-    const { text, isChecked, onToggle } = props;
+    const { text, isChecked, onToggle, testID } = props;
 
     return (
-        <TouchableOpacity onPress={onToggle} style={styles.container}>
+        <TouchableOpacity testID={testID} onPress={onToggle} style={styles.container}>
             <Text variant="bodyM" color="primary" style={styles.text}>
                 {text}
             </Text>

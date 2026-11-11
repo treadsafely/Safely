@@ -8,6 +8,7 @@ import { useActivePortfolioWallets, usePortfolioAssets } from '@safely/ux';
 
 import type { AssetCellProps } from '@mobile/entities/asset';
 import { AssetCellSkeleton, BtcAssetCell, FlameAssetCell } from '@mobile/entities/asset';
+import { TEST_ID } from '@mobile/shared/constants';
 import { List } from '@mobile/shared/ui';
 
 import { styles } from './AssetsList.styles';
@@ -15,19 +16,29 @@ import { styles } from './AssetsList.styles';
 type ChainAssetItem = {
     Cell: ComponentType<Omit<AssetCellProps, 'image' | 'footer'>>;
     screen: 'BtcScreen' | 'FlameScreen';
+    testID: string;
 };
 
 const ITEM_BY_CHAIN: Record<Recipient['blockchain'], ChainAssetItem> = {
-    [BLOCKCHAIN_NAME.BTC]: { Cell: BtcAssetCell, screen: 'BtcScreen' },
-    [BLOCKCHAIN_NAME.FLAME]: { Cell: FlameAssetCell, screen: 'FlameScreen' }
+    [BLOCKCHAIN_NAME.BTC]: {
+        Cell: BtcAssetCell,
+        screen: 'BtcScreen',
+        testID: TEST_ID.home.asset.btc
+    },
+    [BLOCKCHAIN_NAME.FLAME]: {
+        Cell: FlameAssetCell,
+        screen: 'FlameScreen',
+        testID: TEST_ID.home.asset.flame
+    }
 };
 
 const AssetItem = ({ asset, rated }: { asset: PortfolioAsset; rated: RatedCryptoAssetAmount }) => {
     const navigation = useNavigation();
-    const { Cell, screen } = ITEM_BY_CHAIN[asset.blockchain];
+    const { Cell, screen, testID } = ITEM_BY_CHAIN[asset.blockchain];
 
     return (
         <Cell
+            testID={testID}
             onPress={() => {
                 void navigation.navigate('TabsNavigator', {
                     screen: 'HomeStack',

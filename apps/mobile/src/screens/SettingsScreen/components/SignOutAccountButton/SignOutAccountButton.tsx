@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useActiveAccountMeta } from '@safely/ux';
 
 import { useSignOutAccountConfirmation } from '@mobile/features/settings/useSignOutAccountConfirmation';
+import { TEST_ID } from '@mobile/shared/constants';
 import { Cell, Text } from '@mobile/shared/ui';
 
 import { styles } from './SignOutAccountButton.styles';
@@ -18,7 +19,12 @@ export const SignOutAccountButton = (props: SignOutAccountButtonProps) => {
     const handleSignOut = useSignOutAccountConfirmation();
 
     return (
-        <Cell showDivider={showDivider} background="accentRed" onPress={handleSignOut}>
+        <Cell
+            testID={TEST_ID.settings.signOutAccount}
+            showDivider={showDivider}
+            background="accentRed"
+            onPress={handleSignOut}
+        >
             <Cell.Content>
                 <Cell.Row style={styles.row}>
                     <Text variant="labelL" textAlign="center" style={styles.text}>

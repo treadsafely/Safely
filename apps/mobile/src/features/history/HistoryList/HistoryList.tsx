@@ -6,6 +6,7 @@ import { useWindowDimensions, View } from 'react-native';
 import type { HistoryGroupView } from '@safely/ux';
 
 import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
+import { TEST_ID } from '@mobile/shared/constants';
 import { List, Screen, Text } from '@mobile/shared/ui';
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
 
@@ -56,7 +57,16 @@ export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>) => {
                     </View>
                 );
             case 'activity':
-                return <ActivityItem {...item.props} />;
+                return (
+                    <ActivityItem
+                        {...item.props}
+                        testID={
+                            item.props.isPending
+                                ? TEST_ID.history.pendingItem
+                                : TEST_ID.history.item
+                        }
+                    />
+                );
         }
     }, []);
 

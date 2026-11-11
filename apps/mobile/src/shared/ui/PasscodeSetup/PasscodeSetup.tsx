@@ -20,6 +20,7 @@ type PasscodeSetupProps = {
     description?: string;
     reenterDescription?: string;
     onComplete: (passcode: string) => void | Promise<void>;
+    testID?: string;
 };
 
 const PasscodeSetupHeaderButton = ({ type }: { type: PasscodeSetupHeaderType }) => {
@@ -41,7 +42,8 @@ export const PasscodeSetup = ({
     reenterTitle,
     description,
     reenterDescription,
-    onComplete
+    onComplete,
+    testID
 }: PasscodeSetupProps) => {
     const { t } = useTranslation();
 
@@ -109,6 +111,7 @@ export const PasscodeSetup = ({
             </Screen.Header>
 
             <PasscodeView
+                testID={testID}
                 title={currentTitle}
                 description={currentDescription}
                 numberOfDigits={passcodeState.digitsAmount}

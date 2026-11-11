@@ -16,6 +16,7 @@ import {
 } from '@safely/ux';
 
 import { AssetLogo, FlameLogo } from '@mobile/entities/asset';
+import { TEST_ID } from '@mobile/shared/constants';
 import { GradientBackground, Screen, SegmentedControl, Text } from '@mobile/shared/ui';
 
 import { QRCodeBlock } from './components/QRCodeBlock/QRCodeBlock';
@@ -116,7 +117,7 @@ export const ReceiveAssetModal = () => {
                         <SegmentedControl segments={tabs} value={chain} onChange={setSelected} />
                     )}
                 </Screen.Header.Title>
-                <Screen.Header.CloseButton />
+                <Screen.Header.CloseButton testID={TEST_ID.receive.closeButton} />
             </Screen.Header>
             <Screen.Content>
                 <ReceiveCopyToastProvider>

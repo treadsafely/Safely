@@ -5,15 +5,23 @@ includeTags:
     - smoke
 
 # The flows form a chain: each one starts from the state the previous one
-# finished in (fresh onboarding -> add wallets -> import a wallet -> send
-# from it), so the order matters and a failed flow invalidates the rest.
+# finished in (fresh onboarding -> add wallets -> check the recovery phrase ->
+# watch-only -> import a wallet -> send from it -> sign out and import on
+# onboarding), so the order matters and a failed flow invalidates the rest.
 # import-wallet must run right before send-asset: send expects the imported
 # wallet to be the active one, and every added wallet becomes active.
+# recovery-phrase must run right after create-wallet (it reveals the phrase
+# of the active, freshly generated wallet). onboarding-import-wallet signs
+# out (erasing all data), so it must stay last.
+# Every flow assumes passcode 1234.
+# Keep in sync with flow_path in .eas/workflows/build-and-distribute.yml.
 executionOrder:
     continueOnFailure: false
     flowsOrder:
         - onboarding-create-wallet
         - create-wallet
+        - recovery-phrase
         - add-watch-only
         - import-wallet
         - send-asset
+        - onboarding-import-wallet

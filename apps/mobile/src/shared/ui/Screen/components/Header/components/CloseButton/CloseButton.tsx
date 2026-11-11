@@ -7,16 +7,17 @@ import { Button } from '@mobile/shared/ui/Screen/components/Header/components/Bu
 
 type CloseButtonProps = {
     onPress?: () => void;
+    testID?: string;
 };
 
-export const CloseButton = ({ onPress }: CloseButtonProps) => {
+export const CloseButton = ({ onPress, testID }: CloseButtonProps) => {
     const navigation = useContext(NavigationContext);
     const bottomSheet = useBottomSheetContext();
 
     const handleClose = onPress ?? bottomSheet?.close ?? (() => navigation?.goBack());
 
     return (
-        <Button onPress={handleClose}>
+        <Button testID={testID} onPress={handleClose}>
             <Icon icon={Xmark16} />
         </Button>
     );

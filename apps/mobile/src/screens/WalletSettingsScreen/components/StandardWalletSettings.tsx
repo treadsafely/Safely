@@ -6,6 +6,7 @@ import { useActivePortfolio, useChangePortfolioMeta, useDateFormatter } from '@s
 
 import { PortfolioName } from '@mobile/entities/portfolio';
 import { RemovePortfolioButton } from '@mobile/screens/SettingsScreen/components';
+import { TEST_ID } from '@mobile/shared/constants';
 import { Cell, List } from '@mobile/shared/ui';
 import { Icon, Switch16 } from '@mobile/shared/ui/Icon';
 
@@ -65,7 +66,10 @@ export const StandardWalletSettings = () => {
                     <Cell.Chevron />
                 </Cell>
                 {portfolio.type === PortfolioType.BIP39 && (
-                    <Cell onPress={() => navigation.navigate('RecoveryConfirmSheet')}>
+                    <Cell
+                        testID={TEST_ID.walletSettings.recoveryPhrase}
+                        onPress={() => navigation.navigate('RecoveryConfirmSheet')}
+                    >
                         <Cell.Content>
                             <Cell.Row>
                                 <Cell.Title>

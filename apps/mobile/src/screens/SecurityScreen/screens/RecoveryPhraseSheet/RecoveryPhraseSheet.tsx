@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { useAppContext } from '@safely/ux';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { Screen, Text, WordCell } from '@mobile/shared/ui';
 import { ExclamationmarkCircle16, Icon } from '@mobile/shared/ui/Icon';
 
@@ -27,7 +28,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
         <Screen>
             <Screen.Header variant="left">
                 <Screen.Header.Title>{t('security.phraseSheet.title')}</Screen.Header.Title>
-                <Screen.Header.CloseButton />
+                <Screen.Header.CloseButton testID={TEST_ID.recovery.closeButton} />
             </Screen.Header>
             <Screen.Content>
                 <CapturePreventionView
@@ -51,6 +52,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
                                         key={i}
                                         index={i + 1}
                                         word={word}
+                                        testID={TEST_ID.recovery.word(i + 1)}
                                         params={{
                                             isLast: i === leftColumn.length - 1,
                                             isRightColumn: false
@@ -64,6 +66,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
                                         key={i}
                                         index={halfLength + i + 1}
                                         word={word}
+                                        testID={TEST_ID.recovery.word(halfLength + i + 1)}
                                         params={{
                                             isLast: i === rightColumn.length - 1,
                                             isRightColumn: true

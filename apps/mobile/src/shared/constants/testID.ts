@@ -6,6 +6,9 @@
  * so matching by visible text is locale-fragile.
  */
 export const TEST_ID = {
+    onboarding: {
+        notificationsLater: 'onboarding.notificationsLater'
+    },
     welcome: {
         createWallet: 'welcome.createWallet',
         importWallet: 'welcome.importWallet',
@@ -20,10 +23,61 @@ export const TEST_ID = {
         settingsButton: 'home.settingsButton',
         walletSelector: 'home.walletSelector',
         sendButton: 'home.sendButton',
-        receiveButton: 'home.receiveButton'
+        receiveButton: 'home.receiveButton',
+        asset: {
+            btc: 'home.asset.btc',
+            flame: 'home.asset.flame'
+        }
+    },
+    history: {
+        item: 'history.item',
+        pendingItem: 'history.pendingItem'
+    },
+    settings: {
+        currentWallet: 'settings.currentWallet',
+        security: 'settings.security',
+        signOutAccount: 'settings.signOutAccount',
+        closeButton: 'settings.closeButton'
+    },
+    signOutAccount: {
+        checkbox: 'signOutAccount.checkbox',
+        confirmButton: 'signOutAccount.confirmButton'
+    },
+    security: {
+        lockScreenSwitch: 'security.lockScreenSwitch',
+        changePasscode: 'security.changePasscode'
+    },
+    changePasscode: {
+        screen: 'changePasscode.screen'
+    },
+    onboardingPasscode: {
+        screen: 'onboardingPasscode.screen'
+    },
+    lockScreen: {
+        screen: 'lockScreen.screen'
+    },
+    walletSettings: {
+        recoveryPhrase: 'walletSettings.recoveryPhrase',
+        removeWallet: 'walletSettings.removeWallet',
+        backButton: 'walletSettings.backButton'
+    },
+    removeWallet: {
+        checkbox: 'removeWallet.checkbox',
+        confirmButton: 'removeWallet.confirmButton'
+    },
+    watchOnlySheet: {
+        screen: 'watchOnlySheet.screen',
+        okButton: 'watchOnlySheet.okButton'
+    },
+    recovery: {
+        revealButton: 'recovery.revealButton',
+        closeButton: 'recovery.closeButton',
+        /** 1-based, matches the number shown next to the word */
+        word: (index: number) => `recovery.word.${index}`
     },
     receive: {
-        address: 'receive.address'
+        address: 'receive.address',
+        closeButton: 'receive.closeButton'
     },
     accounts: {
         addWallet: 'accounts.addWallet'
@@ -42,9 +96,12 @@ export const TEST_ID = {
         cancelXpubButton: 'watchOnly.cancelXpubButton'
     },
     importWallet: {
-        continueButton: 'importWallet.continueButton'
+        backButton: 'importWallet.backButton',
+        continueButton: 'importWallet.continueButton',
+        error: 'importWallet.error'
     },
     customizeWallet: {
+        nameInput: 'customizeWallet.nameInput',
         saveButton: 'customizeWallet.saveButton'
     },
     passcodeVerification: {

@@ -1,5 +1,6 @@
-# Step 5 (last) of the e2e chain: sends 0.00001 BTC from the wallet imported
-# by import-wallet (it is the active one) to MAESTRO_RECIPIENT_ADDRESS.
+# Step 6 of the e2e chain: sends 0.00001 BTC from the wallet imported
+# by import-wallet (it is the active one) to MAESTRO_RECIPIENT_ADDRESS,
+# then checks the transaction shows up in the BTC history as pending.
 appId: com.safely.wallet
 name: send-asset
 tags:
@@ -58,10 +59,22 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
 
 # Wait for broadcast success and return to the wallet.
 - extendedWaitUntil:
@@ -75,3 +88,18 @@ tags:
       visible:
           id: 'home.settingsButton'
       timeout: 30000
+
+# BTC asset -> history: the just-broadcast transaction must appear as pending.
+# Note: a pending tx from a previous run (< ~1 block ago) would also match;
+# the list is sorted newest-first and scrolls to the new tx, so this is
+# acceptable for a smoke check.
+- extendedWaitUntil:
+      visible:
+          id: 'home.asset.btc'
+      timeout: 30000
+- tapOn:
+      id: 'home.asset.btc'
+- extendedWaitUntil:
+      visible:
+          id: 'history.pendingItem'
+      timeout: 60000
