@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { AccountPortfolioSource } from '@safely/ux';
 
 import { useOnboardingFlow } from '@mobile/features/onboarding';
+import { TEST_ID } from '@mobile/shared/constants';
 import type { PasscodeSetupHeaderType } from '@mobile/shared/ui';
 import { PasscodeSetup } from '@mobile/shared/ui';
 
@@ -26,6 +27,7 @@ export const OnboardingPasscodeScreen = (props: OnboardingPasscodeScreenProps) =
 
     return (
         <PasscodeSetup
+            testID={TEST_ID.onboardingPasscode.screen}
             headerType={headerType}
             title={t('onboarding.passcode.title')}
             reenterTitle={t('onboarding.passcode.reenter.title')}

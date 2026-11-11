@@ -36,7 +36,8 @@ export const TEST_ID = {
     settings: {
         currentWallet: 'settings.currentWallet',
         security: 'settings.security',
-        signOutAccount: 'settings.signOutAccount'
+        signOutAccount: 'settings.signOutAccount',
+        closeButton: 'settings.closeButton'
     },
     signOutAccount: {
         checkbox: 'signOutAccount.checkbox',
@@ -49,12 +50,16 @@ export const TEST_ID = {
     changePasscode: {
         screen: 'changePasscode.screen'
     },
+    onboardingPasscode: {
+        screen: 'onboardingPasscode.screen'
+    },
     lockScreen: {
         screen: 'lockScreen.screen'
     },
     walletSettings: {
         recoveryPhrase: 'walletSettings.recoveryPhrase',
-        removeWallet: 'walletSettings.removeWallet'
+        removeWallet: 'walletSettings.removeWallet',
+        backButton: 'walletSettings.backButton'
     },
     removeWallet: {
         checkbox: 'removeWallet.checkbox',
@@ -66,11 +71,13 @@ export const TEST_ID = {
     },
     recovery: {
         revealButton: 'recovery.revealButton',
+        closeButton: 'recovery.closeButton',
         /** 1-based, matches the number shown next to the word */
         word: (index: number) => `recovery.word.${index}`
     },
     receive: {
-        address: 'receive.address'
+        address: 'receive.address',
+        closeButton: 'receive.closeButton'
     },
     accounts: {
         addWallet: 'accounts.addWallet'

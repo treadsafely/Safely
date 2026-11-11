@@ -1,8 +1,8 @@
-# Step 8 (last) of the e2e chain: sign out of the (only) account, then do a
+# Step 7 (last) of the e2e chain: sign out of the (only) account, then do a
 # first-run import from the welcome screen — the path a user restoring a
 # wallet on a new phone takes.
 #
-# Starts from the state app-lock finished in: lock screen enabled, passcode 5678.
+# Starts from any onboarded state (passcode 1234, lock screen off).
 # Signing out of the last account erases all app data and reloads the app;
 # if anything survives, the welcome screen crashes ("opened with an existing
 # account") and this flow fails. Must stay last.
@@ -16,37 +16,10 @@ tags:
 # Relaunch WITHOUT clearState — signing out is part of the test.
 - launchApp
 
-# app-lock left the lock screen enabled, so a cold start must show it.
-# Wait for it explicitly: a conditional check right after launch could run
-# before the overlay is drawn and then tap "through" it.
-- extendedWaitUntil:
-      visible:
-          id: 'lockScreen.screen'
-      timeout: 60000
-- tapOn:
-      text: '5'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '6'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '7'
-      childOf:
-          id: 'lockScreen.screen'
-- tapOn:
-      text: '8'
-      childOf:
-          id: 'lockScreen.screen'
-- extendedWaitUntil:
-      notVisible:
-          id: 'lockScreen.screen'
-      timeout: 15000
 - extendedWaitUntil:
       visible:
           id: 'home.settingsButton'
-      timeout: 15000
+      timeout: 60000
 
 # Settings -> "Sign out of <account>" -> confirm.
 - tapOn:
@@ -94,15 +67,39 @@ tags:
 
 # Passcode setup: enter + re-enter.
 - waitForAnimationToEnd
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'onboardingPasscode.screen'
 - waitForAnimationToEnd
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'onboardingPasscode.screen'
 
 # Account creation runs behind a loader (import derives + syncs, so it can take
 # a while), then the optional biometry / notifications prompts. Poll for them

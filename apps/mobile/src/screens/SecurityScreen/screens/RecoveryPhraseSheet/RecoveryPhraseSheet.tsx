@@ -28,7 +28,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
         <Screen>
             <Screen.Header variant="left">
                 <Screen.Header.Title>{t('security.phraseSheet.title')}</Screen.Header.Title>
-                <Screen.Header.CloseButton />
+                <Screen.Header.CloseButton testID={TEST_ID.recovery.closeButton} />
             </Screen.Header>
             <Screen.Content>
                 <CapturePreventionView

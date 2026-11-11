@@ -59,10 +59,22 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'passcodeVerification.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'passcodeVerification.screen'
 
 # Wait for broadcast success and return to the wallet.
 - extendedWaitUntil:

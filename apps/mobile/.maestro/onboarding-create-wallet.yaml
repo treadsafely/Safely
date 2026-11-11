@@ -1,6 +1,6 @@
 # Step 1 of the e2e chain (see executionOrder in config.yaml):
 # onboarding -> create-wallet -> recovery-phrase -> add-watch-only ->
-# import-wallet -> send-asset -> app-lock -> onboarding-import-wallet.
+# import-wallet -> send-asset -> onboarding-import-wallet.
 # Each flow starts from the state the previous one finished in.
 appId: com.safely.wallet
 name: onboarding-create-wallet
@@ -21,19 +21,43 @@ tags:
 - tapOn:
       id: 'welcome.createWallet'
 
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'onboardingPasscode.screen'
 
 # Let the "enter" -> "re-enter" transition settle before typing again,
 # otherwise taps land while the input is still locked at max length.
 - waitForAnimationToEnd
 
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- tapOn:
+      text: '1'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '2'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '3'
+      childOf:
+          id: 'onboardingPasscode.screen'
+- tapOn:
+      text: '4'
+      childOf:
+          id: 'onboardingPasscode.screen'
 
 # Account creation runs behind a loader, then the optional biometry and
 # notifications prompts (either may be skipped by the app, e.g. when the
