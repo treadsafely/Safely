@@ -21,6 +21,7 @@ export const modalRecipe = defineSlotRecipe({
             inset: '0',
             backgroundColor: 'background.overlay',
             backdropFilter: 'blur(8px)',
+            appRegion: 'no-drag',
             opacity: 0,
             transition: 'opacity 150ms',
             _open: { opacity: 1 }
@@ -38,6 +39,7 @@ export const modalRecipe = defineSlotRecipe({
             borderRadius: 'lg',
             backgroundColor: 'background.primary',
             outline: 'none',
+            appRegion: 'no-drag',
             transform: 'translate(-50%, -50%) scale(0.96)',
             opacity: 0,
             transition: 'opacity 150ms, transform 150ms',
