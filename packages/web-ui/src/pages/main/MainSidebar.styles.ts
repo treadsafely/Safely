@@ -9,8 +9,6 @@ export const walletsStyles = css({
     overflowY: 'auto'
 });
 
-export const walletListStyles = css({ cursor: 'grab', '& *': { cursor: 'grab' } });
-
 export const draggingListStyles = css({ cursor: 'grabbing', '& *': { cursor: 'grabbing' } });
 
 export const walletRowStyles = css({ touchAction: 'none', userSelect: 'none' });

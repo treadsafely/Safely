@@ -20,7 +20,6 @@ import {
     draggingStyles,
     navigationStyles,
     sidebarStyles,
-    walletListStyles,
     walletRowStyles,
     walletsStyles
 } from './MainSidebar.styles';
@@ -96,7 +95,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
             <List className={walletsStyles}>
                 <List.Group
                     variant="separated"
-                    className={cx(walletListStyles, isReordering && draggingListStyles)}
+                    className={isReordering ? draggingListStyles : undefined}
                 >
                     {orderedPortfolios.map(portfolio => {
                         const id = portfolio.id.toString();
