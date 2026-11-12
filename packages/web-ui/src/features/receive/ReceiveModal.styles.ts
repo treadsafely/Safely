@@ -8,8 +8,6 @@ export const popupStyles = css({
     paddingBottom: '32'
 });
 
-export const contentStyles = css({ paddingTop: '48' });
-
 export const bodyStyles = css({
     display: 'flex',
     justifyContent: 'center',

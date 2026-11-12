@@ -69,7 +69,7 @@ export const modalRecipe = defineSlotRecipe({
             overflowY: 'auto',
             paddingInline: '32',
             paddingBlock: '16',
-            paddingTop: '64px'
+            paddingTop: '48'
         },
         title: {
             textStyle: 'titleM',
