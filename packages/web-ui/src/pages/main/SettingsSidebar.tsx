@@ -84,7 +84,9 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                 <List className={listStyles}>
                     {hasPortfolio && (
                         <>
-                            <List.Title>{t('settings.groups.currentWallet.title')}</List.Title>
+                            <List.Title size="compact">
+                                {t('settings.groups.currentWallet.title')}
+                            </List.Title>
                             <List.Group variant="separated">
                                 <CurrentWalletCell
                                     isSelected={activeSection === 'wallet'}
@@ -94,7 +96,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                         </>
                     )}
 
-                    <List.Title>{t('settings.groups.account.title')}</List.Title>
+                    <List.Title size="compact">{t('settings.groups.account.title')}</List.Title>
                     <List.Group variant="separated">
                         <Cell
                             size="compact"
@@ -135,7 +137,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                         </Cell>
                     </List.Group>
 
-                    <List.Title>{t('settings.groups.application.title')}</List.Title>
+                    <List.Title size="compact">{t('settings.groups.application.title')}</List.Title>
                     <List.Group variant="separated">
                         <Cell
                             size="compact"
@@ -177,7 +179,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                         </Cell>
                     </List.Group>
 
-                    <List.Title>{t('settings.groups.info.title')}</List.Title>
+                    <List.Title size="compact">{t('settings.groups.info.title')}</List.Title>
                     <List.Group variant="separated">
                         <Cell
                             size="compact"
