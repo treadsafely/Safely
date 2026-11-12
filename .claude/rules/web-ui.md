@@ -124,11 +124,12 @@ spans the list alone.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
 the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The
-left one opens by collapsing the outer slot's width while the inner one slides. The right one is an
-overlay: the outer slot is an absolute layer over the content that never takes pointer events, and
-the inner one slides in over it with a shadow, so opening the detail view never reflows the chart
-or the table. Either way the outer slot stays mounted and the page decides what the inner one
-contains — the transaction panel is a sibling of `AppLayout.Content`, which is why the selected
+left one opens by collapsing the outer slot's width while the inner one shifts out, with no
+transition: settings appear on the click. The right one is an overlay: the outer slot is an
+absolute layer over the content that never takes pointer events, and the inner one slides in over
+it with a shadow, so opening the detail view never reflows the chart or the table. Either way
+the outer slot stays mounted and the page decides what the inner one contains — the transaction
+panel is a sibling of `AppLayout.Content`, which is why the selected
 activity lives in `MainPage` and reaches the list as a prop rather than being opened by it.
 
 ## Base UI conventions

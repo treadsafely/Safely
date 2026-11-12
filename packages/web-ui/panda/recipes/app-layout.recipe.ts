@@ -52,9 +52,7 @@ export const appLayoutRecipe = defineSlotRecipe({
             position: 'relative',
             flexShrink: 0,
             width: '300px',
-            overflow: 'hidden',
-            transition: 'width 200ms ease',
-            _motionReduce: { transition: 'none' }
+            overflow: 'hidden'
         },
         secondaryContent: {
             position: 'absolute',
@@ -67,9 +65,7 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderRightWidth: 'hairline',
             borderRightStyle: 'solid',
             borderRightColor: 'other.transparentElement',
-            backgroundColor: 'background.overlay',
-            transition: 'transform 200ms ease',
-            _motionReduce: { transition: 'none' }
+            backgroundColor: 'background.overlay'
         },
         content: {
             display: 'flex',
