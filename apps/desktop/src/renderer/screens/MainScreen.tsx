@@ -32,6 +32,7 @@ const MainScreenContent: FC = () => {
     useTrackWalletOpen();
 
     const { value: devToken, set, remove } = useDesktopLayerSynchronousGlobalStorage('devToken');
+    const sidebarWidth = useDesktopLayerSynchronousGlobalStorage('sidebarWidth');
     const devConfig = useMemo<DevConfig>(
         () => ({
             devToken,
@@ -76,6 +77,8 @@ const MainScreenContent: FC = () => {
                 onNavigate={onNavigate}
                 hasWindowControls={hasWindowControls}
                 isFullScreen={isFullScreen}
+                sidebarWidth={sidebarWidth.value ?? undefined}
+                onSidebarWidthChange={sidebarWidth.set}
                 security={<SecuritySection />}
                 logs={<LogsSection store={platform.logs} />}
             />

@@ -132,6 +132,12 @@ the outer slot stays mounted and the page decides what the inner one contains â€
 panel is a sibling of `AppLayout.Content`, which is why the selected
 activity lives in `MainPage` and reaches the list as a prop rather than being opened by it.
 
+The sidebar width is the CSS variable `--sidebar-width`, set on the shell root from its
+`sidebarWidth` prop; `AppLayout.SidebarResizer` is the handle on its right edge and
+`useResizableWidth` (`shared/hooks`) turns the drag into a clamped width, live while dragging and
+committed on release. The limits sit in `MainPage`, the stored value in the app (desktop keeps it
+in the synchronous global storage), so the page never reads a storage.
+
 ## Base UI conventions
 
 - Component state is exposed as **data attributes**; style them through the conditions declared in
