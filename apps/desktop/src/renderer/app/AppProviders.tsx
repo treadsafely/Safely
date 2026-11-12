@@ -16,7 +16,6 @@ import {
     UnlockableSecuredEncryptedStorage
 } from '@safely/ux';
 import {
-    FatalErrorPage,
     loaderService,
     LoaderViewport,
     ErrorBoundary,
@@ -26,6 +25,7 @@ import {
     WebLinking
 } from '@safely/web-ui';
 
+import { FatalError } from './FatalError';
 import {
     authenticateBiometry,
     createLedgerTransport,
@@ -151,10 +151,7 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>
             <AppContext value={appContext}>
                 <ScreenProtectionProvider protect={platform.protectScreen}>
-                    <ErrorBoundary
-                        logger={logger}
-                        fallback={<FatalErrorPage onShareLogs={() => void platform.logs.share()} />}
-                    >
+                    <ErrorBoundary logger={logger} fallback={<FatalError />}>
                         <LedgerSessionProvider>
                             <Suspense fallback={loader}>
                                 <SyncStorageProvider>
