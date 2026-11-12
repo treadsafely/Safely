@@ -83,7 +83,9 @@ export const periodsStyles = css({
 });
 
 export const periodButtonStyles = css({
-    paddingBlock: '2',
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: '24px',
     paddingInline: '8',
     borderRadius: 'xss',
     borderWidth: 'hairline',
