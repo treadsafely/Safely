@@ -35,7 +35,7 @@ export const StepCard: FC<StepCardProps> = props => {
                         {onBack !== undefined && (
                             <Button
                                 variant="secondary"
-                                size="small"
+                                size="xsmall"
                                 isIconOnly
                                 isRound
                                 aria-label={t('common.back')}
