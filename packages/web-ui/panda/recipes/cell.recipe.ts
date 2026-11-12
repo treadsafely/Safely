@@ -109,6 +109,16 @@ export const cellRecipe = defineSlotRecipe({
                 trailing: { color: 'cell.accentRed.foreground' }
             }
         },
+        size: {
+            compact: {
+                root: { minHeight: '36px', paddingLeft: '8' },
+                leading: { paddingRight: '8' },
+                content: { paddingBlock: '8', paddingRight: '8' },
+                title: { textStyle: 'labelM' },
+                value: { textStyle: 'bodyM' },
+                trailing: { paddingRight: '8' }
+            }
+        },
         isSelected: {
             true: {
                 root: {

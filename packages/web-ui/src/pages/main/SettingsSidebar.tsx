@@ -30,7 +30,12 @@ const CurrentWalletCell: FC<{ isSelected: boolean; onClick: () => void }> = prop
     const portfolio = useActivePortfolio();
 
     return (
-        <Cell tone="transparent" isSelected={props.isSelected} onClick={props.onClick}>
+        <Cell
+            size="compact"
+            tone="transparent"
+            isSelected={props.isSelected}
+            onClick={props.onClick}
+        >
             <Cell.Leading>
                 <WalletIcon icon={portfolio.meta.icon} />
             </Cell.Leading>
@@ -92,6 +97,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                     <List.Title>{t('settings.groups.account.title')}</List.Title>
                     <List.Group variant="separated">
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'account'}
                             onClick={() => onSelectSection('account')}
@@ -103,7 +109,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                                 </Cell.Subtitle>
                             </Cell.Content>
                         </Cell>
-                        <Cell tone="transparent" onClick={account.startEdit}>
+                        <Cell size="compact" tone="transparent" onClick={account.startEdit}>
                             <Cell.Content>
                                 <Cell.Title>
                                     {t('settings.groups.account.options.editAccount')}
@@ -111,6 +117,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                             </Cell.Content>
                         </Cell>
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'addressBook'}
                             onClick={() => onSelectSection('addressBook')}
@@ -121,7 +128,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                                 </Cell.Title>
                             </Cell.Content>
                         </Cell>
-                        <Cell tone="transparent" onClick={account.openAdd}>
+                        <Cell size="compact" tone="transparent" onClick={account.openAdd}>
                             <Cell.Content>
                                 <Cell.Title>{t('settings.addAccount')}</Cell.Title>
                             </Cell.Content>
@@ -131,6 +138,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                     <List.Title>{t('settings.groups.application.title')}</List.Title>
                     <List.Group variant="separated">
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'security'}
                             onClick={() => onSelectSection('security')}
@@ -142,6 +150,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                             </Cell.Content>
                         </Cell>
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'language'}
                             onClick={() => onSelectSection('language')}
@@ -154,6 +163,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                             </Cell.Content>
                         </Cell>
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'currency'}
                             onClick={() => onSelectSection('currency')}
@@ -169,7 +179,11 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
 
                     <List.Title>{t('settings.groups.info.title')}</List.Title>
                     <List.Group variant="separated">
-                        <Cell tone="transparent" onClick={() => openURL(`mailto:${supportEmail}`)}>
+                        <Cell
+                            size="compact"
+                            tone="transparent"
+                            onClick={() => openURL(`mailto:${supportEmail}`)}
+                        >
                             <Cell.Content>
                                 <SettingsValueRow
                                     title={t('settings.groups.info.options.support')}
@@ -178,6 +192,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                             </Cell.Content>
                         </Cell>
                         <Cell
+                            size="compact"
                             tone="transparent"
                             isSelected={activeSection === 'legal'}
                             onClick={() => onSelectSection('legal')}
@@ -189,7 +204,7 @@ export const SettingsSidebar: FC<SettingsSidebarProps> = props => {
                     </List.Group>
 
                     <List.Group variant="separated">
-                        <Cell tone="accentRed" onClick={account.startSignOut}>
+                        <Cell size="compact" tone="accentRed" onClick={account.startSignOut}>
                             <Cell.Content>
                                 <Cell.Title>
                                     {t('settings.signOutAccount.title', {

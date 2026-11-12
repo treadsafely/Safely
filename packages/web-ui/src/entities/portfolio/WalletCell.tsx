@@ -22,23 +22,27 @@ import {
     valueStyles
 } from './WalletCell.styles';
 import { WalletIcon } from './WalletIcon';
+import type { CellSize } from '../../shared';
 import { Badge, Cell, useReorderList } from '../../shared';
 
 export type WalletCellProps = {
     portfolio: Portfolio;
     isActive: boolean;
+    size?: CellSize;
     activeDerivationIndex?: number;
     onSelect: (derivationIndex?: number) => void;
     onReorderDerivations?: (portfolio: PortfolioLedger, orderedDerivationIds: string[]) => void;
 };
 
 export const WalletCell: FC<WalletCellProps> = props => {
-    const { portfolio, isActive, activeDerivationIndex, onSelect, onReorderDerivations } = props;
+    const { portfolio, isActive, size, activeDerivationIndex, onSelect, onReorderDerivations } =
+        props;
 
     if (portfolio.type === PortfolioType.LEDGER) {
         return (
             <LedgerWalletCell
                 portfolio={portfolio}
+                size={size}
                 activeDerivationIndex={isActive ? activeDerivationIndex : undefined}
                 onSelect={onSelect}
                 onReorder={onReorderDerivations}
@@ -47,24 +51,30 @@ export const WalletCell: FC<WalletCellProps> = props => {
     }
 
     return (
-        <PlainWalletCell portfolio={portfolio} isActive={isActive} onSelect={() => onSelect()} />
+        <PlainWalletCell
+            portfolio={portfolio}
+            isActive={isActive}
+            size={size}
+            onSelect={() => onSelect()}
+        />
     );
 };
 
 type PlainWalletCellProps = {
     portfolio: Portfolio;
     isActive: boolean;
+    size?: CellSize;
     onSelect: () => void;
 };
 
 const PlainWalletCell: FC<PlainWalletCellProps> = props => {
-    const { portfolio, isActive, onSelect } = props;
+    const { portfolio, isActive, size, onSelect } = props;
 
     const formatter = useNumberFormatter();
     const { data: balance } = usePortfolioTotalBalance(resolvePortfolioWallets(portfolio));
 
     return (
-        <Cell isSelected={isActive} onClick={onSelect}>
+        <Cell size={size} isSelected={isActive} onClick={onSelect}>
             <Cell.Leading>
                 <WalletIcon icon={portfolio.meta.icon} />
             </Cell.Leading>
@@ -85,13 +95,14 @@ const PlainWalletCell: FC<PlainWalletCellProps> = props => {
 
 type LedgerWalletCellProps = {
     portfolio: PortfolioLedger;
+    size?: CellSize;
     activeDerivationIndex?: number;
     onSelect: (derivationIndex: number) => void;
     onReorder?: (portfolio: PortfolioLedger, orderedDerivationIds: string[]) => void;
 };
 
 const LedgerWalletCell: FC<LedgerWalletCellProps> = props => {
-    const { portfolio, activeDerivationIndex, onSelect, onReorder } = props;
+    const { portfolio, size, activeDerivationIndex, onSelect, onReorder } = props;
 
     const derivations = portfolio.getDerivations();
     const byId = useMemo(
@@ -105,7 +116,7 @@ const LedgerWalletCell: FC<LedgerWalletCellProps> = props => {
 
     return (
         <div className={groupStyles}>
-            <Cell>
+            <Cell size={size}>
                 <Cell.Leading>
                     <WalletIcon icon={portfolio.meta.icon} />
                 </Cell.Leading>
@@ -127,6 +138,7 @@ const LedgerWalletCell: FC<LedgerWalletCellProps> = props => {
                 const cell = (
                     <DerivationCell
                         derivation={derivation}
+                        size={size}
                         isSelected={derivation.index === activeDerivationIndex}
                         onSelect={() => onSelect(derivation.index)}
                     />
@@ -158,18 +170,24 @@ const LedgerWalletCell: FC<LedgerWalletCellProps> = props => {
 
 type DerivationCellProps = {
     derivation: ILedgerDerivation;
+    size?: CellSize;
     isSelected: boolean;
     onSelect: () => void;
 };
 
 const DerivationCell: FC<DerivationCellProps> = props => {
-    const { derivation, isSelected, onSelect } = props;
+    const { derivation, size, isSelected, onSelect } = props;
 
     const formatter = useNumberFormatter();
     const { data: balance } = useBtcWalletFiatBalance(derivation.chains.btc.wallets[0]);
 
     return (
-        <Cell isSelected={isSelected} className={derivationCellStyles} onClick={onSelect}>
+        <Cell
+            size={size}
+            isSelected={isSelected}
+            className={derivationCellStyles}
+            onClick={onSelect}
+        >
             <Cell.Leading>
                 <Badge>{derivation.index + 1}</Badge>
             </Cell.Leading>
