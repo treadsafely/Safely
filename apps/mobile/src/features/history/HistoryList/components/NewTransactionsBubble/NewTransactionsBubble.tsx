@@ -11,7 +11,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useTranslate } from '@safely/ux';
 
-import { Toast } from '@mobile/shared/ui';
+import { Toast, useScreenHeaderHeight } from '@mobile/shared/ui';
 
 import {
     HIDE_DURATION,
@@ -31,6 +31,7 @@ export type NewTransactionsBubbleProps = {
 export const NewTransactionsBubble = (props: NewTransactionsBubbleProps) => {
     const { mode, onPress } = props;
     const t = useTranslate();
+    const screenHeaderHeight = useScreenHeaderHeight();
 
     const [labelState, setLabelState] = useState<NewTransactionsBubbleMode>(
         NewTransactionsBubbleMode.HIDDEN
@@ -39,7 +40,7 @@ export const NewTransactionsBubble = (props: NewTransactionsBubbleProps) => {
     useAnimatedReaction(
         () => mode.value,
         (current, previous) => {
-            if (current !== previous) {
+            if (current !== previous && current !== NewTransactionsBubbleMode.HIDDEN) {
                 scheduleOnRN(setLabelState, current);
             }
         }
@@ -89,7 +90,10 @@ export const NewTransactionsBubble = (props: NewTransactionsBubbleProps) => {
             : t('history.bubble.one');
 
     return (
-        <Animated.View style={[styles.container, animatedStyle]} animatedProps={animatedProps}>
+        <Animated.View
+            style={[styles.container({ top: screenHeaderHeight }), animatedStyle]}
+            animatedProps={animatedProps}
+        >
             <Toast message={message} onPress={onPress} />
         </Animated.View>
     );

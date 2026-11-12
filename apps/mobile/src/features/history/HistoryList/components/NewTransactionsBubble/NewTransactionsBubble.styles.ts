@@ -1,14 +1,14 @@
 import { StyleSheet } from 'react-native-unistyles';
 
 export const styles = StyleSheet.create(theme => ({
-    container: {
+    container: ({ top }: { top: number }) => ({
         position: 'absolute',
         alignItems: 'center',
-        top: 0,
+        top,
         left: 0,
         right: 0,
         padding: theme.spacing[8]
-    }
+    })
 }));
 
 export const ANIMATION_START_Y = -12;
