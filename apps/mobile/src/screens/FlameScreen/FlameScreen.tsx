@@ -12,13 +12,20 @@ import {
     useFlameReceiveInfo
 } from '@safely/ux';
 
-import { AssetHistoryHeader, AssetHistoryScreen, FlameHistoryList } from '@mobile/features/history';
+import {
+    AssetHistoryHeader,
+    AssetHistoryListHeader,
+    AssetHistoryScreen,
+    FlameHistoryList,
+    useHistoryScroll
+} from '@mobile/features/history';
 import { HomeActions } from '@mobile/features/home';
 
 const FlameContent = () => {
     const navigation = useNavigation();
     const portfolio = useActivePortfolio();
     const { theme } = useUnistyles();
+    const scroll = useHistoryScroll();
     const networkBadge = useActivePortfolioNetworkBadge();
     const { displayAddress } = useFlameReceiveInfo();
     const { data: ratedAmount } = useActiveFlameRatedAmount();
@@ -33,15 +40,23 @@ const FlameContent = () => {
     return (
         <>
             <AssetHistoryHeader
-                gradientColor={theme.colors.brand.flame}
                 asset={FLAME_ASSET}
                 networkBadge={networkBadge}
                 address={displayAddress}
-                ratedAmount={ratedAmount}
-                actions={<HomeActions />}
+                scroll={scroll}
             />
             <FlameHistoryList
-                key={portfolio?.id.toString()}
+                key={portfolio.id.toString()}
+                scroll={scroll}
+                header={
+                    <AssetHistoryListHeader
+                        gradientColor={theme.colors.brand.flame}
+                        asset={FLAME_ASSET}
+                        ratedAmount={ratedAmount}
+                        actions={<HomeActions />}
+                        scroll={scroll}
+                    />
+                }
                 onNavigateToActivityItem={onNavigateToActivityItem}
             />
         </>

@@ -1,87 +1,68 @@
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
-import type { CryptoAsset, RatedCryptoAssetAmount } from '@safely/core';
+import type { CryptoAsset } from '@safely/core';
 import type { PortfolioNetworkBadge } from '@safely/ux';
-import { useNumberFormatter } from '@safely/ux';
 
 import { NetworkBadge } from '@mobile/entities/portfolio';
-import { GradientBackground, Screen, Text } from '@mobile/shared/ui';
+import { Screen, Text, useScreenHeaderHeight } from '@mobile/shared/ui';
 
 import { styles } from './AssetHistoryHeader.styles';
-
-const GRADIENT_HEIGHT = 390;
+import type { HistoryScroll } from '../HistoryList';
 
 type AssetHistoryHeaderProps = {
-    gradientColor: string;
     asset: CryptoAsset;
     networkBadge: PortfolioNetworkBadge | null;
     address: string | undefined;
-    ratedAmount: RatedCryptoAssetAmount | null | undefined;
-    actions: ReactNode;
+    scroll: HistoryScroll;
 };
 
 export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
-    const { gradientColor, asset, networkBadge, address, ratedAmount, actions } = props;
-    const formatter = useNumberFormatter();
-    const { symbol } = asset;
-    const amount = ratedAmount?.amount.format(formatter, { currencyDisplay: 'none' });
-    const price = ratedAmount?.price;
-    const fiatAmount = price && ratedAmount.amount.convert(price).format(formatter);
+    const { asset, networkBadge, address, scroll } = props;
+    const screenHeaderHeight = useScreenHeaderHeight();
+
+    const backdropStyle = useAnimatedStyle(() => ({ opacity: scroll.fadeProgress.value }));
+    const hairlineStyle = useAnimatedStyle(() => {
+        const dividerOffset = scroll.listHeaderHeight.value - screenHeaderHeight;
+        const isDividerUnderHeader = dividerOffset > 0 && scroll.scrollY.value >= dividerOffset;
+        return { opacity: isDividerUnderHeader ? 1 : 0 };
+    });
 
     return (
-        <>
-            <GradientBackground color={gradientColor} position="top" height={GRADIENT_HEIGHT} />
-            <Screen.Header style={styles.header}>
-                <Screen.Header.BackButton type="translucent" />
-                <Screen.Header.Title>
-                    <View style={styles.title}>
-                        <View style={styles.titleRow}>
-                            <Text variant="titleS" color="constantWhite" numberOfLines={1}>
-                                {symbol}
-                            </Text>
-                            {networkBadge && (
-                                <NetworkBadge badge={networkBadge} neutralType="translucent" />
-                            )}
-                        </View>
-                        <Text
-                            variant="bodyM"
-                            color="constantWhite"
-                            numberOfLines={1}
-                            ellipsizeMode="middle"
-                            style={address === undefined ? undefined : styles.address}
-                            skeletonVariant="constantWhite"
-                            skeletonWidth={120}
-                        >
-                            {address}
+        <Screen.Header
+            style={styles.header}
+            backdrop={
+                <Animated.View style={[styles.backdrop, backdropStyle]}>
+                    <Animated.View style={[styles.hairline, hairlineStyle]} />
+                </Animated.View>
+            }
+            withCompensateHeight={false}
+            withCompensateInset={false}
+        >
+            <Screen.Header.BackButton type="translucent" />
+            <Screen.Header.Title>
+                <View style={styles.title}>
+                    <View style={styles.titleRow}>
+                        <Text variant="titleS" color="constantWhite" numberOfLines={1}>
+                            {asset.symbol}
                         </Text>
+                        {networkBadge && (
+                            <NetworkBadge badge={networkBadge} neutralType="translucent" />
+                        )}
                     </View>
-                </Screen.Header.Title>
-            </Screen.Header>
-            <View style={styles.balance}>
-                <View style={styles.amountRow}>
-                    <Text variant="displayL" color="constantWhite" skeletonVariant="constantWhite">
-                        {amount}
-                    </Text>
-                    <Text variant="bodyL" color="constantWhite" style={styles.secondary}>
-                        {symbol}
+                    <Text
+                        variant="bodyM"
+                        color="constantWhite"
+                        numberOfLines={1}
+                        ellipsizeMode="middle"
+                        style={address === undefined ? undefined : styles.address}
+                        skeletonVariant="constantWhite"
+                        skeletonWidth={120}
+                    >
+                        {address}
                     </Text>
                 </View>
-                {price !== null && (
-                    <Text
-                        variant="bodyL"
-                        color="constantWhite"
-                        textAlign="center"
-                        style={fiatAmount === undefined ? undefined : styles.secondary}
-                        skeletonVariant="constantWhite"
-                        skeletonWidth={64}
-                    >
-                        {fiatAmount}
-                    </Text>
-                )}
-            </View>
-            {actions}
-            <View style={styles.divider} />
-        </>
+            </Screen.Header.Title>
+        </Screen.Header>
     );
 };

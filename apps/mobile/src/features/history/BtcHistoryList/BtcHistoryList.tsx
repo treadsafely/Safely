@@ -1,4 +1,5 @@
 import { useIsFocused } from '@react-navigation/native';
+import type { ReactNode } from 'react';
 import { useRef } from 'react';
 
 import {
@@ -12,19 +13,22 @@ import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
 
 import {
     type HistoryRowItem,
+    type HistoryScroll,
     HistoryList,
     useNewTransactionsBubble,
     useScrollToTopOnNewTx
 } from '../HistoryList';
 
 type BtcHistoryListProps = {
+    scroll: HistoryScroll;
+    header: ReactNode;
     onNavigateToActivityItem: (activity: BtcHistoryItem) => void;
 };
 
 export const BtcHistoryList = (props: BtcHistoryListProps) => {
     const listRef = useRef<ListRef<HistoryRowItem>>(null);
     const { groups, fetchNextPage } = useBtcHistoryGroups();
-    const bubble = useNewTransactionsBubble({ listRef, topThreshold: 44 });
+    const bubble = useNewTransactionsBubble({ listRef, scroll: props.scroll });
 
     useScrollToTopOnNewTx(listRef, useLastBroadcastedBtcTx()?.txId);
     useBtcHistoryPolling({ isEnabled: useIsFocused(), onNewActivity: bubble.show });
@@ -33,6 +37,8 @@ export const BtcHistoryList = (props: BtcHistoryListProps) => {
         <HistoryList
             listRef={listRef}
             bubble={bubble}
+            scroll={props.scroll}
+            header={props.header}
             groups={groups}
             fetchNextPage={fetchNextPage}
             onNavigateToActivityItem={props.onNavigateToActivityItem}

@@ -12,13 +12,20 @@ import {
     useBtcReceiveInfo
 } from '@safely/ux';
 
-import { AssetHistoryHeader, AssetHistoryScreen, BtcHistoryList } from '@mobile/features/history';
+import {
+    AssetHistoryHeader,
+    AssetHistoryListHeader,
+    AssetHistoryScreen,
+    BtcHistoryList,
+    useHistoryScroll
+} from '@mobile/features/history';
 import { HomeActions } from '@mobile/features/home';
 
 const BtcContent = () => {
     const navigation = useNavigation();
     const portfolio = useActivePortfolio();
     const { theme } = useUnistyles();
+    const scroll = useHistoryScroll();
     const networkBadge = useActivePortfolioNetworkBadge();
     const { displayAddress } = useBtcReceiveInfo();
     const { data: ratedAmount } = useActiveBtcRatedAmount();
@@ -42,15 +49,23 @@ const BtcContent = () => {
     return (
         <>
             <AssetHistoryHeader
-                gradientColor={theme.colors.brand.bitcoin}
                 asset={BTC_ASSET}
                 networkBadge={networkBadge}
                 address={displayAddress}
-                ratedAmount={ratedAmount}
-                actions={<HomeActions />}
+                scroll={scroll}
             />
             <BtcHistoryList
-                key={portfolio?.id.toString()}
+                key={portfolio.id.toString()}
+                scroll={scroll}
+                header={
+                    <AssetHistoryListHeader
+                        gradientColor={theme.colors.brand.bitcoin}
+                        asset={BTC_ASSET}
+                        ratedAmount={ratedAmount}
+                        actions={<HomeActions />}
+                        scroll={scroll}
+                    />
+                }
                 onNavigateToActivityItem={onNavigateToActivityItem}
             />
         </>
