@@ -1,8 +1,17 @@
 import { StyleSheet } from 'react-native-unistyles';
 
-const HEADER_HEIGHT = 64;
+export const HEADER_HEIGHT = 64;
+const Z_INDEX = 1000;
 
 export const styles = StyleSheet.create((theme, rt) => ({
+    backdrop: ({ shouldInsetTop }: { shouldInsetTop: boolean }) => ({
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: shouldInsetTop ? rt.insets.top + HEADER_HEIGHT : HEADER_HEIGHT,
+        zIndex: Z_INDEX
+    }),
     container: ({ shouldInsetTop }: { shouldInsetTop: boolean }) => ({
         position: 'absolute',
         top: 0,
@@ -13,7 +22,7 @@ export const styles = StyleSheet.create((theme, rt) => ({
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        zIndex: 1000,
+        zIndex: Z_INDEX,
         backgroundColor: theme.colors.background.primary,
         variants: {
             background: {
