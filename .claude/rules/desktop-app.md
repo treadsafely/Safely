@@ -421,6 +421,12 @@ as app-state events. A single instance lock guarantees one sync engine per machi
 needs store handling, there being no unlocked state to lock, but a renderer-side passcode session
 would have to expire on one of them.
 
+The window comes back where it was closed: `WindowStateStore` (`src/main/window-state.ts`) keeps
+the normal bounds and the full-screen flag under `main..windowState` in the `regular` store,
+written 500 ms after the last resize or move and once more on `close`, and `createMainWindow`
+spreads them over the defaults; a position that no longer overlaps a display by 100px keeps only
+the size. Being in the store, it goes with `clearAllData` — a wiped app opens like a fresh one.
+
 The renderer's logger writes to its devtools console, which is invisible when the app is driven from
 a terminal, so `src/main/window.ts` forwards renderer console messages, `did-fail-load` and
 `render-process-gone` into the main logger. That is how a renderer that dies during boot stays
