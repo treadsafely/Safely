@@ -16,6 +16,7 @@ import {
     derivationCellStyles,
     derivationRowStyles,
     draggingDerivationStyles,
+    draggingGroupStyles,
     groupRowStyles,
     groupStyles,
     groupTitleStyles,
@@ -109,13 +110,17 @@ const LedgerWalletCell: FC<LedgerWalletCellProps> = props => {
         () => new Map(derivations.map(derivation => [derivation.id.toString(), derivation])),
         [derivations]
     );
-    const { orderedIds, getItemProps } = useReorderList({
+    const {
+        orderedIds,
+        isDragging: isReordering,
+        getItemProps
+    } = useReorderList({
         ids: derivations.map(derivation => derivation.id.toString()),
         onReorder: orderedDerivationIds => onReorder?.(portfolio, orderedDerivationIds)
     });
 
     return (
-        <div className={groupStyles}>
+        <div className={cx(groupStyles, isReordering && draggingGroupStyles)}>
             <Cell size={size}>
                 <Cell.Leading>
                     <WalletIcon icon={portfolio.meta.icon} />
