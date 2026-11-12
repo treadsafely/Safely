@@ -144,6 +144,12 @@ in the synchronous global storage), so the page never reads a storage.
   `panda.config.ts` (`_open`, `_highlighted`, `_selected`, `_enter`, `_exit`).
 - `className` and `style` also accept a **function of state** — never use that form: Panda cannot
   extract it. Components in `shared/ui` narrow `className` to `string` to make this a type error.
+- The field a modal opens on carries `data-autofocus`; `Modal.Popup` resolves its `initialFocus`
+  to that element after mount, else to the popup itself (never the close button). Never put React
+  `autoFocus` on a field that is there when the dialog opens: React focuses it in the commit, the
+  focus manager then skips its own initial focus as "already inside", and the dialog being
+  replaced (a flow switching modals) returns focus to its trigger in a microtask — the field ends
+  up blurred. `autoFocus` is only for a field mounted on a later step of the same dialog.
 - Pass a recipe class name to a Base UI part; do not wrap parts in `styled()`. Without
   `shouldForwardProp` a wrapper leaks style props into the DOM.
 - Multipart components (`Root / Trigger / Positioner / Popup / Item`) map slot-for-slot onto a

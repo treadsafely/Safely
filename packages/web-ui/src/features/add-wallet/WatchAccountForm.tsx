@@ -18,7 +18,7 @@ export const WatchAccountForm: FC<WatchAccountFormProps> = ({ form, onSubmit }) 
         <>
             <Input invalid={form.hasError}>
                 <Input.Field
-                    autoFocus
+                    data-autofocus
                     isMultiline
                     className={fieldStyles}
                     value={form.value}

@@ -126,6 +126,7 @@ export const AddressInput: FC<AddressInputProps> = props => {
                 ) : (
                     <div className={fieldStyles}>
                         <textarea
+                            data-autofocus
                             ref={inputRef}
                             rows={1}
                             className={inputStyles}

@@ -44,7 +44,7 @@ export const CustomizeAccountModal: FC<CustomizeAccountModalProps> = props => {
                 <div className={fieldStyles}>
                     <Input>
                         <Input.Field
-                            autoFocus
+                            data-autofocus
                             maxLength={NAME_MAX_LENGTH}
                             value={name}
                             placeholder={t('customizeAccount.namePlaceholder')}
