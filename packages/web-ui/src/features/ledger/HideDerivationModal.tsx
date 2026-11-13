@@ -17,7 +17,7 @@ export const HideDerivationModal: FC<HideDerivationModalProps> = props => {
     const t = useTranslate();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup closeLabel={t('common.close')}>
                 <Modal.Content>
                     <Modal.Title>

@@ -2,7 +2,6 @@ import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
 
-import { popupStyles } from './AddAccountModal.styles';
 import { Button, Modal } from '../../shared';
 
 export type AddAccountModalProps = {
@@ -18,7 +17,7 @@ export const AddAccountModal: FC<AddAccountModalProps> = props => {
 
     return (
         <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
-            <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
+            <Modal.Popup closeLabel={t('common.close')}>
                 <Modal.Content>
                     <Modal.Title>{t('addAccount.title')}</Modal.Title>
                     <Modal.Description>{t('addAccount.subtitle')}</Modal.Description>

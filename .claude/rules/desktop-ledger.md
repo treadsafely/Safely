@@ -89,5 +89,7 @@ development build lists the device, the entitlement is the first suspect.
   copy of mobile's.
 - The sidebar and the wallet picker render a Ledger as a group — a header that selects nothing and
   one row per derivation. The sidebar reorders both the group among the wallets and the derivations
-  inside it (`useReorderList` nested in `LedgerWalletCell`, the inner drag stops propagation), and
+  inside it (`useReorderList` nested in `LedgerWalletCell`, the inner drag stops propagation; the
+  dragged item is clamped to its own list and to every clipping ancestor, so a derivation stops at
+  the group's edge and a wallet at the scroll container's, however far the pointer goes), and
   the home header shows the active derivation's name and index.

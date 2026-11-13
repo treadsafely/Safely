@@ -28,7 +28,12 @@ export const cellRecipe = defineSlotRecipe({
             minHeight: '48px',
             paddingLeft: '16',
             textAlign: 'left',
-            borderWidth: '0'
+            borderWidth: '0',
+            _focusVisible: {
+                outline: '2px solid',
+                outlineColor: 'input.focused.border',
+                outlineOffset: '-2px'
+            }
         },
         leading: {
             ...tinted,
@@ -107,6 +112,16 @@ export const cellRecipe = defineSlotRecipe({
                 root: { backgroundColor: 'cell.accentRed.background', textAlign: 'center' },
                 title: { color: 'cell.accentRed.foreground' },
                 trailing: { color: 'cell.accentRed.foreground' }
+            }
+        },
+        size: {
+            compact: {
+                root: { minHeight: '36px', paddingLeft: '8' },
+                leading: { paddingRight: '8' },
+                content: { paddingBlock: '8', paddingRight: '8' },
+                title: { textStyle: 'labelM' },
+                value: { textStyle: 'bodyM' },
+                trailing: { paddingRight: '8' }
             }
         },
         isSelected: {

@@ -165,10 +165,6 @@ export function useOnboardingFlow() {
     const goBackFromPasscode = useCallback(() => {
         const pending = source.current;
 
-        if (pending?.kind === 'signedIn') {
-            return;
-        }
-
         source.current = null;
 
         if (pending?.kind === 'imported') {
@@ -307,6 +303,6 @@ export function useOnboardingFlow() {
         onWatchInputReady,
         onPasscodeComplete,
         onBiometryFinished,
-        goBackFromPasscode
+        goBackFromPasscode: hasAccount ? undefined : goBackFromPasscode
     };
 }

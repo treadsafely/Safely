@@ -10,7 +10,7 @@ export type PasscodeScreenProps = {
     onLengthChange?: (length: PasscodeLength) => void;
     onSubmit: (code: string) => void;
     onInvalidCleared?: () => void;
-    onClose: () => void;
+    onClose?: () => void;
     onBack?: () => void;
 };
 

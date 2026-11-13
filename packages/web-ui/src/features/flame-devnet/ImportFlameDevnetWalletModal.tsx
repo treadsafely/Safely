@@ -18,6 +18,7 @@ import {
 import ImportWallet96 from '@safely/ux/assets/icons/96/import-wallet-96.svg?react';
 
 import {
+    bodyStyles,
     buttonsStyles,
     mediaStyles,
     noteStyles,
@@ -95,72 +96,74 @@ const ImportFlameDevnetWalletView: FC<ImportFlameDevnetWalletViewProps> = props 
             hasBackdrop={hasBackdrop}
             onBack={isPending ? undefined : onLeave}
         >
-            <div className={mediaStyles}>
-                <Icon asset={ImportWallet96} size={96} />
-            </div>
+            <div className={bodyStyles}>
+                <div className={mediaStyles}>
+                    <Icon asset={ImportWallet96} size={96} />
+                </div>
 
-            <Modal.Content hasFloatingClose={false}>
-                <Modal.Title>{t('importFlameDevnetWallet.title')}</Modal.Title>
-                <Modal.Description>{subtitle}</Modal.Description>
-            </Modal.Content>
+                <Modal.Content hasFloatingClose={false}>
+                    <Modal.Title>{t('importFlameDevnetWallet.title')}</Modal.Title>
+                    <Modal.Description>{subtitle}</Modal.Description>
+                </Modal.Content>
 
-            <List className={tableStyles}>
-                <List.Group variant="divided">
-                    <InfoRow label={t('importFlameDevnetWallet.walletLabel')}>
-                        <WalletName meta={meta} />
-                    </InfoRow>
+                <List className={tableStyles}>
+                    <List.Group variant="divided">
+                        <InfoRow label={t('importFlameDevnetWallet.walletLabel')}>
+                            <WalletName meta={meta} />
+                        </InfoRow>
 
-                    <InfoRow label={t('importFlameDevnetWallet.balanceLabel')}>
-                        {balance === undefined ? (
-                            <Skeleton width={72} height={20} />
-                        ) : (
-                            balance.format(formatter, { fullPrecision: true })
-                        )}
-                    </InfoRow>
+                        <InfoRow label={t('importFlameDevnetWallet.balanceLabel')}>
+                            {balance === undefined ? (
+                                <Skeleton width={72} height={20} />
+                            ) : (
+                                balance.format(formatter, { fullPrecision: true })
+                            )}
+                        </InfoRow>
 
-                    <InfoRow
-                        label={t('importFlameDevnetWallet.addressLabel')}
-                        copyable={wallet?.receivingAddress}
-                    >
-                        {wallet === null ? (
-                            <Skeleton width={120} height={20} />
-                        ) : (
-                            ellipsisMiddle(wallet.receivingAddress, 8)
-                        )}
-                    </InfoRow>
-                </List.Group>
-            </List>
+                        <InfoRow
+                            label={t('importFlameDevnetWallet.addressLabel')}
+                            copyable={wallet?.receivingAddress}
+                        >
+                            {wallet === null ? (
+                                <Skeleton width={120} height={20} />
+                            ) : (
+                                ellipsisMiddle(wallet.receivingAddress, 8)
+                            )}
+                        </InfoRow>
+                    </List.Group>
+                </List>
 
-            <Text as="p" variant="bodyM" tone="tertiary" align="center" className={noteStyles}>
-                {t('importFlameDevnetWallet.devnetOnly')}
-            </Text>
-
-            <div className={buttonsStyles}>
-                <Button variant="secondary" disabled={isPending} onClick={onLeave}>
-                    {t('common.cancel')}
-                </Button>
-                <Button
-                    variant="primary"
-                    isLoading={isPending}
-                    disabled={!isFromTrustedSite || wallet === null}
-                    onClick={() => onImport(meta)}
-                >
-                    {t('importFlameDevnetWallet.importButton')}
-                </Button>
-            </div>
-
-            <label className={trustedSiteStyles}>
-                <Checkbox
-                    checked={isFromTrustedSite}
-                    onCheckedChange={checked => setIsFromTrustedSite(checked)}
-                />
-                <Text variant="bodyM" tone="secondary">
-                    <Trans
-                        i18nKey="importFlameDevnetWallet.trustedSite"
-                        components={{ site: <Text variant="bodyM" tone="link" /> }}
-                    />
+                <Text as="p" variant="bodyM" tone="tertiary" align="center" className={noteStyles}>
+                    {t('importFlameDevnetWallet.devnetOnly')}
                 </Text>
-            </label>
+
+                <div className={buttonsStyles}>
+                    <Button variant="secondary" disabled={isPending} onClick={onLeave}>
+                        {t('common.cancel')}
+                    </Button>
+                    <Button
+                        variant="primary"
+                        isLoading={isPending}
+                        disabled={!isFromTrustedSite || wallet === null}
+                        onClick={() => onImport(meta)}
+                    >
+                        {t('importFlameDevnetWallet.importButton')}
+                    </Button>
+                </div>
+
+                <label className={trustedSiteStyles}>
+                    <Checkbox
+                        checked={isFromTrustedSite}
+                        onCheckedChange={checked => setIsFromTrustedSite(checked)}
+                    />
+                    <Text variant="bodyM" tone="secondary">
+                        <Trans
+                            i18nKey="importFlameDevnetWallet.trustedSite"
+                            components={{ site: <Text variant="bodyM" tone="link" /> }}
+                        />
+                    </Text>
+                </label>
+            </div>
         </StepCard>
     );
 };

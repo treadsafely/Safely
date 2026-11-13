@@ -23,7 +23,7 @@ export const RecoveryConfirmModal: FC<RecoveryConfirmModalProps> = ({ onReveal, 
     const t = useTranslate();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <div className={iconStyles}>
                     <Icon asset={ListKey96} size={96} />

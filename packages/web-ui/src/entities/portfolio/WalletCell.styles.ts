@@ -8,6 +8,8 @@ export const groupStyles = css({
     backgroundColor: 'cell.default.background'
 });
 
+export const draggingGroupStyles = css({ cursor: 'grabbing', '& *': { cursor: 'grabbing' } });
+
 export const groupTitleStyles = css({ color: 'text.tertiary' });
 
 export const groupRowStyles = css({ justifyContent: 'flex-start' });

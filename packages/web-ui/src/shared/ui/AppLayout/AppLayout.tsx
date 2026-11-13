@@ -1,10 +1,11 @@
-import type { ComponentPropsWithoutRef, FC, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, CSSProperties, FC, ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 
 import { cx } from '@safely/web-ui/styled-system/css';
 import { appLayout } from '@safely/web-ui/styled-system/recipes';
 
 export type AppLayoutRootProps = {
+    sidebarWidth: number;
     hasWindowControls?: boolean;
     isFullScreen?: boolean;
     isSecondaryOpen?: boolean;
@@ -22,13 +23,21 @@ const AppLayoutContext = createContext(appLayout());
 const useAppLayoutStyles = () => useContext(AppLayoutContext);
 
 const AppLayoutRoot: FC<AppLayoutRootProps> = props => {
-    const { hasWindowControls, isFullScreen, isSecondaryOpen, isPanelOpen, className, children } =
-        props;
+    const {
+        sidebarWidth,
+        hasWindowControls,
+        isFullScreen,
+        isSecondaryOpen,
+        isPanelOpen,
+        className,
+        children
+    } = props;
 
     const styles = appLayout({ hasWindowControls, isFullScreen, isSecondaryOpen, isPanelOpen });
+    const style = { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties;
 
     return (
-        <div className={cx(styles.root, className)}>
+        <div className={cx(styles.root, className)} style={style}>
             <AppLayoutContext.Provider value={styles}>{children}</AppLayoutContext.Provider>
         </div>
     );
@@ -44,6 +53,12 @@ const AppLayoutSidebar: FC<AppLayoutPartProps> = props => {
     const { className, ...rest } = props;
 
     return <aside className={cx(useAppLayoutStyles().sidebar, className)} {...rest} />;
+};
+
+const AppLayoutSidebarResizer: FC<AppLayoutPartProps> = props => {
+    const { className, ...rest } = props;
+
+    return <div className={cx(useAppLayoutStyles().sidebarResizer, className)} {...rest} />;
 };
 
 const AppLayoutSecondary: FC<AppLayoutPartProps> = props => {
@@ -79,6 +94,7 @@ const AppLayoutPanelContent: FC<AppLayoutPartProps> = props => {
 export const AppLayout = Object.assign(AppLayoutRoot, {
     TitleBar: AppLayoutTitleBar,
     Sidebar: AppLayoutSidebar,
+    SidebarResizer: AppLayoutSidebarResizer,
     Secondary: AppLayoutSecondary,
     SecondaryContent: AppLayoutSecondaryContent,
     Content: AppLayoutContent,

@@ -5,7 +5,9 @@ import {
     createRouter
 } from '@tanstack/react-router';
 
+import { FatalError } from './FatalError';
 import { OnboardingGuard } from './OnboardingGuard';
+import { logger } from '../logger';
 import { MainScreen, WelcomeScreen } from '../screens';
 import { ROUTE, sMainSearch, sSettingsParams } from '../shared';
 
@@ -52,7 +54,10 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [ROUTE.main] }),
-    context: {} as RouterContext
+    context: {} as RouterContext,
+    defaultErrorComponent: FatalError,
+    defaultOnCatch: (error, errorInfo) =>
+        logger.error('render failed', error, errorInfo.componentStack)
 });
 
 declare module '@tanstack/react-router' {

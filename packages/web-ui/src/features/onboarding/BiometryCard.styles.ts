@@ -17,5 +17,3 @@ export const actionStyles = css({
     justifyContent: 'center',
     paddingBlock: '16'
 });
-
-export const skipStyles = css({ marginLeft: 'auto' });

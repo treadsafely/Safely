@@ -58,7 +58,8 @@ const ALLOWED_REQUEST_HEADERS = [
     'accept',
     'cache-control',
     'last-event-id',
-    'x-requested-with'
+    'x-requested-with',
+    'x-project-token'
 ].join(', ');
 
 const isOwnApiUrl = (url: string): boolean => {

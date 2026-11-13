@@ -6,7 +6,8 @@ export const rowStyles = css({
     justifyContent: 'space-between',
     flexShrink: 0,
     height: '52px',
-    gap: '8'
+    gap: '8',
+    appRegion: 'drag'
 });
 
 export const titleStyles = css({
@@ -17,6 +18,7 @@ export const titleStyles = css({
 
 export const addressStyles = css({
     cursor: 'pointer',
+    appRegion: 'no-drag',
     transition: 'color 150ms',
     _hover: { color: 'text.primary' }
 });

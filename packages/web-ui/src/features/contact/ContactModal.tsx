@@ -38,7 +38,7 @@ export const ContactModal: FC<ContactModalProps> = props => {
     });
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} hasClose={false} closeLabel={t('common.close')}>
                 <Modal.Header
                     closeLabel={t('common.close')}
@@ -58,7 +58,7 @@ export const ContactModal: FC<ContactModalProps> = props => {
                     <Input invalid={Boolean(state.errors.name)}>
                         <Input.Label>{t('newContact.form.name')}</Input.Label>
                         <Input.Field
-                            autoFocus
+                            data-autofocus
                             className={fieldStyles}
                             value={state.values.name}
                             maxLength={CONTACT_NAME_MAX_LENGTH}

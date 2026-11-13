@@ -93,9 +93,12 @@ recipe at the first design change, and nothing in lint or CI compares them. When
 look the primitive lacks, the variant goes into the recipe (`panda/recipes/*.recipe.ts` — and into
 `staticCss` if the recipe is new), or a new primitive goes into `shared/ui`. The history table is
 the worked example of the one case a local `css()` is right: a flat grid row
-(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own column
-template and hover/selected states — while its loading state is still `Skeleton`, not five copies
-of one pulsing bar.
+(`entities/activity/ActivityTableRow`) is a look no primitive owns, so it carries its own
+hover/selected states — while its loading state is still `Skeleton`, not five copies of one
+pulsing bar. The column template lives on `ActivityTableGrid`, the container, and a row is a
+`subgrid` spanning it: that is what lets the date column be `minmax(172px, max-content)` and still
+align across rows, since `max-content` is resolved over the whole table. A row rendered alone (the
+amount-display preview) is wrapped in that container too, or it collapses into one column.
 
 **A screen region picks its chain from the active portfolio, never from a prop a page guesses.**
 A portfolio has one chain on the web targets — BTC, or Flame for a Demo wallet — so
@@ -121,12 +124,19 @@ spans the list alone.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
 the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The
-left one opens by collapsing the outer slot's width while the inner one slides. The right one is an
-overlay: the outer slot is an absolute layer over the content that never takes pointer events, and
-the inner one slides in over it with a shadow, so opening the detail view never reflows the chart
-or the table. Either way the outer slot stays mounted and the page decides what the inner one
-contains — the transaction panel is a sibling of `AppLayout.Content`, which is why the selected
+left one opens by collapsing the outer slot's width while the inner one shifts out, with no
+transition: settings appear on the click. The right one is an overlay: the outer slot is an
+absolute layer over the content that never takes pointer events, and the inner one slides in over
+it with a shadow, so opening the detail view never reflows the chart or the table. Either way
+the outer slot stays mounted and the page decides what the inner one contains — the transaction
+panel is a sibling of `AppLayout.Content`, which is why the selected
 activity lives in `MainPage` and reaches the list as a prop rather than being opened by it.
+
+The sidebar width is the CSS variable `--sidebar-width`, set on the shell root from its
+`sidebarWidth` prop; `AppLayout.SidebarResizer` is the handle on its right edge and
+`useResizableWidth` (`shared/hooks`) turns the drag into a clamped width, live while dragging and
+committed on release. The limits sit in `MainPage`, the stored value in the app (desktop keeps it
+in the synchronous global storage), so the page never reads a storage.
 
 ## Base UI conventions
 
@@ -134,6 +144,21 @@ activity lives in `MainPage` and reaches the list as a prop rather than being op
   `panda.config.ts` (`_open`, `_highlighted`, `_selected`, `_enter`, `_exit`).
 - `className` and `style` also accept a **function of state** — never use that form: Panda cannot
   extract it. Components in `shared/ui` narrow `className` to `string` to make this a type error.
+- The field a modal opens on carries `data-autofocus`; `Modal.Popup` resolves its `initialFocus`
+  to that element after mount, else to the popup itself (never the close button). Never put React
+  `autoFocus` on a field that is there when the dialog opens: React focuses it in the commit, the
+  focus manager then skips its own initial focus as "already inside", and the dialog being
+  replaced (a flow switching modals) returns focus to its trigger in a microtask — the field ends
+  up blurred. `autoFocus` is only for a field mounted on a later step of the same dialog.
+- A modal closes on Esc and on a backdrop click. `disablePointerDismissal` is only for a dialog
+  that waits on something the user must do elsewhere (`LedgerSignModal`); `StepCard` sets it when
+  it has no backdrop (onboarding), and there Esc is the header's back button. The lock screen
+  passes no `onOpenChange` at all.
+- `Passcode` takes no focus: it listens for digits and Backspace on the closest `[role="dialog"]`
+  (else `document`) and ignores keys aimed at another dialog, so the length toggle or the back
+  button holding focus does not stop typing, and a modal over the lock screen does not unlock it.
+- `List` moves focus with ArrowUp/ArrowDown/Home/End over its focusable rows (`cell` paints the
+  ring); a text field inside a row keeps the arrows for the caret.
 - Pass a recipe class name to a Base UI part; do not wrap parts in `styled()`. Without
   `shouldForwardProp` a wrapper leaks style props into the DOM.
 - Multipart components (`Root / Trigger / Positioner / Popup / Item`) map slot-for-slot onto a

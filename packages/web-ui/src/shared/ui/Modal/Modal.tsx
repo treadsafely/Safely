@@ -10,6 +10,8 @@ import { Icon } from '../Icon';
 
 const styles = modal();
 
+const INITIAL_FOCUS_SELECTOR = '[data-autofocus]';
+
 const closeStyles = button({
     variant: 'secondary',
     size: 'xsmall',
@@ -82,13 +84,16 @@ const ModalPopup: FC<ModalPopupProps> = props => {
     const popupRef = useRef<HTMLDivElement>(null);
     const popupStyles = modal({ layer });
 
+    const initialFocus = (): HTMLElement | null =>
+        popupRef.current?.querySelector<HTMLElement>(INITIAL_FOCUS_SELECTOR) ?? popupRef.current;
+
     return (
         <Dialog.Portal>
             {hasBackdrop && <Dialog.Backdrop forceRender className={popupStyles.backdrop} />}
 
             <Dialog.Popup
                 ref={popupRef}
-                initialFocus={popupRef}
+                initialFocus={initialFocus}
                 className={cx(popupStyles.popup, className)}
                 onKeyDown={onKeyDown}
             >
