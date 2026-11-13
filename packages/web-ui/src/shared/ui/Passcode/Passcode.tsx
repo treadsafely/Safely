@@ -1,4 +1,4 @@
-import type { FC, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
 
 import { useTranslate } from '@safely/ux';
@@ -19,6 +19,8 @@ export type PasscodeProps = {
     onChange: (value: string) => void;
     className?: string;
 };
+
+const DIALOG_SELECTOR = '[role="dialog"]';
 
 const preventFocus = (event: { preventDefault: () => void }): void => event.preventDefault();
 
@@ -46,29 +48,39 @@ export const Passcode: FC<PasscodeProps> = props => {
     const rootRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        rootRef.current?.focus();
-    }, []);
+        const dialog = rootRef.current?.closest<HTMLElement>(DIALOG_SELECTOR) ?? null;
+        const scope: GlobalEventHandlers = dialog ?? document;
 
-    const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
-        if (event.key === 'Backspace') {
-            event.preventDefault();
-            removeLast();
-            return;
-        }
+        const onKeyDown = (event: KeyboardEvent): void => {
+            const target = event.target instanceof Element ? event.target : null;
 
-        if (/^[0-9]$/.test(event.key)) {
-            event.preventDefault();
-            append(event.key);
-        }
-    };
+            if (event.metaKey || event.ctrlKey || event.altKey) {
+                return;
+            }
+
+            if ((target?.closest(DIALOG_SELECTOR) ?? null) !== dialog) {
+                return;
+            }
+
+            if (event.key === 'Backspace') {
+                event.preventDefault();
+                onChange(value.slice(0, -1));
+                return;
+            }
+
+            if (/^[0-9]$/.test(event.key) && value.length < length) {
+                event.preventDefault();
+                onChange(value + event.key);
+            }
+        };
+
+        scope.addEventListener('keydown', onKeyDown);
+
+        return () => scope.removeEventListener('keydown', onKeyDown);
+    }, [value, length, onChange]);
 
     return (
-        <div
-            ref={rootRef}
-            tabIndex={-1}
-            onKeyDown={onKeyDown}
-            className={cx(styles.root, className)}
-        >
+        <div ref={rootRef} className={cx(styles.root, className)}>
             <div className={styles.boxes}>
                 {Array.from({ length }, (_, index) => (
                     <div key={index} className={styles.box}>
