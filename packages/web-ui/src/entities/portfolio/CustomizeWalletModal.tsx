@@ -27,7 +27,7 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
     const [icon, setIcon] = useState<PortfolioMetaIcon>(defaultIcon);
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} hasClose={false} closeLabel={t('common.close')}>
                 <Modal.Header closeLabel={t('common.close')}>
                     <Button

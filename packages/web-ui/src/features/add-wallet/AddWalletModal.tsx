@@ -23,7 +23,7 @@ export const AddWalletModal: FC<AddWalletModalProps> = props => {
     const { devIsTestnetAllowed } = useAppContext();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && props.onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && props.onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <div className={iconStyles}>
                     <Icon asset={WalletPlus96} size={96} />

@@ -23,7 +23,11 @@ export const StepCard: FC<StepCardProps> = props => {
     const t = useTranslate();
 
     return (
-        <Modal open>
+        <Modal
+            open
+            disablePointerDismissal={!hasBackdrop}
+            onOpenChange={isOpen => !isOpen && onBack?.()}
+        >
             <Modal.Popup
                 className={cx(popupStyles, hasShadow && shadowStyles)}
                 hasClose={false}

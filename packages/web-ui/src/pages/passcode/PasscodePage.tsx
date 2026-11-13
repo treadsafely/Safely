@@ -38,7 +38,7 @@ export const PasscodePage: FC<PasscodeScreenProps> = props => {
 
     return (
         <ScreenProtection>
-            <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose?.()}>
+            <Modal open onOpenChange={isOpen => !isOpen && onClose?.()}>
                 <Modal.Popup
                     className={popupStyles}
                     hasClose={false}

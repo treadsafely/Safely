@@ -20,7 +20,7 @@ export const WalletAlreadyAddedModal: FC<WalletAlreadyAddedModalProps> = props =
     const t = useTranslate();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <div className={iconStyles}>
                     <WalletIcon icon={meta.icon} size="large" />

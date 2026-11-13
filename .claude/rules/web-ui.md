@@ -150,6 +150,15 @@ in the synchronous global storage), so the page never reads a storage.
   focus manager then skips its own initial focus as "already inside", and the dialog being
   replaced (a flow switching modals) returns focus to its trigger in a microtask — the field ends
   up blurred. `autoFocus` is only for a field mounted on a later step of the same dialog.
+- A modal closes on Esc and on a backdrop click. `disablePointerDismissal` is only for a dialog
+  that waits on something the user must do elsewhere (`LedgerSignModal`); `StepCard` sets it when
+  it has no backdrop (onboarding), and there Esc is the header's back button. The lock screen
+  passes no `onOpenChange` at all.
+- `Passcode` takes no focus: it listens for digits and Backspace on the closest `[role="dialog"]`
+  (else `document`) and ignores keys aimed at another dialog, so the length toggle or the back
+  button holding focus does not stop typing, and a modal over the lock screen does not unlock it.
+- `List` moves focus with ArrowUp/ArrowDown/Home/End over its focusable rows (`cell` paints the
+  ring); a text field inside a row keeps the arrows for the caret.
 - Pass a recipe class name to a Base UI part; do not wrap parts in `styled()`. Without
   `shouldForwardProp` a wrapper leaks style props into the DOM.
 - Multipart components (`Root / Trigger / Positioner / Popup / Item`) map slot-for-slot onto a
