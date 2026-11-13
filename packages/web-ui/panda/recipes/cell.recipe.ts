@@ -28,7 +28,12 @@ export const cellRecipe = defineSlotRecipe({
             minHeight: '48px',
             paddingLeft: '16',
             textAlign: 'left',
-            borderWidth: '0'
+            borderWidth: '0',
+            _focusVisible: {
+                outline: '2px solid',
+                outlineColor: 'input.focused.border',
+                outlineOffset: '-2px'
+            }
         },
         leading: {
             ...tinted,
