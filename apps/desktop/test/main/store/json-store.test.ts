@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { FileCodec } from '../../../src/main/store/json-store';
 import { JsonStore } from '../../../src/main/store/json-store';
 
 /* These read the file back instead of trusting the instance: the point is that what the store
@@ -94,5 +95,54 @@ describe('JsonStore', () => {
 
         expect(await store.get('missing')).toBeNull();
         expect(await store.keys('')).toEqual([]);
+    });
+
+    /* a store that cannot be read must say so: an empty answer here is how a write wipes the data */
+    it('surfaces a read failure that is not an absent file', async () => {
+        await fs.mkdir(filePath);
+
+        const store = new JsonStore(filePath);
+
+        await expect(store.get('answer')).rejects.toThrow();
+    });
+
+    it('erases the file and forgets its content', async () => {
+        const store = new JsonStore(filePath);
+
+        await store.set('answer', '42');
+        await store.erase();
+
+        expect(await fs.readdir(directory)).toEqual([]);
+        expect(await store.get('answer')).toBeNull();
+    });
+
+    it('lets a write queued before erase land, and removes it with the rest', async () => {
+        const store = new JsonStore(filePath);
+
+        const write = store.set('answer', '42');
+
+        await store.erase();
+        await write;
+
+        expect(await fs.readdir(directory)).toEqual([]);
+        expect(await store.get('answer')).toBeNull();
+    });
+
+    it('hands the file content to its codec in both directions', async () => {
+        const codec: FileCodec = {
+            encode: data => [...data].map(([key, value]) => `${key}=${value}`).join('\n'),
+            decode: content =>
+                new Map(
+                    content === ''
+                        ? []
+                        : content.split('\n').map(line => line.split('=') as [string, string])
+                )
+        };
+        const store = new JsonStore(filePath, codec);
+
+        await store.set('answer', '42');
+
+        expect(await fs.readFile(filePath, 'utf8')).toBe('answer=42');
+        expect(await new JsonStore(filePath, codec).get('answer')).toBe('42');
     });
 });
