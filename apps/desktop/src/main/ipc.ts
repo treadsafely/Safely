@@ -2,12 +2,12 @@ import type { BrowserWindow, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import { ipcMain, shell } from 'electron';
 import type { ZodType } from 'zod';
 
-import { isBiometryAvailable, promptBiometry } from './biometry';
 import { getCameraAccessStatus, openCameraPrivacySettings, requestCameraAccess } from './camera';
 import type { DeepLinkReceiver } from './deep-links';
 import { fileTransport, logStore, mainLogger } from './logger';
 import type { StoreScope } from './store';
-import { clearStores, getStore } from './store';
+import { clearStores, getSecretBackend, getStore } from './store';
+import { whenShown } from './window';
 import type { CameraAccessStatus, StoreChannels } from '../shared/ipc';
 import {
     IPC_CHANNEL,
@@ -47,6 +47,18 @@ function assertTrustedSender(event: IpcMainInvokeEvent | IpcMainEvent): void {
 
 function isTrustedSender(event: IpcMainInvokeEvent | IpcMainEvent): boolean {
     return event.senderFrame !== null && event.senderFrame.parent === null;
+}
+
+const windowHandleOf = (window: BrowserWindow | null): Buffer | null =>
+    window === null || window.isDestroyed() ? null : window.getNativeWindowHandle();
+
+/* win32 only, where the first unlock prompts: the window is created hidden, and a prompt raised before it shows has nothing to sit over */
+async function windowHandleWhenShown(window: BrowserWindow | null): Promise<Buffer | null> {
+    if (window !== null && process.platform === 'win32') {
+        await whenShown(window);
+    }
+
+    return windowHandleOf(window);
 }
 
 export function registerIpcHandlers(
@@ -127,15 +139,21 @@ export function registerIpcHandlers(
         await shell.openExternal(payload.url);
     });
 
-    ipcMain.handle(IPC_CHANNEL.biometry.availability, (event): boolean => {
+    ipcMain.handle(IPC_CHANNEL.biometry.availability, (event): Promise<boolean> => {
         assertTrustedSender(event);
 
-        return isBiometryAvailable();
+        return getSecretBackend().isPresenceCheckAvailable();
     });
 
     handle(IPC_CHANNEL.biometry.authenticate, sBiometryAuthenticateRequest, payload =>
-        promptBiometry(payload.reason)
+        getSecretBackend().verifyPresence(windowHandleOf(getWindow()), payload.reason)
     );
+
+    ipcMain.handle(IPC_CHANNEL.secretStore.unlock, async event => {
+        assertTrustedSender(event);
+
+        return getSecretBackend().unlock(await windowHandleWhenShown(getWindow()));
+    });
 
     ipcMain.handle(IPC_CHANNEL.camera.accessStatus, (event): CameraAccessStatus => {
         assertTrustedSender(event);
