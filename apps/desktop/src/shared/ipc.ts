@@ -25,6 +25,10 @@ export const IPC_CHANNEL = {
         authenticate: 'safely:biometry:authenticate'
     },
 
+    secretStore: {
+        unlock: 'safely:secret-store:unlock'
+    },
+
     camera: {
         accessStatus: 'safely:camera:access-status',
         requestAccess: 'safely:camera:request-access',
@@ -114,3 +118,11 @@ export const sCameraAccessGranted = z.boolean();
  */
 export const sKeychainErrorCode = z.enum(['UNAVAILABLE', 'CORRUPT']);
 export type KeychainErrorCode = z.infer<typeof sKeychainErrorCode>;
+
+/* `isPresenceVerified` is true only when a prompt was answered in this call, never on a repeat */
+export const sUnlockOutcome = z.discriminatedUnion('state', [
+    z.object({ state: z.literal('unlocked'), isPresenceVerified: z.boolean() }),
+    z.object({ state: z.enum(['unsupported', 'cancelled', 'lost', 'mismatch', 'failed']) })
+]);
+export type UnlockOutcome = z.infer<typeof sUnlockOutcome>;
+export type UnlockFailure = Exclude<UnlockOutcome['state'], 'unlocked'>;

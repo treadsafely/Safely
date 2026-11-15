@@ -1,5 +1,5 @@
 import type { AppInfo } from './app-info';
-import type { AppState, CameraAccessStatus } from './ipc';
+import type { AppState, CameraAccessStatus, UnlockOutcome } from './ipc';
 
 /**
  * The only path from the web UI to Electron, and the only module both processes may import.
@@ -23,6 +23,10 @@ export interface DesktopBiometryBridge {
     authenticate(reason: string): Promise<boolean>;
 }
 
+export interface DesktopSecretStoreBridge {
+    unlock(): Promise<UnlockOutcome>;
+}
+
 export interface DesktopCameraBridge {
     getAccessStatus(): Promise<CameraAccessStatus>;
     /* resolves to `false` for a refusal and for an answer macOS already remembers */
@@ -42,8 +46,10 @@ export interface DesktopLogsBridge {
     share(): Promise<void>;
 }
 
+export type DesktopOs = 'darwin' | 'win32' | 'other';
+
 export interface DesktopBridge {
-    platform: string;
+    os: DesktopOs;
 
     versions: {
         electron: string;
@@ -67,6 +73,8 @@ export interface DesktopBridge {
     openExternalUrl(url: string): Promise<void>;
 
     biometry: DesktopBiometryBridge;
+
+    secretStore: DesktopSecretStoreBridge;
 
     camera: DesktopCameraBridge;
 

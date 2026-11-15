@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 import { parseAppInfoArgument } from '../shared/app-info';
-import type { DesktopBridge, DesktopStoreBridge } from '../shared/bridge';
+import type { DesktopBridge, DesktopOs, DesktopStoreBridge } from '../shared/bridge';
 import { BRIDGE_KEY } from '../shared/bridge';
 import type { AppState, StoreChannels } from '../shared/ipc';
 import {
@@ -12,7 +12,8 @@ import {
     sCameraAccessStatus,
     sDeepLinkUrl,
     sIsFullScreen,
-    sLogLines
+    sLogLines,
+    sUnlockOutcome
 } from '../shared/ipc';
 
 function createStoreBridge(channels: StoreChannels): DesktopStoreBridge {
@@ -46,8 +47,10 @@ function createStoreBridge(channels: StoreChannels): DesktopStoreBridge {
  * Transport only. Requests are validated in main; responses are parsed here so a malformed
  * reply cannot slip into the UI as a typed value.
  */
+const osOf = (name: string): DesktopOs => (name === 'darwin' || name === 'win32' ? name : 'other');
+
 const bridge: DesktopBridge = {
-    platform: process.platform,
+    os: osOf(process.platform),
     versions: {
         electron: process.versions.electron,
         chrome: process.versions.chrome
@@ -105,6 +108,12 @@ const bridge: DesktopBridge = {
             return sBiometryResult.parse(
                 await ipcRenderer.invoke(IPC_CHANNEL.biometry.authenticate, { reason })
             );
+        }
+    },
+
+    secretStore: {
+        async unlock() {
+            return sUnlockOutcome.parse(await ipcRenderer.invoke(IPC_CHANNEL.secretStore.unlock));
         }
     },
 
