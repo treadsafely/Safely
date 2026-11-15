@@ -1,26 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { FakeKeychain } from './fake-keychain';
-import { keychain } from '../../../src/main/plugins/keychain';
-import { KeychainError, KeychainStore } from '../../../src/main/store/keychain-store';
-
-/* The real module loads the addon at import and throws without one, so it is replaced whole. */
-vi.mock('../../../src/main/plugins/keychain', async () => {
-    const { createFakeKeychain } = await import('./fake-keychain');
-
-    return { keychain: createFakeKeychain() };
-});
-
-const fake = keychain as FakeKeychain;
+import { createFakeKeychain } from './fake-keychain';
+import { KeychainError } from '../../../src/main/store/keychain-error';
+import { KeychainStore } from '../../../src/main/store/keychain-store';
 
 const SERVICE = 'test.encrypted';
 const OTHER_SERVICE = 'test.secureEncrypted';
 
 describe('KeychainStore', () => {
-    const store = new KeychainStore(SERVICE);
+    let fake: FakeKeychain;
+    let store: KeychainStore;
 
     beforeEach(() => {
-        fake.reset();
+        fake = createFakeKeychain();
+        store = new KeychainStore(fake, SERVICE);
     });
 
     it('reads back what it wrote', async () => {
@@ -87,7 +81,7 @@ describe('KeychainStore', () => {
     /* The scopes will differ once the presence gate lands: one clearing the other would hand the
        ungated scope's lifetime to key material. */
     it('never touches another service', async () => {
-        const other = new KeychainStore(OTHER_SERVICE);
+        const other = new KeychainStore(fake, OTHER_SERVICE);
 
         await store.set('shared_name', 'encrypted');
         await other.set('shared_name', 'secure');
