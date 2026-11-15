@@ -8,7 +8,7 @@ import {
 
 import { useScreenHeaderHeight } from '@mobile/shared/ui';
 
-const FADE_DISTANCE = 64;
+const FADE_DISTANCE = 32;
 const TOP_THRESHOLD = 44;
 
 export function useHistoryScroll() {
@@ -18,14 +18,15 @@ export function useHistoryScroll() {
     const fadeProgress = useDerivedValue(() =>
         interpolate(scrollY.value, [0, FADE_DISTANCE], [0, 1], Extrapolation.CLAMP)
     );
+    const isHeaderCovered = useDerivedValue(() => scrollY.value >= FADE_DISTANCE);
     const isAtTop = useDerivedValue(() => {
         const firstRowOffsetBelowHeader = Math.max(listHeaderHeight.value - screenHeaderHeight, 0);
         return scrollY.value <= firstRowOffsetBelowHeader + TOP_THRESHOLD;
     });
 
     return useMemo(
-        () => ({ scrollY, listHeaderHeight, fadeProgress, isAtTop }),
-        [scrollY, listHeaderHeight, fadeProgress, isAtTop]
+        () => ({ scrollY, listHeaderHeight, fadeProgress, isHeaderCovered, isAtTop }),
+        [scrollY, listHeaderHeight, fadeProgress, isHeaderCovered, isAtTop]
     );
 }
 

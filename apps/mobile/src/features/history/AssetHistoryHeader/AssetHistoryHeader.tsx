@@ -21,7 +21,9 @@ export const AssetHistoryHeader = (props: AssetHistoryHeaderProps) => {
     const { asset, networkBadge, address, scroll } = props;
     const screenHeaderHeight = useScreenHeaderHeight();
 
-    const backdropStyle = useAnimatedStyle(() => ({ opacity: scroll.fadeProgress.value }));
+    const backdropStyle = useAnimatedStyle(() => ({
+        opacity: scroll.isHeaderCovered.value ? 1 : 0
+    }));
     const hairlineStyle = useAnimatedStyle(() => {
         const dividerOffset = scroll.listHeaderHeight.value - screenHeaderHeight;
         const isDividerUnderHeader = dividerOffset > 0 && scroll.scrollY.value >= dividerOffset;
