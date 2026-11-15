@@ -1,2 +1,2 @@
 export type { Keychain } from './types';
-export { keychain } from './keychain-addon';
+export { loadKeychain } from './keychain-addon';

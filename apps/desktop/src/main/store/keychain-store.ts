@@ -1,21 +1,6 @@
+import { KeychainError } from './keychain-error';
 import type { Store } from './types';
-import type { KeychainErrorCode } from '../../shared/ipc';
-import { keychain } from '../plugins/keychain';
-
-/**
- * The message is the code and nothing else: it crosses IPC into the renderer verbatim. Anything
- * diagnostic — an OSStatus, a key name — belongs on `cause`, which stays in main.
- */
-export class KeychainError extends Error {
-    constructor(
-        public readonly code: KeychainErrorCode,
-        options?: ErrorOptions
-    ) {
-        super(code, options);
-
-        this.name = 'KeychainError';
-    }
-}
+import type { Keychain } from '../plugins/keychain';
 
 /* `fatal` on purpose: a value that is not the UTF-8 we wrote is a corrupt item, not a lossy one. */
 const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -26,10 +11,13 @@ const decoder = new TextDecoder('utf-8', { fatal: true });
  * signature.
  */
 export class KeychainStore implements Store {
-    constructor(private readonly service: string) {}
+    constructor(
+        private readonly keychain: Keychain,
+        private readonly service: string
+    ) {}
 
     public async get(key: string): Promise<string | null> {
-        const stored = await this.platform(() => keychain.get(this.service, key));
+        const stored = await this.platform(() => this.keychain.get(this.service, key));
 
         if (stored === null) {
             return null;
@@ -43,19 +31,19 @@ export class KeychainStore implements Store {
     }
 
     public async set(key: string, value: string): Promise<void> {
-        await this.platform(() => keychain.set(this.service, key, value));
+        await this.platform(() => this.keychain.set(this.service, key, value));
     }
 
     public async remove(key: string): Promise<void> {
-        await this.platform(() => keychain.remove(this.service, key));
+        await this.platform(() => this.keychain.remove(this.service, key));
     }
 
     public async clear(): Promise<void> {
-        await this.platform(() => keychain.clear(this.service));
+        await this.platform(() => this.keychain.clear(this.service));
     }
 
     public async keys(prefix: string): Promise<string[]> {
-        const accounts = await this.platform(() => keychain.keys(this.service));
+        const accounts = await this.platform(() => this.keychain.keys(this.service));
 
         return prefix === '' ? accounts : accounts.filter(account => account.startsWith(prefix));
     }
