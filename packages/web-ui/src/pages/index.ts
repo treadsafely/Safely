@@ -4,3 +4,4 @@ export * from './main';
 export * from './passcode';
 export * from './welcome';
 export * from './fatal-error';
+export * from './secret-store';
