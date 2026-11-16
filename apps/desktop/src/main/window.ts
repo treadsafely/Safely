@@ -5,6 +5,7 @@ import { darkTheme } from '@safely/ux/theme';
 
 import { appUrl } from './app-protocol';
 import { mainLogger } from './logger';
+import type { RestoredWindowState } from './window-state';
 import type { AppInfo } from '../shared/app-info';
 import { encodeAppInfoArgument } from '../shared/app-info';
 
@@ -22,10 +23,12 @@ const WINDOW = {
 
 export function createMainWindow(
     devServerUrl: string | undefined,
-    appInfo: AppInfo
+    appInfo: AppInfo,
+    windowState: RestoredWindowState
 ): BrowserWindow {
     const window = new BrowserWindow({
         ...WINDOW,
+        ...windowState.options,
         show: false,
         titleBarStyle: 'hidden',
         trafficLightPosition: { x: 19, y: 19 },
@@ -45,6 +48,10 @@ export function createMainWindow(
     });
 
     window.once('ready-to-show', () => {
+        if (windowState.isFullScreen) {
+            window.setFullScreen(true);
+        }
+
         window.show();
     });
 

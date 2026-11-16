@@ -4,7 +4,7 @@ paths:
     - 'apps/desktop/forge.config.ts'
     - 'apps/desktop/postcss.config.cjs'
     - 'apps/desktop/signing/**'
-    - '.github/workflows/desktop-testflight.yml'
+    - '.github/workflows/desktop-*.yml'
 ---
 
 # `apps/desktop` — Electron
@@ -37,8 +37,8 @@ stay: they are correct cross-platform behaviour, not dead code.
 Inside the renderer the layout is FSD, the same shape mobile uses: `shared` → `features` → `screens`
 → `app`, plus `platform/` (the Electron contract and its implementation) and two module-level
 singletons at the root, `logger.ts` and `i18n.ts`. `features/` holds one scenario per directory —
-`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan` — each with its own `keys.ts` where it
-needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
+`passcode`, `biometry`, `app-lock`, `onboarding`, `qr-scan`, `ledger`, `deep-link` — each with its own
+`keys.ts` where it needs one; `screens/` is one component per route, and `app/` composes them into the route tree and
 the providers (the tree itself is described under "Routes" below). What is left here is what binds
 to this target: the wallet, account and contact flows live in `@safely/web-ui` (`web-ui.md` draws
 the line), `onboarding` stays because it navigates and because its
@@ -60,14 +60,22 @@ out of a `DesktopPlatform` implementation, whose shape this app declares itself
 `apps/mobile/src/app/AppContext.tsx` does the assembly. `@safely/web-ui` supplies the pure parts
 (`WebLinking`, the toast service, the logger/i18n factories); the stubs for what this target lacks
 are ours (`src/renderer/platform/unsupported.ts`), because the extension will lack a different set.
-The extension will repeat this wiring with its own platform.
+The Ledger transport is renderer code rather than a bridge member (`features/ledger`, WebHID runs in
+the page) and is built next to the query client in `AppProviders.tsx`, the way mobile builds its BLE
+kit in `AppContext.tsx`. The extension will repeat this wiring with its own platform.
 
 `AppProviders` also mounts `ErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
-`FatalErrorPage` as the fallback — restart and "send logs" (`platform.logs.share()`, the log folder
-in Finder), no erase on purpose: an erase button there would be pressed without reading, so a store
-the keychain disagrees with is recovered through support. It only works because `useSuspenseQuery`
-in `@safely/ux` rethrows a failed query instead of re-suspending into a refetch: before that, a
-missing keychain item meant a black screen and a retry loop, not an error.
+`FatalError` (`app/FatalError.tsx`, `FatalErrorPage` over `platform.logs.share()`) as the fallback —
+restart and "send logs" (the log folder in Finder), no erase on purpose: an erase button there would
+be pressed without reading, so a store the keychain disagrees with is recovered through support. It
+only works because `useSuspenseQuery` in `@safely/ux` rethrows a failed query instead of
+re-suspending into a refetch: before that, a missing keychain item meant a black screen and a retry
+loop, not an error. That boundary sees only what throws outside the route tree: TanStack Router
+wraps every match in a `CatchBoundary` of its own, below `RouterProvider`, so a throw in a screen
+stops there — and its built-in fallback is an unstyled "Something went wrong!" with the raw message,
+logged nowhere. `app/router.tsx` therefore sets `defaultErrorComponent: FatalError` and a
+`defaultOnCatch` that writes the same `render failed` record the root boundary writes — as the router
+default, not per route, so a new route cannot miss it.
 
 **The renderer's platform is a module-level value, not something a component creates.**
 `src/renderer/platform/index.ts` builds it once while the module graph loads, and the logger
@@ -87,12 +95,26 @@ preload still parses it with the zod schema.
 installs the globals the domain packages read at load time — `Buffer`, `IsomorphicEventSource`
 (XHR-based: the SSE stream needs an `Authorization` header), `safelyCrypto.pbkdf2Sha512`
 (`pbkdf2Async` from `@noble/hashes`, which yields to the scheduler instead of blocking the renderer)
-and `flameSdk`, the rejecting `unsupportedFlameSdk` from `platform/unsupported.ts` (type-only
-imports, so it drags no module graph in; a mock until desktop Flame support lands) — and it is the web counterpart of `apps/mobile/global-polyfills.ts`. `import './global-polyfills'`
+and `flameSdk` (`platform/flame.ts`, below) — and it is the web counterpart of `apps/mobile/global-polyfills.ts`. `import './global-polyfills'`
 **must stay the first import of `src/renderer/index.tsx`**: ES imports are evaluated before the
 importing module's body, and the Ledger SDK reads `Buffer` while being evaluated. For the same
 reason nothing inside `global-polyfills.ts` may import `@safely/ux` or `@safely/web-ui`, whose
 module graphs would then be evaluated above the install calls.
+
+**Flame is `@runflame/wallet-wasm`, the WebAssembly build of the same Rust library mobile wraps as
+`@runflame/wallet-rn`.** `platform/flame.ts` implements `SafelyFlame` over it the way
+`apps/mobile/modules/safely-flame` does in Swift and Kotlin: a `Wallet` is built per call from the
+seed or the view key and freed with `using` (its keys live in wasm memory until then), a
+confidential input of a transfer is opened inside the adapter so its blindings never leave it, and
+a note that fails to open is answered per note rather than failing the batch. Two things the
+module imposes: `validateReceivingAddress` and `memoMaxBytes` are synchronous in `SafelyFlame`, so
+`index.tsx` awaits `loadFlameSdk()` before the first render (one `init`, the `.wasm` reaching it
+as a Vite asset URL — not `import.meta.url` inside the dependency, which pre-bundling breaks); and
+`script-src` in `src/main/security.ts` carries `'wasm-unsafe-eval'`, the one source expression
+that admits WebAssembly without admitting `eval`. `buildTransfer` proves on the renderer thread —
+the library offers no asynchronous build — so a slow proof freezes the window for its duration;
+a worker is the way out if that ever matters. The adapter is tested against a mocked module in
+`test/renderer/flame.test.ts`; the real module runs only in the app.
 
 The renderer therefore holds secret material in memory. Moving the secret handling and the signer
 into main is a known, deliberately deferred option — it protects the seed's confidentiality but not
@@ -198,14 +220,29 @@ would be served as a file — see below); the paths and the zod shapes of params
 
 `OnboardingGuard` on the root redirects to `/onboarding` while the account or the passcode is
 missing, and only in that direction (below). The `wallet` settings section without a portfolio
-redirects to `account` from `MainScreen` with `<Navigate replace>`. A deep link, once wired, becomes
-`router.navigate(toMainRouteTarget(location))` — the URL is data to parse, never a location to load.
+redirects to `account` from `MainScreen` with `<Navigate replace>`. A deep link is `MainScreen`'s
+`onNavigate` called with the `MainLocation` that `resolveDeepLink` parsed out of the URL (or, for the
+import of a Demo wallet, the modal that the parsed `DeepLinkTarget` opens) — the URL
+is data to parse, never a location to load; "Deep links" below has the whole path.
 
 `AppLock` replaces the whole tree with the lock screen rather than hiding it: modals, toasts and the
 loader are portalled to `document.body`, so anything left mounted would paint over the lock. The
 `router` is module-level and so is its memory history — unmounting `RouterProvider` loses React
 state (an open flow's inner step), not the location; after unlock the user is back on the same route
 with the same `?modal=`.
+
+`MainScreen` owns a `Suspense` with no fallback below the route component, and it sits there on
+purpose. The first `MainScreen` after onboarding suspends on data the persister has never held, and
+the only boundary above it is the router's own — the root match's, or one per match once a
+`pendingComponent` / `defaultPendingComponent` exists — which is reconciled across routes: the
+welcome tree is then hidden, not unmounted, and React hides a suspended tree by `display: none` on
+its top-most host nodes only, so the welcome card, a modal portalled from inside the page's root
+`div`, kept painting on a blank window for as long as the main data took (SAF-831). A boundary
+under the route component is mounted fresh with the component-type change, so the welcome tree is
+deleted and the window stays on `background.primary` until main renders. Do not move it to a router
+pending component: that reintroduces the shared boundary. A transition cannot hold the previous
+screen either — the router's store is read through `useSyncExternalStore`, which renders every
+navigation synchronously.
 
 **The passcode flow lives in `src/renderer/features/`**, one feature per factor and per scenario:
 `passcode` (hooks, lockout, the prompt store, `PasscodeSetupFlow`, `ChangePasscodeFlow`), `biometry`
@@ -268,7 +305,8 @@ Do not weaken these without a threat-model note:
   capability comes that way.
 - CSP is built in `src/main/security.ts`, with a looser policy only while the dev server runs.
   `style-src 'unsafe-inline'` is required by `@floating-ui` inside Base UI; scripts get no such
-  exemption in production. `connect-src` is an allowlist — `'self'` plus `https://*.safely.app`,
+  exemption in production — `script-src` admits `'self'` and `'wasm-unsafe-eval'` (the Flame
+  module), never `'unsafe-eval'`. `connect-src` is an allowlist — `'self'` plus `https://*.safely.app`,
   where every endpoint the boot config hands out lives — so a new backend host fails loudly (the
   renderer's console errors are forwarded to the main log) instead of silently widening the policy.
 - The **packaged** renderer gets its CSP from the `safely://` protocol handler's own response
@@ -289,6 +327,11 @@ Do not weaken these without a threat-model note:
       server.
     - `Authorization` is listed explicitly in `access-control-allow-headers`. The `*` wildcard
       covers every header **except** that one, and both the sync API and its SSE stream send it.
+    - **Every custom request header a `@safely/core` client sends has to be in that list**
+      (`ALLOWED_REQUEST_HEADERS`): the backend's own allow headers are dropped with the rest, so a
+      header missing there fails the preflight inside Chromium and the request never leaves the
+      renderer — a proxy outside the app shows a successful `OPTIONS` and no `POST`, which is how
+      the analytics `X-Project-Token` went missing. `test/main/security.test.ts` pins the list.
     - Existing `access-control-*` headers from the backend are dropped, not respected: the sync API
       answers with its own host as the origin (`Access-Control-Allow-Origin: sync.safely.app`),
       which no browser accepts, and two values are invalid as well. When the backends serve a
@@ -296,10 +339,11 @@ Do not weaken these without a threat-model note:
       privileged process.
     - Wildcards are legal here only because no request carries credentials (no cookies, no client
       certs). Do not introduce `credentials: 'include'` without revisiting this.
-- Permissions are denied by default. The **camera** is the one exception: granted to the top frame
-  for a video-only request, refused when the microphone is asked for alongside it, and HID (Ledger)
-  joins as its own branch when that lands. The check handler is looser than the request handler on
-  purpose — `desktop-qr.md` has both halves.
+- Permissions are denied by default. The **camera** is the one media exception: granted to the top
+  frame for a video-only request, refused when the microphone is asked for alongside it. The check
+  handler is looser than the request handler on purpose — `desktop-qr.md` has both halves. **HID**
+  is its own branch: the check handler opens `navigator.hid`, and the device permission handler
+  grants Ledger's vendor id and nothing else — `desktop-ledger.md`.
 - Fuses in `forge.config.ts` disable `RunAsNode`, the inspector and `NODE_OPTIONS`, and enable asar
   integrity validation.
 
@@ -311,12 +355,57 @@ wallet keeps synced state — unreliable, and weakens CSP. The dev server is a d
 (`http://localhost:*`), so browser storage does not carry over between `start` and a packaged build;
 `src/main/paths.ts` keeps the dev profile in a separate `userData` directory for the same reason.
 
-Deep links are **not wired yet**: nothing calls `setAsDefaultProtocolClient`, there is no `open-url`
-listener and the bundle declares no URL type, so the OS never hands a `safely://` URL to the app.
-When they land they will arrive through `open-url` / argv — a different mechanism from this handler,
-which only serves requests made inside the app's session. Such a URL has a different host than the
-app origin and is refused by the navigation guard, so it has to be turned into a route, never
-navigated to.
+## Deep links
+
+Two kinds, the same two mobile handles, both arriving in main and nowhere else — on macOS a URL
+never comes through argv or `second-instance`:
+
+- `safely://…` through `app.on('open-url')`. The bundle declares the scheme with `protocols` in
+  `forge.config.ts` (`CFBundleURLTypes`), and macOS registers only what the Info.plist declares, so
+  `setAsDefaultProtocolClient` runs only when packaged and **`pnpm start` never receives a link** —
+  a `package:mas` build does, `open safely:///tab/updates` from a terminal drives it. The same
+  scheme serves the renderer (`app-protocol.ts`), which is a different mechanism: a link is a string
+  handed to the app, never a request the handler answers, and `safely://app/…` resolves to no route.
+- `https://link.safely.app/…` through `app.on('continue-activity')` with the type
+  `NSUserActivityTypeBrowsingWeb` and the URL in `details.webpageURL`. `will-continue-activity` is
+  not handled on purpose: AppKit calls `continue` regardless of its answer, which only decides who
+  draws the Handoff indicator. The entitlement is `com.apple.developer.associated-domains` on the
+  main plist — a **capability**, so the profiles have to grant it (`desktop-signing.md`) — and the
+  domain's `apple-app-site-association` has to list `3ZVCUSJU6R.com.safely.wallet-desktop` next to
+  the mobile app ID; Apple's CDN fetches the file within a day and devices re-check weekly, so a
+  change there is not visible at once. A link clicked in Safari on the same domain stays in Safari
+  by Apple's rule; one from Mail, Messages or Notes opens the app.
+
+`DeepLinkReceiver` (`src/main/deep-links.ts`) subscribes **before `ready`** — on a cold start the
+URL arrives before the window exists — and keeps one slot, last wins. It pushes nothing but a
+notification (`deepLink.received`, plus revealing the window); the renderer **pulls** the URL with
+`deepLinks.take()`, and the slot empties on the take. Pull rather than push because the renderer is
+often not listening when the link arrives — cold start, the lock screen, onboarding, a `reload()` —
+and the slot simply waits. `useDeepLinks(onLink, isEnabled)` (`features/deep-link`) is that pull:
+it takes on mount and on each notification, **but only while the screen can act** — not while the
+passcode prompt is open, not while `isEnabled` is false — and otherwise leaves the URL in main's
+slot; nothing is parked in the renderer. Two screens use it: `MainScreen` takes everything (a route
+becomes `onNavigate`, the import of a Demo wallet opens `ImportFlameDevnetWalletModal` next to
+`MainPage`); `WelcomeScreen` takes only between onboarding steps and acts only on that import — it
+is the one link that starts an onboarding (the phrase becomes the first portfolio, passcode and
+biometry follow) — and drops a route, which means nothing without an account. `AppLock` unmounts
+the tree while locked and `OnboardingGuard` keeps `MainScreen` off it until onboarded, so a link
+applies right after unlock and a route that arrived during onboarding applies when the flow itself
+reaches main — never before, which is how the biometry step would be skipped. The modal receives
+the phrase and the name as the raw link parameters and parses them itself with the `@safely/ux`
+parsers mobile uses; the link puts them in the query or the fragment, and `resolveDeepLink` reads
+both through `fragmentToQuery` from `@safely/ux`, the same helper mobile's linking options apply.
+
+The path vocabulary is shared: `DEEP_LINK_PATHS` in `@safely/ux` (`shared/linking`) is mobile's
+`linking.path` tree built by `defineDeepLinkPaths`: a node's `segment` is what mobile declares, its
+`path` the full route `resolveDeepLink` maps onto a `MainView`, accepting `safely://tab/…`,
+`safely:///tab/…` and the https form alike. A path desktop has no screen for is ignored with a
+warning that **never includes the URL**: a link can carry a seed phrase in its fragment. The scheme and the host come from
+`@safely/ux` too (`APP_URL_SCHEME`, `UNIVERSAL_LINK_HOST`); main takes the scheme through the
+`@safely/ux/deep-link` subpath; the entitlement restates the host and `forge.config.ts` the scheme
+(`mobile-app.md`).
+Not yet verified on a signed build: whether `continue-activity` fires in the MAS sandbox is what the
+first TestFlight build shows (the profile already carries Associated Domains).
 
 Closing the window ends the whole app — renderer, sync engine and main process. There is no
 `window-all-closed` handler, and Electron's default without one is to quit, on macOS as everywhere
@@ -331,6 +420,12 @@ store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium thr
 as app-state events. A single instance lock guarantees one sync engine per machine. Neither path
 needs store handling, there being no unlocked state to lock, but a renderer-side passcode session
 would have to expire on one of them.
+
+The window comes back where it was closed: `WindowStateStore` (`src/main/window-state.ts`) keeps
+the normal bounds and the full-screen flag under `main..windowState` in the `regular` store,
+written 500 ms after the last resize or move and once more on `close`, and `createMainWindow`
+spreads them over the defaults; a position that no longer overlaps a display by 100px keeps only
+the size. Being in the store, it goes with `clearAllData` — a wiped app opens like a fresh one.
 
 The renderer's logger writes to its devtools console, which is invisible when the app is driven from
 a terminal, so `src/main/window.ts` forwards renderer console messages, `did-fail-load` and
@@ -402,6 +497,8 @@ the renderer only has a console transport there.
   entitlement plist — the helpers only inherit its sandbox (`desktop-signing.md`).
   `verify-signature.sh` gates the entitlement and the absence of a microphone one; `desktop-qr.md`
   says which of the three is actually load-bearing.
+- **The Ledger needs `com.apple.security.device.usb`** on the main entitlement plist, gated by
+  `verify-signature.sh` too; `desktop-ledger.md` has the WebHID side.
 - `package:mas` produces the sandboxed MAS app (`out/Safely-mas-arm64/`), `make:mas` wraps it into the
   **`.pkg` App Store Connect takes** and needs `SAFELY_INSTALLER_IDENTITY` for that. Signing is
   env-driven and listed at the top of `forge.config.ts`: `SAFELY_SIGN_IDENTITY` turns it on,
@@ -416,7 +513,7 @@ the renderer only has a console transport there.
   `signing/verify-signature.sh` fails on both, and CI runs it as a gate. A development-signed
   download needs its quarantine flag removed by hand.
 - **The build number reaches the app twice, from one variable.** `SAFELY_BUILD_NUMBER` — CI passes
-  the counter it allocated (`../../.github/workflows/desktop-testflight.yml`) — becomes
+  the counter it allocated (`../../.github/workflows/desktop-build.yml`) — becomes
   `packagerConfig.buildVersion`, and macOS renders `Version 0.0.1 (42)` in the About panel out of
   Info.plist with no code involved; it is also a vite `define` in `vite.main.config.ts`, which
   `src/main/about-panel.ts` hands to `setAboutPanelOptions` so the panel is right in `pnpm start`
@@ -427,7 +524,7 @@ the renderer only has a console transport there.
   Electron's default menu, so a `Menu.setApplicationMenu` without `role: 'about'` silently removes
   it.
 - **Store builds are signed only in CI, with Mac App Distribution, and reach testers through
-  TestFlight** (`../../.github/workflows/desktop-testflight.yml`, `desktop-signing.md`); a
+  TestFlight** (`../../.github/workflows/desktop-build.yml`, `desktop-signing.md`); a
   developer signs a local build with their own development identity. Two consequences for anything
   that touches the build: CI proves the signature is well-formed and
   nothing more — whether securityd honours it is only visible when the app runs — and a change to

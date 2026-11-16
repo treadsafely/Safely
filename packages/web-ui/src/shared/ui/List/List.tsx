@@ -1,9 +1,10 @@
-import type { ComponentPropsWithoutRef, FC } from 'react';
+import type { ComponentPropsWithoutRef, FC, KeyboardEvent } from 'react';
 
 import { cx } from '@safely/web-ui/styled-system/css';
 import type { ListRecipe } from '@safely/web-ui/styled-system/recipes';
 import { list } from '@safely/web-ui/styled-system/recipes';
 
+import { focusListItem } from '../../dom';
 import type { RecipeVariants } from '../recipe-variants';
 
 export type ListRootProps = Omit<ComponentPropsWithoutRef<'section'>, 'className'> & {
@@ -12,6 +13,7 @@ export type ListRootProps = Omit<ComponentPropsWithoutRef<'section'>, 'className
 
 export type ListTitleProps = Omit<ComponentPropsWithoutRef<'h2'>, 'className'> & {
     variant?: RecipeVariants<ListRecipe>['titleVariant'];
+    size?: RecipeVariants<ListRecipe>['size'];
     className?: string;
 };
 
@@ -24,16 +26,22 @@ export type ListFooterProps = Omit<ComponentPropsWithoutRef<'p'>, 'className'> &
     className?: string;
 };
 
+const FOCUSABLE_SELECTOR = 'button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])';
+
+function moveFocus(event: KeyboardEvent<HTMLElement>): void {
+    focusListItem(event, FOCUSABLE_SELECTOR);
+}
+
 const ListRoot: FC<ListRootProps> = props => {
     const { className, ...rest } = props;
 
-    return <section className={cx(list().root, className)} {...rest} />;
+    return <section className={cx(list().root, className)} onKeyDown={moveFocus} {...rest} />;
 };
 
 const ListTitle: FC<ListTitleProps> = props => {
-    const { variant, className, ...rest } = props;
+    const { variant, size, className, ...rest } = props;
 
-    return <h2 className={cx(list({ titleVariant: variant }).title, className)} {...rest} />;
+    return <h2 className={cx(list({ titleVariant: variant, size }).title, className)} {...rest} />;
 };
 
 const ListGroup: FC<ListGroupProps> = props => {

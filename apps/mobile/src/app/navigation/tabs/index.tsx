@@ -3,7 +3,7 @@ import { BottomTabBar, createBottomTabNavigator } from '@react-navigation/bottom
 import i18next from 'i18next';
 import { useEffect, useState } from 'react';
 
-import { useHasPortfolio } from '@safely/ux';
+import { DEEP_LINK_PATHS, useHasPortfolio } from '@safely/ux';
 
 import { SafelyBetaScreen } from '@mobile/screens/SafelyBetaScreen';
 import { SafetyScreen } from '@mobile/screens/SafetyScreen';
@@ -39,7 +39,7 @@ export const TabsNavigator = createBottomTabNavigator({
         SafelyBetaScreen: {
             screen: SafelyBetaScreen,
             linking: {
-                path: 'updates'
+                path: DEEP_LINK_PATHS.tabs.updates.segment
             },
             options: () => ({
                 title: i18next.t('tabs.updates'),

@@ -1,9 +1,13 @@
 import type { Build, IEnumerableStorage, ISyncKeyValueStorage } from '@safely/core';
 import type { ILogFileStore } from '@safely/sync';
-import type { AppStateStatus, LedgerTransport } from '@safely/ux';
+import type { AppStateStatus } from '@safely/ux';
 
 import type { AppInfo } from '../../shared/app-info';
-import type { DesktopBiometryBridge, DesktopCameraBridge } from '../../shared/bridge';
+import type {
+    DesktopBiometryBridge,
+    DesktopCameraBridge,
+    DesktopDeepLinkBridge
+} from '../../shared/bridge';
 
 /**
  * What the renderer supplies to the shared UI — the app's own contract, not one `@safely/web-ui`
@@ -29,6 +33,8 @@ export interface DesktopPlatform {
 
     readonly camera: DesktopCameraBridge;
 
+    readonly deepLinks: DesktopDeepLinkBridge;
+
     readonly logs: ILogFileStore;
 
     openExternalUrl(url: string): Promise<void>;
@@ -44,7 +50,4 @@ export interface DesktopPlatform {
     subscribeFullScreen(this: void, onChange: () => void): () => void;
 
     getIsFullScreen(this: void): boolean;
-
-    /** Absent until a Ledger transport lands (WebHID). */
-    readonly ledgerTransport?: LedgerTransport;
 }

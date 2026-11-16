@@ -1,0 +1,217 @@
+name: Desktop release
+
+# The merge of a release branch into master is the desktop release, the same shape as mobile's
+# release-draft.yml + release-assets.yml: the package is built from the merge commit by
+# `desktop-build.yml`, uploaded to TestFlight, and published as the GitHub prerelease
+# `v<desktop version>-desktop` with the .pkg and the dependency listing attached.
+#
+# `push` and not `pull_request: closed` as mobile has: a pull_request run's GITHUB_REF is
+# `refs/pull/<n>/merge`, which the `desktop-release` environment would have to allow — and that rule
+# would hand the signing keys to any pull request. desktop-signing.md has the rest.
+
+on:
+  push:
+    branches:
+      - master
+  # Skips the pull request check: how a version whose merge run never built is released by hand.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Outside the build group on purpose: a merge that releases nothing ends here without waiting in
+  # the group or evicting a pending build from it.
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+      version: ${{ steps.decide.outputs.version }}
+      tag: ${{ steps.decide.outputs.tag }}
+      warning: ${{ steps.decide.outputs.warning }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Decide whether this commit is a desktop release
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then
+            echo "::error::A desktop release is cut from master only, not from $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+          version="$(jq -r .version apps/desktop/package.json)"
+          tag="v${version}-desktop"
+          build=true
+          warning=""
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            previous="$(gh api "repos/$GITHUB_REPOSITORY/contents/apps/desktop/package.json?ref=$BEFORE" \
+              -H 'Accept: application/vnd.github.raw' 2> /dev/null | jq -r .version || true)"
+
+            # A fork can name its branch `release/x` too, hence the head repository check.
+            find_source_branch() {
+              gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq \
+                '[.[] | select(.merged_at != null and .base.ref == "master"
+                  and .head.repo.full_name == env.GITHUB_REPOSITORY) | .head.ref][0] // ""'
+            }
+            source_branch="$(find_source_branch)"
+            # The commit-to-pull-request link is indexed with a delay; wait for it only on a version bump.
+            attempt=1
+            while [ -z "$source_branch" ] && [ "$previous" != "$version" ] && [ "$attempt" -lt 6 ]; do
+              sleep 10
+              source_branch="$(find_source_branch)"
+              attempt=$((attempt + 1))
+            done
+
+            if ! printf '%s' "$source_branch" | grep -Eq '^release/[^/]+$'; then
+              echo "::notice::${GITHUB_SHA:0:7} is not a merge of a release/* pull request (${source_branch:-no pull request}) — no desktop release"
+              build=false
+              if [ "$previous" != "$version" ]; then
+                warning="⚠️ Desktop version became $version in ${GITHUB_SHA:0:7}, but no merged release/* pull request brought it (${source_branch:-none found}) — no release; if this is one, run Desktop release by hand on master"
+              fi
+            fi
+          fi
+
+          if [ "$build" = "true" ]; then
+            # Only "not found" means no release yet; any other answer must not end in a second build.
+            if gh release view "$tag" > /dev/null 2> "$RUNNER_TEMP/gh.err"; then
+              echo "::notice::$tag is already published — a desktop version is released once"
+              build=false
+            elif ! grep -q 'release not found' "$RUNNER_TEMP/gh.err"; then
+              cat "$RUNNER_TEMP/gh.err" >&2
+              exit 1
+            fi
+          fi
+
+          echo "Desktop $version at ${GITHUB_SHA:0:7}: build=$build"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "warning=$warning" >> "$GITHUB_OUTPUT"
+
+  # The group is shared with desktop-staging.yml; see the note there.
+  pipeline:
+    needs: prepare
+    if: needs.prepare.outputs.build == 'true'
+    concurrency:
+      group: desktop-build
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+    uses: ./.github/workflows/desktop-build.yml
+    with:
+      # A failure is reported by the pipeline itself, naming the tag; the success is `report` below.
+      report-success: false
+      release-tag: ${{ needs.prepare.outputs.tag }}
+    secrets:
+      BUILD_NUMBER_TOKEN: ${{ secrets.BUILD_NUMBER_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      APPLE_MAS_APP_CERT_P12: ${{ secrets.APPLE_MAS_APP_CERT_P12 }}
+      APPLE_MAS_INSTALLER_CERT_P12: ${{ secrets.APPLE_MAS_INSTALLER_CERT_P12 }}
+      APPLE_MAS_CERT_PASSWORD: ${{ secrets.APPLE_MAS_CERT_PASSWORD }}
+      APPLE_MAS_PROVISIONING_PROFILE: ${{ secrets.APPLE_MAS_PROVISIONING_PROFILE }}
+      ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+      ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+
+  # Its own tag, so it never collides with the mobile `v<version>` even when the numbers coincide —
+  # the platforms version independently. Publishing creates the tag; prerelease until the Mac App
+  # Store rollout, done by hand.
+  release:
+    needs: [prepare, pipeline]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch the build artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.pipeline.outputs.artifact }}
+          path: ${{ runner.temp }}/release
+
+      - name: Publish the desktop release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          NUMBER: ${{ needs.pipeline.outputs.number }}
+        run: |
+          set -euo pipefail
+
+          stage="$RUNNER_TEMP/release"
+          pkg="$stage/Safely-$VERSION-b$NUMBER.pkg"
+          mv "$stage/Safely.pkg" "$pkg"
+
+          # The commit, not `master`: a branch name would let the tag land wherever master points.
+          gh release create "$TAG" "$pkg" "$stage/desktop-dependencies.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes "Desktop $VERSION (build $NUMBER) — ${GITHUB_SHA:0:7}, uploaded to TestFlight. Prerelease until the Mac App Store rollout." \
+            --prerelease
+
+          echo "::notice::$TAG published with the package and the dependency listing"
+
+  # Silent when `prepare` found nothing to release and when the pipeline did not succeed: a failure or
+  # a cancellation mid-run is reported by the pipeline itself, a cancellation before it ran by hand.
+  report:
+    needs: [prepare, pipeline, release]
+    if: >-
+      always() && (needs.prepare.result != 'success' || needs.prepare.outputs.warning != ''
+      || needs.pipeline.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compose the status
+        id: status
+        env:
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          WARNING: ${{ needs.prepare.outputs.warning }}
+          RELEASE_RESULT: ${{ needs.release.result }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          BUILD_NUMBER: ${{ needs.pipeline.outputs.number }}
+        run: |
+          set -euo pipefail
+
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          url="$run_url"
+
+          if [ "$PREPARE_RESULT" != "success" ]; then
+            status="❌ Desktop release check failed — see the run"
+          elif [ -n "$WARNING" ]; then
+            status="$WARNING"
+          elif [ "$RELEASE_RESULT" = "success" ]; then
+            status="✅ Released $TAG (${BUILD_NUMBER:-?}) — uploaded to TestFlight, published on GitHub"
+            url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          else
+            status="⚠️ Uploaded $VERSION (${BUILD_NUMBER:-?}) to TestFlight, but publishing $TAG failed — re-run the failed jobs only; the package is kept 3 days"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Post the release status to Slack
+        uses: ./.github/actions/desktop-slack-report
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ steps.status.outputs.status }}
+          url: ${{ steps.status.outputs.url }}

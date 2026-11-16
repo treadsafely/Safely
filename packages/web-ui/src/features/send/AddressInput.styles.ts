@@ -49,7 +49,12 @@ export const inputStyles = css({
     overflow: 'hidden',
     fieldSizing: 'content',
     wordBreak: 'break-all',
-    _placeholder: { color: 'text.tertiary' }
+    _placeholder: { color: 'text.tertiary' },
+    '&[data-picked]': {
+        color: 'text.tertiary',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden'
+    }
 });
 
 export const recognisedNameStyles = css({
@@ -72,12 +77,6 @@ export const mirrorStyles = css({
     whiteSpace: 'pre-wrap',
     visibility: 'hidden',
     pointerEvents: 'none'
-});
-
-export const pickedInputStyles = css({
-    color: 'text.tertiary',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden'
 });
 
 export const pickedRowStyles = css({

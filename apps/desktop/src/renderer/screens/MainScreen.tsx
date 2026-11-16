@@ -7,23 +7,32 @@ import {
     useSearch
 } from '@tanstack/react-router';
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 
-import { useHasPortfolio } from '@safely/ux';
+import { useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
 import type { DevConfig, MainLocation } from '@safely/web-ui';
-import { DevConfigProvider, LogsSection, MainPage } from '@safely/web-ui';
+import {
+    DevConfigProvider,
+    ImportFlameDevnetWalletModal,
+    LogsSection,
+    MainPage
+} from '@safely/web-ui';
 
 import { toMainLocation, toMainRouteTarget } from './main-location';
-import { SecuritySection } from '../features';
+import type { ImportFlameDevnetLink } from '../features';
+import { SecuritySection, useDeepLinks } from '../features';
 import { platform } from '../platform';
 import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
 
-export const MainScreen: FC = () => {
+const MainScreenContent: FC = () => {
     const { hasWindowControls, isFullScreen } = useRouteContext({ from: '__root__' });
     const navigate = useNavigate();
     const hasPortfolio = useHasPortfolio();
 
+    useTrackWalletOpen();
+
     const { value: devToken, set, remove } = useDesktopLayerSynchronousGlobalStorage('devToken');
+    const sidebarWidth = useDesktopLayerSynchronousGlobalStorage('sidebarWidth');
     const devConfig = useMemo<DevConfig>(
         () => ({
             devToken,
@@ -46,6 +55,12 @@ export const MainScreen: FC = () => {
         void navigate({ ...toMainRouteTarget(next), replace: isSameView });
     };
 
+    const [importLink, setImportLink] = useState<ImportFlameDevnetLink | null>(null);
+
+    useDeepLinks(target =>
+        target.kind === 'location' ? onNavigate(target.location) : setImportLink(target)
+    );
+
     const isWalletSectionWithoutPortfolio =
         !hasPortfolio && location.view.kind === 'settings' && location.view.section === 'wallet';
 
@@ -62,9 +77,26 @@ export const MainScreen: FC = () => {
                 onNavigate={onNavigate}
                 hasWindowControls={hasWindowControls}
                 isFullScreen={isFullScreen}
+                sidebarWidth={sidebarWidth.value ?? undefined}
+                onSidebarWidthChange={sidebarWidth.set}
                 security={<SecuritySection />}
                 logs={<LogsSection store={platform.logs} />}
             />
+
+            {importLink !== null && (
+                <ImportFlameDevnetWalletModal
+                    testseed={importLink.testseed}
+                    walletName={importLink.walletName}
+                    flow={{ kind: 'account' }}
+                    onClose={() => setImportLink(null)}
+                />
+            )}
         </DevConfigProvider>
     );
 };
+
+export const MainScreen: FC = () => (
+    <Suspense fallback={null}>
+        <MainScreenContent />
+    </Suspense>
+);

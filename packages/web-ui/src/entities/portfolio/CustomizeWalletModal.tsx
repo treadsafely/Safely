@@ -8,9 +8,11 @@ import { useTranslate } from '@safely/ux';
 import { fieldStyles, popupStyles } from './CustomizeWalletModal.styles';
 import { IconPicker } from './IconPicker';
 import { WalletIcon } from './WalletIcon';
-import { Button, Input, Modal } from '../../shared';
+import { Badge, Button, Input, Modal } from '../../shared';
 
 export type CustomizeWalletModalProps = {
+    title?: string;
+    tag?: number;
     defaultName: string;
     defaultIcon: PortfolioMetaIcon;
     onSave: (meta: Pick<PortfolioMeta, 'name' | 'icon'>) => void;
@@ -18,14 +20,14 @@ export type CustomizeWalletModalProps = {
 };
 
 export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
-    const { defaultName, defaultIcon, onSave, onClose } = props;
+    const { title, tag, defaultName, defaultIcon, onSave, onClose } = props;
 
     const t = useTranslate();
     const [name, setName] = useState(defaultName);
     const [icon, setIcon] = useState<PortfolioMetaIcon>(defaultIcon);
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} hasClose={false} closeLabel={t('common.close')}>
                 <Modal.Header closeLabel={t('common.close')}>
                     <Button
@@ -39,23 +41,30 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
                 </Modal.Header>
 
                 <Modal.Content hasFloatingClose={false}>
-                    <Modal.Title>{t('customizeWallet.title')}</Modal.Title>
+                    <Modal.Title>{title ?? t('customizeWallet.title')}</Modal.Title>
                     <Modal.Description>{t('customizeWallet.description')}</Modal.Description>
                 </Modal.Content>
 
                 <div className={fieldStyles}>
                     <Input>
                         <Input.Field
+                            data-autofocus
                             maxLength={PORTFOLIO_NAME_MAX_LENGTH}
                             value={name}
                             placeholder={t('customizeWallet.namePlaceholder')}
                             onChange={event => setName(event.target.value)}
-                            trailing={<WalletIcon icon={icon} size="medium" />}
+                            trailing={
+                                tag === undefined ? (
+                                    <WalletIcon icon={icon} size="medium" />
+                                ) : (
+                                    <Badge>{tag}</Badge>
+                                )
+                            }
                         />
                     </Input>
                 </div>
 
-                <IconPicker icon={icon} onChange={setIcon} />
+                {tag === undefined && <IconPicker icon={icon} onChange={setIcon} />}
             </Modal.Popup>
         </Modal>
     );

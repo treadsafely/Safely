@@ -13,7 +13,10 @@ which devices exist, which one is remembered — is the app's
 (`apps/desktop/src/renderer/features/qr-scan/`), the same split the passcode module follows. The
 entry point is `IAppContext.qrScanner.scan()`, assembled in `app/AppProviders.tsx` over
 `qrScanPrompt`, a promise store shaped exactly like `passcodePrompt`; `app/App.tsx` renders
-`QrScanFlow` inside `AppLock`, so nothing can scan over the lock screen.
+`QrScanFlow` inside `AppLock`, so nothing can scan over the lock screen. Closing the scanner rejects
+with `QrScanCancelledError` from `@safely/core`, the same error mobile's `QRScanModal` rejects with
+on close, so a caller tells a cancel from a failure by `instanceof` and never waits on a promise
+that will not settle.
 
 ## The decoder is the platform's, and only on macOS
 
@@ -92,10 +95,6 @@ asked.
 
 ## Not built yet
 
-- **Nothing calls it yet.** `IAppContext.qrScanner.scan()` is wired and `QrScanFlow` is mounted, but
-  no screen invokes either, so the whole scanner is reachable only from the next feature that needs
-  it. `useConnectAccountToNewDevice` in `@safely/ux` is what the first real consumer — a settings
-  screen that adds a device — will call.
 - **No screen for "no camera at all"**, and none is designed: `NotFoundError` and a failing stream
   become an error toast on `camera.noCameraFound.title` and reject the promise.
 - **No image fallback** — dropping a screenshot or reading the clipboard would scan without a camera

@@ -44,7 +44,12 @@ export const LinkDeviceWarningModal = () => {
         using secureEncryptedStorage = getSecureEncrypted();
         await secureEncryptedStorage.unlock();
 
-        const ikPubHex = await connectToNewDevice({ secureEncryptedStorage });
+        const ikPubHex = await connectToNewDevice({ secureEncryptedStorage }).catch(() => null);
+
+        if (ikPubHex === null) {
+            return;
+        }
+
         navigation.dispatch(StackActions.replace('DeviceLinkedModal', { ikPubHex }));
     };
 

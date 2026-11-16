@@ -26,6 +26,7 @@ type LedgerSigningContextValue = {
 
 type LedgerSessionContextValue = {
     getLedgerKit: () => DeviceManagementKit;
+    disconnect: () => Promise<void>;
     selectedDevice: DiscoveredDevice | null;
     setSelectedDevice: (device: DiscoveredDevice | null) => void;
     sessionId: string | null;
@@ -39,11 +40,11 @@ const LedgerSessionContext = createContext<LedgerSessionContextValue | null>(nul
 
 type LedgerSessionProviderProps = {
     children: ReactNode;
-    openConnectScreen: () => void;
+    onSigningStart?: () => void;
 };
 
 export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
-    const { children, openConnectScreen } = props;
+    const { children, onSigningStart } = props;
     const { ledgerTransport } = useAppContext();
 
     const [sessionId, setSessionIdState] = useState<string | null>(null);
@@ -66,6 +67,19 @@ export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
         return ledgerKitRef.current;
     }, [ledgerTransport]);
 
+    const disconnect = useCallback(async () => {
+        const currentSessionId = sessionIdRef.current;
+
+        if (!currentSessionId) {
+            return;
+        }
+
+        await getLedgerKit()
+            .disconnect({ sessionId: currentSessionId })
+            .catch(() => {});
+        setSessionId(null);
+    }, [getLedgerKit, setSessionId]);
+
     useEffect(() => {
         return () => {
             ledgerKitRef.current?.close();
@@ -86,13 +100,7 @@ export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
                 (async () => {
                     const ledgerKit = getLedgerKit();
 
-                    const previousSessionId = sessionIdRef.current;
-                    if (previousSessionId) {
-                        await ledgerKit
-                            .disconnect({ sessionId: previousSessionId })
-                            .catch(() => {});
-                        setSessionId(null);
-                    }
+                    await disconnect();
 
                     const sessionActor = createActor(ledgerSigningMachine, {
                         input: {
@@ -105,37 +113,53 @@ export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
                     });
                     actor = sessionActor;
 
-                    sessionActor.subscribe(snapshot => {
-                        if (snapshot.context.sessionId) {
-                            setSessionId(snapshot.context.sessionId);
-                        }
+                    const release = (): void =>
+                        setActiveActor(current => (current === sessionActor ? null : current));
 
-                        if (snapshot.status !== 'done') {
-                            return;
-                        }
+                    sessionActor.subscribe({
+                        next: snapshot => {
+                            if (snapshot.context.sessionId) {
+                                setSessionId(snapshot.context.sessionId);
+                            }
 
-                        sessionActor.stop();
+                            if (snapshot.status !== 'done') {
+                                return;
+                            }
 
-                        const { error, result } = snapshot.output;
+                            sessionActor.stop();
+                            release();
 
-                        if (error) {
+                            const { error, result } = snapshot.output;
+
+                            if (error) {
+                                reject(
+                                    error instanceof Error
+                                        ? error
+                                        : new Error('Ledger signing failed')
+                                );
+                            } else {
+                                resolve(result as T);
+                            }
+                        },
+                        error: (error: unknown) => {
+                            sessionActor.stop();
+                            release();
                             reject(
                                 error instanceof Error ? error : new Error('Ledger signing failed')
                             );
-                        } else {
-                            resolve(result as T);
                         }
                     });
 
                     setActiveActor(sessionActor);
                     sessionActor.start();
-                    openConnectScreen();
+                    onSigningStart?.();
                 })().catch((error: unknown) => {
                     actor?.stop();
+                    setActiveActor(current => (current === actor ? null : current));
                     reject(error instanceof Error ? error : new Error('Ledger signing failed'));
                 });
             }),
-        [getLedgerKit, ledgerTransport, openConnectScreen, setSessionId]
+        [getLedgerKit, disconnect, ledgerTransport, onSigningStart, setSessionId]
     );
 
     const port = useMemo<ILedgerSessionPort>(() => ({ withSession }), [withSession]);
@@ -145,6 +169,7 @@ export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
     const sessionValue = useMemo(
         () => ({
             getLedgerKit,
+            disconnect,
             selectedDevice,
             setSelectedDevice,
             sessionId,
@@ -152,7 +177,7 @@ export const LedgerSessionProvider = (props: LedgerSessionProviderProps) => {
             findMorePortfolioId,
             setFindMorePortfolioId
         }),
-        [getLedgerKit, selectedDevice, sessionId, setSessionId, findMorePortfolioId]
+        [getLedgerKit, disconnect, selectedDevice, sessionId, setSessionId, findMorePortfolioId]
     );
 
     return (

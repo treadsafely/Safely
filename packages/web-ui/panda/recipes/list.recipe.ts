@@ -28,7 +28,7 @@ export const listRecipe = defineSlotRecipe({
         titleVariant: {
             caption: {
                 title: {
-                    paddingInline: '8',
+                    paddingInline: '16',
                     paddingTop: '16',
                     paddingBottom: '8',
                     textStyle: 'bodyM',
@@ -45,6 +45,11 @@ export const listRecipe = defineSlotRecipe({
                     textTransform: 'capitalize',
                     color: 'text.primary'
                 }
+            }
+        },
+        size: {
+            compact: {
+                title: { paddingInline: '8', textStyle: 'bodyS' }
             }
         },
         variant: {

@@ -1,56 +1,45 @@
 import { useNavigation } from '@react-navigation/core';
 import { StackActions } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 
-import { useLedgerAccounts, useLedgerAccountSelection, useLedgerSession } from '@safely/ux';
+import type { Portfolio } from '@safely/core';
+import { useLedgerImport, useLedgerFirstPortfolio } from '@safely/ux';
 
-import { getLedgerWalletName, useExitToConnectLedger } from '@mobile/features/ledger';
+import { useExitToConnectLedger } from '@mobile/features/ledger';
 import { useOnboardingFlow } from '@mobile/features/onboarding';
 import { LedgerImportAccountsView } from '@mobile/screens/LedgerImportAccountsScreen/LedgerImportAccountsView';
 
+const NO_PORTFOLIOS: Portfolio[] = [];
+
 export const OnboardingLedgerImportScreen = () => {
-    const { t } = useTranslation();
     const exitToConnect = useExitToConnectLedger();
     const navigation = useNavigation();
-    const { selectedDevice } = useLedgerSession();
     const { onLedgerReady } = useOnboardingFlow();
+    const toLedgerFirstPortfolio = useLedgerFirstPortfolio();
 
-    const { accounts, balances, masterFingerprint, retry, isError, isTimedOut } =
-        useLedgerAccounts();
-
-    const { selectedIndexes, selectedAccounts, toggle } = useLedgerAccountSelection({
+    const {
         accounts,
-        balances
-    });
-
-    const isDerived = accounts.length > 0;
-    const showRetry = isError || isTimedOut;
+        balances,
+        selectedIndexes,
+        isDerived,
+        isFailed,
+        isContinueDisabled,
+        selection,
+        toggle,
+        retry
+    } = useLedgerImport({ portfolios: NO_PORTFOLIOS, findMorePortfolioId: null });
 
     const handleContinue = useCallback(() => {
-        if (!masterFingerprint) {
+        if (selection === null) {
             return;
         }
 
-        const accountsWithNames = selectedAccounts.map(account => ({
-            ...account,
-            name: t('portfolio.ledgerWallet', { number: account.index + 1 })
-        }));
-
-        onLedgerReady(
-            masterFingerprint.toString('hex'),
-            selectedDevice?.deviceModel.model ?? '',
-            getLedgerWalletName(selectedDevice?.deviceModel.model, 1),
-            accountsWithNames
-        );
-    }, [masterFingerprint, selectedAccounts, selectedDevice, onLedgerReady, t]);
+        onLedgerReady(toLedgerFirstPortfolio(selection));
+    }, [selection, onLedgerReady, toLedgerFirstPortfolio]);
 
     const handleRetry = useCallback(async () => {
-        const recovered = await retry();
-
-        if (!recovered) {
-            navigation.dispatch(StackActions.popToTop());
-        }
+        await retry();
+        navigation.dispatch(StackActions.popToTop());
     }, [retry, navigation]);
 
     return (
@@ -59,10 +48,10 @@ export const OnboardingLedgerImportScreen = () => {
             balances={balances}
             selectedIndexes={selectedIndexes}
             isDerived={isDerived}
-            showRetry={showRetry}
-            isContinueDisabled={!showRetry && (!isDerived || selectedIndexes.size === 0)}
+            showRetry={isFailed}
+            isContinueDisabled={isContinueDisabled}
             onToggle={toggle}
-            onPrimary={showRetry ? handleRetry : handleContinue}
+            onPrimary={isFailed ? handleRetry : handleContinue}
             onBack={exitToConnect}
         />
     );

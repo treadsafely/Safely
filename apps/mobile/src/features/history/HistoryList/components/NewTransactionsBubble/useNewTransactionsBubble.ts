@@ -1,8 +1,9 @@
 import { type RefObject, useCallback } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { type SharedValue, useSharedValue } from 'react-native-reanimated';
+import { type SharedValue, useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
+
+import type { HistoryScroll } from '../../hooks';
 
 export enum NewTransactionsBubbleMode {
     HIDDEN = 0,
@@ -12,11 +13,10 @@ export enum NewTransactionsBubbleMode {
 
 type UseNewTransactionsBubbleOptions = {
     listRef: RefObject<Pick<ListRef<unknown>, 'scrollToOffset'> | null>;
-    topThreshold: number;
+    scroll: HistoryScroll;
 };
 
 type UseNewTransactionsBubbleReturn = {
-    scrollHandler: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
     mode: SharedValue<NewTransactionsBubbleMode>;
     onPress: () => void;
     show: () => void;
@@ -25,26 +25,21 @@ type UseNewTransactionsBubbleReturn = {
 export function useNewTransactionsBubble(
     options: UseNewTransactionsBubbleOptions
 ): UseNewTransactionsBubbleReturn {
-    const { listRef, topThreshold } = options;
+    const { listRef, scroll } = options;
 
     const mode = useSharedValue<NewTransactionsBubbleMode>(NewTransactionsBubbleMode.HIDDEN);
-    const atTop = useSharedValue(true);
 
-    const scrollHandler = useCallback(
-        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const nextAtTop = event.nativeEvent.contentOffset.y <= topThreshold;
-            if (atTop.value !== nextAtTop) {
-                atTop.value = nextAtTop;
-            }
-            if (nextAtTop && mode.value !== NewTransactionsBubbleMode.HIDDEN) {
+    useAnimatedReaction(
+        () => scroll.isAtTop.value,
+        isAtTop => {
+            if (isAtTop && mode.value !== NewTransactionsBubbleMode.HIDDEN) {
                 mode.value = NewTransactionsBubbleMode.HIDDEN;
             }
-        },
-        [atTop, mode, topThreshold]
+        }
     );
 
     const show = useCallback(() => {
-        if (atTop.value) {
+        if (scroll.isAtTop.value) {
             return;
         }
 
@@ -56,7 +51,7 @@ export function useNewTransactionsBubble(
                 mode.value = NewTransactionsBubbleMode.MANY;
                 break;
         }
-    }, [atTop, mode]);
+    }, [scroll, mode]);
 
     const onPress = useCallback(() => {
         mode.value = NewTransactionsBubbleMode.HIDDEN;
@@ -64,7 +59,6 @@ export function useNewTransactionsBubble(
     }, [mode, listRef]);
 
     return {
-        scrollHandler,
         mode,
         onPress,
         show

@@ -6,3 +6,4 @@ export * from './useIsVisible';
 export * from './useIsDocumentVisible';
 export * from './useReorderList';
 export * from './usePasscodeEntry';
+export * from './useResizableWidth';

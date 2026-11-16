@@ -1,6 +1,7 @@
 const { version } = require('./package.json');
 
-// the app reads it back from `extra.universalLinkHost`; the host must serve the AASA and assetlinks.json files
+// a config file cannot import TS: both restate `packages/ux/src/shared/linking/deep-link.ts`
+const APP_URL_SCHEME = 'safely';
 const UNIVERSAL_LINK_HOST = 'link.safely.app';
 
 module.exports = {
@@ -11,7 +12,7 @@ module.exports = {
         orientation: 'portrait',
         icon: './assets/icon.png',
         userInterfaceStyle: 'dark',
-        scheme: 'safely',
+        scheme: APP_URL_SCHEME,
         ios: {
             infoPlist: {
                 UIDesignRequiresCompatibility: true,
@@ -118,7 +119,6 @@ module.exports = {
             './plugins/withNetworkSecurityConfig'
         ],
         extra: {
-            universalLinkHost: UNIVERSAL_LINK_HOST,
             eas: {
                 projectId: 'ba0507d3-f22e-49b9-8925-aa436d193658',
                 build: {

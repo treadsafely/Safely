@@ -4,6 +4,15 @@ export const styles = StyleSheet.create(theme => ({
     header: {
         backgroundColor: 'transparent'
     },
+    backdrop: {
+        flex: 1,
+        backgroundColor: theme.colors.background.primary
+    },
+    hairline: {
+        ...StyleSheet.absoluteFillObject,
+        borderBottomWidth: theme.border.hairline,
+        borderBottomColor: theme.colors.other.transparentElement
+    },
     title: {
         alignItems: 'center',
         maxWidth: 220
@@ -16,24 +25,5 @@ export const styles = StyleSheet.create(theme => ({
     address: {
         opacity: 0.64,
         maxWidth: 160
-    },
-    balance: {
-        alignItems: 'center',
-        gap: theme.spacing[4],
-        paddingTop: theme.spacing[32],
-        paddingBottom: theme.spacing[24],
-        paddingHorizontal: theme.spacing[24]
-    },
-    amountRow: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        gap: theme.spacing[6]
-    },
-    secondary: {
-        opacity: 0.56
-    },
-    divider: {
-        height: theme.border.hairline,
-        backgroundColor: theme.colors.other.transparentElement
     }
 }));

@@ -5,6 +5,8 @@ export {
     type EnableBiometryFlowProps,
     isBiometryUnlockEnabled
 } from './biometry';
+export { type DeepLinkTarget, type ImportFlameDevnetLink, useDeepLinks } from './deep-link';
+export { createLedgerTransport } from './ledger';
 export { useOnboardingFlow } from './onboarding';
 export {
     passcodePrompt,
@@ -14,9 +16,4 @@ export {
     type UsePasscodeResult
 } from './passcode';
 export { SecuritySection } from './security';
-export {
-    QrScanCancelledError,
-    QrScanFlow,
-    qrScanPrompt,
-    type QrScanPromptOptions
-} from './qr-scan';
+export { QrScanFlow, qrScanPrompt, type QrScanPromptOptions } from './qr-scan';

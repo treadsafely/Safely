@@ -3,11 +3,11 @@ import type { FC } from 'react';
 import {
     orderAmounts,
     useActivePortfolioWallets,
-    useActiveWalletBtcBalance,
     useIsActivePortfolioWatchOnly,
     useNumberFormatter,
+    usePortfolioAssets,
     usePortfolioBalanceUnit,
-    useTotalBalance,
+    usePortfolioTotalBalance,
     useTranslate
 } from '@safely/ux';
 
@@ -28,15 +28,16 @@ export const Balance: FC<BalanceProps> = props => {
 
     const t = useTranslate();
 
-    const { data: totalBalance } = useTotalBalance();
-    const { data: btcBalance } = useActiveWalletBtcBalance();
+    const wallets = useActivePortfolioWallets();
+    const { data: totalBalance } = usePortfolioTotalBalance(wallets);
+    const [primaryAsset] = usePortfolioAssets(wallets);
     const isWatchOnly = useIsActivePortfolioWatchOnly();
 
     const formatter = useNumberFormatter();
-    const mainBalanceUnit = usePortfolioBalanceUnit(useActivePortfolioWallets());
+    const mainBalanceUnit = usePortfolioBalanceUnit(wallets);
 
     const fiatAmount = totalBalance === null ? null : totalBalance?.format(formatter);
-    const cryptoAmount = btcBalance?.display.format(formatter);
+    const cryptoAmount = primaryAsset?.rated?.amount.format(formatter);
 
     const [primaryAmount, secondaryAmount] = orderAmounts(
         mainBalanceUnit,

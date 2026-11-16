@@ -121,22 +121,26 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   App Link) or `safely://import-flame-devnet-wallet?testseed=<phrase>`. The https link opens the app
   when it is installed and otherwise loads the page on `link.safely.app`, which sends the user to the
   store; the phrase rides in the fragment so that page's server never receives it, and
-  `fragmentToQuery` in the linking options' `getStateFromPath` turns it back into the query React
-  Navigation parses (it ignores a fragment). The app side is `ios.associatedDomains` and the
+  `fragmentToQuery` (`@safely/ux`, `shared/linking`, which desktop's `resolveDeepLink` reads too) in
+  the linking options' `getStateFromPath` turns it back into the query React Navigation parses (it
+  ignores a fragment). The app side is `ios.associatedDomains` and the
   `android.intentFilters` (`autoVerify`, every path of the host) in
-  `app.config.js`, all built from its `UNIVERSAL_LINK_HOST`, which also goes to
-  `extra.universalLinkHost` for `useLockAwareLinking` to read through `expo-constants` — change the
-  host there and nowhere else; the domain must
-  serve `/.well-known/apple-app-site-association` (app ID `<team>.com.safely.wallet`) and
+  `app.config.js`. The scheme and the host are `APP_URL_SCHEME` and `UNIVERSAL_LINK_HOST` in
+  `@safely/ux` (`shared/linking/deep-link.ts`), which `useLockAwareLinking` and desktop read; a
+  manifest cannot import TS, so the host is restated in `app.config.js` and desktop's
+  `signing/entitlements.plist`, the scheme in `app.config.js` and desktop's `forge.config.ts` —
+  change a value in those three places, nowhere else (`desktop-app.md`, "Deep links");
+  the domain must serve `/.well-known/apple-app-site-association` (app IDs `<team>.com.safely.wallet`
+  and `<team>.com.safely.wallet-desktop`) and
   `/.well-known/assetlinks.json` (SHA-256 of the Play app-signing key and of the key EAS signs tester
   APKs with), with no redirect. The host exists only for app links, so the intent filter and the
-  AASA (`"/": "/*"`) claim every path: a new deep link needs only its `linking.path`, no rebuild for
-  the manifest, and a path the navigation does not know opens the app where it was. The
-  `import-flame-devnet-wallet` path maps
+  AASA (`"/": "/*"`) claim every path: a new deep link needs only its `linking.path` — the
+  `segment` of a `DEEP_LINK_PATHS` node from `@safely/ux`, whose `path` desktop matches — no
+  rebuild for the manifest, and a path the navigation does not know opens the app where it was.
+  The `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
-  through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
-  only drops the https prefix (logged), never the app. The modal reads `testseed` and the optional
-  `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
+  through `useLockAwareLinking`, so it runs only after unlock. The modal reads `testseed` and the
+  optional `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
   delivers an array. It parses the phrase
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
   (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft
@@ -375,6 +379,17 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   locked, so protected screens run no effects and deep links apply only after unlock. Never
   reintroduce a `LockScreen` route or navigate to present the lock — that is the bug the security
   audit found (a `safely:///tab` link replaced the lock screen).
+- **A multiline `TextInput` grows one commit late on Fabric, and that is accepted for now.** The
+  shadow node measures the text the native side reported last, so a pasted address renders on one
+  clipped line and the box grows on the next commit. The fix is upstream's open
+  [facebook/react-native#59744](https://github.com/facebook/react-native/pull/59744), a C++ header
+  — but a `pnpm patch` of it compiles nothing, because Expo links the prebuilt `React-Core-prebuilt`
+  xcframework; it would need `buildReactNativeFromSource` in `expo-build-properties`, which adds
+  10–20 minutes to every clean iOS build, so the patch was tried and dropped. Re-check when a React
+  Native bump contains the PR. What *is* kept: `scrollEnabled={false}` on an auto-growing input
+  (`SendAssetModal/components/AddressInput`), because iOS otherwise animates a scroll to the caret
+  inside the still-one-line field after a paste. Don't mask the growth with a mirrored `Text` that
+  draws the value over a transparent input either: that hides typed text behind the JS round-trip.
 - Layers and the `@mobile/*` aliases: see `fsd-layers.md`.
 
 ## i18n

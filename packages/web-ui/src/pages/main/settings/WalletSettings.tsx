@@ -6,7 +6,7 @@ import Switch16 from '@safely/ux/assets/icons/16/switch-16.svg?react';
 
 import { destructiveGroupStyles, listStyles, walletRowStyles } from './SettingsSection.styles';
 import { PortfolioTypeBadge, WalletIcon } from '../../../entities';
-import { useWalletFlow, WalletModals } from '../../../features';
+import { DerivedWalletsList, useWalletFlow, WalletModals } from '../../../features';
 import { Cell, Icon, List, PageHeader } from '../../../shared';
 
 export const WalletSettings: FC = () => {
@@ -28,6 +28,7 @@ export const WalletSettings: FC = () => {
 
     const revealedStatus =
         portfolio.type === PortfolioType.BIP39 ? portfolio.secretRevealedStatus : null;
+    const isLedger = portfolio.type === PortfolioType.LEDGER;
 
     return (
         <>
@@ -53,7 +54,11 @@ export const WalletSettings: FC = () => {
                     <Cell onClick={flow.openEdit}>
                         <Cell.Content>
                             <Cell.Title>
-                                {t('settings.groups.currentWallet.options.editWallet')}
+                                {t(
+                                    isLedger
+                                        ? 'settings.groups.currentWallet.options.editLedger'
+                                        : 'settings.groups.currentWallet.options.editWallet'
+                                )}
                             </Cell.Title>
                         </Cell.Content>
                         <Cell.Chevron />
@@ -79,11 +84,20 @@ export const WalletSettings: FC = () => {
                     )}
                 </List.Group>
 
+                {portfolio.type === PortfolioType.LEDGER && (
+                    <DerivedWalletsList portfolio={portfolio} onFindMore={flow.openFindMore} />
+                )}
+
                 <List.Group variant="separated" className={destructiveGroupStyles}>
                     <Cell tone="accentRed" onClick={flow.openRemove}>
                         <Cell.Content>
                             <Cell.Title>
-                                {t('settings.removePortfolio.title', { name: portfolio.meta.name })}
+                                {t(
+                                    isLedger
+                                        ? 'settings.removePortfolio.disconnectLedger'
+                                        : 'settings.removePortfolio.title',
+                                    { name: portfolio.meta.name }
+                                )}
                             </Cell.Title>
                         </Cell.Content>
                     </Cell>

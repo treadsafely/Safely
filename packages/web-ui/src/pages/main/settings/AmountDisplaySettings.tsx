@@ -14,9 +14,9 @@ import {
 } from '@safely/ux';
 import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 
-import { previewCardStyles, previewStyles } from './AmountDisplaySettings.styles';
+import { previewStyles } from './AmountDisplaySettings.styles';
 import { listStyles } from './SettingsSection.styles';
-import { ActivityItem } from '../../../entities';
+import { ActivityTableGrid, ActivityTableRow } from '../../../entities';
 import { Button, Cell, Icon, List, PageHeader, Switch, Text } from '../../../shared';
 
 const AMOUNT_ORDERS: AmountUnit[] = ['crypto', 'fiat'];
@@ -24,12 +24,10 @@ const AMOUNT_ORDERS: AmountUnit[] = ['crypto', 'fiat'];
 const DEMO_VALUE = new CryptoAssetAmount({ relativeAmount: 0.03, asset: BTC_ASSET });
 const DEMO_FEE = new CryptoAssetAmount({ relativeAmount: 0.00000073, asset: BTC_ASSET });
 const DEMO_ADDRESS = 'bc1qra…m2e4c8';
-const DEMO_TIMESTAMP_LABEL = '23:45';
+const DEMO_HOURS_AGO = 2;
 
 const Preview: FC<{ children: ReactNode }> = ({ children }) => (
-    <div className={previewStyles}>
-        <div className={previewCardStyles}>{children}</div>
-    </div>
+    <div className={previewStyles}>{children}</div>
 );
 
 const TransactionHistoryPreview: FC = () => {
@@ -38,17 +36,18 @@ const TransactionHistoryPreview: FC = () => {
     const { data: rate } = useMainnetRate(BTC_ASSET);
 
     return (
-        <ActivityItem
-            tone="tertiary"
-            title={t('history.transactionInfo.received')}
-            amountSign="+"
-            formattedValue={DEMO_VALUE.format(formatter)}
-            valueTone="accentGreen"
-            formattedFiat={rate ? DEMO_VALUE.convert(rate).format(formatter) : null}
-            timestampLabel={DEMO_TIMESTAMP_LABEL}
-            isPending={false}
-            counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
-        />
+        <ActivityTableGrid isCompact>
+            <ActivityTableRow
+                title={t('history.transactionInfo.received')}
+                amountSign="+"
+                formattedValue={DEMO_VALUE.format(formatter)}
+                valueTone="accentGreen"
+                formattedFiat={rate ? DEMO_VALUE.convert(rate).format(formatter) : null}
+                counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
+                dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
+                direction="in"
+            />
+        </ActivityTableGrid>
     );
 };
 
@@ -66,17 +65,18 @@ const SentAmountPreview: FC = () => {
     });
 
     return (
-        <ActivityItem
-            tone="tertiary"
-            title={t('history.transactionInfo.sent')}
-            amountSign="−"
-            formattedValue={amount.format(formatter, { fullPrecision: isFullPrecision })}
-            valueTone="primary"
-            formattedFiat={rate ? amount.convert(rate).format(formatter) : null}
-            timestampLabel={DEMO_TIMESTAMP_LABEL}
-            isPending={false}
-            counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
-        />
+        <ActivityTableGrid isCompact>
+            <ActivityTableRow
+                title={t('history.transactionInfo.sent')}
+                amountSign="−"
+                formattedValue={amount.format(formatter, { fullPrecision: isFullPrecision })}
+                valueTone="primary"
+                formattedFiat={rate ? amount.convert(rate).format(formatter) : null}
+                counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
+                dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
+                direction="out"
+            />
+        </ActivityTableGrid>
     );
 };
 

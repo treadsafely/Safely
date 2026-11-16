@@ -2,16 +2,20 @@ import type { BrowserWindow } from 'electron';
 import { app, powerMonitor } from 'electron';
 import path from 'node:path';
 
+import { APP_URL_SCHEME } from '@safely/ux/deep-link';
+
 import { configureAboutPanel } from './about-panel';
 import { readAppInfo } from './app-info';
 import { APP_ORIGIN, registerAppProtocol, registerPrivilegedSchemes } from './app-protocol';
+import { DeepLinkReceiver } from './deep-links';
 import { registerIpcHandlers } from './ipc';
 import { logStore, mainLogger } from './logger';
 import { installApplicationMenu } from './menu';
 import { useSeparateDevUserData } from './paths';
 import { hardenSession, hardenWebContents } from './security';
-import { createStores } from './store';
+import { createStores, getStore } from './store';
 import { createMainWindow } from './window';
+import { WindowStateStore } from './window-state';
 import { IPC_CHANNEL } from '../shared/ipc';
 import type { AppState } from '../shared/ipc';
 
@@ -21,6 +25,12 @@ const devServerUrl: string | undefined = MAIN_WINDOW_VITE_DEV_SERVER_URL;
 const allowedOrigins = devServerUrl ? [new URL(devServerUrl).origin, APP_ORIGIN] : [APP_ORIGIN];
 
 let mainWindow: BrowserWindow | null = null;
+
+const deepLinks = new DeepLinkReceiver(
+    mainLogger,
+    () => mainWindow,
+    () => revealMainWindow()
+);
 
 function notifyAppState(state: AppState): void {
     mainWindow?.webContents.send(IPC_CHANNEL.appState, state);
@@ -32,7 +42,9 @@ function notifyFullScreen(isFullScreen: boolean): void {
 
 function revealMainWindow(): void {
     if (!mainWindow) {
-        mainWindow = attachMainWindow();
+        void attachMainWindow().then(window => {
+            mainWindow = window;
+        });
         return;
     }
 
@@ -44,8 +56,11 @@ function revealMainWindow(): void {
     mainWindow.focus();
 }
 
-function attachMainWindow(): BrowserWindow {
-    const window = createMainWindow(devServerUrl, readAppInfo());
+async function attachMainWindow(): Promise<BrowserWindow> {
+    const windowState = new WindowStateStore(getStore('regular'), mainLogger);
+    const window = createMainWindow(devServerUrl, readAppInfo(), await windowState.read());
+
+    windowState.track(window);
 
     window.on('focus', () => notifyAppState('active'));
     window.on('blur', () => notifyAppState('inactive'));
@@ -76,10 +91,11 @@ if (app.isPackaged && DEBUG_SWITCHES.some(flag => app.commandLine.hasSwitch(flag
     app.exit(1);
 }
 
-/* Both must happen before the app is ready. */
+/* All of these must happen before the app is ready. */
 useSeparateDevUserData();
 registerPrivilegedSchemes();
 app.enableSandbox();
+deepLinks.listen();
 
 if (!app.requestSingleInstanceLock()) {
     /* Two renderers would run two sync engines against the same storage. */
@@ -93,7 +109,7 @@ if (!app.requestSingleInstanceLock()) {
 
     void app
         .whenReady()
-        .then(() => {
+        .then(async () => {
             configureAboutPanel();
             installApplicationMenu();
 
@@ -101,18 +117,23 @@ if (!app.requestSingleInstanceLock()) {
                 registerAppProtocol(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`));
             }
 
+            /* macOS registers only a scheme the Info.plist declares — `protocols` in forge.config.ts */
+            if (app.isPackaged) {
+                app.setAsDefaultProtocolClient(APP_URL_SCHEME);
+            }
+
             hardenSession(devServerUrl);
             /* Before the handlers: an IPC call that arrives without a store must not be served. */
             createStores();
             logStore.cleanup();
-            registerIpcHandlers(() => mainWindow);
+            registerIpcHandlers(() => mainWindow, deepLinks);
 
             app.on('did-resign-active', () => notifyAppState('background'));
 
             powerMonitor.on('lock-screen', () => notifyAppState('background'));
             powerMonitor.on('suspend', () => notifyAppState('background'));
 
-            mainWindow = attachMainWindow();
+            mainWindow = await attachMainWindow();
         })
         .catch((error: unknown) => {
             /* A keychain that cannot be reached is fatal, and quitting is the whole point: a window

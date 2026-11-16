@@ -48,3 +48,5 @@ export const errorBlockStyles = css({
     paddingBlock: '12',
     textAlign: 'center'
 });
+
+export const memoStyles = css({ whiteSpace: 'pre-wrap', wordBreak: 'break-word' });
