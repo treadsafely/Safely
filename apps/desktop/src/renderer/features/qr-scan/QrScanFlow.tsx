@@ -87,10 +87,6 @@ const QrScanSession: FC<QrScanSessionProps> = ({ request }) => {
                     request.resolve(value);
                     close();
                 }}
-                onUnsupported={() => {
-                    toast({ message: t('common.errors.notSupportedYet'), type: 'error' });
-                    cancel();
-                }}
                 onClose={cancel}
             />
 

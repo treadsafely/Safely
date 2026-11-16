@@ -34,21 +34,11 @@ export type QrScanModalProps = {
     isDetecting?: boolean;
     source?: QrScanSource;
     onDetected: (value: string) => void;
-    onUnsupported?: () => void;
     onClose: () => void;
 };
 
 export const QrScanModal: FC<QrScanModalProps> = props => {
-    const {
-        title,
-        subtitle,
-        stream,
-        isDetecting = true,
-        source,
-        onDetected,
-        onUnsupported,
-        onClose
-    } = props;
+    const { title, subtitle, stream, isDetecting = true, source, onDetected, onClose } = props;
 
     const t = useTranslate();
     const [video, setVideo] = useState<HTMLVideoElement | null>(null);
@@ -68,8 +58,7 @@ export const QrScanModal: FC<QrScanModalProps> = props => {
     useQrDetection({
         video,
         isEnabled: stream !== null && isDetecting,
-        onDetected,
-        onUnsupported
+        onDetected
     });
 
     return (
