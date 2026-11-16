@@ -5,7 +5,8 @@ import { platform } from '../../../platform';
 
 const desktopLayerSynchronousGlobalStructure = {
     devToken: z.string().nullable(),
-    devIsTestnetAllowed: z.boolean().nullable()
+    devIsTestnetAllowed: z.boolean().nullable(),
+    sidebarWidth: z.number().nullable()
 };
 
 type DesktopLayerSynchronousGlobalStructure = typeof desktopLayerSynchronousGlobalStructure;

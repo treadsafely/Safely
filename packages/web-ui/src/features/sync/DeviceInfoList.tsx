@@ -9,7 +9,7 @@ import {
     useTranslate
 } from '@safely/ux';
 
-import { bannerStyles } from './DeviceDetailsModal.styles';
+import { bannerStyles, hideWarningStyles } from './DeviceDetailsModal.styles';
 import { Banner, Button, List, TableCell, Text } from '../../shared';
 
 const ConnectionValue: FC<{ lastSyncAt: number | null }> = ({ lastSyncAt }) => {
@@ -120,14 +120,15 @@ export const DeviceInfoList: FC<DeviceInfoListProps> = ({ details }) => {
                         <Banner.Text>
                             {t('security.deviceDetails.staleWarning', { deviceName })}
                         </Banner.Text>
+                        <Button
+                            variant="destructiveOrange"
+                            size="xsmall"
+                            className={hideWarningStyles}
+                            onClick={() => hideWarning(details.ikPubHex)}
+                        >
+                            {t('security.deviceDetails.hideWarning')}
+                        </Button>
                     </Banner.Content>
-                    <Button
-                        variant="destructiveOrange"
-                        size="xsmall"
-                        onClick={() => hideWarning(details.ikPubHex)}
-                    >
-                        {t('security.deviceDetails.hideWarning')}
-                    </Button>
                 </Banner>
             )}
         </List>

@@ -112,7 +112,14 @@ export default defineConfig({
             backgroundColor: 'background.primary',
             color: 'text.primary',
             fontFamily: SYSTEM_FONT_STACK,
-            WebkitFontSmoothing: 'antialiased'
+            WebkitFontSmoothing: 'antialiased',
+            userSelect: 'none'
+        },
+        'input, textarea': {
+            userSelect: 'text'
+        },
+        'img, svg, a': {
+            WebkitUserDrag: 'none'
         },
         '::-webkit-scrollbar': {
             width: '10px',

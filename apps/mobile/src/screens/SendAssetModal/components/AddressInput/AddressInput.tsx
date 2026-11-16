@@ -149,6 +149,7 @@ export const AddressInput = (props: AddressInputProps) => {
                         autoCorrect={false}
                         spellCheck={false}
                         multiline
+                        scrollEnabled={false}
                         submitBehavior="submit"
                         returnKeyType="next"
                         onSubmitEditing={onSubmitEditing}

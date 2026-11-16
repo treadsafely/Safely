@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import { useTranslate } from '@safely/ux';
 
-import { actionStyles, iconStyles, skipStyles, textStyles } from './BiometryCard.styles';
+import { actionStyles, iconStyles, textStyles } from './BiometryCard.styles';
 import type { BiometryScreenProps } from '../../shared';
 import { Button, Icon, Modal, StepCard } from '../../shared';
 
@@ -18,7 +18,7 @@ export const BiometryCard: FC<BiometryScreenProps> = props => {
             hasShadow={false}
             hasBackdrop={false}
             trailing={
-                <Button variant="secondary" size="xsmall" className={skipStyles} onClick={onSkip}>
+                <Button variant="secondary" size="xsmall" onClick={onSkip}>
                     {t('common.later')}
                 </Button>
             }

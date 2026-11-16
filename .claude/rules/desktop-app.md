@@ -65,11 +65,17 @@ the page) and is built next to the query client in `AppProviders.tsx`, the way m
 kit in `AppContext.tsx`. The extension will repeat this wiring with its own platform.
 
 `AppProviders` also mounts `ErrorBoundary` (`@safely/web-ui`) around the suspense boundary with
-`FatalErrorPage` as the fallback — restart and "send logs" (`platform.logs.share()`, the log folder
-in Finder), no erase on purpose: an erase button there would be pressed without reading, so a store
-the keychain disagrees with is recovered through support. It only works because `useSuspenseQuery`
-in `@safely/ux` rethrows a failed query instead of re-suspending into a refetch: before that, a
-missing keychain item meant a black screen and a retry loop, not an error.
+`FatalError` (`app/FatalError.tsx`, `FatalErrorPage` over `platform.logs.share()`) as the fallback —
+restart and "send logs" (the log folder in Finder), no erase on purpose: an erase button there would
+be pressed without reading, so a store the keychain disagrees with is recovered through support. It
+only works because `useSuspenseQuery` in `@safely/ux` rethrows a failed query instead of
+re-suspending into a refetch: before that, a missing keychain item meant a black screen and a retry
+loop, not an error. That boundary sees only what throws outside the route tree: TanStack Router
+wraps every match in a `CatchBoundary` of its own, below `RouterProvider`, so a throw in a screen
+stops there — and its built-in fallback is an unstyled "Something went wrong!" with the raw message,
+logged nowhere. `app/router.tsx` therefore sets `defaultErrorComponent: FatalError` and a
+`defaultOnCatch` that writes the same `render failed` record the root boundary writes — as the router
+default, not per route, so a new route cannot miss it.
 
 **The renderer's platform is a module-level value, not something a component creates.**
 `src/renderer/platform/index.ts` builds it once while the module graph loads, and the logger
@@ -225,6 +231,19 @@ loader are portalled to `document.body`, so anything left mounted would paint ov
 state (an open flow's inner step), not the location; after unlock the user is back on the same route
 with the same `?modal=`.
 
+`MainScreen` owns a `Suspense` with no fallback below the route component, and it sits there on
+purpose. The first `MainScreen` after onboarding suspends on data the persister has never held, and
+the only boundary above it is the router's own — the root match's, or one per match once a
+`pendingComponent` / `defaultPendingComponent` exists — which is reconciled across routes: the
+welcome tree is then hidden, not unmounted, and React hides a suspended tree by `display: none` on
+its top-most host nodes only, so the welcome card, a modal portalled from inside the page's root
+`div`, kept painting on a blank window for as long as the main data took (SAF-831). A boundary
+under the route component is mounted fresh with the component-type change, so the welcome tree is
+deleted and the window stays on `background.primary` until main renders. Do not move it to a router
+pending component: that reintroduces the shared boundary. A transition cannot hold the previous
+screen either — the router's store is read through `useSyncExternalStore`, which renders every
+navigation synchronously.
+
 **The passcode flow lives in `src/renderer/features/`**, one feature per factor and per scenario:
 `passcode` (hooks, lockout, the prompt store, `PasscodeSetupFlow`, `ChangePasscodeFlow`), `biometry`
 and `app-lock` (`AppLock` plus the lock-screen toggle). It is the counterpart of mobile's
@@ -308,6 +327,11 @@ Do not weaken these without a threat-model note:
       server.
     - `Authorization` is listed explicitly in `access-control-allow-headers`. The `*` wildcard
       covers every header **except** that one, and both the sync API and its SSE stream send it.
+    - **Every custom request header a `@safely/core` client sends has to be in that list**
+      (`ALLOWED_REQUEST_HEADERS`): the backend's own allow headers are dropped with the rest, so a
+      header missing there fails the preflight inside Chromium and the request never leaves the
+      renderer — a proxy outside the app shows a successful `OPTIONS` and no `POST`, which is how
+      the analytics `X-Project-Token` went missing. `test/main/security.test.ts` pins the list.
     - Existing `access-control-*` headers from the backend are dropped, not respected: the sync API
       answers with its own host as the origin (`Access-Control-Allow-Origin: sync.safely.app`),
       which no browser accepts, and two values are invalid as well. When the backends serve a
@@ -396,6 +420,12 @@ store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium thr
 as app-state events. A single instance lock guarantees one sync engine per machine. Neither path
 needs store handling, there being no unlocked state to lock, but a renderer-side passcode session
 would have to expire on one of them.
+
+The window comes back where it was closed: `WindowStateStore` (`src/main/window-state.ts`) keeps
+the normal bounds and the full-screen flag under `main..windowState` in the `regular` store,
+written 500 ms after the last resize or move and once more on `close`, and `createMainWindow`
+spreads them over the defaults; a position that no longer overlaps a display by 100px keeps only
+the size. Being in the store, it goes with `clearAllData` — a wiped app opens like a fresh one.
 
 The renderer's logger writes to its devtools console, which is invisible when the app is driven from
 a terminal, so `src/main/window.ts` forwards renderer console messages, `did-fail-load` and

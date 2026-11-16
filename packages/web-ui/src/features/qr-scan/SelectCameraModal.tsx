@@ -24,7 +24,7 @@ export const SelectCameraModal: FC<SelectCameraModalProps> = props => {
     const t = useTranslate();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup closeLabel={t('common.close')} hasClose={false}>
                 <Modal.Header
                     closeLabel={t('common.close')}

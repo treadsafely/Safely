@@ -31,7 +31,7 @@ export const RemoveWalletModal: FC<RemoveWalletModalProps> = props => {
         portfolio.type === PortfolioType.LEDGER ? portfolio.getDerivations().length : 0;
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <Modal.Content>
                     <Modal.Title>{t(copy.titleKey, { name: portfolio.meta.name })}</Modal.Title>

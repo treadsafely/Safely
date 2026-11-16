@@ -379,6 +379,17 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   locked, so protected screens run no effects and deep links apply only after unlock. Never
   reintroduce a `LockScreen` route or navigate to present the lock — that is the bug the security
   audit found (a `safely:///tab` link replaced the lock screen).
+- **A multiline `TextInput` grows one commit late on Fabric, and that is accepted for now.** The
+  shadow node measures the text the native side reported last, so a pasted address renders on one
+  clipped line and the box grows on the next commit. The fix is upstream's open
+  [facebook/react-native#59744](https://github.com/facebook/react-native/pull/59744), a C++ header
+  — but a `pnpm patch` of it compiles nothing, because Expo links the prebuilt `React-Core-prebuilt`
+  xcframework; it would need `buildReactNativeFromSource` in `expo-build-properties`, which adds
+  10–20 minutes to every clean iOS build, so the patch was tried and dropped. Re-check when a React
+  Native bump contains the PR. What *is* kept: `scrollEnabled={false}` on an auto-growing input
+  (`SendAssetModal/components/AddressInput`), because iOS otherwise animates a scroll to the caret
+  inside the still-one-line field after a paste. Don't mask the growth with a mirrored `Text` that
+  draws the value over a transparent input either: that hides typed text behind the JS round-trip.
 - Layers and the `@mobile/*` aliases: see `fsd-layers.md`.
 
 ## i18n

@@ -17,7 +17,7 @@ export const SignInSuccessModal: FC<SignInSuccessModalProps> = props => {
     const t = useTranslate();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onContinue()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onContinue()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <SignInSuccessContent inviterIkPubHex={inviterIkPubHex} />
 

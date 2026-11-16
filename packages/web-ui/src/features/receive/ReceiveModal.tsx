@@ -20,7 +20,6 @@ import {
     badgesStyles,
     bodyStyles,
     cardStyles,
-    contentStyles,
     copiedStyles,
     cutoutStyles,
     LOGO_SIZE,
@@ -49,7 +48,7 @@ const ReceiveCard: FC<ReceiveCardProps> = props => {
 
     return (
         <>
-            <Modal.Content className={contentStyles}>
+            <Modal.Content>
                 <Modal.Title>{t('receiveAsset.title', { symbol: asset.symbol })}</Modal.Title>
                 <Modal.Description>
                     {t('receiveAsset.description', { name: asset.name ?? asset.symbol })}

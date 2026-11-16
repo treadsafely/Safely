@@ -8,7 +8,7 @@ import { useActivePortfolio, useActivePortfolioWallets } from '@safely/ux';
 import { Balance } from './Balance';
 import { Header } from './Header';
 import { History } from './History';
-import { chartStyles, headerStyles } from './MainContent.styles';
+import { chartStyles, headerStyles, scrollStyles } from './MainContent.styles';
 import { Chart, NewTransactionsBubble, useNewTransactionsBubble } from '../../../features';
 
 export type MainContentProps = {
@@ -40,28 +40,30 @@ export const MainContent: FC<MainContentProps> = props => {
 
     return (
         <>
-            <div ref={bubble.topRef} />
-
             <div className={headerStyles}>
                 <Header />
                 <Balance onSend={onSend} onReceive={onReceive} onScan={onScan} />
                 <NewTransactionsBubble mode={bubble.mode} onClick={bubble.scrollToTop} />
             </div>
 
-            {wallets.btc !== null && (
-                <div className={chartStyles}>
-                    <Chart />
-                </div>
-            )}
+            <div className={scrollStyles}>
+                <div ref={bubble.topRef} />
 
-            <History
-                wallets={wallets}
-                selectedActivityKey={selectedActivityKey}
-                onSelectBtcActivity={onSelectBtcActivity}
-                onSelectFlameActivity={onSelectFlameActivity}
-                onReceive={onReceive}
-                onNewActivity={bubble.show}
-            />
+                {wallets.btc !== null && (
+                    <div className={chartStyles}>
+                        <Chart />
+                    </div>
+                )}
+
+                <History
+                    wallets={wallets}
+                    selectedActivityKey={selectedActivityKey}
+                    onSelectBtcActivity={onSelectBtcActivity}
+                    onSelectFlameActivity={onSelectFlameActivity}
+                    onReceive={onReceive}
+                    onNewActivity={bubble.show}
+                />
+            </div>
         </>
     );
 };

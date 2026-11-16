@@ -21,7 +21,7 @@ export const SelectWalletModal: FC<SelectWalletModalProps> = props => {
     const activeDerivationIndex = useActivePortfolioLedgerIndex();
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                 <Modal.Content>
                     <Modal.Title>{t('accounts.title')}</Modal.Title>

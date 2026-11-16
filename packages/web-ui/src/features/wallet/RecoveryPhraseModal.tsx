@@ -25,7 +25,7 @@ export const RecoveryPhraseModal: FC<RecoveryPhraseModalProps> = ({ mnemonic, on
 
     return (
         <ScreenProtection>
-            <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+            <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
                 <Modal.Popup className={popupStyles} closeLabel={t('common.close')}>
                     <div className={headerStyles}>
                         <Modal.Title className={titleStyles}>

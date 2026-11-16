@@ -38,20 +38,40 @@ import {
     useSendFlow
 } from '../../features';
 import type { DisclosureProps } from '../../shared';
-import { AppLayout } from '../../shared';
+import { AppLayout, useResizableWidth } from '../../shared';
+
+const SIDEBAR_WIDTH = { default: 300, min: 240, max: 400 };
 
 export type MainPageProps = {
     location: MainLocation;
     onNavigate: (next: MainLocation) => void;
     hasWindowControls?: boolean;
     isFullScreen?: boolean;
+    sidebarWidth?: number;
+    onSidebarWidthChange: (width: number) => void;
     security: ReactNode;
     logs: ReactNode;
 };
 
 export const MainPage: FC<MainPageProps> = props => {
-    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs } = props;
+    const {
+        location,
+        onNavigate,
+        hasWindowControls,
+        isFullScreen,
+        sidebarWidth,
+        onSidebarWidthChange,
+        security,
+        logs
+    } = props;
     const { view, modal } = location;
+
+    const sidebar = useResizableWidth({
+        width: sidebarWidth ?? SIDEBAR_WIDTH.default,
+        min: SIDEBAR_WIDTH.min,
+        max: SIDEBAR_WIDTH.max,
+        onChange: onSidebarWidthChange
+    });
 
     const hasPortfolio = useHasPortfolio();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
@@ -146,6 +166,7 @@ export const MainPage: FC<MainPageProps> = props => {
 
     return (
         <AppLayout
+            sidebarWidth={sidebar.width}
             hasWindowControls={hasWindowControls}
             isFullScreen={isFullScreen}
             isSecondaryOpen={view.kind === 'settings'}
@@ -165,6 +186,8 @@ export const MainPage: FC<MainPageProps> = props => {
                 onOpenSafety={openSafety}
                 onOpenSettings={toggleSettings}
             />
+
+            <AppLayout.SidebarResizer {...sidebar.handleProps} />
 
             <SettingsSidebar
                 activeSection={section}
