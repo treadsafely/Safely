@@ -60,7 +60,11 @@ tags:
 - waitForAnimationToEnd
 - assertNotVisible:
       id: 'importWallet.error'
-- inputText: ${MAESTRO_SEED_PHRASE}
+# A funded wallet: the label only renames the printed step, Maestro's debug logs
+# and EAS artifacts still carry the phrase. See .claude/rules/mobile-e2e.md.
+- inputText:
+      text: ${MAESTRO_SEED_PHRASE}
+      label: 'Type MAESTRO_SEED_PHRASE'
 
 - tapOn:
       id: 'importWallet.continueButton'
@@ -78,22 +82,10 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn:
-      text: '1'
-      childOf:
-          id: 'passcodeVerification.screen'
-- tapOn:
-      text: '2'
-      childOf:
-          id: 'passcodeVerification.screen'
-- tapOn:
-      text: '3'
-      childOf:
-          id: 'passcodeVerification.screen'
-- tapOn:
-      text: '4'
-      childOf:
-          id: 'passcodeVerification.screen'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'passcodeVerification.screen'
 
 # Import + initial sync, then navigation resets to home
 # with the imported wallet active. Home stays in the hierarchy under the

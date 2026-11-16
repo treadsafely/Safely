@@ -61,79 +61,29 @@ tags:
           id: 'importWallet.continueButton'
       timeout: 15000
 - waitForAnimationToEnd
-- inputText: ${MAESTRO_SEED_PHRASE}
+# A funded wallet: the label only renames the printed step, Maestro's debug logs
+# and EAS artifacts still carry the phrase. See .claude/rules/mobile-e2e.md.
+- inputText:
+      text: ${MAESTRO_SEED_PHRASE}
+      label: 'Type MAESTRO_SEED_PHRASE'
 - tapOn:
       id: 'importWallet.continueButton'
 
 # Passcode setup: enter + re-enter.
 - waitForAnimationToEnd
-- tapOn:
-      text: '1'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '2'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '3'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '4'
-      childOf:
-          id: 'onboardingPasscode.screen'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 - waitForAnimationToEnd
-- tapOn:
-      text: '1'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '2'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '3'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '4'
-      childOf:
-          id: 'onboardingPasscode.screen'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 
-# Account creation runs behind a loader (import derives + syncs, so it can take
-# a while), then the optional biometry / notifications prompts. Poll for them
-# every ~2s instead of a fixed wait, since either may be skipped by the app.
-- repeat:
-      times: 30
-      while:
-          notVisible:
-              id: 'home.settingsButton'
-      commands:
-          - runFlow:
-                when:
-                    visible:
-                        id: 'biometry.skip'
-                commands:
-                    - tapOn:
-                          id: 'biometry.skip'
-          - runFlow:
-                when:
-                    visible:
-                        id: 'onboarding.notificationsLater'
-                commands:
-                    - tapOn:
-                          id: 'onboarding.notificationsLater'
-          - extendedWaitUntil:
-                visible:
-                    id: 'home.settingsButton'
-                timeout: 2000
-                optional: true
-
-- extendedWaitUntil:
-      visible:
-          id: 'home.settingsButton'
-      timeout: 60000
+# Account creation (import derives + syncs, so it can take a while), then the
+# optional biometry / notifications prompts.
+- runFlow: subflows/finish-onboarding.yaml
 
 # The imported wallet must be the one derived from MAESTRO_SEED_PHRASE.
 - tapOn:

@@ -16,7 +16,7 @@ import { styles } from './AssetsList.styles';
 type ChainAssetItem = {
     Cell: ComponentType<Omit<AssetCellProps, 'image' | 'footer'>>;
     screen: 'BtcScreen' | 'FlameScreen';
-    testID: string;
+    testID?: string;
 };
 
 const ITEM_BY_CHAIN: Record<Recipient['blockchain'], ChainAssetItem> = {
@@ -25,11 +25,7 @@ const ITEM_BY_CHAIN: Record<Recipient['blockchain'], ChainAssetItem> = {
         screen: 'BtcScreen',
         testID: TEST_ID.home.asset.btc
     },
-    [BLOCKCHAIN_NAME.FLAME]: {
-        Cell: FlameAssetCell,
-        screen: 'FlameScreen',
-        testID: TEST_ID.home.asset.flame
-    }
+    [BLOCKCHAIN_NAME.FLAME]: { Cell: FlameAssetCell, screen: 'FlameScreen' }
 };
 
 const AssetItem = ({ asset, rated }: { asset: PortfolioAsset; rated: RatedCryptoAssetAmount }) => {

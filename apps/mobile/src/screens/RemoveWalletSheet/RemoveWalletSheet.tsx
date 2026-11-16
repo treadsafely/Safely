@@ -12,7 +12,6 @@ import {
     useToast
 } from '@safely/ux';
 
-import { TEST_ID } from '@mobile/shared/constants';
 import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
 
@@ -68,7 +67,6 @@ const RemoveWalletContent = () => {
 
             {copy.checkboxKey !== undefined && (
                 <ConfirmCheckbox
-                    testID={TEST_ID.removeWallet.checkbox}
                     text={t(copy.checkboxKey)}
                     isChecked={isConfirmed}
                     onToggle={() => setIsConfirmed(prev => !prev)}
@@ -77,7 +75,6 @@ const RemoveWalletContent = () => {
 
             <View style={styles.footer}>
                 <Button
-                    testID={TEST_ID.removeWallet.confirmButton}
                     type="destructive"
                     size="large"
                     disabled={(copy.checkboxKey !== undefined && !isConfirmed) || isDeleting}

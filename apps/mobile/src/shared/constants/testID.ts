@@ -25,17 +25,14 @@ export const TEST_ID = {
         sendButton: 'home.sendButton',
         receiveButton: 'home.receiveButton',
         asset: {
-            btc: 'home.asset.btc',
-            flame: 'home.asset.flame'
+            btc: 'home.asset.btc'
         }
     },
     history: {
-        item: 'history.item',
         pendingItem: 'history.pendingItem'
     },
     settings: {
         currentWallet: 'settings.currentWallet',
-        security: 'settings.security',
         signOutAccount: 'settings.signOutAccount',
         closeButton: 'settings.closeButton'
     },
@@ -43,27 +40,12 @@ export const TEST_ID = {
         checkbox: 'signOutAccount.checkbox',
         confirmButton: 'signOutAccount.confirmButton'
     },
-    security: {
-        lockScreenSwitch: 'security.lockScreenSwitch',
-        changePasscode: 'security.changePasscode'
-    },
-    changePasscode: {
-        screen: 'changePasscode.screen'
-    },
     onboardingPasscode: {
         screen: 'onboardingPasscode.screen'
     },
-    lockScreen: {
-        screen: 'lockScreen.screen'
-    },
     walletSettings: {
         recoveryPhrase: 'walletSettings.recoveryPhrase',
-        removeWallet: 'walletSettings.removeWallet',
         backButton: 'walletSettings.backButton'
-    },
-    removeWallet: {
-        checkbox: 'removeWallet.checkbox',
-        confirmButton: 'removeWallet.confirmButton'
     },
     watchOnlySheet: {
         screen: 'watchOnlySheet.screen',
@@ -72,8 +54,7 @@ export const TEST_ID = {
     recovery: {
         revealButton: 'recovery.revealButton',
         closeButton: 'recovery.closeButton',
-        /** 1-based, matches the number shown next to the word */
-        word: (index: number) => `recovery.word.${index}`
+        word: (shownNumber: number) => `recovery.word.${shownNumber}`
     },
     receive: {
         address: 'receive.address',

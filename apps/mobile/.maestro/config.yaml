@@ -14,7 +14,9 @@ includeTags:
 # of the active, freshly generated wallet). onboarding-import-wallet signs
 # out (erasing all data), so it must stay last.
 # Every flow assumes passcode 1234.
-# Keep in sync with flow_path in .eas/workflows/build-and-distribute.yml.
+# Keep identical to flow_path in .eas/workflows/build-and-distribute.yml.
+# Shared steps live in subflows/, which the '*.yaml' glob above does not reach.
+# Don't run the chain with --exclude-tags: flowsOrder names every flow.
 executionOrder:
     continueOnFailure: false
     flowsOrder:

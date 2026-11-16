@@ -52,7 +52,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
                                         key={i}
                                         index={i + 1}
                                         word={word}
-                                        testID={TEST_ID.recovery.word(i + 1)}
+                                        wordTestID={TEST_ID.recovery.word(i + 1)}
                                         params={{
                                             isLast: i === leftColumn.length - 1,
                                             isRightColumn: false
@@ -66,7 +66,7 @@ export const RecoveryPhraseSheet = (props: RecoveryPhraseSheetProps) => {
                                         key={i}
                                         index={halfLength + i + 1}
                                         word={word}
-                                        testID={TEST_ID.recovery.word(halfLength + i + 1)}
+                                        wordTestID={TEST_ID.recovery.word(halfLength + i + 1)}
                                         params={{
                                             isLast: i === rightColumn.length - 1,
                                             isRightColumn: true

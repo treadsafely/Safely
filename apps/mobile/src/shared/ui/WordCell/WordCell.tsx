@@ -12,12 +12,11 @@ interface Props {
     word: string;
     index: number;
     params: WordCellParams;
-    /** set on the word itself, so e2e can read it with copyTextFrom */
-    testID?: string;
+    wordTestID?: string;
 }
 
 export const WordCell = (props: Props) => {
-    const { index, word, params, testID } = props;
+    const { index, word, params, wordTestID } = props;
     const { isLast = false, isRightColumn = false } = params;
 
     styles.useVariants({ isLast, isRightColumn });
@@ -27,7 +26,7 @@ export const WordCell = (props: Props) => {
             <Text variant="bodyM" color="tertiary" style={styles.number}>
                 {index}.
             </Text>
-            <Text variant="bodyM" testID={testID}>
+            <Text variant="bodyM" testID={wordTestID}>
                 {word}
             </Text>
         </View>

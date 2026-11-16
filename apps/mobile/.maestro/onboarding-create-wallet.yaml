@@ -21,77 +21,21 @@ tags:
 - tapOn:
       id: 'welcome.createWallet'
 
-- tapOn:
-      text: '1'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '2'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '3'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '4'
-      childOf:
-          id: 'onboardingPasscode.screen'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 
 # Let the "enter" -> "re-enter" transition settle before typing again,
 # otherwise taps land while the input is still locked at max length.
 - waitForAnimationToEnd
 
-- tapOn:
-      text: '1'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '2'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '3'
-      childOf:
-          id: 'onboardingPasscode.screen'
-- tapOn:
-      text: '4'
-      childOf:
-          id: 'onboardingPasscode.screen'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 
-# Account creation runs behind a loader, then the optional biometry and
-# notifications prompts (either may be skipped by the app, e.g. when the
-# notification permission is already decided). Poll for them every ~2s.
-- repeat:
-      times: 30
-      while:
-          notVisible:
-              id: 'home.settingsButton'
-      commands:
-          - runFlow:
-                when:
-                    visible:
-                        id: 'biometry.skip'
-                commands:
-                    - tapOn:
-                          id: 'biometry.skip'
-          - runFlow:
-                when:
-                    visible:
-                        id: 'onboarding.notificationsLater'
-                commands:
-                    - tapOn:
-                          id: 'onboarding.notificationsLater'
-          - extendedWaitUntil:
-                visible:
-                    id: 'home.settingsButton'
-                timeout: 2000
-                optional: true
-
-# We should now be on the home tab.
-- extendedWaitUntil:
-      visible:
-          id: 'home.settingsButton'
-      timeout: 30000
+# Account creation, then the optional biometry / notifications prompts.
+- runFlow: subflows/finish-onboarding.yaml
 - assertVisible:
       id: 'home.settingsButton'

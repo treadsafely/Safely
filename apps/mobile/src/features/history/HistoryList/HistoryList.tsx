@@ -60,11 +60,7 @@ export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>) => {
                 return (
                     <ActivityItem
                         {...item.props}
-                        testID={
-                            item.props.isPending
-                                ? TEST_ID.history.pendingItem
-                                : TEST_ID.history.item
-                        }
+                        testID={item.props.isPending ? TEST_ID.history.pendingItem : undefined}
                     />
                 );
         }

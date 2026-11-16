@@ -11,7 +11,6 @@ import {
     useSetBiometryEnabled
 } from '@mobile/features/biometry';
 import { useLogOutAllConfirmation } from '@mobile/features/settings/useLogOutAllConfirmation';
-import { TEST_ID } from '@mobile/shared/constants';
 import { Cell, List, Screen, Switch } from '@mobile/shared/ui';
 import { ArrowLeft16, Icon } from '@mobile/shared/ui/Icon';
 
@@ -98,15 +97,11 @@ export const SecurityScreen = () => {
                                     </Cell.Row>
                                 </Cell.Content>
                                 <Switch
-                                    testID={TEST_ID.security.lockScreenSwitch}
                                     value={lockScreenEnabled}
                                     onPress={handleLockScreenToggle}
                                 />
                             </Cell>
-                            <Cell
-                                testID={TEST_ID.security.changePasscode}
-                                onPress={handleChangePasscode}
-                            >
+                            <Cell onPress={handleChangePasscode}>
                                 <Cell.Content>
                                     <Cell.Row>
                                         <Cell.Title>

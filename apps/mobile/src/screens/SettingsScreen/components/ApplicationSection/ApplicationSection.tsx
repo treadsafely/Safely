@@ -1,7 +1,6 @@
 import { useNavigation } from '@react-navigation/core';
 import { useTranslation } from 'react-i18next';
 
-import { TEST_ID } from '@mobile/shared/constants';
 import { Cell, List } from '@mobile/shared/ui';
 
 export const ApplicationSection = () => {
@@ -13,7 +12,6 @@ export const ApplicationSection = () => {
             <List.Title>{t('settings.groups.application.title')}</List.Title>
             <List.Group variant="divided">
                 <Cell
-                    testID={TEST_ID.settings.security}
                     onPress={() =>
                         navigation.navigate('SettingsModal', { screen: 'SecurityModal' })
                     }

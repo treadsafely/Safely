@@ -21,11 +21,10 @@ type SwitchProps = {
     duration?: number;
     trackColors?: { on: string; off: string };
     disabled?: boolean;
-    testID?: string;
 };
 
 export const Switch = (props: SwitchProps) => {
-    const { value, onPress, style, duration = 180, disabled = false, testID } = props;
+    const { value, onPress, style, duration = 180, disabled = false } = props;
     const width = useSharedValue(0);
     const isPressedIn = useSharedValue(false);
     const isOn = useSharedValue(value);
@@ -78,7 +77,6 @@ export const Switch = (props: SwitchProps) => {
 
     return (
         <Pressable
-            testID={testID}
             disabled={disabled}
             onPress={handlePress}
             onPressIn={() => {

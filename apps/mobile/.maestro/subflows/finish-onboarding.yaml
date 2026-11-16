@@ -1,0 +1,37 @@
+# Waits out account creation after the onboarding passcode and dismisses the
+# optional biometry and notifications prompts until the home tab shows up.
+# Either prompt may be skipped by the app (e.g. when the notification
+# permission is already decided), so poll for them every ~2s instead of
+# expecting a fixed sequence. A new optional onboarding prompt goes here.
+appId: com.safely.wallet
+---
+- repeat:
+      times: 30
+      while:
+          notVisible:
+              id: 'home.settingsButton'
+      commands:
+          - runFlow:
+                when:
+                    visible:
+                        id: 'biometry.skip'
+                commands:
+                    - tapOn:
+                          id: 'biometry.skip'
+          - runFlow:
+                when:
+                    visible:
+                        id: 'onboarding.notificationsLater'
+                commands:
+                    - tapOn:
+                          id: 'onboarding.notificationsLater'
+          - extendedWaitUntil:
+                visible:
+                    id: 'home.settingsButton'
+                timeout: 2000
+                optional: true
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
