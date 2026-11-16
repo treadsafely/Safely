@@ -120,6 +120,7 @@ export const appLayoutRecipe = defineSlotRecipe({
                 titleBar: { paddingLeft: '98px' }
             },
             right: {
+                titleBar: { width: '100%' },
                 secondaryContent: { paddingTop: TITLE_BAR_HEIGHT },
                 content: {
                     borderTopWidth: TITLE_BAR_HEIGHT,
