@@ -427,9 +427,10 @@ else: `pnpm start` exits 0 the moment the window closes — measured, not assume
 windowless is the macOS convention and would take that handler; until it exists, the next launch is
 a cold start that boots the engine from scratch and re-reads everything from the store, and
 `revealMainWindow` (`src/main/index.ts`) only ever reveals a window that is still there — `activate`
-or a second launch on a hidden or minimised one — with its recreate branch unreachable. So nothing
-may depend on renderer memory outliving the window: whatever has to survive is written through a
-store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium throttle its timers —
+or a second launch on a hidden or minimised one — and returns when there is none, which is only
+ever the moment `whenReady` is still creating it (a recreate branch there opened a second window
+once window creation became asynchronous). So nothing may depend on renderer memory outliving the
+window: whatever has to survive is written through a store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium throttle its timers —
 `backgroundThrottling` stays at its default — and main reports the hide and the show to the renderer
 as app-state events. A single instance lock guarantees one sync engine per machine. Neither path
 needs store handling, there being no unlocked state to lock, but a renderer-side passcode session

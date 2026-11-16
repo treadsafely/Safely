@@ -41,14 +41,8 @@ function notifyFullScreen(isFullScreen: boolean): void {
 }
 
 function revealMainWindow(): void {
+    /* no window means `whenReady` is still creating it: closing the window quits the app, so there is nothing to recreate */
     if (!mainWindow) {
-        /* `second-instance` can arrive before `ready`, and `whenReady` creates the window itself */
-        if (app.isReady()) {
-            void attachMainWindow().then(window => {
-                mainWindow = window;
-            });
-        }
-
         return;
     }
 
