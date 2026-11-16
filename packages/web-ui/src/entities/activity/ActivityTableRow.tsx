@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { FC, KeyboardEventHandler, ReactNode } from 'react';
 
 import { SPACE } from '@safely/core';
 import type { ActivityRowView } from '@safely/ux';
@@ -34,14 +34,19 @@ export type ActivityTableRowProps = Pick<
 export type ActivityTableGridProps = {
     isCompact?: boolean;
     className?: string;
+    onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
     children: ReactNode;
 };
 
 export const ActivityTableGrid: FC<ActivityTableGridProps> = props => {
-    const { isCompact, className, children } = props;
+    const { isCompact, className, onKeyDown, children } = props;
 
     return (
-        <div className={cx(columnsStyles, className)} data-compact={isCompact || undefined}>
+        <div
+            className={cx(columnsStyles, className)}
+            data-compact={isCompact || undefined}
+            onKeyDown={onKeyDown}
+        >
             {children}
         </div>
     );

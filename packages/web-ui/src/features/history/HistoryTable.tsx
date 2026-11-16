@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { KeyboardEvent, ReactElement } from 'react';
 
 import type { HistoryGroupView } from '@safely/ux';
 import { useRelativeDateLabel, useTranslate } from '@safely/ux';
@@ -7,7 +7,7 @@ import { HistoryEmptyPlaceholder } from './HistoryEmptyPlaceholder';
 import { loaderStyles, sentinelStyles, tableStyles } from './HistoryTable.styles';
 import type { ActivityDirection } from '../../entities';
 import { ActivityTableGrid, ActivityTableRow, ActivityTableRowSkeleton } from '../../entities';
-import { Spinner, useOnVisible } from '../../shared';
+import { focusListItem, Spinner, useOnVisible } from '../../shared';
 
 const SKELETON_ROWS = [0, 1, 2];
 const PREFETCH_MARGIN = '400px';
@@ -73,8 +73,11 @@ export const HistoryTable = <TActivity,>(props: HistoryTableProps<TActivity>): R
         return <HistoryEmptyPlaceholder assetSymbol={assetSymbol} onReceive={onReceive} />;
     }
 
+    const selectByArrows = (event: KeyboardEvent<HTMLDivElement>): void =>
+        focusListItem(event, 'button')?.click();
+
     return (
-        <ActivityTableGrid className={tableStyles}>
+        <ActivityTableGrid className={tableStyles} onKeyDown={selectByArrows}>
             {groups
                 .flatMap(group => group.rows)
                 .map(row => (

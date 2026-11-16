@@ -29,7 +29,12 @@ export const interactiveStyles = css({
     cursor: 'pointer',
     transition: 'background 0.12s',
     _hover: { background: 'other.hover' },
-    _selected: { background: 'background.tertiary' }
+    _selected: { background: 'background.tertiary' },
+    '&:focus-visible:not([data-selected])': {
+        outline: '1px solid',
+        outlineColor: 'input.focused.border',
+        outlineOffset: '-1px'
+    }
 });
 
 export const cellStyles = css({
