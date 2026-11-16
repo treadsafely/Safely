@@ -15,6 +15,7 @@
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/base.h>
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -22,6 +23,7 @@
 
 namespace {
 
+using winrt::Windows::Foundation::AsyncStatus;
 using winrt::Windows::Foundation::IAsyncOperation;
 using winrt::Windows::Security::Credentials::KeyCredential;
 using winrt::Windows::Security::Credentials::KeyCredentialAttestationStatus;
@@ -148,6 +150,27 @@ std::vector<uint8_t> BytesOf(const IBuffer& buffer) {
   return std::vector<uint8_t>(bytes.begin(), bytes.end());
 }
 
+// The Hello dialog belongs to another process, and Windows does not let that process take the
+// foreground from ours: after the first prompt of a launch it opens behind the app and only
+// flashes in the taskbar. We hold the foreground, so we hand it over — once, so a user who then
+// switches away is not dragged back. KeePassXC and Bitwarden find the dialog the same way.
+template <typename Operation>
+auto AwaitPrompt(Operation operation) {
+  bool handedOver = false;
+
+  while (operation.wait_for(std::chrono::milliseconds(200)) == AsyncStatus::Started) {
+    if (handedOver) {
+      continue;
+    }
+    HWND prompt = FindWindowW(L"Credential Dialog Xaml Host", nullptr);
+    if (prompt != nullptr) {
+      handedOver = GetForegroundWindow() == prompt || SetForegroundWindow(prompt) != 0;
+    }
+  }
+
+  return operation.get();
+}
+
 Napi::Value IsSupported(const Napi::CallbackInfo& info) {
   return Queue(
       info.Env(), "IsSupportedAsync",
@@ -164,7 +187,7 @@ Napi::Value IsSupported(const Napi::CallbackInfo& info) {
 // The key must attest to a TPM, checked once at creation: a later launch opens a credential that
 // already passed, and a transient attestation failure there must not lock an initialised store.
 // The window handle is accepted for parity with the consent prompt; the key credential API takes
-// none.
+// none, which is why its dialog is brought forward by AwaitPrompt instead.
 Napi::Value Sign(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -187,9 +210,8 @@ Napi::Value Sign(const Napi::CallbackInfo& info) {
 
         KeyCredentialRetrievalResult retrieval =
             mode == "create"
-                ? KeyCredentialManager::RequestCreateAsync(credentialName,
-                                                           KeyCredentialCreationOption::FailIfExists)
-                      .get()
+                ? AwaitPrompt(KeyCredentialManager::RequestCreateAsync(
+                      credentialName, KeyCredentialCreationOption::FailIfExists))
                 : KeyCredentialManager::OpenAsync(credentialName).get();
 
         if (retrieval.Status() != KeyCredentialStatus::Success) {
@@ -214,7 +236,7 @@ Napi::Value Sign(const Napi::CallbackInfo& info) {
 
         IBuffer input = CryptographicBuffer::CreateFromByteArray(
             winrt::array_view<const uint8_t>(challenge.data(), challenge.data() + challenge.size()));
-        auto signing = credential.RequestSignAsync(input).get();
+        auto signing = AwaitPrompt(credential.RequestSignAsync(input));
 
         outcome.status = StatusOf(signing.Status());
         if (signing.Status() == KeyCredentialStatus::Success) {

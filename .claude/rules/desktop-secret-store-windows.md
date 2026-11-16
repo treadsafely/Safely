@@ -96,8 +96,10 @@ passed, and does not attest again: a transient attestation failure there must no
 initialised store. A first launch that stops after the credential exists — the prompt cancelled,
 the attestation refused, the header not written — deletes it best-effort, or every retry would
 leave one more in the NGC container. Windows 11 requires a TPM 2.0, so what this excludes is
-mostly Windows 10 machines and virtual machines without a virtual TPM — whether a Parallels vTPM
-attests is the first measurement on real hardware.
+mostly Windows 10 machines and virtual machines. **A Parallels vTPM does not attest** — measured
+2026-11-16 on Windows 11 ARM: `tpmtool getdeviceinformation` reports `Is Capable For Attestation:
+False` (no EK certificate), the PIN prompt succeeds and the gate then shows `unsupported`. The real
+store can therefore be exercised only on hardware; a VM covers the build, the package and the gate.
 
 ## Unlock outcomes
 
@@ -179,6 +181,13 @@ local build with a development certificate it creates.
   higher, and how the third number advances per submission is **not decided yet**. `SAFELY_MSIX_UNSIGNED=true`
   skips the development certificate; CI sets it because the Store signs after certification, and
   whether Partner Center takes an unsigned package is one of the first-submission checks.
+- `electron-windows-msix` looks for the Windows Kit whose version equals the manifest's `MinVersion`
+  and fails when that exact SDK is not installed, so `forge.config.ts` passes the newest installed
+  kit as `windowsKitVersion` (`newestWindowsKit()`). A locally signed build also needs PowerShell 7
+  on the machine: the development certificate is created by a script the tool runs with `pwsh.exe`,
+  which Windows does not ship.
+- `binding.gyp` reads the node-addon-api include path with `<!(…)`, not `<!@(…)`: the list form
+  splits the output like a shell and eats the backslashes of a Windows path — `napi.h` not found.
 - The manifest declares `runFullTrust`, `internetClient`, the `webcam` capability for the QR
   scanner and the `safely` protocol. A packaged app cannot register a protocol from code — HKCU is
   virtualised — so `setAsDefaultProtocolClient` runs on macOS only, and the link arrives as a process
@@ -198,8 +207,13 @@ Everything below is the first session on a Windows machine, in this order; the d
 falls on the first two:
 
 1. the signature over the same challenge is identical across calls and reboots;
-2. `RequestSignAsync` from Electron's main process raises the prompt over our window;
-3. attestation on a Parallels vTPM and on real hardware;
+2. `RequestSignAsync` from Electron's main process raises the prompt over our window — partly
+   measured 2026-11-16: the first prompt of a launch opens over the window, one after a cancel and
+   "try again" opens behind it and only flashes in the taskbar, because the dialog is another
+   process's window. `AwaitPrompt` in `hello.cpp` hands it the foreground (the class name
+   `Credential Dialog Xaml Host`, as KeePassXC and Bitwarden do), verified the same day in the VM
+   on Cancel → "try again"; real hardware is still to be checked;
+3. attestation on real hardware (a Parallels vTPM does not attest, above);
 4. `IsSupportedAsync` without a PIN, in a VM without a TPM, under a policy that disables Hello;
 5. what the Hello dialog shows as the requesting application for the packaged app;
 6. a second package with another identity reaching our credential after a prompt (expected: yes —
