@@ -1,4 +1,4 @@
-# Step 4 of the e2e chain: imports a wallet from MAESTRO_SEED_PHRASE.
+# Step 5 of the e2e chain: imports a wallet from MAESTRO_SEED_PHRASE.
 # Needs an onboarded state: a wallet on the home screen, passcode 1234,
 # biometry skipped. Must run right before send-asset — the imported wallet
 # becomes the active one, and send-asset sends from the active wallet.
@@ -31,7 +31,40 @@ tags:
           id: 'importWallet.continueButton'
       timeout: 15000
 - waitForAnimationToEnd
-- inputText: ${MAESTRO_SEED_PHRASE}
+
+# Negative check first: 12 valid BIP39 words with a broken checksum
+# ("abandon" x12 — the valid phrase ends with "about") must be rejected
+# with an error, and the form must stay on screen.
+- inputText:
+      'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon
+      abandon'
+- tapOn:
+      id: 'importWallet.continueButton'
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.error'
+      timeout: 10000
+- assertNotVisible:
+      id: 'customizeWallet.saveButton'
+
+# Go back and reopen the screen to get an empty field — more reliable than
+# erasing text in the masked native input.
+- tapOn:
+      id: 'importWallet.backButton'
+- tapOn:
+      id: 'addWallet.importExisting'
+- extendedWaitUntil:
+      visible:
+          id: 'importWallet.continueButton'
+      timeout: 15000
+- waitForAnimationToEnd
+- assertNotVisible:
+      id: 'importWallet.error'
+# A funded wallet: the label only renames the printed step, Maestro's debug logs
+# and EAS artifacts still carry the phrase. See .claude/rules/mobile-e2e.md.
+- inputText:
+      text: ${MAESTRO_SEED_PHRASE}
+      label: 'Type MAESTRO_SEED_PHRASE'
 
 - tapOn:
       id: 'importWallet.continueButton'
@@ -49,13 +82,18 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'passcodeVerification.screen'
 
 # Import + initial sync, then navigation resets to home
-# with the imported wallet active.
+# with the imported wallet active. Home stays in the hierarchy under the
+# modals, so wait for the customize screen to go away first.
+- extendedWaitUntil:
+      notVisible:
+          id: 'customizeWallet.saveButton'
+      timeout: 60000
 - extendedWaitUntil:
       visible:
           id: 'home.settingsButton'

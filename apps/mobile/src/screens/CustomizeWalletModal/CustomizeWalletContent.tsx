@@ -13,6 +13,7 @@ import {
     PORTFOLIO_NAME_MAX_LENGTH
 } from '@safely/core';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { Badge, ColorPicker, EmojiPicker, Text } from '@mobile/shared/ui';
 import { smoothstepGradient, useAutoFocus } from '@mobile/shared/utils';
 
@@ -96,6 +97,7 @@ export const CustomizeWalletContent = ({
                     <View style={styles.inputWrapper}>
                         <TextInput
                             ref={inputRef}
+                            testID={TEST_ID.customizeWallet.nameInput}
                             value={walletName}
                             onChangeText={onWalletNameChange}
                             placeholder={t('customizeWallet.namePlaceholder')}

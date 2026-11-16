@@ -61,7 +61,7 @@ export const SeedPhraseImportForm = ({ onMnemonicReady }: SeedPhraseImportFormPr
     return (
         <Screen>
             <Screen.Header variant="left">
-                <Screen.Header.BackButton />
+                <Screen.Header.BackButton testID={TEST_ID.importWallet.backButton} />
                 <Button
                     testID={TEST_ID.importWallet.continueButton}
                     type="primary"
@@ -100,7 +100,11 @@ export const SeedPhraseImportForm = ({ onMnemonicReady }: SeedPhraseImportFormPr
                             sensitive
                         />
                         {error && (
-                            <Text variant="bodyM" color="accentRed">
+                            <Text
+                                testID={TEST_ID.importWallet.error}
+                                variant="bodyM"
+                                color="accentRed"
+                            >
                                 {error}
                             </Text>
                         )}

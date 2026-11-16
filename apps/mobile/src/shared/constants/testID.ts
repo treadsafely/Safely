@@ -6,6 +6,9 @@
  * so matching by visible text is locale-fragile.
  */
 export const TEST_ID = {
+    onboarding: {
+        notificationsLater: 'onboarding.notificationsLater'
+    },
     welcome: {
         createWallet: 'welcome.createWallet',
         importWallet: 'welcome.importWallet',
@@ -20,10 +23,42 @@ export const TEST_ID = {
         settingsButton: 'home.settingsButton',
         walletSelector: 'home.walletSelector',
         sendButton: 'home.sendButton',
-        receiveButton: 'home.receiveButton'
+        receiveButton: 'home.receiveButton',
+        asset: {
+            btc: 'home.asset.btc'
+        }
+    },
+    history: {
+        pendingItem: 'history.pendingItem'
+    },
+    settings: {
+        currentWallet: 'settings.currentWallet',
+        signOutAccount: 'settings.signOutAccount',
+        closeButton: 'settings.closeButton'
+    },
+    signOutAccount: {
+        checkbox: 'signOutAccount.checkbox',
+        confirmButton: 'signOutAccount.confirmButton'
+    },
+    onboardingPasscode: {
+        screen: 'onboardingPasscode.screen'
+    },
+    walletSettings: {
+        recoveryPhrase: 'walletSettings.recoveryPhrase',
+        backButton: 'walletSettings.backButton'
+    },
+    watchOnlySheet: {
+        screen: 'watchOnlySheet.screen',
+        okButton: 'watchOnlySheet.okButton'
+    },
+    recovery: {
+        revealButton: 'recovery.revealButton',
+        closeButton: 'recovery.closeButton',
+        word: (shownNumber: number) => `recovery.word.${shownNumber}`
     },
     receive: {
-        address: 'receive.address'
+        address: 'receive.address',
+        closeButton: 'receive.closeButton'
     },
     accounts: {
         addWallet: 'accounts.addWallet'
@@ -42,9 +77,12 @@ export const TEST_ID = {
         cancelXpubButton: 'watchOnly.cancelXpubButton'
     },
     importWallet: {
-        continueButton: 'importWallet.continueButton'
+        backButton: 'importWallet.backButton',
+        continueButton: 'importWallet.continueButton',
+        error: 'importWallet.error'
     },
     customizeWallet: {
+        nameInput: 'customizeWallet.nameInput',
         saveButton: 'customizeWallet.saveButton'
     },
     passcodeVerification: {
