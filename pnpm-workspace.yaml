@@ -131,3 +131,4 @@ overrides:
   # Babel's target resolver, reached through @babel/core in metro and in the root's
   # eslint plugins alike, which is why one unscoped major selector covers both.
   'browserslist@4': '^4.28.7' # GHSA-73wf-gq98-2v4g, GHSA-c83g-rgw3-j3cx
+  'bitcoinjs-lib@6': '^6.1.10' # GHSA-8vv3-6qpc-gpw6 (critical), peer of @ledgerhq/device-signer-kit-bitcoin
