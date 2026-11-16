@@ -20,6 +20,11 @@ export function safeStringify(value: unknown, options?: SafeStringifyOptions): s
             return input;
         }
 
+        /* hex rather than Buffer's own decimal array, so the sensitive-data filter can recognise key material */
+        if (ArrayBuffer.isView(input)) {
+            return Buffer.from(input.buffer, input.byteOffset, input.byteLength).toString('hex');
+        }
+
         const candidate =
             typeof (input as { toJSON?: unknown }).toJSON === 'function'
                 ? (input as { toJSON: () => unknown }).toJSON()
