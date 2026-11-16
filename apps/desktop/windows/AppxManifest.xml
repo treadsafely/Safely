@@ -40,9 +40,7 @@
         BackgroundColor="transparent"
         Square150x150Logo="assets\Square150x150Logo.png"
         Square44x44Logo="assets\Square44x44Logo.png">
-        <uap:DefaultTile
-          Square71x71Logo="assets\Square71x71Logo.png"
-          Square310x310Logo="assets\Square310x310Logo.png" />
+        <uap:DefaultTile Square71x71Logo="assets\Square71x71Logo.png" />
       </uap:VisualElements>
       <Extensions>
         <!-- the `safely://` links, which a packaged app cannot register from code (HKCU is virtualised) -->

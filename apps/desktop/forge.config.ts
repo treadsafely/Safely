@@ -109,6 +109,21 @@ function renderManifest(arch: string): void {
     fs.writeFileSync(RENDERED_MANIFEST, rendered);
 }
 
+const WINDOWS_KITS_BIN = 'C:\\Program Files (x86)\\Windows Kits\\10\\bin';
+
+/* electron-windows-msix otherwise wants the kit named by the manifest's MinVersion — the oldest Windows we run on, not an SDK a build machine has */
+function newestWindowsKit(): string | undefined {
+    if (!fs.existsSync(WINDOWS_KITS_BIN)) {
+        return undefined;
+    }
+
+    return fs
+        .readdirSync(WINDOWS_KITS_BIN)
+        .filter(name => fs.existsSync(path.join(WINDOWS_KITS_BIN, name, 'x64', 'makeappx.exe')))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .at(-1);
+}
+
 let targetArch: string = process.arch;
 
 const config: ForgeConfig = {
@@ -154,6 +169,7 @@ const config: ForgeConfig = {
                   new MakerMSIX(
                       {
                           appManifest: RENDERED_MANIFEST,
+                          windowsKitVersion: newestWindowsKit(),
                           packageAssets: path.join(__dirname, 'windows', 'assets'),
                           sign: process.env.SAFELY_MSIX_UNSIGNED !== 'true',
                           logLevel: 'warn'
@@ -179,6 +195,11 @@ const config: ForgeConfig = {
         },
         preMake: async () => {
             if (host === 'win32') {
+                /* the maker moves its package into place without overwriting, so a second local build fails on the first one's file */
+                fs.rmSync(path.join(__dirname, 'out', 'make', 'msix'), {
+                    recursive: true,
+                    force: true
+                });
                 renderManifest(targetArch);
             }
         }
