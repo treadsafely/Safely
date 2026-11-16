@@ -16,7 +16,7 @@ export type PasscodeSetupFlowProps = {
     confirm: PasscodeSetupCopy;
     Screen?: FC<PasscodeScreenProps>;
     onConfirmed: (passcode: string) => void;
-    onCancel: () => void;
+    onCancel?: () => void;
 };
 
 /* both steps are one component on purpose: the entered code never reaches router state */
@@ -44,10 +44,13 @@ export const PasscodeSetupFlow: FC<PasscodeSetupFlowProps> = props => {
         onConfirmed(passcode);
     };
 
-    const onClose = (): void => {
-        created.current = '';
-        onCancel();
-    };
+    const onClose =
+        onCancel === undefined
+            ? undefined
+            : (): void => {
+                  created.current = '';
+                  onCancel();
+              };
 
     const onBackToCreate = (): void => {
         created.current = '';

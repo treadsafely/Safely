@@ -5,12 +5,13 @@ import Checkmark28 from '@safely/ux/assets/icons/28/checkmark-28.svg?react';
 import { cx } from '@safely/web-ui/styled-system/css';
 import { cell } from '@safely/web-ui/styled-system/recipes';
 
-import type { CellTone } from './CellContext';
+import type { CellSize, CellTone } from './CellContext';
 import { CellContext, useCellStyles } from './CellContext';
 import { Icon } from '../Icon';
 
 export type CellRootProps = {
     tone?: CellTone;
+    size?: CellSize;
     isSelected?: boolean;
     isInteractive?: boolean;
     onClick?: () => void;
@@ -26,10 +27,10 @@ type CellPartProps<TElement extends 'div' | 'span'> = Omit<
 };
 
 const CellRoot: FC<CellRootProps> = props => {
-    const { tone, isSelected, onClick, className, children } = props;
+    const { tone, size, isSelected, onClick, className, children } = props;
     const isInteractive = props.isInteractive ?? Boolean(onClick);
 
-    const styles = cell({ tone, isSelected, isInteractive });
+    const styles = cell({ tone, size, isSelected, isInteractive });
     const content = <CellContext.Provider value={styles}>{children}</CellContext.Provider>;
 
     if (!onClick) {

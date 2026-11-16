@@ -13,8 +13,9 @@ import { logStore, mainLogger } from './logger';
 import { installApplicationMenu } from './menu';
 import { useSeparateDevUserData } from './paths';
 import { hardenSession, hardenWebContents } from './security';
-import { createStores } from './store';
+import { createStores, getStore } from './store';
 import { createMainWindow } from './window';
+import { WindowStateStore } from './window-state';
 import { IPC_CHANNEL } from '../shared/ipc';
 import type { AppState } from '../shared/ipc';
 
@@ -43,7 +44,9 @@ function revealMainWindow(): void {
     if (!mainWindow) {
         /* `second-instance` can arrive before `ready`, and `whenReady` creates the window itself */
         if (app.isReady()) {
-            mainWindow = attachMainWindow();
+            void attachMainWindow().then(window => {
+                mainWindow = window;
+            });
         }
 
         return;
@@ -57,8 +60,11 @@ function revealMainWindow(): void {
     mainWindow.focus();
 }
 
-function attachMainWindow(): BrowserWindow {
-    const window = createMainWindow(devServerUrl, readAppInfo());
+async function attachMainWindow(): Promise<BrowserWindow> {
+    const windowState = new WindowStateStore(getStore('regular'), mainLogger);
+    const window = createMainWindow(devServerUrl, readAppInfo(), await windowState.read());
+
+    windowState.track(window);
 
     window.on('focus', () => notifyAppState('active'));
     window.on('blur', () => notifyAppState('inactive'));
@@ -110,7 +116,7 @@ if (!app.requestSingleInstanceLock()) {
 
     void app
         .whenReady()
-        .then(() => {
+        .then(async () => {
             configureAboutPanel();
             installApplicationMenu();
 
@@ -134,7 +140,7 @@ if (!app.requestSingleInstanceLock()) {
             powerMonitor.on('lock-screen', () => notifyAppState('background'));
             powerMonitor.on('suspend', () => notifyAppState('background'));
 
-            mainWindow = attachMainWindow();
+            mainWindow = await attachMainWindow();
         })
         .catch((error: unknown) => {
             /* A keychain that cannot be reached is fatal, and quitting is the whole point: a window

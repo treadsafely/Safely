@@ -16,7 +16,7 @@ import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 
 import { previewStyles } from './AmountDisplaySettings.styles';
 import { listStyles } from './SettingsSection.styles';
-import { ActivityTableRow } from '../../../entities';
+import { ActivityTableGrid, ActivityTableRow } from '../../../entities';
 import { Button, Cell, Icon, List, PageHeader, Switch, Text } from '../../../shared';
 
 const AMOUNT_ORDERS: AmountUnit[] = ['crypto', 'fiat'];
@@ -36,17 +36,18 @@ const TransactionHistoryPreview: FC = () => {
     const { data: rate } = useMainnetRate(BTC_ASSET);
 
     return (
-        <ActivityTableRow
-            title={t('history.transactionInfo.received')}
-            amountSign="+"
-            formattedValue={DEMO_VALUE.format(formatter)}
-            valueTone="accentGreen"
-            formattedFiat={rate ? DEMO_VALUE.convert(rate).format(formatter) : null}
-            counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
-            dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
-            direction="in"
-            isCompact
-        />
+        <ActivityTableGrid isCompact>
+            <ActivityTableRow
+                title={t('history.transactionInfo.received')}
+                amountSign="+"
+                formattedValue={DEMO_VALUE.format(formatter)}
+                valueTone="accentGreen"
+                formattedFiat={rate ? DEMO_VALUE.convert(rate).format(formatter) : null}
+                counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
+                dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
+                direction="in"
+            />
+        </ActivityTableGrid>
     );
 };
 
@@ -64,17 +65,18 @@ const SentAmountPreview: FC = () => {
     });
 
     return (
-        <ActivityTableRow
-            title={t('history.transactionInfo.sent')}
-            amountSign="−"
-            formattedValue={amount.format(formatter, { fullPrecision: isFullPrecision })}
-            valueTone="primary"
-            formattedFiat={rate ? amount.convert(rate).format(formatter) : null}
-            counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
-            dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
-            direction="out"
-            isCompact
-        />
+        <ActivityTableGrid isCompact>
+            <ActivityTableRow
+                title={t('history.transactionInfo.sent')}
+                amountSign="−"
+                formattedValue={amount.format(formatter, { fullPrecision: isFullPrecision })}
+                valueTone="primary"
+                formattedFiat={rate ? amount.convert(rate).format(formatter) : null}
+                counterparty={{ kind: 'address', label: DEMO_ADDRESS }}
+                dateLabel={t('relativeDate.hoursAgo', { count: DEMO_HOURS_AGO })}
+                direction="out"
+            />
+        </ActivityTableGrid>
     );
 };
 

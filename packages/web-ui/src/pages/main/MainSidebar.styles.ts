@@ -5,11 +5,11 @@ export const sidebarStyles = css({ paddingTop: '44px' });
 export const walletsStyles = css({
     flex: '1',
     minHeight: '0',
-    paddingInline: '8',
-    overflowY: 'auto'
+    paddingLeft: '8',
+    overflowY: 'auto',
+    scrollbarGutter: 'stable',
+    '&::-webkit-scrollbar': { width: '8px' }
 });
-
-export const walletListStyles = css({ cursor: 'grab', '& *': { cursor: 'grab' } });
 
 export const draggingListStyles = css({ cursor: 'grabbing', '& *': { cursor: 'grabbing' } });
 

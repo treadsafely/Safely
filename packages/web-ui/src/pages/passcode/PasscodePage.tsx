@@ -38,17 +38,20 @@ export const PasscodePage: FC<PasscodeScreenProps> = props => {
 
     return (
         <ScreenProtection>
-            <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+            <Modal open onOpenChange={isOpen => !isOpen && onClose?.()}>
                 <Modal.Popup
                     className={popupStyles}
                     hasClose={false}
                     closeLabel={t('common.close')}
                 >
-                    <Modal.Header closeLabel={t('common.close')} hasClose={onBack === undefined}>
+                    <Modal.Header
+                        closeLabel={t('common.close')}
+                        hasClose={onBack === undefined && onClose !== undefined}
+                    >
                         {onBack !== undefined && (
                             <Button
                                 variant="secondary"
-                                size="small"
+                                size="xsmall"
                                 isIconOnly
                                 isRound
                                 aria-label={t('common.back')}

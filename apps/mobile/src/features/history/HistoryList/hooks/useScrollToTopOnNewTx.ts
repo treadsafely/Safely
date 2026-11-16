@@ -9,16 +9,9 @@ export function useScrollToTopOnNewTx<TItem>(
     const prevTxIdRef = useRef(txId);
 
     useEffect(() => {
-        async function scrollAndRecordInteraction() {
-            await listRef.current?.scrollToIndex({
-                index: 0,
-                animated: true,
-                viewPosition: 0
-            });
-            listRef.current?.recordInteraction();
-        }
         if (txId && txId !== prevTxIdRef.current) {
-            void scrollAndRecordInteraction();
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+            listRef.current?.recordInteraction();
         }
         prevTxIdRef.current = txId;
     }, [txId, listRef]);

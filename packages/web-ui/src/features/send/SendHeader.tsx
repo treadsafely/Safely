@@ -24,8 +24,9 @@ export const SendHeader: FC<SendHeaderProps> = props => {
             {onBack !== undefined && (
                 <Button
                     variant="secondary"
-                    size="small"
+                    size="xsmall"
                     isIconOnly
+                    isRound
                     aria-label={t('common.back')}
                     onClick={onBack}
                 >

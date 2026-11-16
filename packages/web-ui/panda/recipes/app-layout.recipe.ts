@@ -1,7 +1,7 @@
 import { defineSlotRecipe } from '@pandacss/dev';
 
 const TITLE_BAR_HEIGHT = '52px';
-const SIDEBAR_WIDTH = '300px';
+const SIDEBAR_WIDTH = 'var(--sidebar-width)';
 const PANEL_WIDTH = '400px';
 
 export const appLayoutRecipe = defineSlotRecipe({
@@ -11,6 +11,7 @@ export const appLayoutRecipe = defineSlotRecipe({
         'root',
         'titleBar',
         'sidebar',
+        'sidebarResizer',
         'secondary',
         'secondaryContent',
         'content',
@@ -48,13 +49,21 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderRightColor: 'other.transparentElement',
             backgroundColor: 'background.secondary'
         },
+        sidebarResizer: {
+            position: 'absolute',
+            top: '0',
+            bottom: '0',
+            left: 'calc(var(--sidebar-width) - 3px)',
+            zIndex: 2,
+            width: '7px',
+            cursor: 'col-resize',
+            appRegion: 'no-drag'
+        },
         secondary: {
             position: 'relative',
             flexShrink: 0,
             width: '300px',
-            overflow: 'hidden',
-            transition: 'width 200ms ease',
-            _motionReduce: { transition: 'none' }
+            overflow: 'hidden'
         },
         secondaryContent: {
             position: 'absolute',
@@ -67,9 +76,7 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderRightWidth: 'hairline',
             borderRightStyle: 'solid',
             borderRightColor: 'other.transparentElement',
-            backgroundColor: 'background.overlay',
-            transition: 'transform 200ms ease',
-            _motionReduce: { transition: 'none' }
+            backgroundColor: 'background.overlay'
         },
         content: {
             display: 'flex',

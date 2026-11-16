@@ -5,6 +5,7 @@ import { darkTheme } from '@safely/ux/theme';
 
 import { appUrl } from './app-protocol';
 import { mainLogger } from './logger';
+import type { RestoredWindowState } from './window-state';
 import type { AppInfo } from '../shared/app-info';
 import { encodeAppInfoArgument } from '../shared/app-info';
 
@@ -49,10 +50,12 @@ const TITLE_BAR: Partial<Record<NodeJS.Platform, TitleBarOptions>> = {
 
 export function createMainWindow(
     devServerUrl: string | undefined,
-    appInfo: AppInfo
+    appInfo: AppInfo,
+    windowState: RestoredWindowState
 ): BrowserWindow {
     const window = new BrowserWindow({
         ...WINDOW,
+        ...windowState.options,
         ...TITLE_BAR[process.platform],
         show: false,
         /* from the design tokens, so the window never flashes white before the first frame */
@@ -79,6 +82,10 @@ export function createMainWindow(
     );
 
     window.once('ready-to-show', () => {
+        if (windowState.isFullScreen) {
+            window.setFullScreen(true);
+        }
+
         window.show();
     });
 

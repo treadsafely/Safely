@@ -12,6 +12,8 @@ export const listsStyles = css({
 
 export const bannerStyles = css({ marginTop: '8' });
 
+export const hideWarningStyles = css({ marginTop: '12' });
+
 export const statusColumnStyles = css({
     display: 'flex',
     flexDirection: 'column',
