@@ -40,3 +40,17 @@ jobs:
       ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
       ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
       ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+
+  # Its own group: a Windows build never waits behind, or evicts, a TestFlight upload.
+  pipeline-windows:
+    concurrency:
+      group: desktop-build-windows
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+    uses: ./.github/workflows/desktop-build-windows.yml
+    with:
+      report-success: true
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
