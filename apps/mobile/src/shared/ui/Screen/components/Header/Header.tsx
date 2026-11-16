@@ -1,16 +1,20 @@
+import type { ReactNode } from 'react';
 import React from 'react';
 import type { ViewProps } from 'react-native';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Title } from './components/Title';
 import type { HeaderVariant } from './Header.context';
 import { HeaderContext } from './Header.context';
 import { styles } from './Header.styles';
+import { resolveShouldInsetTop } from './Header.utils';
 import { useScreenContext } from '../../Screen.context';
 
 interface HeaderProps extends ViewProps {
     variant?: HeaderVariant;
+    backdrop?: ReactNode;
     withCompensateHeight?: boolean;
+    withCompensateInset?: boolean;
     shortHeader?: boolean;
 }
 
@@ -18,14 +22,16 @@ export const HeaderContainer = (props: HeaderProps) => {
     const {
         children,
         variant = 'center',
+        backdrop,
         style,
         withCompensateHeight = true,
+        withCompensateInset = true,
         shortHeader = false,
         ...rest
     } = props;
     const { background, layout } = useScreenContext();
 
-    const shouldInsetTop = layout === 'screen' || (layout === 'modal' && Platform.OS === 'android');
+    const shouldInsetTop = resolveShouldInsetTop(layout);
 
     const { hasTitle, leftChildren, titleChild, rightChildren, hasSides } = React.useMemo(() => {
         const childrenArray = React.Children.toArray(children);
@@ -51,6 +57,11 @@ export const HeaderContainer = (props: HeaderProps) => {
 
     return (
         <HeaderContext.Provider value={{ variant, hasSides, shouldInsetTop }}>
+            {backdrop && (
+                <View style={styles.backdrop({ shouldInsetTop })} pointerEvents="none">
+                    {backdrop}
+                </View>
+            )}
             <View
                 style={[
                     styles.container({
@@ -70,7 +81,7 @@ export const HeaderContainer = (props: HeaderProps) => {
                     children
                 )}
             </View>
-            {shouldInsetTop && <View style={styles.topInset} />}
+            {shouldInsetTop && withCompensateInset && <View style={styles.topInset} />}
             {withCompensateHeight && <View style={styles.headerHeight} />}
         </HeaderContext.Provider>
     );

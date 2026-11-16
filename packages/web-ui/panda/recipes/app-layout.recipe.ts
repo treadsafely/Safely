@@ -1,7 +1,7 @@
 import { defineSlotRecipe } from '@pandacss/dev';
 
 const TITLE_BAR_HEIGHT = '52px';
-const SIDEBAR_WIDTH = '300px';
+const SIDEBAR_WIDTH = 'var(--sidebar-width)';
 const PANEL_WIDTH = '400px';
 
 export const appLayoutRecipe = defineSlotRecipe({
@@ -11,6 +11,7 @@ export const appLayoutRecipe = defineSlotRecipe({
         'root',
         'titleBar',
         'sidebar',
+        'sidebarResizer',
         'secondary',
         'secondaryContent',
         'content',
@@ -43,20 +44,26 @@ export const appLayoutRecipe = defineSlotRecipe({
             flexDirection: 'column',
             flexShrink: 0,
             width: SIDEBAR_WIDTH,
-            paddingTop: TITLE_BAR_HEIGHT,
-            overflowY: 'auto',
             borderRightWidth: 'hairline',
             borderRightStyle: 'solid',
             borderRightColor: 'other.transparentElement',
             backgroundColor: 'background.secondary'
         },
+        sidebarResizer: {
+            position: 'absolute',
+            top: '0',
+            bottom: '0',
+            left: 'calc(var(--sidebar-width) - 3px)',
+            zIndex: 2,
+            width: '7px',
+            cursor: 'col-resize',
+            appRegion: 'no-drag'
+        },
         secondary: {
             position: 'relative',
             flexShrink: 0,
             width: '300px',
-            overflow: 'hidden',
-            transition: 'width 200ms ease',
-            _motionReduce: { transition: 'none' }
+            overflow: 'hidden'
         },
         secondaryContent: {
             position: 'absolute',
@@ -69,24 +76,24 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderRightWidth: 'hairline',
             borderRightStyle: 'solid',
             borderRightColor: 'other.transparentElement',
-            backgroundColor: 'background.overlay',
-            transition: 'transform 200ms ease',
-            _motionReduce: { transition: 'none' }
+            backgroundColor: 'background.overlay'
         },
         content: {
             display: 'flex',
             flexDirection: 'column',
             flex: '1',
             minWidth: '0',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            scrollbarGutter: 'stable both-edges'
         },
         panel: {
-            position: 'relative',
-            flexShrink: 0,
+            position: 'absolute',
+            top: '0',
+            right: '0',
+            bottom: '0',
+            zIndex: 1,
             width: PANEL_WIDTH,
-            overflow: 'hidden',
-            transition: 'width 200ms ease',
-            _motionReduce: { transition: 'none' }
+            pointerEvents: 'none'
         },
         panelContent: {
             position: 'absolute',
@@ -101,6 +108,8 @@ export const appLayoutRecipe = defineSlotRecipe({
             borderLeftStyle: 'solid',
             borderLeftColor: 'other.transparentElement',
             backgroundColor: 'background.primary',
+            boxShadow: '-16px 0 48px 0 rgba(0, 0, 0, 0.36)',
+            pointerEvents: 'auto',
             transition: 'transform 200ms ease',
             _motionReduce: { transition: 'none' }
         }
@@ -119,14 +128,17 @@ export const appLayoutRecipe = defineSlotRecipe({
         },
         isPanelOpen: {
             false: {
-                panel: { width: '0' },
-                panelContent: { transform: 'translateX(100%)' }
+                panelContent: { transform: 'translateX(100%)', pointerEvents: 'none' }
             }
         },
         isFullScreen: {
             true: {
                 secondaryContent: { paddingTop: TITLE_BAR_HEIGHT },
-                content: { paddingTop: TITLE_BAR_HEIGHT },
+                content: {
+                    borderTopWidth: TITLE_BAR_HEIGHT,
+                    borderTopStyle: 'solid',
+                    borderTopColor: 'transparent'
+                },
                 panelContent: { paddingTop: TITLE_BAR_HEIGHT }
             }
         }

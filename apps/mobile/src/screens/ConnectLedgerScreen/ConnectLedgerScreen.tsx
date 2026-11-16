@@ -17,7 +17,7 @@ export const ConnectLedgerScreen = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
     const getBleManager = useBleManager();
-    const { getLedgerKit, sessionId, setSessionId } = useLedgerSession();
+    const { disconnect } = useLedgerSession();
 
     const steps = [
         {
@@ -35,17 +35,12 @@ export const ConnectLedgerScreen = () => {
     ];
 
     const proceedToLedgerFlow = useCallback(async () => {
-        if (sessionId) {
-            await getLedgerKit()
-                .disconnect({ sessionId })
-                .catch(() => {});
-            setSessionId(null);
-        }
+        await disconnect();
 
         navigation.dispatch(
             CommonActions.navigate('LedgerFlowModal', { screen: 'LedgerDiscoveryModal' })
         );
-    }, [navigation, sessionId, getLedgerKit, setSessionId]);
+    }, [navigation, disconnect]);
 
     const handleContinue = async () => {
         const state = await getBluetoothState(getBleManager());

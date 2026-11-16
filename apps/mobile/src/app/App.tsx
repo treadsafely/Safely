@@ -48,7 +48,7 @@ export const App = () => {
                                     <PasscodePromptProvider>
                                         <AppContextProvider>
                                             <LedgerSessionProvider
-                                                openConnectScreen={openLedgerConnectScreen}
+                                                onSigningStart={openLedgerConnectScreen}
                                             >
                                                 <RootSuspenseGate>
                                                     <AnalyticsProvider>

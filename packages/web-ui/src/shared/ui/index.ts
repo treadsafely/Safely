@@ -18,6 +18,7 @@ export * from './PasscodeLengthToggle';
 export * from './Skeleton';
 export * from './Spinner';
 export * from './StepCard';
+export * from './StepsList';
 export * from './Switch';
 export * from './TableCell';
 export * from './Text';

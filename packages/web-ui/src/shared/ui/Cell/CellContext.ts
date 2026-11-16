@@ -7,6 +7,8 @@ import type { RecipeVariants } from '../recipe-variants';
 
 export type CellTone = NonNullable<RecipeVariants<CellRecipe>['tone']>;
 
+export type CellSize = NonNullable<RecipeVariants<CellRecipe>['size']>;
+
 export const CellContext = createContext(cell());
 
 export const useCellStyles = () => useContext(CellContext);

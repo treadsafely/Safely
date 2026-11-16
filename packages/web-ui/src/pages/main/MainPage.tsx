@@ -1,7 +1,9 @@
 import type { FC, ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 
-import type { BtcHistoryItem, BtcActivityItem } from '@safely/ux';
+import type { FlameHistoryItem } from '@safely/core';
+import { BLOCKCHAIN_NAME } from '@safely/core';
+import type { BtcHistoryItem } from '@safely/ux';
 import {
     AccountLinkState,
     isBtcActivityItem,
@@ -19,11 +21,14 @@ import { MainSidebar } from './MainSidebar';
 import type { DevTool, SettingsSection } from './settings';
 import { SettingsContent } from './settings';
 import { SettingsSidebar } from './SettingsSidebar';
+import type { SelectedActivity } from '../../features';
 import {
     AccountModals,
     AddWalletModals,
+    LedgerSignModal,
     ReceiveModals,
     SafetyContent,
+    selectedActivityKey,
     SendModals,
     TransactionDetails,
     UpdatesContent,
@@ -33,20 +38,40 @@ import {
     useSendFlow
 } from '../../features';
 import type { DisclosureProps } from '../../shared';
-import { AppLayout } from '../../shared';
+import { AppLayout, useResizableWidth } from '../../shared';
+
+const SIDEBAR_WIDTH = { default: 300, min: 240, max: 400 };
 
 export type MainPageProps = {
     location: MainLocation;
     onNavigate: (next: MainLocation) => void;
     hasWindowControls?: boolean;
     isFullScreen?: boolean;
+    sidebarWidth?: number;
+    onSidebarWidthChange: (width: number) => void;
     security: ReactNode;
     logs: ReactNode;
 };
 
 export const MainPage: FC<MainPageProps> = props => {
-    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs } = props;
+    const {
+        location,
+        onNavigate,
+        hasWindowControls,
+        isFullScreen,
+        sidebarWidth,
+        onSidebarWidthChange,
+        security,
+        logs
+    } = props;
     const { view, modal } = location;
+
+    const sidebar = useResizableWidth({
+        width: sidebarWidth ?? SIDEBAR_WIDTH.default,
+        min: SIDEBAR_WIDTH.min,
+        max: SIDEBAR_WIDTH.max,
+        onChange: onSidebarWidthChange
+    });
 
     const hasPortfolio = useHasPortfolio();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
@@ -64,7 +89,7 @@ export const MainPage: FC<MainPageProps> = props => {
     const linkState = useAccountLinkState();
     const isAttentionRequired = useIsAttentionRequired();
 
-    const [selectedActivity, setSelectedActivity] = useState<BtcActivityItem | null>(null);
+    const [selectedActivity, setSelectedActivity] = useState<SelectedActivity | null>(null);
 
     const section = view.kind === 'settings' ? view.section : null;
     const tool = view.kind === 'settings' ? view.tool : null;
@@ -99,16 +124,25 @@ export const MainPage: FC<MainPageProps> = props => {
         changeView({ kind: 'settings', section: 'devTools', tool: next });
 
     /* orders have no detail view on the web targets yet */
-    const selectActivity = (activity: BtcHistoryItem): void =>
-        isBtcActivityItem(activity) ? setSelectedActivity(activity) : undefined;
+    const selectBtcActivity = (activity: BtcHistoryItem): void => {
+        if (isBtcActivityItem(activity)) {
+            setSelectedActivity({ blockchain: BLOCKCHAIN_NAME.BTC, activity });
+        }
+    };
+
+    const selectFlameActivity = (activity: FlameHistoryItem): void =>
+        setSelectedActivity({ blockchain: BLOCKCHAIN_NAME.FLAME, activity });
 
     const home = hasPortfolio ? (
         <MainContent
-            selectedActivityKey={selectedActivity?.key}
+            selectedActivityKey={
+                selectedActivity === null ? undefined : selectedActivityKey(selectedActivity)
+            }
             onSend={send.onOpen}
             onReceive={receive.onOpen}
             onScan={send.scan}
-            onSelectActivity={selectActivity}
+            onSelectBtcActivity={selectBtcActivity}
+            onSelectFlameActivity={selectFlameActivity}
             onPortfolioChange={clearSelectedActivity}
         />
     ) : (
@@ -132,6 +166,7 @@ export const MainPage: FC<MainPageProps> = props => {
 
     return (
         <AppLayout
+            sidebarWidth={sidebar.width}
             hasWindowControls={hasWindowControls}
             isFullScreen={isFullScreen}
             isSecondaryOpen={view.kind === 'settings'}
@@ -151,6 +186,8 @@ export const MainPage: FC<MainPageProps> = props => {
                 onOpenSafety={openSafety}
                 onOpenSettings={toggleSettings}
             />
+
+            <AppLayout.SidebarResizer {...sidebar.handleProps} />
 
             <SettingsSidebar
                 activeSection={section}
@@ -177,7 +214,7 @@ export const MainPage: FC<MainPageProps> = props => {
                 <AppLayout.PanelContent>
                     {selectedActivity !== null && (
                         <TransactionDetails
-                            activity={selectedActivity}
+                            selected={selectedActivity}
                             onClose={() => setSelectedActivity(null)}
                         />
                     )}
@@ -187,6 +224,7 @@ export const MainPage: FC<MainPageProps> = props => {
             <AddWalletModals flow={addWallet} />
             <AccountModals flow={account} />
             {!isWatchOnly && <SendModals flow={send} />}
+            <LedgerSignModal />
             <ReceiveModals flow={receive} />
         </AppLayout>
     );

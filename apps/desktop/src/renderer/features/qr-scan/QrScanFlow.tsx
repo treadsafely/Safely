@@ -1,11 +1,12 @@
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 
+import { QrScanCancelledError } from '@safely/core';
 import { useToast, useTranslate } from '@safely/ux';
 import { CameraAccessModal, QrScanModal, SelectCameraModal } from '@safely/web-ui';
 
 import type { QrScanRequest } from './qr-scan-prompt';
-import { QrScanCancelledError, useQrScanPromptStore } from './qr-scan-prompt';
+import { useQrScanPromptStore } from './qr-scan-prompt';
 import { openCameraSettings, useCameraAccess } from './useCameraAccess';
 import { useCameraStream } from './useCameraStream';
 import { useQrScanDeviceId } from './useQrScanDeviceId';

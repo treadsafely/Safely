@@ -8,8 +8,6 @@ export const popupStyles = css({
     paddingBottom: '32'
 });
 
-export const contentStyles = css({ paddingTop: '48' });
-
 export const bodyStyles = css({
     display: 'flex',
     justifyContent: 'center',
@@ -52,6 +50,8 @@ export const addressStyles = css({
     textWrap: 'balance',
     cursor: 'pointer'
 });
+
+export const addressRestStyles = css({ color: 'text.secondary' });
 
 export const copiedStyles = css({
     position: 'absolute',
