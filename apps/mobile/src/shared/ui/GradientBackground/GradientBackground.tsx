@@ -9,6 +9,7 @@ import {
     vec
 } from '@shopify/react-native-skia';
 import Color from 'color';
+import { memo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
 
@@ -33,7 +34,7 @@ type GradientBackgroundProps = {
     height: number;
 };
 
-export const GradientBackground = (props: GradientBackgroundProps) => {
+export const GradientBackground = memo((props: GradientBackgroundProps) => {
     const { color, position, height } = props;
     const { width } = useWindowDimensions();
     const { theme } = useUnistyles();
@@ -76,4 +77,4 @@ export const GradientBackground = (props: GradientBackgroundProps) => {
             </Rect>
         </Canvas>
     );
-};
+});

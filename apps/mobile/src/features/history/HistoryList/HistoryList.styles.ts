@@ -4,19 +4,13 @@ export const styles = StyleSheet.create(theme => ({
     container: {
         flex: 1
     },
-    contentContainer: {
+    row: {
+        paddingTop: 2,
         paddingHorizontal: theme.spacing[8]
     },
-    firstSectionHeader: {
-        marginTop: theme.spacing[4]
-    },
-    separator: {
-        height: 2
-    },
     sectionHeaderContainer: {
-        paddingHorizontal: theme.spacing[8],
-        // compensate item separator height
-        paddingTop: 22,
+        paddingHorizontal: theme.spacing[16],
+        paddingTop: theme.spacing[24],
         paddingBottom: 10
     },
     firstSectionHeaderContainer: {
