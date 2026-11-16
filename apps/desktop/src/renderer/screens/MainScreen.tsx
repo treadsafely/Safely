@@ -25,7 +25,7 @@ import { platform } from '../platform';
 import { ROUTE, sSettingsParams, useDesktopLayerSynchronousGlobalStorage } from '../shared';
 
 export const MainScreen: FC = () => {
-    const { hasWindowControls, isFullScreen } = useRouteContext({ from: '__root__' });
+    const { windowControls, isFullScreen } = useRouteContext({ from: '__root__' });
     const navigate = useNavigate();
     const hasPortfolio = useHasPortfolio();
 
@@ -74,7 +74,7 @@ export const MainScreen: FC = () => {
             <MainPage
                 location={location}
                 onNavigate={onNavigate}
-                hasWindowControls={hasWindowControls}
+                windowControls={windowControls}
                 isFullScreen={isFullScreen}
                 security={<SecuritySection />}
                 logs={<LogsSection store={platform.logs} />}

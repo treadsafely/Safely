@@ -108,9 +108,18 @@ export const appLayoutRecipe = defineSlotRecipe({
         }
     },
     variants: {
-        hasWindowControls: {
-            true: {
+        windowControls: {
+            left: {
                 titleBar: { paddingLeft: '98px' }
+            },
+            right: {
+                secondaryContent: { paddingTop: TITLE_BAR_HEIGHT },
+                content: {
+                    borderTopWidth: TITLE_BAR_HEIGHT,
+                    borderTopStyle: 'solid',
+                    borderTopColor: 'transparent'
+                },
+                panelContent: { paddingTop: TITLE_BAR_HEIGHT }
             }
         },
         isSecondaryOpen: {

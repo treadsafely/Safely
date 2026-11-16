@@ -1,1 +1,1 @@
-export { AppLayout, type AppLayoutRootProps } from './AppLayout';
+export { AppLayout, type AppLayoutRootProps, type WindowControls } from './AppLayout';

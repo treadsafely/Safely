@@ -4,8 +4,10 @@ import { createContext, useContext } from 'react';
 import { cx } from '@safely/web-ui/styled-system/css';
 import { appLayout } from '@safely/web-ui/styled-system/recipes';
 
+export type WindowControls = 'left' | 'right' | null;
+
 export type AppLayoutRootProps = {
-    hasWindowControls?: boolean;
+    windowControls?: WindowControls;
     isFullScreen?: boolean;
     isSecondaryOpen?: boolean;
     isPanelOpen?: boolean;
@@ -22,10 +24,15 @@ const AppLayoutContext = createContext(appLayout());
 const useAppLayoutStyles = () => useContext(AppLayoutContext);
 
 const AppLayoutRoot: FC<AppLayoutRootProps> = props => {
-    const { hasWindowControls, isFullScreen, isSecondaryOpen, isPanelOpen, className, children } =
+    const { windowControls, isFullScreen, isSecondaryOpen, isPanelOpen, className, children } =
         props;
 
-    const styles = appLayout({ hasWindowControls, isFullScreen, isSecondaryOpen, isPanelOpen });
+    const styles = appLayout({
+        windowControls: windowControls ?? undefined,
+        isFullScreen,
+        isSecondaryOpen,
+        isPanelOpen
+    });
 
     return (
         <div className={cx(styles.root, className)}>

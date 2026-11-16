@@ -37,20 +37,20 @@ import {
     useReceiveFlow,
     useSendFlow
 } from '../../features';
-import type { DisclosureProps } from '../../shared';
+import type { DisclosureProps, WindowControls } from '../../shared';
 import { AppLayout } from '../../shared';
 
 export type MainPageProps = {
     location: MainLocation;
     onNavigate: (next: MainLocation) => void;
-    hasWindowControls?: boolean;
+    windowControls?: WindowControls;
     isFullScreen?: boolean;
     security: ReactNode;
     logs: ReactNode;
 };
 
 export const MainPage: FC<MainPageProps> = props => {
-    const { location, onNavigate, hasWindowControls, isFullScreen, security, logs } = props;
+    const { location, onNavigate, windowControls, isFullScreen, security, logs } = props;
     const { view, modal } = location;
 
     const hasPortfolio = useHasPortfolio();
@@ -146,7 +146,7 @@ export const MainPage: FC<MainPageProps> = props => {
 
     return (
         <AppLayout
-            hasWindowControls={hasWindowControls}
+            windowControls={windowControls}
             isFullScreen={isFullScreen}
             isSecondaryOpen={view.kind === 'settings'}
             isPanelOpen={selectedActivity !== null}
