@@ -1,9 +1,11 @@
+export { biometryCopy } from './biometry-copy';
+export { BiometryPrompt } from './BiometryPrompt';
+export { BiometryPromptContext, useBiometryPrompt } from './BiometryPrompt.context';
 export { EnableBiometryFlow, type EnableBiometryFlowProps } from './EnableBiometryFlow';
 export {
-    authenticateBiometry,
     isBiometryAvailable,
-    isBiometryPromptOpen,
     isBiometryUnlockEnabled,
     useBiometryQuery,
-    useSetBiometryEnabled
+    useSetBiometryEnabled,
+    useSuspenseBiometryQuery
 } from './useBiometry';

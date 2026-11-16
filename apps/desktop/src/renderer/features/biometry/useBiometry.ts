@@ -1,29 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useSuspenseQuery } from '@safely/ux';
+
+import { useBiometryPrompt } from './BiometryPrompt.context';
 import { biometryKeys } from './keys';
-import { i18n } from '../../i18n';
 import { platform } from '../../platform';
 import { desktopLayerEncryptedStorage, useDesktopLayerEncryptedStorage } from '../../shared';
 
 export function isBiometryAvailable(): Promise<boolean> {
     return platform.biometry.isAvailable();
-}
-
-let isPromptOpen = false;
-
-/* the prompt costs the app its active state, and a lock raised by that would cover the prompt itself */
-export function isBiometryPromptOpen(): boolean {
-    return isPromptOpen;
-}
-
-export async function authenticateBiometry(): Promise<boolean> {
-    isPromptOpen = true;
-
-    try {
-        return await platform.biometry.authenticate(i18n.t('biometry.reason'));
-    } finally {
-        isPromptOpen = false;
-    }
 }
 
 /* the security gate runs outside React, so this path takes the storage without the hook */
@@ -42,11 +27,10 @@ export async function isBiometryUnlockEnabled(): Promise<boolean> {
     return isAvailable && isEnabled === true;
 }
 
-/* deliberately not suspending: an availability round-trip must not blank the app it renders inside */
-export function useBiometryQuery() {
+function useBiometryStateQueryOptions() {
     const { get: storageGet, set: storageSet } = useDesktopLayerEncryptedStorage('biometryEnabled');
 
-    return useQuery({
+    return {
         queryKey: biometryKeys.state.toKey(),
         queryFn: async () => {
             const isAvailable = await platform.biometry.isAvailable();
@@ -61,17 +45,26 @@ export function useBiometryQuery() {
             return { isAvailable, isEnabled: isAvailable && wasEnabled };
         },
         staleTime: Infinity
-    });
+    };
+}
+
+export function useBiometryQuery() {
+    return useQuery(useBiometryStateQueryOptions());
+}
+
+export function useSuspenseBiometryQuery() {
+    return useSuspenseQuery(useBiometryStateQueryOptions());
 }
 
 export function useSetBiometryEnabled() {
     const client = useQueryClient();
+    const prompt = useBiometryPrompt();
     const { set: storageSet } = useDesktopLayerEncryptedStorage('biometryEnabled');
 
     return useMutation({
         /* proving the factor works is part of turning it on; giving it up is authorized by the caller */
         mutationFn: async (enabled: boolean) => {
-            if (enabled && !(await authenticateBiometry())) {
+            if (enabled && !(await prompt.authenticate())) {
                 throw new Error('Biometric authentication failed');
             }
 

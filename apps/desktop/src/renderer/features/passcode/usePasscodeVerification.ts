@@ -4,7 +4,7 @@ import { useSubmitWhenComplete } from '@safely/ux';
 
 import { usePasscode } from './usePasscode';
 import { usePasscodeLockout } from './usePasscodeLockout';
-import { authenticateBiometry, useBiometryQuery } from '../biometry';
+import { useBiometryPrompt, useBiometryQuery } from '../biometry';
 
 const CODE_VISIBLE_MS = 300;
 
@@ -32,6 +32,7 @@ export function usePasscodeVerification(
     const { onVerified, hasBiometryAutoPrompt = false } = params;
 
     const passcode = usePasscode();
+    const biometryPrompt = useBiometryPrompt();
     const { data: biometry } = useBiometryQuery();
     const { isLocked, hasLockedOut, remainingSeconds, recordFailure, reset } = usePasscodeLockout();
 
@@ -70,7 +71,7 @@ export function usePasscodeVerification(
 
     /* dropping this reset accumulates mistypes across sessions until the lockout hides the factor */
     const promptBiometry = useCallback(() => {
-        void authenticateBiometry().then(async isAuthenticated => {
+        void biometryPrompt.authenticate().then(async isAuthenticated => {
             if (!isAuthenticated) {
                 return;
             }
@@ -78,7 +79,7 @@ export function usePasscodeVerification(
             await reset();
             verified();
         });
-    }, [reset, verified]);
+    }, [biometryPrompt, reset, verified]);
 
     const onEntered = useCallback(
         (entered: string) => {

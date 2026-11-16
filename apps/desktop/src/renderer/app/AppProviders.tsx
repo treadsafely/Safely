@@ -27,12 +27,16 @@ import {
 } from '@safely/web-ui';
 
 import {
-    authenticateBiometry,
+    biometryCopy,
+    BiometryPrompt,
+    BiometryPromptContext,
     createLedgerTransport,
     isBiometryUnlockEnabled,
     passcodePrompt,
-    qrScanPrompt
+    qrScanPrompt,
+    SecretStoreGate
 } from '../features';
+import { i18n } from '../i18n';
 import { fileTransport, logger } from '../logger';
 import { platform } from '../platform';
 import { unsupportedPushNotifications } from '../platform/unsupported';
@@ -50,9 +54,11 @@ async function clearLockoutAfterFactor(): Promise<void> {
     }
 }
 
+const biometryPrompt = new BiometryPrompt(platform.biometry, () => i18n.t(biometryCopy.reason));
+
 const securityGate: Security = {
     async check(options) {
-        if ((await isBiometryUnlockEnabled()) && (await authenticateBiometry())) {
+        if ((await isBiometryUnlockEnabled()) && (await biometryPrompt.authenticate())) {
             await clearLockoutAfterFactor();
             return;
         }
@@ -150,20 +156,26 @@ export const AppProviders: FC<PropsWithChildren<AppProvidersProps>> = ({ loader,
     return (
         <QueryProvider persister={persister} queryClient={queryClient} loader={loader}>
             <AppContext value={appContext}>
-                <ScreenProtectionProvider protect={platform.protectScreen}>
-                    <ErrorBoundary
-                        logger={logger}
-                        fallback={<FatalErrorPage onShareLogs={() => void platform.logs.share()} />}
-                    >
-                        <LedgerSessionProvider>
-                            <Suspense fallback={loader}>
-                                <SyncStorageProvider>
-                                    <AnalyticsProvider>{children}</AnalyticsProvider>
-                                </SyncStorageProvider>
-                            </Suspense>
-                        </LedgerSessionProvider>
-                    </ErrorBoundary>
-                </ScreenProtectionProvider>
+                <BiometryPromptContext value={biometryPrompt}>
+                    <ScreenProtectionProvider protect={platform.protectScreen}>
+                        <ErrorBoundary
+                            logger={logger}
+                            fallback={
+                                <FatalErrorPage onShareLogs={() => void platform.logs.share()} />
+                            }
+                        >
+                            <LedgerSessionProvider>
+                                <SecretStoreGate>
+                                    <Suspense fallback={loader}>
+                                        <SyncStorageProvider>
+                                            <AnalyticsProvider>{children}</AnalyticsProvider>
+                                        </SyncStorageProvider>
+                                    </Suspense>
+                                </SecretStoreGate>
+                            </LedgerSessionProvider>
+                        </ErrorBoundary>
+                    </ScreenProtectionProvider>
+                </BiometryPromptContext>
                 <ToastViewport />
                 <LoaderViewport />
             </AppContext>
