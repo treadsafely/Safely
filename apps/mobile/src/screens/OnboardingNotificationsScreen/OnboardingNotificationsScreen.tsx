@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { usePushPermissionQuery, useSetPushNotificationsEnabled } from '@safely/ux';
 
 import { useOnboardingFlow } from '@mobile/features/onboarding';
+import { TEST_ID } from '@mobile/shared/constants';
 import { Button, Icon, Notifications96, Screen, Text } from '@mobile/shared/ui';
 
 import { styles } from './OnboardingNotificationsScreen.styles';
@@ -41,7 +42,11 @@ export const OnboardingNotificationsScreen = () => {
         <Screen>
             <Screen.Header withCompensateHeight={false}>
                 <View />
-                <Screen.Header.Button type="small" onPress={onNotificationsFinished}>
+                <Screen.Header.Button
+                    testID={TEST_ID.onboarding.notificationsLater}
+                    type="small"
+                    onPress={onNotificationsFinished}
+                >
                     <Text variant="labelM">{t('common.later')}</Text>
                 </Screen.Header.Button>
             </Screen.Header>

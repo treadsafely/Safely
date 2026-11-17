@@ -32,6 +32,7 @@ export type OnboardingStep =
 type OnboardingSource =
     | { kind: 'generated' }
     | { kind: 'imported'; mnemonic: string[] }
+    | { kind: 'flameDevnet'; mnemonic: string[]; walletName: string }
     | { kind: 'watchOnly'; input: string }
     | { kind: 'ledger'; selection: LedgerAccountsSelection }
     | { kind: 'signedIn' };
@@ -105,6 +106,12 @@ export function useOnboardingFlow() {
         [startPasscode]
     );
 
+    const startFlameDevnet = useCallback(
+        (mnemonic: string[], walletName: string) =>
+            startPasscode({ kind: 'flameDevnet', mnemonic, walletName }),
+        [startPasscode]
+    );
+
     const onWatchInputReady = useCallback(
         (input: string) => startPasscode({ kind: 'watchOnly', input }),
         [startPasscode]
@@ -158,10 +165,6 @@ export function useOnboardingFlow() {
     const goBackFromPasscode = useCallback(() => {
         const pending = source.current;
 
-        if (pending?.kind === 'signedIn') {
-            return;
-        }
-
         source.current = null;
 
         if (pending?.kind === 'imported') {
@@ -194,6 +197,18 @@ export function useOnboardingFlow() {
                             networkType: PortfolioNetworkType.MAINNET
                         }
                     });
+                    return;
+                }
+
+                if (pending.kind === 'flameDevnet') {
+                    using mnemonicAccessor = new MnemonicResource(pending.mnemonic);
+
+                    await createAccount({
+                        secureEncryptedStorage,
+                        firstPortfolio: { kind: 'flameDevnet', mnemonicAccessor },
+                        firstPortfolioName: pending.walletName
+                    });
+
                     return;
                 }
 
@@ -283,10 +298,11 @@ export function useOnboardingFlow() {
         openWatch,
         openLedger,
         startCreate,
+        startFlameDevnet,
         onMnemonicReady,
         onWatchInputReady,
         onPasscodeComplete,
         onBiometryFinished,
-        goBackFromPasscode
+        goBackFromPasscode: hasAccount ? undefined : goBackFromPasscode
     };
 }

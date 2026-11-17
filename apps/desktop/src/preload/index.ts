@@ -10,6 +10,7 @@ import {
     sBiometryResult,
     sCameraAccessGranted,
     sCameraAccessStatus,
+    sDeepLinkUrl,
     sIsFullScreen,
     sLogLines
 } from '../shared/ipc';
@@ -120,6 +121,21 @@ const bridge: DesktopBridge = {
         },
         async openPrivacySettings(): Promise<void> {
             await ipcRenderer.invoke(IPC_CHANNEL.camera.openPrivacySettings);
+        }
+    },
+
+    deepLinks: {
+        async take(): Promise<string | null> {
+            return sDeepLinkUrl.parse(await ipcRenderer.invoke(IPC_CHANNEL.deepLink.take));
+        },
+        onReceived(callback: () => void): () => void {
+            const listener = () => callback();
+
+            ipcRenderer.on(IPC_CHANNEL.deepLink.received, listener);
+
+            return () => {
+                ipcRenderer.removeListener(IPC_CHANNEL.deepLink.received, listener);
+            };
         }
     },
 

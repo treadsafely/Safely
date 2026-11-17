@@ -1,33 +1,16 @@
 import type { LinkingOptions, ParamListBase } from '@react-navigation/native';
 import { getStateFromPath } from '@react-navigation/native';
-import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { useEffect, useMemo, useRef } from 'react';
-import { z } from 'zod';
 
-import { logger } from '@mobile/shared/logger';
-import { fragmentToQuery } from '@mobile/shared/navigation';
+import { fragmentToQuery, UNIVERSAL_LINK_HOST } from '@safely/ux';
+
 import { ExpoPushNotifications } from '@mobile/shared/push-notifications';
-
-const sUniversalLinkExtra = z.object({ universalLinkHost: z.string().min(1) });
-
-function resolveLinkingPrefixes(): string[] {
-    const extra = sUniversalLinkExtra.safeParse(Constants.expoConfig?.extra);
-
-    if (!extra.success) {
-        logger.error('linking.universal_link_host_missing');
-
-        return [Linking.createURL('/')];
-    }
-
-    return [Linking.createURL('/'), `https://${extra.data.universalLinkHost}`];
-}
 
 export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamListBase> {
     const pendingUrlRef = useRef<string | null>(null);
     const listenerRef = useRef<((url: string) => void) | null>(null);
     const isLockedRef = useRef(isLocked);
-    const hasConsumedInitialUrlRef = useRef(false);
 
     useEffect(() => {
         isLockedRef.current = isLocked;
@@ -35,6 +18,9 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
 
     useEffect(() => {
         const handleUrl = (url: string) => {
+            // the native cache survives reloadAppAsync (erase all data) and would replay this URL on the next mount
+            Linking.clearInitialURL();
+
             const listener = listenerRef.current;
 
             if (isLockedRef.current || listener === null) {
@@ -45,16 +31,13 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
 
             listener(url);
         };
+        // read before the subscriptions: a URL they deliver clears this cache
+        const initialUrl = Linking.getLinkingURL();
         const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
         const unsubscribePush = ExpoPushNotifications.subscribeToTappedUrls(handleUrl);
 
-        if (!hasConsumedInitialUrlRef.current) {
-            hasConsumedInitialUrlRef.current = true;
-            void Linking.getInitialURL().then(url => {
-                if (url !== null) {
-                    handleUrl(url);
-                }
-            });
+        if (initialUrl !== null) {
+            handleUrl(initialUrl);
         }
 
         return () => {
@@ -82,7 +65,8 @@ export function useLockAwareLinking(isLocked: boolean): LinkingOptions<ParamList
     return useMemo(
         () => ({
             enabled: true,
-            prefixes: resolveLinkingPrefixes(),
+            // the scheme stays `createURL`: the dev client opens `exp+safely://`, not `safely://`
+            prefixes: [Linking.createURL('/'), `https://${UNIVERSAL_LINK_HOST}`],
             getStateFromPath: (path, options) => getStateFromPath(fragmentToQuery(path), options),
             // called on the container's first render despite `initialState`, its result discarded: the effect above delivers the initial URL
             getInitialURL: () => null,

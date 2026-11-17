@@ -9,7 +9,7 @@ export const confirmStyles = css({
     marginInline: '8',
     padding: '16',
     borderRadius: 'sm',
-    backgroundColor: 'background.tertiary',
+    backgroundColor: 'background.secondary',
     cursor: 'pointer'
 });
 

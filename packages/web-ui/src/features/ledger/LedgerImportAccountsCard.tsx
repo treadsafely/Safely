@@ -4,7 +4,6 @@ import type { BtcAssetAmount, LedgerAccount } from '@safely/core';
 import { LEDGER_ACCOUNT_COUNT, useToast, useTranslate } from '@safely/ux';
 
 import { LedgerAccountCell } from './LedgerAccountCell';
-import { submitStyles } from './LedgerCard.styles';
 import {
     captionStyles,
     columnStyles,
@@ -48,7 +47,23 @@ export const LedgerImportAccountsCard: FC<LedgerImportAccountsCardProps> = props
     const toast = useToast();
 
     return (
-        <StepCard hasShadow={hasBackdrop} hasBackdrop={hasBackdrop} onBack={onBack}>
+        <StepCard
+            hasShadow={hasBackdrop}
+            hasBackdrop={hasBackdrop}
+            onBack={onBack}
+            trailing={
+                <Button
+                    variant={showRetry ? 'secondary' : 'primary'}
+                    size="small"
+                    disabled={isContinueDisabled}
+                    onClick={onPrimary}
+                >
+                    {showRetry
+                        ? t('addWallet.connectLedger.importAccounts.takingTooLong')
+                        : t('common.continue')}
+                </Button>
+            }
+        >
             <div className={columnStyles}>
                 <Modal.Content hasFloatingClose={false}>
                     <Modal.Title>{t('addWallet.connectLedger.importAccounts.title')}</Modal.Title>
@@ -103,19 +118,6 @@ export const LedgerImportAccountsCard: FC<LedgerImportAccountsCardProps> = props
                             </Text>
                         </Text>
                     )}
-                </div>
-
-                <div className={submitStyles}>
-                    <Button
-                        variant={showRetry ? 'secondary' : 'primary'}
-                        size="small"
-                        disabled={isContinueDisabled}
-                        onClick={onPrimary}
-                    >
-                        {showRetry
-                            ? t('addWallet.connectLedger.importAccounts.takingTooLong')
-                            : t('common.continue')}
-                    </Button>
                 </div>
             </div>
         </StepCard>

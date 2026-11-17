@@ -27,3 +27,5 @@ export const tableStyles = css({
     gap: '2',
     padding: '8'
 });
+
+export const memoStyles = css({ whiteSpace: 'pre-wrap', wordBreak: 'break-word' });

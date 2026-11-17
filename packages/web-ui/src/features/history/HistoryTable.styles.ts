@@ -1,24 +1,19 @@
 import { css } from '@safely/web-ui/styled-system/css';
 
-export const listStyles = css({
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%'
-});
-
-export const groupStyles = css({
-    paddingInline: '8',
+export const tableStyles = css({
+    width: '100%',
     paddingBottom: '8'
 });
 
 export const sentinelStyles = css({
-    flexShrink: 0,
+    gridColumn: '1 / -1',
     height: '1px'
 });
 
 export const loaderStyles = css({
+    gridColumn: '1 / -1',
     display: 'flex',
     justifyContent: 'center',
-    paddingBottom: '16',
+    paddingBlock: '16',
     color: 'icon.tertiary'
 });

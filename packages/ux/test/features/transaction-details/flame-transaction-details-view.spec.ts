@@ -44,7 +44,8 @@ const baseContext: FlameTransactionDetailsContext = {
     confirmedAtFormatter: stubFormatter(DATE_LABEL),
     numberFormatter,
     showFullSentAmount: false,
-    status
+    status,
+    explorerUrl: null
 };
 
 const flameActivity = (params: Partial<FlameHistoryItem> = {}): FlameHistoryItem => ({
@@ -128,6 +129,11 @@ describe('buildFlameTransactionDetailsView', () => {
             amountSign: null,
             primaryAmount: '–'
         });
+    });
+    it('links the transaction to the explorer when the network has one', () => {
+        const explorerUrl = `https://explorer.test/tx/${TXID}`;
+
+        expect(buildView(flameActivity(), { explorerUrl }).explorerUrl).toBe(explorerUrl);
     });
 });
 

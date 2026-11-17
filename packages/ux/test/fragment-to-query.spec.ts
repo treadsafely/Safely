@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fragmentToQuery } from '@mobile/shared/navigation/fragment-to-query';
+import { fragmentToQuery } from '../src/shared/linking/fragment-to-query';
 
 describe('fragmentToQuery', () => {
     it('keeps a path without a fragment', () => {
@@ -23,5 +23,11 @@ describe('fragmentToQuery', () => {
 
     it('drops an empty fragment', () => {
         expect(fragmentToQuery('import-flame-devnet-wallet#')).toBe('import-flame-devnet-wallet');
+    });
+
+    it('works on a full url', () => {
+        expect(fragmentToQuery('safely:///import-flame-devnet-wallet#testseed=a+b')).toBe(
+            'safely:///import-flame-devnet-wallet?testseed=a+b'
+        );
     });
 });

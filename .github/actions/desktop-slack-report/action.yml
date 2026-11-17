@@ -1,0 +1,61 @@
+name: Desktop Slack report
+description: Posts a desktop pipeline outcome to the Slack Workflow Builder trigger. Needs the repository checked out.
+
+# The Slack side is a Workflow Builder trigger, which consumes a flat JSON whose keys are the
+# variables that workflow declares: header, status_string, artifact_url.
+
+inputs:
+  webhook:
+    description: SLACK_WEBHOOK_URL; unset or malformed skips the report with a warning
+    required: false
+    default: ''
+  status:
+    description: The status line
+    required: true
+  url:
+    description: The link the report points at
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Post to Slack
+      shell: bash
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.webhook }}
+        STATUS: ${{ inputs.status }}
+        URL: ${{ inputs.url }}
+      run: |
+        set -euo pipefail
+
+        # Guards against an unresolved secrets expression passed through verbatim, and against an unset secret.
+        case "${SLACK_WEBHOOK_URL:-}" in
+          https://*) ;;
+          *)
+            echo "::warning::SLACK_WEBHOOK_URL is unset or not a URL — skipping the Slack report"
+            exit 0
+            ;;
+        esac
+
+        subject="$(git log -1 --pretty=%s)"
+
+        # jq builds the body so a commit subject carrying quotes or a backslash stays one string.
+        payload="$(jq -n \
+          --arg header "$GITHUB_REF_NAME <- $subject" \
+          --arg status_string "$STATUS" \
+          --arg artifact_url "$URL" \
+          '{header: $header, status_string: $status_string, artifact_url: $artifact_url}')"
+
+        echo "$payload"
+
+        # A reporting hiccup must not turn an uploaded build red.
+        code="$(printf '%s' "$payload" \
+          | curl -sS -o /dev/stderr -w '%{http_code}' \
+              -X POST -H 'Content-Type: application/json' --data @- \
+              "$SLACK_WEBHOOK_URL" || echo 000)"
+
+        if [ "$code" = "200" ]; then
+          echo "Slack report posted."
+        else
+          echo "::warning::Slack rejected the report (HTTP $code)"
+        fi

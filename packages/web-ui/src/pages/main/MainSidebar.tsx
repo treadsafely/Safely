@@ -18,9 +18,10 @@ import { cx } from '@safely/web-ui/styled-system/css';
 import {
     draggingListStyles,
     draggingStyles,
+    navigationStyles,
     sidebarStyles,
-    walletListStyles,
-    walletRowStyles
+    walletRowStyles,
+    walletsStyles
 } from './MainSidebar.styles';
 import { WalletCell } from '../../entities';
 import { AppLayout, Cell, ColorDot, Icon, List, useReorderList } from '../../shared';
@@ -91,10 +92,10 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
 
     return (
         <AppLayout.Sidebar className={sidebarStyles}>
-            <List>
+            <List className={walletsStyles}>
                 <List.Group
                     variant="separated"
-                    className={cx(walletListStyles, isReordering && draggingListStyles)}
+                    className={isReordering ? draggingListStyles : undefined}
                 >
                     {orderedPortfolios.map(portfolio => {
                         const id = portfolio.id.toString();
@@ -108,6 +109,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                             >
                                 <WalletCell
                                     portfolio={portfolio}
+                                    size="compact"
                                     isActive={
                                         isWalletView &&
                                         activePortfolioId !== undefined &&
@@ -131,9 +133,9 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                 </List.Group>
             </List>
 
-            <List>
+            <List className={navigationStyles}>
                 <List.Group variant="separated">
-                    <Cell onClick={onAddWallet}>
+                    <Cell size="compact" onClick={onAddWallet}>
                         <Cell.Leading>
                             <Icon asset={PlusAlternate16} tone="tertiary" />
                         </Cell.Leading>
@@ -142,7 +144,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                         </Cell.Content>
                     </Cell>
 
-                    <Cell isSelected={isUpdatesOpen} onClick={onOpenUpdates}>
+                    <Cell size="compact" isSelected={isUpdatesOpen} onClick={onOpenUpdates}>
                         <Cell.Leading>
                             <Icon asset={Message16} tone="tertiary" />
                         </Cell.Leading>
@@ -156,7 +158,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                         )}
                     </Cell>
 
-                    <Cell isSelected={isSafetyOpen} onClick={onOpenSafety}>
+                    <Cell size="compact" isSelected={isSafetyOpen} onClick={onOpenSafety}>
                         <Cell.Leading>
                             <Icon asset={ShieldExclamationmark16} tone="tertiary" />
                         </Cell.Leading>
@@ -174,7 +176,7 @@ export const MainSidebar: FC<MainSidebarProps> = props => {
                         )}
                     </Cell>
 
-                    <Cell isSelected={isSettingsOpen} onClick={onOpenSettings}>
+                    <Cell size="compact" isSelected={isSettingsOpen} onClick={onOpenSettings}>
                         <Cell.Leading>
                             <Icon asset={Sliders16} tone="tertiary" />
                         </Cell.Leading>

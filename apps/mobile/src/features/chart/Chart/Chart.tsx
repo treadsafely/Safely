@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
 import { View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { BTC_ASSET } from '@safely/core';
-import { useChart } from '@safely/ux';
+import { useChart, useChartStartDate } from '@safely/ux';
 
 import type { ChartPoint } from '@mobile/shared/utils/chart';
 
@@ -16,7 +15,7 @@ import {
     ChartLineSkeleton,
     ProviderLabel
 } from './components';
-import { CHART_CONFIG, ChartPeriod } from './config';
+import { ChartPeriod } from './config';
 import { useChartPeriodQuery, useSetChartPeriod, useCrosshair } from './hooks';
 
 export const Chart = () => {
@@ -26,11 +25,8 @@ export const Chart = () => {
     const chartPointsShared = useSharedValue<ChartPoint[]>([]);
     const pathFractionsShared = useSharedValue<number[]>([]);
 
-    const stickyStartDate = useMemo(() => {
-        const periodConfig = CHART_CONFIG[selectedPeriod];
-        return periodConfig.startOfPeriod(new Date(Date.now() - periodConfig.fullPeriodLength));
-    }, [selectedPeriod]);
-    const chart = useChart(asset, stickyStartDate);
+    const startDate = useChartStartDate(selectedPeriod);
+    const chart = useChart(asset, startDate);
     const crosshair = useCrosshair({ chartPointsShared, pathFractionsShared, selectedPeriod });
 
     const prices = chart.data?.prices ?? [];
@@ -49,7 +45,7 @@ export const Chart = () => {
                 <ChartLineSkeleton />
             ) : (
                 <ChartLine
-                    startDate={stickyStartDate}
+                    startDate={startDate}
                     prices={prices}
                     selectedPeriod={selectedPeriod}
                     chartPointsShared={chartPointsShared}
@@ -60,7 +56,7 @@ export const Chart = () => {
                 />
             )}
             <ChartFooter
-                startDate={stickyStartDate}
+                startDate={startDate}
                 selectedPeriod={selectedPeriod}
                 primaryCrosshair={crosshair.primaryCrosshair}
                 isTimeLabelReady={crosshair.isTimeLabelReady}

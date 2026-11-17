@@ -15,9 +15,8 @@ import type { BtcApiTx, BtcApiUtxoWithOptionalTx } from '@safely/core/api/btc';
 import { useActiveAccount } from '../account';
 import { btcTxToActivityItem } from '../activity/api';
 import type { BtcActivityItem } from '../activity/types';
-import { useActiveBtcWallet } from '../portfolio';
+import { resolveAccountBtcWallets, useActiveBtcWallet, usePortfolios } from '../portfolio';
 import { utxo } from './keys';
-import { refetchQueries } from '../../shared';
 
 const lastBroadcastedBtcTxStore = createStore<Record<string, BroadcastedBtcTx>>(() => ({}));
 
@@ -52,6 +51,7 @@ export function getLastBroadcastedBtcTxForWallet(
 
 export function useSetLastBroadcastedBtcTx() {
     const account = useActiveAccount();
+    const portfolios = usePortfolios();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -59,8 +59,11 @@ export function useSetLastBroadcastedBtcTx() {
             const accountId = account.accountId;
             lastBroadcastedBtcTxStore.setState(s => ({ ...s, [accountId]: tx }));
 
-            void queryClient.invalidateQueries({ queryKey: utxo.toKey() });
-            void refetchQueries(queryClient, utxo.toKey());
+            resolveAccountBtcWallets(portfolios)
+                .filter(wallet => selectLastBroadcastedBtcTxForWallet(tx, wallet) !== null)
+                .forEach(wallet => {
+                    void queryClient.invalidateQueries({ queryKey: utxo.wallet(wallet).toKey() });
+                });
 
             setTimeout(() => {
                 if (lastBroadcastedBtcTxStore.getState()[accountId]?.txId === tx.txId) {

@@ -36,12 +36,10 @@ export type BtcTransactionDetailsView = TransactionDetailsView & {
     memo: null;
     status: BtcTransactionStatusView;
     fee: (TransactionFeeView & { formattedFiat: string }) | null;
-    assetImage: string | undefined;
     explorerUrl: string;
 };
 
 export type FlameTransactionDetailsView = TransactionDetailsView & {
     secondaryAmount: null;
-    explorerUrl: null;
     hasFiatRateNote: false;
 };

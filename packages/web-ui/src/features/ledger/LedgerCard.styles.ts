@@ -7,6 +7,14 @@ export const bodyStyles = css({
     width: '100%'
 });
 
+export const topAlignedBodyStyles = css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    flex: '1',
+    width: '100%'
+});
+
 export const centeredBodyStyles = css({
     display: 'flex',
     flexDirection: 'column',
@@ -24,35 +32,32 @@ export const imageStyles = css({
     height: 'auto'
 });
 
+export const croppedImageStyles = css({
+    display: 'flex',
+    alignItems: 'flex-end',
+    width: '100%',
+    maxWidth: '390px',
+    height: '131px',
+    overflow: 'hidden'
+});
+
+export const compactImageStyles = css({
+    display: 'flex',
+    alignItems: 'flex-end',
+    width: '100%',
+    maxWidth: '390px',
+    height: '112px'
+});
+
 export const stepsStyles = css({
     width: '100%',
+    paddingInline: '24',
     paddingBlock: '16'
 });
 
 export const submitStyles = css({
     display: 'flex',
     justifyContent: 'center',
-    flexShrink: 0,
-    paddingBlock: '24'
-});
-
-export const pulseStyles = css({
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '96px',
-    height: '96px'
-});
-
-export const ringStyles = css({
-    position: 'absolute',
-    inset: '0',
-    borderRadius: 'full',
-    backgroundColor: 'accent.blue',
-    animation: 'ring 1.6s ease-out infinite',
-    '@media (prefers-reduced-motion: reduce)': {
-        animation: 'none',
-        opacity: '0.16'
-    }
+    paddingTop: '8',
+    paddingBottom: '16'
 });

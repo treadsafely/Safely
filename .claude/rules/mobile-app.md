@@ -112,30 +112,35 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   every testnet rule (no market price, no contacts, no pushes) applies to it. Balance and history count
   only flames, the native flavor: the SDK says so per output (`isNative` on a decoded clear contract
   and on an opened note, kept in `FlameOutputAmount`), so the app holds no flavor constant of its own;
-  FLM has 8 decimals. The node URL is
-  `blockchains.flame.<network>.rpc_url` from the boot config; until the config serves it,
-  `useFlameApi` falls back to `https://dev-flamed.safely.app/` for testnet.
+  FLM has 8 decimals. The node URL and the explorer links come from
+  `blockchains.flame.<network>` in the boot config, keyed by the wallet's `FlameNetwork` — so the
+  devnet node is served under `testnet`; a network the config does not serve has no node and no
+  explorer — `useFlameApi` returns `null`, the explorer link is hidden.
 - **No UI creates a devnet portfolio.** Mobile imports one from
   `https://link.safely.app/import-flame-devnet-wallet#testseed=<phrase>` (a Universal Link / Android
   App Link) or `safely://import-flame-devnet-wallet?testseed=<phrase>`. The https link opens the app
   when it is installed and otherwise loads the page on `link.safely.app`, which sends the user to the
   store; the phrase rides in the fragment so that page's server never receives it, and
-  `fragmentToQuery` in the linking options' `getStateFromPath` turns it back into the query React
-  Navigation parses (it ignores a fragment). The app side is `ios.associatedDomains` and the
+  `fragmentToQuery` (`@safely/ux`, `shared/linking`, which desktop's `resolveDeepLink` reads too) in
+  the linking options' `getStateFromPath` turns it back into the query React Navigation parses (it
+  ignores a fragment). The app side is `ios.associatedDomains` and the
   `android.intentFilters` (`autoVerify`, every path of the host) in
-  `app.config.js`, all built from its `UNIVERSAL_LINK_HOST`, which also goes to
-  `extra.universalLinkHost` for `useLockAwareLinking` to read through `expo-constants` — change the
-  host there and nowhere else; the domain must
-  serve `/.well-known/apple-app-site-association` (app ID `<team>.com.safely.wallet`) and
+  `app.config.js`. The scheme and the host are `APP_URL_SCHEME` and `UNIVERSAL_LINK_HOST` in
+  `@safely/ux` (`shared/linking/deep-link.ts`), which `useLockAwareLinking` and desktop read; a
+  manifest cannot import TS, so the host is restated in `app.config.js` and desktop's
+  `signing/entitlements.plist`, the scheme in `app.config.js` and desktop's `forge.config.ts` —
+  change a value in those three places, nowhere else (`desktop-app.md`, "Deep links");
+  the domain must serve `/.well-known/apple-app-site-association` (app IDs `<team>.com.safely.wallet`
+  and `<team>.com.safely.wallet-desktop`) and
   `/.well-known/assetlinks.json` (SHA-256 of the Play app-signing key and of the key EAS signs tester
   APKs with), with no redirect. The host exists only for app links, so the intent filter and the
-  AASA (`"/": "/*"`) claim every path: a new deep link needs only its `linking.path`, no rebuild for
-  the manifest, and a path the navigation does not know opens the app where it was. The
-  `import-flame-devnet-wallet` path maps
+  AASA (`"/": "/*"`) claim every path: a new deep link needs only its `linking.path` — the
+  `segment` of a `DEEP_LINK_PATHS` node from `@safely/ux`, whose `path` desktop matches — no
+  rebuild for the manifest, and a path the navigation does not know opens the app where it was.
+  The `import-flame-devnet-wallet` path maps
   to `ImportFlameDevnetWalletModal`, a `presentation: 'modal'` screen (an iOS page sheet), which goes
-  through `useLockAwareLinking`, so it runs only after unlock. A missing `extra.universalLinkHost`
-  only drops the https prefix (logged), never the app. The modal reads `testseed` and the optional
-  `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
+  through `useLockAwareLinking`, so it runs only after unlock. The modal reads `testseed` and the
+  optional `walletName` through zod as a string or `''` — a link repeating the key (query plus fragment)
   delivers an array. It parses the phrase
   (`parseFlameDevnetSeedParam`: quotes, `+`/`%20`, case) and the name
   (`parseFlameDevnetWalletNameParam`: control and format characters dropped — any site can craft
@@ -177,13 +182,19 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   error always go back, so an onboarding step or an open flow underneath is kept. A link is
   dispatched on top of the initial route (`initialState` is always set, so React Navigation discards
   the initial URL — it still calls the linking options' `getInitialURL` on its first render, which
-  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getInitialURL()` and
+  therefore answers `null`, and `useLockAwareLinking`'s effect reads `Linking.getLinkingURL()` and
   delivers it like any other link, after unlock), so there is always something to go back to; the reset to
   `resolveStartRoute` (`@mobile/shared/navigation`) is only a fallback. `resolveStartRoute` is the one
   place the start route is decided — `useInitialNavigationState` and `useRestrictionGuard` read it;
   never hand-write that choice again (the restriction guard once sent an account without a passcode
   to `WelcomeScreen`, which throws on an account). The passcode-setup route itself is
-  `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup. While the import writes, `usePreventRemove` keeps the modal on screen
+  `PASSCODE_SETUP_ROUTE`, shared by `resolveStartRoute` and the sign-in's reset to passcode setup.
+  Every URL `useLockAwareLinking` handles first clears expo-linking's native cache
+  (`clearInitialURL`), and a handled push tap clears `getLastNotificationResponse`: both outlive
+  `reloadAppAsync`, so erase all data would otherwise replay the last link (it reopened the devnet
+  import). RN's `Linking.getInitialURL()` reads the launch intent / `launchOptions`, which cannot be
+  cleared — don't go back to it. The cache is read before the subscriptions, since a push URL they
+  deliver clears it. While the import writes, `usePreventRemove` keeps the modal on screen
   (see the UI section below), since the write cannot be cancelled and would reset the stack after
   the user left.
 - `flame` holds `{ encryptedViewKey, receivingAddress, trackingAddress, predicate }`, all computed once at
@@ -368,6 +379,17 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
   locked, so protected screens run no effects and deep links apply only after unlock. Never
   reintroduce a `LockScreen` route or navigate to present the lock — that is the bug the security
   audit found (a `safely:///tab` link replaced the lock screen).
+- **A multiline `TextInput` grows one commit late on Fabric, and that is accepted for now.** The
+  shadow node measures the text the native side reported last, so a pasted address renders on one
+  clipped line and the box grows on the next commit. The fix is upstream's open
+  [facebook/react-native#59744](https://github.com/facebook/react-native/pull/59744), a C++ header
+  — but a `pnpm patch` of it compiles nothing, because Expo links the prebuilt `React-Core-prebuilt`
+  xcframework; it would need `buildReactNativeFromSource` in `expo-build-properties`, which adds
+  10–20 minutes to every clean iOS build, so the patch was tried and dropped. Re-check when a React
+  Native bump contains the PR. What *is* kept: `scrollEnabled={false}` on an auto-growing input
+  (`SendAssetModal/components/AddressInput`), because iOS otherwise animates a scroll to the caret
+  inside the still-one-line field after a paste. Don't mask the growth with a mirrored `Text` that
+  draws the value over a transparent input either: that hides typed text behind the JS round-trip.
 - Layers and the `@mobile/*` aliases: see `fsd-layers.md`.
 
 ## i18n

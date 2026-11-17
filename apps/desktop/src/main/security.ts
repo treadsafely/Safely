@@ -27,8 +27,10 @@ const BASE_POLICY = [
     "object-src 'none'"
 ];
 
+const SCRIPT_SRC = "script-src 'self' 'wasm-unsafe-eval'";
+
 const productionPolicy = (): string =>
-    [...BASE_POLICY, "script-src 'self'", `connect-src 'self' ${API_HOST_PATTERN}`].join('; ');
+    [...BASE_POLICY, SCRIPT_SRC, `connect-src 'self' ${API_HOST_PATTERN}`].join('; ');
 
 /* Vite's dev server injects the react-refresh preamble inline and talks over a websocket. */
 const developmentPolicy = (devServerUrl: string): string => {
@@ -36,7 +38,7 @@ const developmentPolicy = (devServerUrl: string): string => {
 
     return [
         ...BASE_POLICY,
-        `script-src 'self' 'unsafe-inline' ${origin}`,
+        `${SCRIPT_SRC} 'unsafe-inline' ${origin}`,
         `connect-src 'self' ${API_HOST_PATTERN} ${origin} ws://${host}`
     ].join('; ');
 };
@@ -56,7 +58,8 @@ const ALLOWED_REQUEST_HEADERS = [
     'accept',
     'cache-control',
     'last-event-id',
-    'x-requested-with'
+    'x-requested-with',
+    'x-project-token'
 ].join(', ');
 
 const isOwnApiUrl = (url: string): boolean => {

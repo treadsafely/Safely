@@ -1,6 +1,6 @@
 import { keepPreviousData } from '@tanstack/react-query';
 
-import type { About, AboutOrder, AboutPost } from '@safely/core';
+import type { About, AboutPost } from '@safely/core';
 
 import { apiKeys } from './keys';
 import { useConfigApi } from './useConfigApi';
@@ -13,12 +13,12 @@ export function getLatestPostTimestamp(about: About | undefined): number | null 
     return timestamps.length === 0 ? null : Math.max(...timestamps);
 }
 
-export function useAboutQuery(order: AboutOrder = 'asc') {
+export function useAboutQuery() {
     const configApi = useConfigApi();
 
     return usePersistQuery<About>({
-        queryKey: apiKeys.about(configApi.id, order).toKey(),
-        queryFn: () => configApi.getAbout(order),
+        queryKey: apiKeys.about(configApi.id).toKey(),
+        queryFn: () => configApi.getAbout(),
         schemaKey: 'about',
         placeholderData: keepPreviousData
     });
@@ -35,7 +35,7 @@ export interface AboutFeed {
 }
 
 export function useAboutFeedRows(): AboutFeed {
-    const { data, isLoading } = useAboutQuery('desc');
+    const { data, isLoading } = useAboutQuery();
     const rows = useGroupedRows(
         data?.posts ?? [],
         getAboutPostTimestamp,

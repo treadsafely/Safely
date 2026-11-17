@@ -2,17 +2,24 @@ import type { FC } from 'react';
 import { useMemo } from 'react';
 
 import type { CryptoAsset } from '@safely/core';
-import { SPACE } from '@safely/core';
 import {
     CHART_CONFIG,
     priceChangeOverPeriod,
     useActiveFiat,
-    useActivePortfolioRate,
+    useMainnetRate,
     useNumberFormatter,
+    useTranslate,
     type ChartPeriod
 } from '@safely/ux';
 
-import { diffWrapStyles, headerStyles, priceStyles, symbolStyles } from './Chart.styles';
+import {
+    collapseToggleStyles,
+    controlsStyles,
+    headerRowStyles,
+    headerStyles,
+    priceGroupStyles
+} from './Chart.styles';
+import { ChartPeriods } from './ChartPeriods';
 import { PriceDiff } from './PriceDiff';
 import type { ChartActive } from './types';
 import { Text } from '../../shared';
@@ -29,12 +36,16 @@ export type ChartHeaderProps = {
     prices: [number, number][];
     period: ChartPeriod;
     active: ChartActive | null;
+    isCollapsed: boolean;
+    onPeriodChange: (period: ChartPeriod) => void;
+    onToggleCollapsed: () => void;
 };
 
 export const ChartHeader: FC<ChartHeaderProps> = props => {
-    const { asset, prices, period, active } = props;
+    const { asset, prices, period, active, isCollapsed, onPeriodChange, onToggleCollapsed } = props;
 
-    const rate = useActivePortfolioRate(asset);
+    const t = useTranslate();
+    const rate = useMainnetRate(asset);
     const fiat = useActiveFiat();
     const formatter = useNumberFormatter();
     const periodDiff = usePeriodDiff(prices, period);
@@ -57,17 +68,27 @@ export const ChartHeader: FC<ChartHeaderProps> = props => {
 
     return (
         <div className={headerStyles}>
-            <Text variant="titleM" isTabular className={priceStyles}>
-                {displayPrice ?? '-'}
-            </Text>
-            <Text variant="bodyM" tone="tertiary" className={symbolStyles}>
-                {asset.symbol}
-                {SPACE.THSP}/{SPACE.THSP}
-                {fiat.id.symbol}
-            </Text>
-            <div className={diffWrapStyles}>
-                <PriceDiff priceDiff={displayDiff} isFaded={isDiffFaded} />
+            <div className={headerRowStyles}>
+                <div className={priceGroupStyles}>
+                    <Text variant="bodyL" isTabular>
+                        {displayPrice ?? '-'}
+                    </Text>
+                    <PriceDiff priceDiff={displayDiff} isFaded={isDiffFaded} />
+                </div>
+                <div className={controlsStyles}>
+                    {!isCollapsed && <ChartPeriods value={period} onChange={onPeriodChange} />}
+                    <button
+                        type="button"
+                        className={collapseToggleStyles}
+                        onClick={onToggleCollapsed}
+                    >
+                        {t(isCollapsed ? 'chart.expand' : 'chart.collapse')}
+                    </button>
+                </div>
             </div>
+            <Text variant="bodyM" tone="tertiary">
+                {t('chart.title')}
+            </Text>
         </div>
     );
 };

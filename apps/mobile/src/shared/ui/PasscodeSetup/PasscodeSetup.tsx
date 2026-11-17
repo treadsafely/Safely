@@ -20,6 +20,7 @@ type PasscodeSetupProps = {
     description?: string;
     reenterDescription?: string;
     onComplete: (passcode: string) => void | Promise<void>;
+    testID?: string;
 };
 
 const PasscodeSetupHeaderButton = ({ type }: { type: PasscodeSetupHeaderType }) => {
@@ -41,7 +42,8 @@ export const PasscodeSetup = ({
     reenterTitle,
     description,
     reenterDescription,
-    onComplete
+    onComplete,
+    testID
 }: PasscodeSetupProps) => {
     const { t } = useTranslation();
 
@@ -83,6 +85,13 @@ export const PasscodeSetup = ({
         }
     }, [passcodeState, isReenterStep, firstPasscode, onComplete]);
 
+    const handleBackToFirstStep = useCallback(() => {
+        if (passcodeState.isSuccess.value) return;
+
+        setFirstPasscode(null);
+        passcodeState.reset();
+    }, [passcodeState]);
+
     useSubmitWhenComplete({
         value: passcodeState.inputValue,
         length: passcodeState.digitsAmount,
@@ -95,7 +104,11 @@ export const PasscodeSetup = ({
     return (
         <Screen>
             <Screen.Header variant="left">
-                <PasscodeSetupHeaderButton type={headerType} />
+                {isReenterStep ? (
+                    <Screen.Header.BackButton onPress={handleBackToFirstStep} />
+                ) : (
+                    <PasscodeSetupHeaderButton type={headerType} />
+                )}
 
                 {!isReenterStep && (
                     <Screen.Header.Button type="small" onPress={passcodeState.switchDigitsAmount}>
@@ -109,6 +122,7 @@ export const PasscodeSetup = ({
             </Screen.Header>
 
             <PasscodeView
+                testID={testID}
                 title={currentTitle}
                 description={currentDescription}
                 numberOfDigits={passcodeState.digitsAmount}

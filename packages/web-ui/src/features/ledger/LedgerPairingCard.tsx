@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import { useLedgerPairingSteps, useLedgerSession, useTranslate } from '@safely/ux';
 
 import { getLedgerImage } from './ledger-image';
-import { bodyStyles, imageStyles, stepsStyles } from './LedgerCard.styles';
+import { bodyStyles, compactImageStyles, imageStyles, stepsStyles } from './LedgerCard.styles';
 import { LedgerSteps } from './LedgerSteps';
 import { Modal, StepCard } from '../../shared';
 
@@ -24,11 +24,13 @@ export const LedgerPairingCard: FC<LedgerPairingCardProps> = props => {
     return (
         <StepCard hasShadow={hasBackdrop} hasBackdrop={hasBackdrop} onBack={onBack}>
             <div className={bodyStyles}>
-                <img
-                    src={getLedgerImage(selectedDevice?.deviceModel.model)}
-                    className={imageStyles}
-                    alt=""
-                />
+                <div className={compactImageStyles}>
+                    <img
+                        src={getLedgerImage(selectedDevice?.deviceModel.model)}
+                        className={imageStyles}
+                        alt=""
+                    />
+                </div>
 
                 <Modal.Content hasFloatingClose={false}>
                     <Modal.Title>{title}</Modal.Title>

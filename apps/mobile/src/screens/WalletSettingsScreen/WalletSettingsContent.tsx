@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { PortfolioType } from '@safely/core';
 import { useActivePortfolio } from '@safely/ux';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { Screen } from '@mobile/shared/ui';
 import { ArrowLeft16, Icon } from '@mobile/shared/ui/Icon';
 
@@ -19,7 +20,10 @@ export const WalletSettingsContent = () => {
     return (
         <Screen>
             <Screen.Header variant="center">
-                <Screen.Header.Button onPress={navigation.goBack}>
+                <Screen.Header.Button
+                    testID={TEST_ID.walletSettings.backButton}
+                    onPress={navigation.goBack}
+                >
                     <Icon icon={ArrowLeft16} />
                 </Screen.Header.Button>
                 <Screen.Header.Title>{t('settings.title')}</Screen.Header.Title>

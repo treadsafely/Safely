@@ -36,10 +36,10 @@ tags:
       visible:
           id: 'passcodeVerification.screen'
       timeout: 15000
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'passcodeVerification.screen'
 
 # Wallet generation, then navigation resets to home
 # with the new wallet active.

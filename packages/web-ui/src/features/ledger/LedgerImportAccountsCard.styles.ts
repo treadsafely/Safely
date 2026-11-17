@@ -17,6 +17,7 @@ export const scrollStyles = css({
 export const captionStyles = css({
     display: 'block',
     paddingTop: '8',
+    paddingBottom: '16',
     paddingInline: '32'
 });
 

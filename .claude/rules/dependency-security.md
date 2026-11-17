@@ -298,6 +298,8 @@ exception, then dismiss it pointing at whichever landed. Never dismiss on its ow
   as one unit. Ignoring by bare `dependency-name` also suppresses security updates — only an `ignore`
   written with `update-types: version-update:semver-*` leaves those working. Dependabot does not read
   `minimumReleaseAge`, so its `cooldown` mirrors it by hand.
+- **`@noble/hashes` and `@noble/curves` are held on 2.2.0**, the last self-audited release of both;
+  every update type is ignored, so only a security update reaches them. Bump the pair together.
 - **Do not add a `gradle` ecosystem.** Measured: the dependency graph holds 1289 npm and 10 Actions
   packages and **zero Maven**, because GitHub does not read module `build.gradle` files. A Gradle
   entry would add update pull requests, not coverage. Android detection is the native gate's job
@@ -330,6 +332,9 @@ from EAS, never EAS pushing, because pushing needs a GitHub write token inside t
   `apps/mobile/scripts/release/` download that commit's artifacts, uploads them with `gh` and
   publishes the draft as a prerelease, which is what makes GitHub create the tag. Called after the
   draft, on a schedule twice an hour, and by hand; one draft per run.
+- Desktop needs no polling: `.github/workflows/desktop-build.yml` builds in GitHub itself, so
+  `desktop-release.yml`'s `release` job attaches the `.pkg` and `desktop-dependencies.txt` to
+  `v<desktop version>-desktop` directly. `desktop-signing.md` has that pipeline.
 - **The two credentials never meet, and it is the workflow that guarantees it.** `gh` runs only in
   the steps holding `GH_TOKEN`; the download step gets `EXPO_TOKEN` and runs node through
   `env -u GH_TOKEN -u GITHUB_TOKEN`, so the process that talks to Expo and reads a third-party

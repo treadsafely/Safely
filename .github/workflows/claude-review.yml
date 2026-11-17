@@ -80,7 +80,7 @@ jobs:
           echo "Diff size: $TOTAL lines (additions=$ADDITIONS, deletions=$DELETIONS)"
 
       - id: claude
-        uses: anthropics/claude-code-action@16f9f71ab9c490faf367f94dd294897edc25be33 # v1.0.261
+        uses: anthropics/claude-code-action@4d75e5f390ee76b2e09c1980ecc99ff3a2e088c8 # v1.0.275
         timeout-minutes: 18
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

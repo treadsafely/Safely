@@ -1,5 +1,6 @@
 # Step 1 of the e2e chain (see executionOrder in config.yaml):
-# onboarding -> create-wallet -> add-watch-only -> import-wallet -> send-asset.
+# onboarding -> create-wallet -> recovery-phrase -> add-watch-only ->
+# import-wallet -> send-asset -> onboarding-import-wallet.
 # Each flow starts from the state the previous one finished in.
 appId: com.safely.wallet
 name: onboarding-create-wallet
@@ -17,35 +18,27 @@ tags:
           id: 'welcome.createWallet'
       timeout: 60000
 
-- tapOn:
-      id: 'welcome.createWallet'
+- runFlow:
+      file: subflows/tap-until-visible.yaml
+      env:
+          TAP_ID: 'welcome.createWallet'
+          EXPECT_ID: 'onboardingPasscode.screen'
 
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 
 # Let the "enter" -> "re-enter" transition settle before typing again,
 # otherwise taps land while the input is still locked at max length.
 - waitForAnimationToEnd
 
-- tapOn: '1'
-- tapOn: '2'
-- tapOn: '3'
-- tapOn: '4'
-
 - runFlow:
-      when:
-          visible:
-              id: 'biometry.skip'
-      commands:
-          - tapOn:
-                id: 'biometry.skip'
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
 
-# We should now be on the home tab.
-- extendedWaitUntil:
-      visible:
-          id: 'home.settingsButton'
-      timeout: 30000
+# Account creation, then the optional biometry / notifications prompts.
+- runFlow: subflows/finish-onboarding.yaml
 - assertVisible:
       id: 'home.settingsButton'

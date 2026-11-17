@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react';
 
-import { centeredBodyStyles, submitStyles } from './LedgerCard.styles';
+import { centeredBodyStyles } from './LedgerCard.styles';
+import type { ButtonProps } from '../../shared';
 import { Button, Modal, StepCard } from '../../shared';
 
 export type LedgerStatusCardProps = {
@@ -9,6 +10,7 @@ export type LedgerStatusCardProps = {
     title: string;
     subtitle: string;
     buttonLabel: string;
+    buttonVariant?: ButtonProps['variant'];
     onButtonClick: () => void;
     onBack: () => void;
 };
@@ -20,6 +22,7 @@ export const LedgerStatusCard: FC<LedgerStatusCardProps> = props => {
         title,
         subtitle,
         buttonLabel,
+        buttonVariant = 'primary',
         onButtonClick,
         onBack
     } = props;
@@ -33,10 +36,8 @@ export const LedgerStatusCard: FC<LedgerStatusCardProps> = props => {
                     <Modal.Title>{title}</Modal.Title>
                     <Modal.Description>{subtitle}</Modal.Description>
                 </Modal.Content>
-            </div>
 
-            <div className={submitStyles}>
-                <Button variant="primary" size="small" onClick={onButtonClick}>
+                <Button variant={buttonVariant} size="small" onClick={onButtonClick}>
                     {buttonLabel}
                 </Button>
             </div>

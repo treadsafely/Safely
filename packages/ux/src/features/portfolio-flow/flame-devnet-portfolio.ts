@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { IMnemonicAccessor, Portfolio, PortfolioMeta, MnemonicResource } from '@safely/core';
 import {
@@ -11,10 +11,20 @@ import {
 
 import {
     portfolioKeys,
+    useErrorToast,
+    useFlameWalletOutputs,
     useImportFlameDevnetPortfolio,
     usePortfolios,
+    useSetActivePortfolio,
+    useToast,
     useUnlockableSecureSecretEncryptorFactory
 } from '../../entities';
+import { SecurityCheckCancelledError, useTranslate } from '../../shared';
+
+const IMPORT_ERRORS = {
+    InvalidMnemonicError: 'importWalletScreen.errors.invalidMnemonic',
+    PortfolioGenerationFailedError: 'importWalletScreen.errors.failedToGenerate'
+};
 
 // a seed phrase in a link arrives quoted, and with `+` or `%20` between the words
 export function parseFlameDevnetSeedParam(raw: string): string[] {
@@ -88,4 +98,71 @@ export function useImportFlameDevnetPortfolioFromSeed() {
             });
         }
     });
+}
+
+export function useFlameDevnetImportPreview(
+    mnemonicResource: MnemonicResource,
+    walletName: string,
+    onUnavailable: () => void
+) {
+    const errorToast = useErrorToast(IMPORT_ERRORS);
+    const { meta, walletQuery } = useFlameDevnetWalletPreview(mnemonicResource, walletName);
+    const wallet = walletQuery.data ?? null;
+    const balance = useFlameWalletOutputs(wallet).data?.balance;
+
+    const shownErrorRef = useRef<unknown>(null);
+    useEffect(() => {
+        const { error } = walletQuery;
+        if (!error || shownErrorRef.current === error) return;
+
+        shownErrorRef.current = error;
+        errorToast(error);
+        onUnavailable();
+    }, [walletQuery, errorToast, onUnavailable]);
+
+    return { meta, wallet, balance };
+}
+
+export function useFlameDevnetAccountImport(
+    mnemonicResource: MnemonicResource,
+    onDone: () => void
+) {
+    const t = useTranslate();
+    const toast = useToast();
+    const errorToast = useErrorToast(IMPORT_ERRORS);
+    const duplicate = useRef(useExistingFlameDevnetPortfolio(mnemonicResource)).current;
+    const { mutate: setActivePortfolio } = useSetActivePortfolio();
+    const { mutateAsync: importPortfolio, isPending } = useImportFlameDevnetPortfolioFromSeed();
+
+    const onDoneRef = useRef(onDone);
+    useEffect(() => {
+        onDoneRef.current = onDone;
+    });
+
+    useEffect(() => {
+        if (!duplicate) return;
+
+        setActivePortfolio({ id: duplicate.id });
+        toast({ message: t('importFlameDevnetWallet.alreadyImported') });
+        onDoneRef.current();
+    }, [duplicate, setActivePortfolio, toast, t]);
+
+    const importWallet = useCallback(
+        async (meta: PortfolioMeta): Promise<void> => {
+            try {
+                await importPortfolio({ mnemonicResource, meta });
+            } catch (error) {
+                if (!(error instanceof SecurityCheckCancelledError)) {
+                    errorToast(error);
+                }
+                return;
+            }
+
+            toast({ message: t('importFlameDevnetWallet.imported') });
+            onDone();
+        },
+        [importPortfolio, mnemonicResource, errorToast, toast, t, onDone]
+    );
+
+    return { isDuplicate: duplicate !== undefined, isPending, importWallet };
 }

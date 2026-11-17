@@ -58,6 +58,7 @@ export const platform: DesktopPlatform = {
     },
     biometry: bridge.biometry,
     camera: bridge.camera,
+    deepLinks: bridge.deepLinks,
     logs: {
         append: lines => bridge.logs.append(lines),
         read: async () =>

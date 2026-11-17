@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { Screen, Text } from '@mobile/shared/ui';
 
 import { SettingsContent } from './components';
@@ -18,7 +19,7 @@ export const SettingsScreen = () => {
                         {t('settings.title')}
                     </Text>
                 </Screen.Header.Title>
-                <Screen.Header.CloseButton />
+                <Screen.Header.CloseButton testID={TEST_ID.settings.closeButton} />
             </Screen.Header>
             <SettingsContent />
         </Screen>

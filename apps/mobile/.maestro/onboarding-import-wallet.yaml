@@ -1,0 +1,96 @@
+# Step 7 (last) of the e2e chain: sign out of the (only) account, then do a
+# first-run import from the welcome screen — the path a user restoring a
+# wallet on a new phone takes.
+#
+# Starts from any onboarded state (passcode 1234, lock screen off).
+# Signing out of the last account erases all app data and reloads the app;
+# if anything survives, the welcome screen crashes ("opened with an existing
+# account") and this flow fails. Must stay last.
+appId: com.safely.wallet
+name: onboarding-import-wallet
+tags:
+    - smoke
+    - onboarding
+    - import
+---
+# Relaunch WITHOUT clearState — signing out is part of the test.
+- launchApp
+
+- extendedWaitUntil:
+      visible:
+          id: 'home.settingsButton'
+      timeout: 60000
+
+# Settings -> "Sign out of <account>" -> confirm.
+- tapOn:
+      id: 'home.settingsButton'
+- scrollUntilVisible:
+      element:
+          id: 'settings.signOutAccount'
+      direction: DOWN
+      timeout: 15000
+- tapOn:
+      id: 'settings.signOutAccount'
+- extendedWaitUntil:
+      visible:
+          id: 'signOutAccount.confirmButton'
+      timeout: 15000
+- waitForAnimationToEnd
+# Without linked devices the sheet asks to tick "I understand" first.
+- runFlow:
+      when:
+          visible:
+              id: 'signOutAccount.checkbox'
+      commands:
+          - tapOn:
+                id: 'signOutAccount.checkbox'
+- tapOn:
+      id: 'signOutAccount.confirmButton'
+
+# All data is erased and the app reloads into onboarding.
+- extendedWaitUntil:
+      visible:
+          id: 'welcome.importWallet'
+      timeout: 60000
+- runFlow:
+      file: subflows/tap-until-visible.yaml
+      env:
+          TAP_ID: 'welcome.importWallet'
+          EXPECT_ID: 'importWallet.continueButton'
+
+# The seed input autofocuses ~400ms after the screen gets focus.
+- waitForAnimationToEnd
+# A funded wallet: the label only renames the printed step, Maestro's debug logs
+# and EAS artifacts still carry the phrase. See .claude/rules/mobile-e2e.md.
+- inputText:
+      text: ${MAESTRO_SEED_PHRASE}
+      label: 'Type MAESTRO_SEED_PHRASE'
+- tapOn:
+      id: 'importWallet.continueButton'
+
+# Passcode setup: enter + re-enter.
+- waitForAnimationToEnd
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
+- waitForAnimationToEnd
+- runFlow:
+      file: subflows/enter-passcode.yaml
+      env:
+          SCREEN_ID: 'onboardingPasscode.screen'
+
+# Account creation (import derives + syncs, so it can take a while), then the
+# optional biometry / notifications prompts.
+- runFlow: subflows/finish-onboarding.yaml
+
+# The imported wallet must be the one derived from MAESTRO_SEED_PHRASE.
+- tapOn:
+      id: 'home.receiveButton'
+- extendedWaitUntil:
+      visible:
+          id: 'receive.address'
+      timeout: 15000
+- assertVisible:
+      id: 'receive.address'
+      text: ${MAESTRO_IMPORTED_WALLET_ADDRESS}

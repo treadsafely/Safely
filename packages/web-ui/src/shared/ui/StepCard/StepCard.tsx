@@ -4,7 +4,7 @@ import { useTranslate } from '@safely/ux';
 import ArrowLeft16 from '@safely/ux/assets/icons/16/arrow-left-16.svg?react';
 import { cx } from '@safely/web-ui/styled-system/css';
 
-import { autoHeightPopupStyles, bodyStyles, popupStyles, shadowStyles } from './StepCard.styles';
+import { bodyStyles, popupStyles, shadowStyles, trailingStyles } from './StepCard.styles';
 import { Button } from '../Button';
 import { Icon } from '../Icon';
 import { Modal } from '../Modal';
@@ -13,30 +13,23 @@ export type StepCardProps = {
     trailing?: ReactNode;
     hasShadow?: boolean;
     hasBackdrop?: boolean;
-    isAutoHeight?: boolean;
     onBack?: () => void;
     children: ReactNode;
 };
 
 export const StepCard: FC<StepCardProps> = props => {
-    const {
-        trailing,
-        hasShadow = true,
-        hasBackdrop = true,
-        isAutoHeight,
-        onBack,
-        children
-    } = props;
+    const { trailing, hasShadow = true, hasBackdrop = true, onBack, children } = props;
 
     const t = useTranslate();
 
     return (
-        <Modal open>
+        <Modal
+            open
+            disablePointerDismissal={!hasBackdrop}
+            onOpenChange={isOpen => !isOpen && onBack?.()}
+        >
             <Modal.Popup
-                className={cx(
-                    isAutoHeight ? autoHeightPopupStyles : popupStyles,
-                    hasShadow && shadowStyles
-                )}
+                className={cx(popupStyles, hasShadow && shadowStyles)}
                 hasClose={false}
                 hasBackdrop={hasBackdrop}
                 closeLabel={t('common.close')}
@@ -46,7 +39,7 @@ export const StepCard: FC<StepCardProps> = props => {
                         {onBack !== undefined && (
                             <Button
                                 variant="secondary"
-                                size="small"
+                                size="xsmall"
                                 isIconOnly
                                 isRound
                                 aria-label={t('common.back')}
@@ -56,7 +49,7 @@ export const StepCard: FC<StepCardProps> = props => {
                             </Button>
                         )}
 
-                        {trailing}
+                        {trailing !== undefined && <div className={trailingStyles}>{trailing}</div>}
                     </Modal.Header>
                 )}
 

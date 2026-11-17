@@ -28,7 +28,7 @@ export const ImportWalletForm: FC<ImportWalletFormProps> = props => {
         <>
             <Input invalid={Boolean(error)}>
                 <Input.Field
-                    autoFocus
+                    data-autofocus
                     isMultiline
                     className={fieldStyles}
                     value={value}

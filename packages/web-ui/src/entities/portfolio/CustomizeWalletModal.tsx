@@ -27,7 +27,7 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
     const [icon, setIcon] = useState<PortfolioMetaIcon>(defaultIcon);
 
     return (
-        <Modal open disablePointerDismissal onOpenChange={isOpen => !isOpen && onClose()}>
+        <Modal open onOpenChange={isOpen => !isOpen && onClose()}>
             <Modal.Popup className={popupStyles} hasClose={false} closeLabel={t('common.close')}>
                 <Modal.Header closeLabel={t('common.close')}>
                     <Button
@@ -48,6 +48,7 @@ export const CustomizeWalletModal: FC<CustomizeWalletModalProps> = props => {
                 <div className={fieldStyles}>
                     <Input>
                         <Input.Field
+                            data-autofocus
                             maxLength={PORTFOLIO_NAME_MAX_LENGTH}
                             value={name}
                             placeholder={t('customizeWallet.namePlaceholder')}

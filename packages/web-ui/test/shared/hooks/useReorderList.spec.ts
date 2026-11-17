@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ItemRect } from '../../../src/shared/hooks/useReorderList';
-import { resolveTargetIndex } from '../../../src/shared/hooks/useReorderList';
+import { clampOffset, resolveTargetIndex } from '../../../src/shared/hooks/useReorderList';
 
 const GAP = 2;
 
@@ -61,5 +61,30 @@ describe('resolveTargetIndex', () => {
             row + 1
         );
         expect(resolveTargetIndex(rects, row, row + 1, groupMiddle - rects[row].top - 1)).toBe(row);
+    });
+});
+
+describe('clampOffset', () => {
+    const bounds = { top: rects[0].top, bottom: rects[5].top + rects[5].height };
+
+    it('passes an offset through while the item stays inside the list', () => {
+        expect(clampOffset(rects[2], bounds, 30)).toBe(30);
+        expect(clampOffset(rects[2], bounds, -30)).toBe(-30);
+    });
+
+    it('stops the item at the first and the last slot however far the pointer goes', () => {
+        expect(clampOffset(rects[2], bounds, -1000)).toBe(bounds.top - rects[2].top);
+        expect(clampOffset(rects[2], bounds, 1000)).toBe(
+            bounds.bottom - rects[2].height - rects[2].top
+        );
+    });
+
+    it('cuts the range down to a clipping container', () => {
+        const clipped = { top: rects[1].top, bottom: rects[4].top + rects[4].height };
+
+        expect(clampOffset(rects[2], clipped, -1000)).toBe(rects[1].top - rects[2].top);
+        expect(clampOffset(rects[2], clipped, 1000)).toBe(
+            clipped.bottom - rects[2].height - rects[2].top
+        );
     });
 });
