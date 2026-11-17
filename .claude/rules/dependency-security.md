@@ -7,8 +7,8 @@ paths:
   - 'apps/mobile/eas.json'
   - 'apps/mobile/.eas/workflows/**'
   - '.github/workflows/ci.yml'
-  - '.github/workflows/release-draft.yml'
-  - '.github/workflows/release-assets.yml'
+  - '.github/workflows/mobile-release-draft.yml'
+  - '.github/workflows/mobile-release-assets.yml'
   - '.github/dependabot.yml'
   - 'pnpm-workspace.yaml'
 ---
@@ -22,7 +22,7 @@ opens a pull request — updating is Dependabot's job, deciding is ours.
 | Gate           | Code                                | Database                          | Registry                                                  | Runs                                                                    |
 | -------------- | ----------------------------------- | --------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **JavaScript** | `scripts/audit-gate.mjs`            | `pnpm audit`                      | `security/dependency-advisories.json`                     | `pnpm dependencies-audit`, `dependency-advisories` in `ci.yml`          |
-| **Native**     | `apps/mobile/scripts/native-audit/` | OSV (Maven), Sonatype (CocoaPods) | `apps/mobile/scripts/native-audit/native-advisories.json` | `security_gate` in `apps/mobile/.eas/workflows/build-and-distribute.yml` |
+| **Native**     | `apps/mobile/scripts/native-audit/` | OSV (Maven), Sonatype (CocoaPods) | `apps/mobile/scripts/native-audit/native-advisories.json` | `security_gate` in `apps/mobile/.eas/workflows/mobile-build-and-distribute.yml` |
 
 ```bash
 pnpm dependencies-audit                                       # JS, what CI runs
@@ -42,11 +42,6 @@ a short `results` array means the tail of the batch went unasked, a `next_page_t
 coordinate is under-reported, and a purl missing from a Sonatype `component-report` was never looked
 at. All three throw. That is a different thing from a component Sonatype returns with no
 `description` — "not in the database", which is reported on its own.
-
-**None of the native work has run on master yet** (2026-09-08): the gate, the capture globs, the EAS
-gate job and the release workflows are all still on this branch, so every number below was measured
-on a branch build or a laptop, and the first master build after the merge is also the first test of
-the `buildArtifactPaths` globs. Delete this paragraph once that build has run.
 
 ## Declared is not a subset of resolved
 
@@ -323,18 +318,18 @@ Every EAS build record, artifact and job run expires 30 days after creation (`Bu
 Release assets never expire, which is why they are the destination; the direction is GitHub pulling
 from EAS, never EAS pushing, because pushing needs a GitHub write token inside the EAS environment.
 
-- `.github/workflows/release-draft.yml` — on a merged pull request from
-  `release/<major>.<minor>.<patch>` into master, drafts `v<version>` targeted at **the merge commit's
+- `.github/workflows/mobile-release-draft.yml` — on a merged pull request from a release branch
+  that names mobile (`release.md`) into master, drafts `v<version>-mobile` targeted at **the merge commit's
   SHA** (a branch name would let the tag land wherever master points when the draft is published).
-  The version comes from `apps/mobile/package.json` and must equal the branch's; a `release/*` branch
-  naming no version (`release/desktop`) is not a release and not an error either.
-- `.github/workflows/release-assets.yml` — takes a tag or picks the oldest waiting draft, has
+  `scripts/release/` checks the branch against `apps/mobile/package.json`; a desktop-only release
+  branch is not a mobile release and not an error either.
+- `.github/workflows/mobile-release-assets.yml` — takes a tag or picks the oldest waiting mobile draft, has
   `apps/mobile/scripts/release/` download that commit's artifacts, uploads them with `gh` and
   publishes the draft as a prerelease, which is what makes GitHub create the tag. Called after the
   draft, on a schedule twice an hour, and by hand; one draft per run.
 - Desktop needs no polling: `.github/workflows/desktop-build.yml` builds in GitHub itself, so
   `desktop-release.yml`'s `release` job attaches the `.pkg` and `desktop-dependencies.txt` to
-  `v<desktop version>-desktop` directly. `desktop-signing.md` has that pipeline.
+  `v<version>-desktop` directly. `desktop-signing.md` has that pipeline.
 - **The two credentials never meet, and it is the workflow that guarantees it.** `gh` runs only in
   the steps holding `GH_TOKEN`; the download step gets `EXPO_TOKEN` and runs node through
   `env -u GH_TOKEN -u GITHUB_TOKEN`, so the process that talks to Expo and reads a third-party
@@ -355,13 +350,13 @@ from EAS, never EAS pushing, because pushing needs a GitHub write token inside t
 - **The match is run-scoped, and per job.** `workflowRunsPaginated(filter: { requestedGitRef:
   "refs/heads/master" })`, then the commit, then `build_ios`, `build_android`, `build_android_play`
   and `security_gate` each `SUCCESS` — not the run's own status, because a Maestro flake fails the
-  run and must not hold a release. Two master runs can carry the same `appVersion` (the
-  `release/1.2.3` merge and a later `fix/*` merge), so the version is not a key and the commit is. A
+  run and must not hold a release. Two master runs can carry the same `appVersion` (a re-run,
+  or the merges built before the release scheme), so the version is not a key and the commit is. A
   run started with `eas workflow:run` has no ref and is skipped deliberately.
-- Seven assets: `safely-<version>-<build>.ipa|apk|aab` (44 / 216 / 146 MiB), `ios-Podfile.lock`,
-  `android-sdkDependencies.txt` and `android-dependencies.pb` from each build's `buildArtifactsUrl`
+- Seven assets: `safely-mobile-<version>-<build>.ipa|apk|aab` (44 / 216 / 146 MiB), `mobile-ios-Podfile.lock`,
+  `mobile-android-sdkDependencies.txt` and `mobile-android-dependencies.pb` from each build's `buildArtifactsUrl`
   — **pre-signed for 15 minutes**, so query and download in one pass — and
-  `native-graphs-<version>.tar.gz`, the gate's own `native-dependency-graphs` artifact. A URL the run
+  `mobile-native-graphs-<version>.tar.gz`, the gate's own `native-dependency-graphs` artifact. A URL the run
   should have and does not fails the workflow: published incomplete is worse than published late.
 - Nothing to attach yet is a **silent success**; only a real failure reds the run. There is no
   notification by design — a draft release is watched by the person who merged it.

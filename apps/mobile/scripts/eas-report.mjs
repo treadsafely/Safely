@@ -1,6 +1,6 @@
 // Posts the build & e2e report to Slack.
 //
-// Run by the `report` job in apps/mobile/.eas/workflows/build-and-distribute.yml.
+// Run by the `report` job in apps/mobile/.eas/workflows/mobile-build-and-distribute.yml.
 // All inputs arrive via env vars (EAS interpolates job statuses, build outputs
 // and workflow inputs).
 //

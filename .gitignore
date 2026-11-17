@@ -26,4 +26,6 @@ CLAUDE.local.md
 .claude/agents/local/
 .claude/settings.local.json
 .claude/.cc-writes
+# release-review workflow reports, kept per branch and commit for incremental re-runs
+.release-reviews/
 .pnpm-store

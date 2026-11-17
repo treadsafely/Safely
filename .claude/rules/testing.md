@@ -2,6 +2,7 @@
 paths:
   - '**/test/**/*.{ts,tsx}'
   - '**/*.{test,spec}.{ts,tsx}'
+  - 'scripts/**/*.test.mjs'
 ---
 
 # Tests
@@ -27,6 +28,10 @@ pnpm --filter mobile run test:all          # plus swift test and ./gradlew test
 
 A single file: `pnpm --filter <pkg> exec vitest run <path>`. CI runs `test` only for changed
 packages and their dependents, and for everything when root-level files change.
+
+The root `scripts/` tooling belongs to no package and is the one exception: plain ESM run by node,
+so its tests use `node:test`, sit next to the module (`scripts/release/release-scheme.test.mjs`)
+and run through `pnpm test:scripts`, which CI calls on every pull request beside `lint:scripts`.
 
 ## What is tested how
 

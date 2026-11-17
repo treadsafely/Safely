@@ -321,9 +321,9 @@ the sandbox and an application group matching `ElectronTeamID`, that every helpe
 upload (`.github/workflows/desktop-build.yml`).
 
 It cannot check that securityd honours any of it — a profile can be present, unexpired and still name
-the wrong App ID or omit this machine. That half is exercised by **launching the app** and writing
-through the encrypted-store panel in `ScaffoldView.tsx` — with one item per key that is the same path
-the app takes on its first store call, so there is deliberately no headless self-test beside it.
+the wrong App ID or omit this machine. That half is exercised by **launching the app** and going
+through onboarding, whose account creation is the first store write — with one item per key
+that is the path every later write takes, so there is deliberately no headless self-test beside it.
 
 What neither covers:
 

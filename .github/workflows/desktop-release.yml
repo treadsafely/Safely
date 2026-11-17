@@ -1,8 +1,9 @@
 name: Desktop release
 
-# The merge of a release branch into master is the desktop release, the same shape as mobile's
-# release-draft.yml + release-assets.yml: the package is built from the merge commit by
-# `desktop-build.yml`, uploaded to TestFlight, and published as the GitHub prerelease
+# The merge into master of a release branch that names desktop — `release/x.y.0` or
+# `release/desktop-x.y.z` (`.claude/rules/release.md`) — is the desktop release, the same shape as
+# mobile's mobile-release-draft.yml + mobile-release-assets.yml: the package is built from the merge
+# commit by `desktop-build.yml`, uploaded to TestFlight, and published as the GitHub prerelease
 # `v<desktop version>-desktop` with the .pkg and the dependency listing attached.
 #
 # `push` and not `pull_request: closed` as mobile has: a pull_request run's GITHUB_REF is
@@ -32,10 +33,14 @@ jobs:
       build: ${{ steps.decide.outputs.build }}
       version: ${{ steps.decide.outputs.version }}
       tag: ${{ steps.decide.outputs.tag }}
+      previous-tag: ${{ steps.decide.outputs.previous-tag }}
       warning: ${{ steps.decide.outputs.warning }}
     steps:
+      # Full history: the scheme check reads master before the merge and the released tags.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Decide whether this commit is a desktop release
         id: decide
@@ -51,13 +56,14 @@ jobs:
           fi
 
           version="$(jq -r .version apps/desktop/package.json)"
-          tag="v${version}-desktop"
+          tag="$(node scripts/release/index.mjs tag --platform desktop --version "$version")"
           build=true
           warning=""
+          previous_tag=""
 
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            previous="$(gh api "repos/$GITHUB_REPOSITORY/contents/apps/desktop/package.json?ref=$BEFORE" \
-              -H 'Accept: application/vnd.github.raw' 2> /dev/null | jq -r .version || true)"
+            # The push's own base, not HEAD^1: a push of several commits may bump the version in any.
+            previous="$(git show "$BEFORE:apps/desktop/package.json" 2> /dev/null | jq -r .version || true)"
 
             # A fork can name its branch `release/x` too, hence the head repository check.
             find_source_branch() {
@@ -80,6 +86,31 @@ jobs:
               if [ "$previous" != "$version" ]; then
                 warning="⚠️ Desktop version became $version in ${GITHUB_SHA:0:7}, but no merged release/* pull request brought it (${source_branch:-none found}) — no release; if this is one, run Desktop release by hand on master"
               fi
+            else
+              # Exit 3: outside the scheme, which releases nothing; ci.yml has already refused its PR.
+              set +e
+              scheme="$(node scripts/release/index.mjs check --branch "$source_branch" \
+                --base HEAD^1 --platform desktop --allow-released)"
+              code=$?
+              set -e
+              read_scheme() { printf '%s\n' "$scheme" | sed -n "s/^$1=//p"; }
+
+              if [ "$code" = 3 ]; then
+                echo "::notice::$source_branch is outside the release scheme — no desktop release"
+                build=false
+              elif [ "$code" != 0 ]; then
+                echo "::error::$source_branch breaks the release scheme — see the lines above" >&2
+                exit 1
+              elif [ -z "$(read_scheme desktop)" ]; then
+                echo "::notice::$source_branch does not release desktop"
+                build=false
+              elif [ "$(read_scheme desktop-released)" = "true" ]; then
+                echo "::notice::$tag is already published — a desktop version is released once"
+                build=false
+              else
+                tag="$(read_scheme desktop-tag)"
+                previous_tag="$(read_scheme desktop-previous-tag)"
+              fi
             fi
           fi
 
@@ -98,6 +129,7 @@ jobs:
           echo "build=$build" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "previous-tag=$previous_tag" >> "$GITHUB_OUTPUT"
           echo "warning=$warning" >> "$GITHUB_OUTPUT"
 
   # The group is shared with desktop-staging.yml; see the note there.
@@ -147,12 +179,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
           TAG: ${{ needs.prepare.outputs.tag }}
+          PREVIOUS: ${{ needs.prepare.outputs.previous-tag }}
           NUMBER: ${{ needs.pipeline.outputs.number }}
         run: |
           set -euo pipefail
 
+          summary="Desktop $VERSION (build $NUMBER) — ${GITHUB_SHA:0:7}, uploaded to TestFlight. Prerelease until the Mac App Store rollout."
+          # As mobile: generated from the previous desktop tag, never a mobile one; gh puts the summary first.
+          if [ -n "$PREVIOUS" ]; then
+            notes=(--notes "$summary" --generate-notes --notes-start-tag "$PREVIOUS")
+          else
+            notes=(--notes "$summary")
+          fi
+
           stage="$RUNNER_TEMP/release"
-          pkg="$stage/Safely-$VERSION-b$NUMBER.pkg"
+          pkg="$stage/safely-desktop-$VERSION-b$NUMBER.pkg"
           mv "$stage/Safely.pkg" "$pkg"
 
           # The commit, not `master`: a branch name would let the tag land wherever master points.
@@ -160,7 +201,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$TAG" \
-            --notes "Desktop $VERSION (build $NUMBER) — ${GITHUB_SHA:0:7}, uploaded to TestFlight. Prerelease until the Mac App Store rollout." \
+            "${notes[@]}" \
             --prerelease
 
           echo "::notice::$TAG published with the package and the dependency listing"

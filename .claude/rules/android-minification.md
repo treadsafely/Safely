@@ -58,7 +58,7 @@ State the outcome in the plan, including "nothing at risk" — the check has to 
 - Run the release variant on an Android device or emulator and walk the changed flow by hand:
   `cd apps/mobile && pnpm exec expo run:android --variant release`. For inputs: type, paste,
   delete, switch focus, open and dismiss the keyboard.
-- The Maestro flows in `.eas/workflows/build-and-distribute.yml` run on the minified APK, but cover
+- The Maestro flows in `.eas/workflows/mobile-build-and-distribute.yml` run on the minified APK, but cover
   only their own flows; a feature outside them needs the manual pass above.
 - Crash traces from a release build are obfuscated; deobfuscate with
   `android/app/build/outputs/mapping/release/mapping.txt` (the AAB carries it, so Play does this

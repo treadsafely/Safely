@@ -1,0 +1,106 @@
+name: Mobile release draft
+
+# A merged release branch that names mobile — `release/x.y.0` or `release/mobile-x.y.z` — drafts the
+# mobile release `v<x.y.z>-mobile`; `mobile-release-assets.yml` completes it. `.claude/rules/release.md`
+# has the scheme.
+on:
+    pull_request:
+        types: [closed]
+        branches: [master]
+
+permissions:
+    contents: read
+
+jobs:
+    draft:
+        name: Draft the mobile release
+        if: ${{ github.event.pull_request.merged && startsWith(github.head_ref, 'release/') }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        outputs:
+            tag: ${{ steps.release.outputs.tag }}
+        steps:
+            # Full history: the check reads master before the merge and the released tags.
+            - uses: actions/checkout@v7.0.1
+              with:
+                  ref: ${{ github.event.pull_request.merge_commit_sha }}
+                  fetch-depth: 0
+
+            # Exit 3: a branch outside the scheme releases nothing; ci.yml has already refused its PR.
+            - name: Check the release branch
+              id: scheme
+              env:
+                  HEAD_REF: ${{ github.head_ref }}
+              run: |
+                  set +e
+                  OUT="$(node scripts/release/index.mjs check --branch "$HEAD_REF" \
+                      --base HEAD^1 --platform mobile --allow-released)"
+                  CODE=$?
+                  set -e
+                  case "$CODE" in
+                      0) printf '%s\n' "$OUT" >> "$GITHUB_OUTPUT" ;;
+                      3) echo "::notice::$HEAD_REF is outside the release scheme — no release" ;;
+                      *) exit "$CODE" ;;
+                  esac
+
+            - name: Already released
+              if: ${{ steps.scheme.outputs.mobile-released == 'true' }}
+              env:
+                  TAG: ${{ steps.scheme.outputs.mobile-tag }}
+              run: echo "::notice::$TAG is already published — a mobile version is released once"
+
+            # EAS finds the merged branch only in a merge commit's message; a squash builds no mobile.
+            - name: Require a merge commit
+              if: ${{ steps.scheme.outputs.mobile != '' && steps.scheme.outputs.mobile-released == 'false' }}
+              env:
+                  HEAD_REF: ${{ github.head_ref }}
+              run: |
+                  if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -lt 3 ]; then
+                      echo "::error::$HEAD_REF was not merged with a merge commit, so EAS built no mobile release — ship the next mobile version, merged with a merge commit"
+                      exit 1
+                  fi
+
+            - name: Create the draft release
+              id: release
+              if: ${{ steps.scheme.outputs.mobile != '' && steps.scheme.outputs.mobile-released == 'false' }}
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: ${{ steps.scheme.outputs.mobile-tag }}
+                  PREVIOUS: ${{ steps.scheme.outputs.mobile-previous-tag }}
+                  MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+              run: |
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                  if gh release view "$TAG" > /dev/null 2>&1; then
+                      echo "::notice::$TAG already exists — leaving it alone"
+                      exit 0
+                  fi
+
+                  # From the previous mobile tag, never a desktop one: the platforms share one tag list.
+                  if [ -n "$PREVIOUS" ]; then
+                      NOTES=(--generate-notes --notes-start-tag "$PREVIOUS")
+                  else
+                      NOTES=(--notes "First tracked mobile release. Artifacts are attached by the mobile-release-assets workflow.")
+                  fi
+
+                  # The merge commit, not `master`: the tag is created on publish.
+                  gh release create "$TAG" --draft --prerelease \
+                      --target "$MERGE_SHA" --title "$TAG" "${NOTES[@]}"
+
+            - name: Not a mobile release
+              if: ${{ steps.scheme.outputs.desktop != '' && steps.scheme.outputs.mobile == '' }}
+              env:
+                  HEAD_REF: ${{ github.head_ref }}
+              run: echo "::notice::$HEAD_REF does not release mobile"
+
+    # Normally finds nothing yet; that workflow's schedule finishes the job.
+    attach:
+        name: Attach the artifacts
+        needs: draft
+        if: ${{ needs.draft.outputs.tag != '' }}
+        permissions:
+            contents: write
+        uses: ./.github/workflows/mobile-release-assets.yml
+        with:
+            tag: ${{ needs.draft.outputs.tag }}
+        secrets: inherit

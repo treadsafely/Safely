@@ -1,23 +1,50 @@
 name: Desktop staging
 
-# A push to a release branch is a TestFlight build and nothing more; the release is the merge into
+# A push to a release branch that names desktop — `release/x.y.0` or `release/desktop-x.y.z`
+# (`.claude/rules/release.md`) — is a TestFlight build and nothing more; the release is the merge into
 # master (`desktop-release.yml`). The pipeline itself is `desktop-build.yml`.
 
 on:
   # A merge into a release branch is a push to it, and it builds unattended: what may reach a release
   # branch is decided by the ruleset on `release/*`, not by an approval here. The pattern matches the
-  # ruleset's exactly — `*` stops at `/`, so `release/**` would also build branches the ruleset does
-  # not protect. The `desktop-release` environment has to allow the ref too.
+  # ruleset's — `*` stops at `/`, so `release/**` would also build branches the ruleset does not
+  # protect. The `desktop-release` environment has to allow the ref too. `check` refuses the names
+  # these globs let through and the scheme does not.
   push:
     branches:
-      - 'release/*'
+      - 'release/*.*.0'
+      - 'release/desktop-*'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # Before the pipeline, so a misnamed branch or an unbumped version spends no build number.
+  check:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Against the merge-base, not master's tip: a platform release merged meanwhile is not this
+      # branch changing the other platform's version.
+      - name: Check the release branch
+        run: |
+          set -euo pipefail
+          base="$(git merge-base origin/master HEAD)"
+          node scripts/release/index.mjs check --branch "$GITHUB_REF_NAME" --base "$base" \
+            --platform desktop
+
   pipeline:
+    needs: check
+    if: ${{ !cancelled() && (needs.check.result == 'success' || needs.check.result == 'skipped') }}
     # One counter for every run of both callers, so two must not read it before either has written it
     # back. `queue: max` keeps every waiting pipeline instead of the default one, which a newer push
     # replaced — a pending release included. desktop-signing.md has the rest.
@@ -40,3 +67,22 @@ jobs:
       ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
       ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
       ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+
+  # The pipeline reports every outcome of its own, but a push `check` refused never reaches it.
+  report-check:
+    needs: check
+    if: ${{ failure() && needs.check.result == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Post the refusal to Slack
+        uses: ./.github/actions/desktop-slack-report
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ❌ ${{ github.ref_name }} breaks the release scheme — no desktop build; see the run
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
