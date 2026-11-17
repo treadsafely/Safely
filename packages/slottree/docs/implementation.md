@@ -150,5 +150,6 @@ time. The actual time can be found in the source code.
 When a version is no longer part of the author versions set, a new entry is created in the `versionDeletion` slot, with a
 `shouldBeDeletedAt` timestamp based on the current replica's local time.
 
-During Slot Tree startup, the implementation will check if any versions marked for deletion are ready to be deleted, and
-if so, they will be deleted by replacing their container slot with a Tombstone.
+During Slot Tree startup, the implementation checks whether any versions marked for deletion are ready to be deleted.
+If so, their version keys are physically removed from the root container. This is garbage collection: the data remains
+available in other schema versions, so no tombstone is created.

@@ -1,9 +1,10 @@
 import type { MergeProtocol, MergeStats } from './merge-protocol';
 import type { ContainerSlot, Slot } from './slots';
-import { createOriginContainer, isContainerSlot } from './slots';
+import { createOriginContainer, isContainerSlot, isTombstoneSlot } from './slots';
 import { cloneDeep, stripSlot } from './slots/slot-json';
 import { validateSlot } from './slots/slot-validation';
 import type { StorageVersion } from './versioning/version';
+import { VersionController } from './versioning/version-controller';
 import { VersionPropagation } from './versioning/version-propagation';
 import type { Draft } from './write';
 import { createDraft, selectJsonStorage } from './write';
@@ -42,6 +43,15 @@ export class WorkingStorageRoot {
         const before = cloneDeep(this.root);
         const stats = protocol.merge(this.root, incoming);
 
+        const controller = new VersionController(this.root, this.versions, protocol, {
+            nowSeconds: () => protocol.wallTime()
+        });
+        if (controller.deleteVersionsUnusedByDevices()) {
+            stats.updated += 1;
+        }
+
+        this.restoreLatestOverTombstone(before, controller);
+
         const propagation = new VersionPropagation(this.versions, protocol);
         propagation.propagateChangedOlderVersionsToNewer(before, this.root);
 
@@ -63,6 +73,20 @@ export class WorkingStorageRoot {
 
     public result(): ContainerSlot {
         return this.root;
+    }
+
+    private restoreLatestOverTombstone(
+        beforeMerge: ContainerSlot,
+        controller: VersionController
+    ): void {
+        // Legacy version cleanup could leave a tombstone that replaces the live latest version during merge.
+        // Restore the pre-merge container with a newer stamp so it passes validation and supersedes the
+        // tombstone on peers.
+        const latest = this.latestVersion();
+        const previousLatest = beforeMerge.v[String(latest.version)];
+        if (isContainerSlot(previousLatest) && isTombstoneSlot(controller.get(latest))) {
+            controller.setLatestVersion(previousLatest);
+        }
     }
 
     private latestVersion(): StorageVersion {

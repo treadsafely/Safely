@@ -127,6 +127,9 @@ export class StorageImpl<T> implements SlotTree<T> {
 
         this.root = options.root === undefined ? createOriginContainer() : cloneSlot(options.root);
 
+        // following methods can call .tick() so we need to ensure that protocol has latest clock
+        this.protocol.observeTree(this.root);
+
         this.ensureLatestInitialized();
         this.syncDeviceVersion();
         this.deleteUnusedVersions();
@@ -150,6 +153,7 @@ export class StorageImpl<T> implements SlotTree<T> {
 
             const propagation = new VersionPropagation(this.versions, this.protocol);
             propagation.propagateToOlderVersions(root);
+            controller.deleteVersionsUnusedByDevices();
         });
     }
 
@@ -361,7 +365,7 @@ export class StorageImpl<T> implements SlotTree<T> {
             this.clock
         );
 
-        if (controller.get(latest) !== undefined) {
+        if (isContainerSlot(controller.get(latest))) {
             this.committedRoot().get<T>();
             return;
         }
