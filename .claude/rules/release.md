@@ -57,6 +57,8 @@ until both apps share a minor on master, so the first release that aligns them i
   into `master` from a branch outside `release/*`, flag every changed path under `apps/**` or
   `packages/**`** and ask whether it belongs on a release branch instead — the EAS workflow files
   in `apps/mobile/.eas/` included.
+- **A release branch gets a deep review before its merge into `master`**: the `release-review`
+  workflow, run locally on a clean checkout of the branch (`release-review.md`).
 - **A long-lived `release/x.y.0` must take in `master` before its own merge**: platform-only
   releases may have shipped meanwhile, and their fixes — shared code included — would otherwise be
   lost. The version conflict this produces resolves to `x.y.0`.

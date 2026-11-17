@@ -112,12 +112,13 @@ the error message.
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
 `web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-ledger.md`, `desktop-secret-store.md`,
-`desktop-signing.md`, `release.md`, `testing.md`, `android-minification.md`. `git.md` has no
-`paths:` and loads always.
+`desktop-signing.md`, `release.md`, `release-review.md`, `testing.md`, `android-minification.md`.
+`git.md` has no `paths:` and loads always.
 
 `release.md` is the release scheme of both apps — shared `major.minor`, per-platform patch, the
 release branch names and tags; read it before cutting a release branch or touching a release
-workflow.
+workflow. Before a release branch merges into `master` it gets a deep review: the `release-review`
+workflow, run locally — `release-review.md`.
 
 `desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
 schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
