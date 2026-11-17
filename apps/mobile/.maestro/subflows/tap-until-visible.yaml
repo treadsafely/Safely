@@ -1,0 +1,25 @@
+# Taps TAP_ID until EXPECT_ID shows up (3 attempts, 5s each).
+# Right after launch the welcome buttons are in the hierarchy before the app
+# takes touches, and the first tap can be lost. The 5s wait between taps keeps
+# a slow but successful tap from navigating twice.
+appId: com.safely.wallet
+---
+- waitForAnimationToEnd
+- repeat:
+      times: 3
+      while:
+          notVisible:
+              id: ${EXPECT_ID}
+      commands:
+          - tapOn:
+                id: ${TAP_ID}
+          - extendedWaitUntil:
+                visible:
+                    id: ${EXPECT_ID}
+                timeout: 5000
+                optional: true
+
+- extendedWaitUntil:
+      visible:
+          id: ${EXPECT_ID}
+      timeout: 5000

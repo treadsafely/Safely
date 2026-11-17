@@ -52,14 +52,13 @@ tags:
       visible:
           id: 'welcome.importWallet'
       timeout: 60000
-- tapOn:
-      id: 'welcome.importWallet'
+- runFlow:
+      file: subflows/tap-until-visible.yaml
+      env:
+          TAP_ID: 'welcome.importWallet'
+          EXPECT_ID: 'importWallet.continueButton'
 
 # The seed input autofocuses ~400ms after the screen gets focus.
-- extendedWaitUntil:
-      visible:
-          id: 'importWallet.continueButton'
-      timeout: 15000
 - waitForAnimationToEnd
 # A funded wallet: the label only renames the printed step, Maestro's debug logs
 # and EAS artifacts still carry the phrase. See .claude/rules/mobile-e2e.md.

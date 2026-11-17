@@ -18,8 +18,11 @@ tags:
           id: 'welcome.createWallet'
       timeout: 60000
 
-- tapOn:
-      id: 'welcome.createWallet'
+- runFlow:
+      file: subflows/tap-until-visible.yaml
+      env:
+          TAP_ID: 'welcome.createWallet'
+          EXPECT_ID: 'onboardingPasscode.screen'
 
 - runFlow:
       file: subflows/enter-passcode.yaml

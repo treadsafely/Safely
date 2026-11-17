@@ -17,8 +17,11 @@ state the previous one left (onboarding → add wallets → recovery phrase → 
   `flow_path` honours `config.yaml`, and a wrong order on CI would run the chain on the wrong state
   while spending real BTC — so CI gets the explicit list. A new flow goes into both.
 - **Shared steps are subflows** in `.maestro/subflows/` (`enter-passcode.yaml` with `SCREEN_ID`,
-  `finish-onboarding.yaml`); the `'*.yaml'` glob in `config.yaml` does not reach them. Every flow
-  assumes passcode 1234.
+  `finish-onboarding.yaml`, `tap-until-visible.yaml` with `TAP_ID`/`EXPECT_ID`); the `'*.yaml'` glob
+  in `config.yaml` does not reach them. Every flow assumes passcode 1234.
+- **A tap on the welcome screen goes through `tap-until-visible.yaml`.** Right after launch the
+  buttons are in the hierarchy before the release APK takes touches: a lost `welcome.createWallet`
+  tap left the app on welcome, and every later flow of the chain failed on its home wait.
 - **Never set `retries` on the EAS job.** A retry reruns flows out of the chain's state, and
   `send-asset` would broadcast a second real payment.
 - **Never filter the chain by tag** (`--exclude-tags`): `flowsOrder` names every flow, and dropping
