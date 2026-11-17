@@ -8,7 +8,7 @@ import { queryExpo } from '../native-audit/eas/api.mjs';
 
 // A run started with `eas workflow:run` carries no ref, so the filter skips it.
 const GIT_REF = 'refs/heads/master';
-const WORKFLOW_FILE = 'build-and-distribute.yml';
+const WORKFLOW_FILE = 'mobile-build-and-distribute.yml';
 const RUNS_PER_PAGE = 25;
 
 // Not the run's own status: an e2e flake must not hold back a release.
@@ -124,9 +124,9 @@ const BINARIES = [
 ];
 
 const CAPTURED_GRAPHS = [
-    { job: 'build_ios', name: 'ios-Podfile.lock' },
-    { job: 'build_android', name: 'android-sdkDependencies.txt' },
-    { job: 'build_android_play', name: 'android-dependencies.pb' }
+    { job: 'build_ios', name: 'mobile-ios-Podfile.lock' },
+    { job: 'build_android', name: 'mobile-android-sdkDependencies.txt' },
+    { job: 'build_android_play', name: 'mobile-android-dependencies.pb' }
 ];
 
 function buildOf(jobs, key) {
@@ -152,7 +152,7 @@ export function releaseAssets({ jobs, version }) {
                 `${job} built v${build.appVersion}, but the release is v${version} — wrong run matched`
             );
         assets.push({
-            name: `safely-${version}-${build.appBuildVersion}.${extension}`,
+            name: `safely-mobile-${version}-${build.appBuildVersion}.${extension}`,
             url: urlOf(build, 'applicationArchiveUrl', 'application archive'),
             platform: job,
             build
@@ -172,7 +172,7 @@ export function releaseAssets({ jobs, version }) {
         throw new Error(
             `the gate uploaded no \`${GRAPHS_ARTIFACT}\` artifact — rerun the EAS workflow for this commit`
         );
-    assets.push({ name: `native-graphs-${version}.tar.gz`, url: graphs.downloadUrl });
+    assets.push({ name: `mobile-native-graphs-${version}.tar.gz`, url: graphs.downloadUrl });
 
     return assets;
 }

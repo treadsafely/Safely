@@ -524,7 +524,8 @@ the renderer only has a console transport there.
   Electron's default menu, so a `Menu.setApplicationMenu` without `role: 'about'` silently removes
   it.
 - **Store builds are signed only in CI, with Mac App Distribution, and reach testers through
-  TestFlight** (`../../.github/workflows/desktop-build.yml`, `desktop-signing.md`); a
+  TestFlight** (`../../.github/workflows/desktop-build.yml`, `desktop-signing.md`; versions and
+  release branches: `release.md`); a
   developer signs a local build with their own development identity. Two consequences for anything
   that touches the build: CI proves the signature is well-formed and
   nothing more — whether securityd honours it is only visible when the app runs — and a change to

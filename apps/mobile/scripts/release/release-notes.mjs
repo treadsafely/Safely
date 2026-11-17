@@ -18,9 +18,9 @@ export function assetSection({ project, run, jobs, version, sha, assets }) {
         '',
         `Native dependency gate: ${gateSummary(jobs) || 'see the EAS run'}`,
         '',
-        'Resolved native graphs are attached as `ios-Podfile.lock`,',
-        '`android-sdkDependencies.txt`, `android-dependencies.pb` and',
-        `\`native-graphs-${version}.tar.gz\` (parsed, with the gate report).`,
+        'Resolved native graphs are attached as `mobile-ios-Podfile.lock`,',
+        '`mobile-android-sdkDependencies.txt`, `mobile-android-dependencies.pb` and',
+        `\`mobile-native-graphs-${version}.tar.gz\` (parsed, with the gate report).`,
         '',
         `Commit \`${sha}\` · [EAS run](${runUrl(project, run.id)})`
     ].join('\n');

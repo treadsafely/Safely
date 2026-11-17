@@ -10,7 +10,7 @@
     "ios": "expo run:ios",
     "icons": "node scripts/generate-icons-file.js",
     "compile": "tsc --noEmit",
-    "build": "pnpm dlx eas-cli workflow:run build-and-distribute.yml --input release_notes=\"$(git branch --show-current)\"",
+    "build": "pnpm dlx eas-cli workflow:run mobile-build-and-distribute.yml --input release_notes=\"$(git branch --show-current)\"",
     "lint": "eslint ./src ./scripts",
     "test": "pnpm run test:js",
     "test:all": "pnpm run test:js && pnpm run test:ios && pnpm run test:android",

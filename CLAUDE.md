@@ -41,6 +41,8 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
 - `pnpm lint:scripts` — the root `scripts/` tooling, which belongs to no package and which
   `pnpm -r` therefore skips; CI runs it on every pull request. `apps/mobile/scripts` needs no
   separate call — mobile's `lint` covers `./src ./scripts`
+- `pnpm test:scripts` — `node --test` over `scripts/**/*.test.mjs` (the release scheme check);
+  CI runs it next to `lint:scripts`
 - `pnpm check:unicode` — fails on invisible (`Default_Ignorable`) characters in any tracked file,
   its name or a symlink target:
   bidi, zero-width, variation selectors, Tag characters (emoji ZWJ sequences and a VS15/VS16 after
@@ -53,13 +55,10 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   `make:<target>` pair per platform, while `forge.config.ts` holds everything platform-specific and
   refuses a target it does not support; Mac App Store (sandboxed) is the only one for now.
   `build:native` compiles the keychain addon (the package/make scripts run it first, `pnpm install`
-  never does). Store builds are signed only by `.github/workflows/desktop-build.yml`, which uploads
-  them to App Store Connect for TestFlight and is called by `desktop-staging.yml` (a push to
-  `release/*`) and `desktop-release.yml` (a `release/*` merge into `master`, which also publishes
-  the GitHub release `v<desktop version>-desktop`); locally a developer builds `package:mas` with
-  their own development identity.
-  `.claude/rules/desktop-signing.md` has the certificates, the environment, the `release/*` ruleset and what each job
-  may hold
+  never does). Store builds are signed only in CI (`.claude/rules/desktop-signing.md`: certificates,
+  environment, rulesets, what each job may hold); locally a developer builds `package:mas` with their
+  own development identity. When a push or a merge builds and releases which app:
+  `.claude/rules/release.md`
 - `packages/web-ui` generates `styled-system/` with `panda codegen`; its `compile`/`lint`/`test`
   scripts run it first, and `pnpm -r run` is topological, so the apps that depend on it build after.
   A standalone run in an app may need `pnpm --filter @safely/web-ui run codegen` first.
@@ -113,7 +112,12 @@ the error message.
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
 `web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-ledger.md`, `desktop-secret-store.md`,
-`desktop-signing.md`, `testing.md`, `android-minification.md`.
+`desktop-signing.md`, `release.md`, `testing.md`, `android-minification.md`. `git.md` has no
+`paths:` and loads always.
+
+`release.md` is the release scheme of both apps — shared `major.minor`, per-platform patch, the
+release branch names and tags; read it before cutting a release branch or touching a release
+workflow.
 
 `desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
 schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
@@ -141,6 +145,7 @@ Whenever a change makes something here wrong, incomplete or misleading, update i
 - new layer, path alias, or state-management convention → `fsd-layers.md`
 - sync protocol, state format or schema version changed → the spec first, then `sync-and-crypto.md`
 - native module, EAS profile, i18n or theming change → `mobile-app.md`
+- release branch scheme, release or tester-build workflow, tag or asset name → `release.md`
 - new test location, naming or tooling → `testing.md`
 - a new spec or long-form doc appeared → add a pointer under "Where the details are"
 
@@ -167,5 +172,7 @@ git history too. Point at where the value lives (`.env`, the secret manager) ins
 5. if the change touched anything listed under "Keeping these instructions current", update
    `CLAUDE.md` / `.claude/rules/*` in the same PR
 
-PRs target `master`; a non-draft PR triggers CI and the Claude review workflow
-(`.github/workflows/claude-review.yml`; re-run it by commenting `@claude review`).
+Feature PRs target the open `release/*` branch; `master` takes release branches and maintenance
+branches (CI, configuration) only — `.claude/rules/release.md`. A non-draft PR triggers CI and the
+Claude review workflow (`.github/workflows/claude-review.yml`; re-run it by commenting
+`@claude review`).

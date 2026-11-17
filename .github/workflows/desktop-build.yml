@@ -123,7 +123,7 @@ jobs:
         run: pnpm --filter @safely/web-ui run codegen
 
       # The release's record of what actually shipped — the macOS counterpart of mobile's
-      # android-sdkDependencies.txt. Resolved from the frozen lockfile just installed above.
+      # mobile-android-sdkDependencies.txt. Resolved from the frozen lockfile just installed above.
       - name: List resolved dependencies
         env:
           NUMBER: ${{ needs.allocate-build-number.outputs.number }}

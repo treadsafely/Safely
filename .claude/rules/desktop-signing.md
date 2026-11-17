@@ -153,19 +153,22 @@ packaging step can meet a relocked keychain halfway through.
 ## The TestFlight pipeline
 
 Three workflows. `desktop-build.yml` is the pipeline and runs only when called (`workflow_call`);
-`desktop-staging.yml` calls it on a push to `release/*` — a merge into a release branch is one — and
-`desktop-release.yml` on a push to `master`. Both callers also run by hand: Actions → Desktop staging
-/ Desktop release → Run workflow. The jobs are split by what each may hold:
+`desktop-staging.yml` calls it on a push to a release branch that names desktop (`release/*.*.0`,
+`release/desktop-*`) — a merge into a release branch is one — and `desktop-release.yml` on a push to
+`master`. Both callers also run by hand: Actions → Desktop staging / Desktop release → Run
+workflow; a hand-dispatched staging run skips `check`. The jobs are split by what each may hold:
 
 | Workflow | Job | Runner | Holds | Does |
 | -------- | --- | ------ | ----- | ---- |
-| release | `prepare` | `ubuntu-latest` | `github.token` | reads the desktop version; ends the run unless the push is the merge of a `release/*` pull request and `v<version>-desktop` is not published yet |
+| staging | `check` | `ubuntu-latest` | nothing | runs the scheme check of `release.md` on a push, so a misnamed branch or an unbumped version spends no build number |
+| staging | `report-check` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts a push `check` refused — the pipeline, which reports everything else, never started |
+| release | `prepare` | `ubuntu-latest` | `github.token` | reads the desktop version; ends the run unless the push is the merge of a release pull request that names desktop, passes the scheme check and `v<version>-desktop` is not published yet |
 | build | `allocate-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | reads the counter through the API and hands `n + 1` to `build` |
 | build | `build` | `macos-15` | the certificates and the profile | `make:mas`, `verify-signature.sh`, `pkgutil --check-signature`, lists the resolved production dependencies, hands the `.pkg` and that `desktop-dependencies.txt` on as an artifact kept 3 days |
 | build | `upload` | `macos-15` | the App Store Connect API key | `xcrun altool --validate-app`, then `--upload-app` |
 | build | `record-build-number` | `ubuntu-latest` | `BUILD_NUMBER_TOKEN` | advances the counter, only after `upload` succeeded |
 | build | `report` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts the outcome — every outcome when called from staging, failures only when called from release |
-| release | `release` | `ubuntu-latest` | `github.token` | after the pipeline, publishes the GitHub prerelease `v<desktop version>-desktop` on this commit with the `.pkg` and the dependency listing |
+| release | `release` | `ubuntu-latest` | `github.token` | after the pipeline, publishes the GitHub prerelease `v<version>-desktop` on this commit with `safely-desktop-<version>-b<build>.pkg` and the dependency listing |
 | release | `report` | `ubuntu-latest` | `SLACK_WEBHOOK_URL` | posts the release, a failed `release`, a failed `prepare`, or a version bump that came with no release pull request; a failed or cancelled pipeline is reported by the pipeline itself, naming the unpublished tag |
 
 The Slack post itself is the composite action `.github/actions/desktop-slack-report`, shared by both
@@ -182,24 +185,31 @@ composite action also has a limit of its own: the runner evaluates `${{ … }}` 
 block, comments included, and a composite action has no `secrets` context, so a literal `secrets.*`
 in a shell comment there fails the template validation of the whole `report` job.
 
-**A release branch is TestFlight only; the release is the merge into master**, the same shape as
-mobile's `release-draft.yml` + `release-assets.yml`. Publishing the release creates the tag
-`v<desktop version>-desktop` on the merge commit, with the package built from that very commit — not
-the release branch's, whose tree can differ once master has moved — so the last TestFlight build the
-testers see is the one the tag names. Master is built **only for the merge of a `release/*` pull
-request, and once per desktop version**: `prepare` looks up the pull request that brought the commit
-(`commits/<sha>/pulls`, head in this repository — a fork can name a branch `release/x` too) and then
-asks GitHub whether the release exists. GitHub links a merge commit to its pull request with a
-delay, so when the push changed the desktop version (compared with `github.event.before`) and the
-lookup comes back empty, `prepare` asks again for up to 50 seconds. A dependabot or feature merge
-builds nothing, spends no macOS minutes and no build number; one that leaves the desktop version
-alone posts nothing to Slack, while one that bumps it — or a release merge the lookup still cannot
-see — posts a warning naming the way out, a hand-dispatched release. Bumping the desktop version on a release branch is therefore what schedules a desktop
-release; a release branch that does not bump it ships mobile only. A hand-dispatched release on
-`master` skips the pull request check and releases whatever commit master is at; dispatched from any
-other branch it fails.
+Versions, release branches, tags, and when a merge releases desktop, mobile or both: `release.md`.
+This section is the desktop mechanics underneath.
 
-**Why `push` and not `pull_request: closed`, which is what mobile's `release-draft.yml` uses.** The
+**A release branch is TestFlight only; the release is the merge into master**, the same shape as
+mobile's `mobile-release-draft.yml` + `mobile-release-assets.yml`. Publishing the release creates the
+tag `v<version>-desktop` on the merge commit, with the package built from that very commit — not
+the release branch's, whose tree can differ once master has moved — so the last TestFlight build the
+testers see is the one the tag names. Master is built **only for the merge of a release pull
+request that names desktop, and once per desktop version**. Which branch outcome ends `prepare` how
+— out of scope, outside the scheme, breaking it, already released — is the table in `release.md`;
+the mechanics underneath: `prepare` looks up the pull request that brought the commit
+(`commits/<sha>/pulls`, head in this repository — a fork can name a branch `release/x` too), runs
+the scheme check on its branch with the merge commit's first parent as the base, and then asks
+GitHub whether the release exists, where only `release not found` counts as "not yet". GitHub links
+a merge commit to its pull request with a delay, so when the push changed the desktop version
+(compared with `github.event.before`, so a push of several commits counts as one) and the lookup
+comes back empty, `prepare` asks again for up to 50
+seconds. A merge that is no release pull request builds nothing, spends no macOS minutes and no
+build number; one that leaves the desktop version alone posts nothing to Slack, while one that
+bumps it — or a release merge the lookup still cannot see — posts a warning naming the way out, a
+hand-dispatched release. A hand-dispatched release on `master` skips the pull request lookup and
+the scheme check, takes its tag from `scripts/release/index.mjs tag` and releases whatever commit
+master is at, with the summary line as its only notes; dispatched from any other branch it fails.
+
+**Why `push` and not `pull_request: closed`, which is what `mobile-release-draft.yml` uses.** The
 environment's branch rule is matched against the run's `GITHUB_REF`, and a `pull_request` run's is
 `refs/pull/<n>/merge`. Allowing that ref in `desktop-release` would hand the signing keys to every
 `pull_request` run — any branch with a pull request open, a changed workflow included, reviewed or
@@ -209,12 +219,9 @@ workflow file comes from there — but it hands secrets to an event any pull req
 included, and stays safe only while nothing in the pipeline checks out the pull request's head; the
 `push` trigger plus the lookup gives the same answer without that edge.
 
-There is no check of the version against the branch name as mobile has: the branch is named after
-the mobile version, the two platforms version independently, and that is also why the tag carries
-the `-desktop` suffix — one `release/*` branch can carry mobile `2.2.1` and desktop `1.1.5` at once.
 The release stays a prerelease until the Mac App Store rollout, which is done by hand in App Store
-Connect. Mobile attaches through the polling `release-assets.yml`; desktop builds in CI, so it
-attaches its own assets directly. The listing mirrors mobile's `android-sdkDependencies.txt`.
+Connect. Mobile attaches through the polling `mobile-release-assets.yml`; desktop builds in CI, so it
+attaches its own assets directly. The listing mirrors mobile's `mobile-android-sdkDependencies.txt`.
 
 `macos-15` is arm64, the architecture the addon is built for. The upload calls `altool` directly
 rather than through a marketplace action: `apple-actions/upload-testflight-build` is a community
@@ -237,15 +244,17 @@ key, each on its own runner.
   build the chain), `APPLE_MAS_CERT_PASSWORD`, `APPLE_MAS_PROVISIONING_PROFILE` (base64);
 - upload: `ASC_API_KEY_P8`, `ASC_API_KEY_ID`, `ASC_API_ISSUER_ID`.
 
-**A push to `release/*`, or a release merge into `master`, builds and uploads with no approval.**
+**A push to a desktop release branch, or a release merge into `master`, builds and uploads with no
+approval.**
 What decides what gets signed is therefore what can reach those branches, and that is two
 repository rulesets, not the environment. "master & release" (`master`, `release/*`) requires a pull request with one approving
 review and forbids deletion and force pushes, admins bypassing. "Release" (`release/*`)
 **restricts creations**, bypassed only by the people who cut release branches — without it anyone
 with write access creates `release/x` from any commit, a changed workflow included, and CI signs it.
-That rule covers the mobile `release/<version>` branches as well, so whoever cuts those needs to be
-on its bypass list. The workflow's trigger is `release/*` and not `release/**` for the
-same reason: `*` stops at `/`, and a nested branch would build without the ruleset. The environment itself
+That rule covers every release branch of `release.md`, mobile-only ones included, so whoever cuts
+those needs to be on its bypass list. The workflow's triggers (`release/*.*.0`, `release/desktop-*`)
+stay inside `release/*` for the same reason: `*` stops at `/`, and a nested branch would build
+without the ruleset. The environment itself
 carries deployment-branch rules for `release/*` and `master` and no reviewer. Approval per run was the
 alternative and was dropped: with the ruleset in place it would ask the same question twice. A
 branch dispatched by hand has to be added to the environment's branch rule too, or the run starts

@@ -1,4 +1,4 @@
-// Downloads an EAS release build's artifacts; the GitHub side is gh, in release-assets.yml.
+// Downloads an EAS release build's artifacts; the GitHub side is gh, in mobile-release-assets.yml.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

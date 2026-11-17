@@ -1,11 +1,13 @@
-name: Build & Distribute to Firebase
+name: Mobile build & distribute
 
+# Branches that release mobile: `.claude/rules/release.md`. The globs are coarse on purpose — EAS knows
+# only `*`, and a character class silently matches nothing — and ci.yml checks the exact name.
 on:
   push:
     branches:
       - master
-      # EAS branch globs ignore character classes: `release/[0-9]*...` silently matched nothing.
-      - release/*.*.*
+      - release/*.*.0
+      - release/mobile-*
   workflow_dispatch:
     inputs:
       release_notes:
@@ -29,7 +31,10 @@ jobs:
       notes: ${{ steps.prep.outputs.notes }}
       android_profile: ${{ steps.prep.outputs.android_profile }}
       build_type: ${{ steps.prep.outputs.build_type }}
+      mobile: ${{ steps.prep.outputs.mobile }}
     steps:
+      # For scripts/release, the scheme's one definition; cwd becomes apps/mobile.
+      - uses: eas/checkout
       - name: Compute notes & profile
         id: prep
         run: |
@@ -55,6 +60,42 @@ jobs:
           echo "Resolved notes: $NOTES"
           set-output notes "$NOTES"
 
+          # Whether this push ships mobile, by the branch name: on a release branch its own name, on
+          # master the merged branch, which the merge commit message is the one place EAS sees.
+          # Exit 3 of `scope` is a name outside the scheme: no build, no deployment. Any other push
+          # to master — a maintenance merge, a squash — ships nothing.
+          # Only 0 and 3 are answers; a crash must fail the run, not read as "no mobile here".
+          mobile_in_scope() {
+            local out code=0
+            out="$(node ../../scripts/release/index.mjs scope --branch "$1")" || code=$?
+            case "$code" in
+              0) [ -n "$(printf '%s\n' "$out" | sed -n 's/^mobile=//p')" ] ;;
+              3) return 1 ;;
+              *)
+                echo "scripts/release/index.mjs exited $code - no answer, failing the run"
+                exit "$code"
+                ;;
+            esac
+          }
+
+          MERGE='^Merge pull request #[0-9]+ from [^/[:space:]]+/(release/[^[:space:]]+)'
+          if [[ "$REF_NAME" == release/* ]]; then
+            if ! mobile_in_scope "$REF_NAME"; then
+              echo "$REF_NAME does not release mobile under the release scheme - see .claude/rules/release.md"
+              exit 1
+            fi
+            set-output mobile "true"
+          elif [[ "$REF_NAME" == master && "$EVENT_NAME" != "workflow_dispatch" ]]; then
+            if [[ "$COMMIT_MESSAGE" =~ $MERGE ]] && mobile_in_scope "${BASH_REMATCH[1]}"; then
+              set-output mobile "true"
+            else
+              echo "not a merge of a release branch that ships mobile - no mobile build"
+              set-output mobile "false"
+            fi
+          else
+            set-output mobile "true"
+          fi
+
           # Cache feature builds (release/*) and manual runs; master stays uncached
           # for clean from-scratch builds. master also ships the AAB to Play, so it's
           # the "production" build type; everything else is "staging".
@@ -70,6 +111,7 @@ jobs:
     name: Build iOS
     type: build
     needs: [prepare]
+    if: ${{ needs.prepare.outputs.mobile == 'true' }}
     params:
       platform: ios
       profile: staging-base
@@ -79,6 +121,7 @@ jobs:
     name: Build APK
     type: build
     needs: [prepare]
+    if: ${{ needs.prepare.outputs.mobile == 'true' }}
     params:
       platform: android
       profile: ${{ needs.prepare.outputs.android_profile }}
@@ -88,7 +131,7 @@ jobs:
     name: Build AAB (Play)
     type: build
     needs: [prepare]
-    if: ${{ github.ref_name == 'master' }}
+    if: ${{ github.ref_name == 'master' && needs.prepare.outputs.mobile == 'true' }}
     params:
       platform: android
       profile: production
@@ -265,6 +308,8 @@ jobs:
   # both the statuses and the build outputs (version / build number).
   report:
     name: Report (Slack)
+    # A failed prepare (a branch refused by the scheme, a crash) is reported too.
+    if: ${{ after.prepare.status != 'success' || after.prepare.outputs.mobile == 'true' }}
     after:
       - prepare
       - build_ios

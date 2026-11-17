@@ -72,6 +72,7 @@ jobs:
         # so it is linted by its own always-on call.
         run: |
           pnpm run lint:scripts
+          pnpm run test:scripts
           if [ "$ROOT_CHANGED" = "true" ]; then
             pnpm -r run lint
           else
@@ -99,6 +100,25 @@ jobs:
             pnpm --filter "...[$BASE_SHA]" --filter "!safely" run test
           fi
 
+
+  # The same check the release workflows run after the merge, while the pull request can still change.
+  release-scheme:
+    if: github.base_ref == 'master' && startsWith(github.head_ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.10.0'
+
+      # The checkout is the pull request merged into master, so its first parent is master.
+      - name: Check the release branch
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: node scripts/release/index.mjs check --branch "$BRANCH" --base HEAD^1
 
   dependency-advisories:
     runs-on: ubuntu-latest

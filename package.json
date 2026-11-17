@@ -11,6 +11,7 @@
     "test": "pnpm -r run test",
     "lint": "pnpm run lint:scripts && pnpm -r run lint",
     "lint:scripts": "eslint scripts",
+    "test:scripts": "node --test 'scripts/**/*.test.mjs'",
     "dependencies-audit": "node scripts/audit-gate.mjs",
     "check:unicode": "node scripts/check-hidden-unicode.mjs"
   },

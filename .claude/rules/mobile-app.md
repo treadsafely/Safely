@@ -405,16 +405,19 @@ reports a missing key and i18next silently falls back to English. Keep Russian c
 
 ## Build and release
 
+- Versions, release branches, tags and how a mobile release relates to a desktop one:
+  `release.md`. This section covers only the EAS side.
 - EAS profiles are in `eas.json` (`staging-base`, `staging-cached`, `production`; build numbers come
   from `appVersionSource: remote`).
-- Tester distribution runs through the EAS Workflow `.eas/workflows/build-and-distribute.yml`;
-  trigger it locally with `pnpm --filter mobile run build`. It fires on a push to `master` or to a
-  `release/<major>.<minor>.<patch>` branch (`release/1.4.0`, pattern `release/*.*.*`) — a
-  differently named `release/*` branch is deliberately ignored — and on manual dispatch. Read that
-  file's comments before editing it — EAS Workflows has sharp edges the syntax doesn't hint at:
+- Tester distribution runs through the EAS Workflow `.eas/workflows/mobile-build-and-distribute.yml`;
+  trigger it locally with `pnpm --filter mobile run build`. It fires on a push to `master` (builds
+  only for the merge of a release branch that ships mobile), to `release/*.*.0` or
+  `release/mobile-*`, and on manual dispatch; `release.md` has why the globs are coarse and what
+  checks the exact name. Read the workflow's own comments before editing it — EAS Workflows has
+  sharp edges the syntax doesn't hint at:
   - `on.push.branches` globs support only `*`, `**` and `!`. A character class is not an error, it
     just never matches: `release/[0-9]*.[0-9]*.[0-9]*` passed minimatch and triggered nothing on
-    `release/1.3.0`. Validate the version elsewhere (`release-draft.yml` does).
+    `release/1.3.0`. Validate the branch name elsewhere (`release.md` says where).
   - `env:` must be job-level. A step-level `env:` is unsupported and its `${{ }}` values arrive as
     raw literals; interpolate inside `run:` instead, or put the value on the job.
   - a custom `steps:` job starts with an empty working dir — `- uses: eas/checkout` first, otherwise

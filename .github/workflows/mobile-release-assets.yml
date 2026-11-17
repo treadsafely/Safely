@@ -1,6 +1,6 @@
-name: Release assets
+name: Mobile release assets
 
-# Copies an EAS release build into its GitHub release and publishes it, tagging it.
+# Copies an EAS release build into its mobile GitHub release and publishes it, tagging it.
 on:
     workflow_call:
         inputs:
@@ -11,7 +11,7 @@ on:
     workflow_dispatch:
         inputs:
             tag:
-                description: Only this release, e.g. v1.2.4. Empty means the oldest draft.
+                description: Only this release, e.g. v1.5.0-mobile. Empty means the oldest mobile draft.
                 type: string
                 required: false
                 default: ''
@@ -46,11 +46,11 @@ jobs:
                   else
                       # Oldest first: closest to losing its artifacts.
                       TAG=$(gh release list --limit 30 --json tagName,isDraft,createdAt \
-                          --jq 'map(select(.isDraft and (.tagName | test("^v[0-9]+[.][0-9]+[.][0-9]+$"))))
+                          --jq 'map(select(.isDraft and (.tagName | test("^v[0-9]+[.][0-9]+[.][0-9]+-mobile$"))))
                                 | sort_by(.createdAt) | .[0].tagName // ""')
                   fi
                   if [ -z "$TAG" ]; then
-                      echo 'no draft release is waiting for artifacts'
+                      echo 'no mobile draft release is waiting for artifacts'
                       exit 0
                   fi
 
@@ -67,9 +67,16 @@ jobs:
                       exit 0
                   fi
 
+                  VERSION="${TAG#v}"
+                  VERSION="${VERSION%-mobile}"
+                  if [ "v$VERSION-mobile" != "$TAG" ]; then
+                      echo "::error::$TAG is not a mobile release tag (v<x.y.z>-mobile)"
+                      exit 1
+                  fi
+
                   {
                       echo "tag=$TAG"
-                      echo "version=${TAG#v}"
+                      echo "version=$VERSION"
                       echo "sha=$SHA"
                       echo "attached=$(gh release view "$TAG" --json assets \
                           --jq '[.assets[].name] | join(",")')"
