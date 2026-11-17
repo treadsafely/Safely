@@ -47,8 +47,7 @@ export class VersionController {
             throw new Error('Initial version must be a container');
         }
 
-        this.root.v[this.versionKey(latest)] = slot;
-        return slot;
+        return this.setLatestVersion(slot);
     }
 
     public createVersionFrom(version: VersionSelector): ContainerSlot | undefined {
@@ -68,8 +67,19 @@ export class VersionController {
             current = projected;
         }
 
-        this.root.v[this.versionKey(this.latestVersion())] = current;
-        return current;
+        return this.setLatestVersion(current);
+    }
+
+    public setLatestVersion(slot: ContainerSlot): ContainerSlot {
+        // To ensure that version will override tombstone, we need to create a version with
+        // `t` greater than `t` from tombstone slot
+        const key = this.versionKey(this.latestVersion());
+        const latest = isTombstoneSlot(this.root.v[key])
+            ? createContainerSlot(this.protocol.tick(), this.protocol.id, slot.v)
+            : slot;
+
+        this.root.v[key] = latest;
+        return latest;
     }
 
     public delete(version: VersionSelector): void {

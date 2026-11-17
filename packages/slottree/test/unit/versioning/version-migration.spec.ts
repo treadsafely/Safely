@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import type { StorageV1 } from './version-fixtures';
@@ -97,10 +97,13 @@ describe('version migration', () => {
         const restored = cborEncoder.decode(storage.export()).v['3'] as ContainerSlot;
 
         expect(restored.s).toBe(SlotKind.Container);
-        expect(restored.t).toBe(123);
-        expect(restored.a).toBe(oldDeviceAuthor);
+        expect(restored.t).toBeGreaterThan(tombstoneTimestamp);
+        expect(restored.a).toBe(device1);
         expect(restored.v.key1).toMatchObject({ v: 42, t: 123, a: oldDeviceAuthor });
         expect(restored.v.label).toMatchObject({ v: 'from-v1', t: 123, a: oldDeviceAuthor });
+
+        storage.merge(snapshot);
+        expect(storage.get()).toEqual(expected);
 
         const reopened = createStorageFromSnapshot({
             ...options,
@@ -108,6 +111,65 @@ describe('version migration', () => {
         });
 
         expect(reopened.get()).toEqual(expected);
+    });
+
+    it('restores the initial version over a tombstone when no older version is live', () => {
+        const tombstoneTimestamp = 9_999_999_999;
+        const snapshot = cborEncoder.encode(
+            createOriginContainer({
+                '3': createTombstoneSlot(tombstoneTimestamp, oldDeviceAuthor)
+            })
+        );
+        const storage = createStorageFromSnapshot({
+            authorId: Buffer.from('device-1'),
+            versions: v3,
+            snapshot,
+            clock: { nowSeconds: () => 1_000 }
+        });
+        const initial = storage.get();
+        const restored = cborEncoder.decode(storage.export()).v['3'];
+
+        expect(restored).toMatchObject({ s: SlotKind.Container, a: device1 });
+        expect(restored?.t).toBeGreaterThan(tombstoneTimestamp);
+
+        storage.merge(snapshot);
+        expect(storage.get()).toEqual(initial);
+    });
+
+    it('persists the live latest version over a winning tombstone received during merge', async () => {
+        const tombstoneTimestamp = 9_999_999_999;
+        const clock = { nowSeconds: () => 1_000 };
+        const storage = createStorage({ authorId: Buffer.from('device-1'), versions: v3, clock });
+        storage.transaction(draft => {
+            draft.set('key4', 'only in v3');
+        });
+        const expected = storage.get();
+        const peer = createStorage({
+            authorId: Buffer.from(oldDeviceAuthor, 'hex'),
+            versions: v1,
+            clock,
+            root: createOriginContainer({
+                '3': createTombstoneSlot(tombstoneTimestamp, oldDeviceAuthor)
+            })
+        });
+        const incoming = peer.export();
+        const commit = vi.fn(async (snapshot: Buffer) => {
+            const restored = cborEncoder.decode(snapshot).v['3'];
+            expect(restored).toMatchObject({ s: SlotKind.Container, a: device1 });
+            expect(restored?.t).toBeGreaterThan(tombstoneTimestamp);
+            expect(stripSlot(restored)).toEqual(expected);
+            return true;
+        });
+
+        expect(await storage.unsafeAsyncMerge(incoming, commit)).toBe(true);
+        expect(storage.get()).toEqual(expected);
+        expect(await storage.unsafeAsyncMerge(incoming, commit)).toBe(false);
+        expect(commit).toHaveBeenCalledOnce();
+
+        peer.merge(storage.export());
+        expect(cborEncoder.decode(peer.export()).v['3']).toEqual(
+            cborEncoder.decode(storage.export()).v['3']
+        );
     });
 
     it('physically deletes an unused intermediate version without recreating it during projections', () => {
