@@ -124,8 +124,10 @@ spans the list alone.
 
 The shell has two side regions, each a pair of slots: `AppLayout.Secondary`/`SecondaryContent` on
 the left holds settings, `AppLayout.Panel`/`PanelContent` on the right holds a detail view. The
-left one opens by collapsing the outer slot's width while the inner one shifts out, with no
-transition: settings appear on the click. The right one is an overlay: the outer slot is an
+left one opens by collapsing the outer slot's width while the inner one is `display: none`, with no
+transition: settings appear on the click. It is not shifted out of sight instead, because a drag
+region ignores the clip of its ancestors — the settings header's then lands over the main sidebar
+and swallows the clicks on the first wallets. The right one is an overlay: the outer slot is an
 absolute layer over the content that never takes pointer events, and the inner one slides in over
 it with a shadow, so opening the detail view never reflows the chart or the table. Either way
 the outer slot stays mounted and the page decides what the inner one contains — the transaction

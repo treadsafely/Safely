@@ -133,7 +133,7 @@ export const appLayoutRecipe = defineSlotRecipe({
         isSecondaryOpen: {
             false: {
                 secondary: { width: '0' },
-                secondaryContent: { transform: 'translateX(-100%)' }
+                secondaryContent: { display: 'none' }
             }
         },
         isPanelOpen: {
