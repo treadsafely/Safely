@@ -13,13 +13,16 @@ gets a deep review, run locally by the `release-review` workflow in `.claude/wor
 
 ## Running it
 
-1. Check out the release branch in a **clean** working tree at the commit to be merged: reviewers
-   read files from the working tree but take the diff from committed history, so uncommitted edits
-   mix in silently (the report flags a dirty tree). Take `master` in first if it moved
-   (`release.md`); the report shows how many `master` commits are missing.
+1. `git fetch origin`, then check out the release branch in a **clean** working tree at the commit to
+   be merged: reviewers read files from the working tree but take the diff from committed history,
+   so uncommitted edits mix in silently (the report flags a dirty tree). The workflow never fetches,
+   and it compares against `origin/master`: the local `master` goes stale behind a release branch,
+   which both drags already-released code into the range and hides `master` commits the branch has
+   not taken in. Take `master` in first if it moved (`release.md`); the report shows how many of its
+   commits are missing and the base sha it measured against.
 2. Ask Claude Code to run the `release-review` workflow. Args, all optional:
-   `{full: true}` forces a full run; `base` (`master`) and `head` (`HEAD`) set the range; `focus`
-   adds emphasis to every reviewer; `chunkLines` (1200) sets the area chunk size.
+   `{full: true}` forces a full run; `base` (`origin/master`) and `head` (`HEAD`) set the range;
+   `focus` adds emphasis to every reviewer; `chunkLines` (1200) sets the area chunk size.
 3. Triage the report it writes to `.release-reviews/<branch>/<sha>.md`.
 
 ## Full and incremental runs
@@ -29,7 +32,7 @@ findings with their status, read by the next run). The directory is gitignored: 
 machine that ran them.
 
 - **Full** — no previous report for the branch, `full: true`, or the previous report's commit is not
-  an ancestor of `HEAD` (rebase, force-push). Reviews the whole release diff `master...HEAD`.
+  an ancestor of `HEAD` (rebase, force-push). Reviews the whole release diff `origin/master...HEAD`.
 - **Incremental** — the default once a report exists. Reviews only the files changed since the
   previous report's commit that are still part of the release diff, so changes taken in from
   `master` are not reviewed again. Every finding left open by the previous report is re-checked
@@ -40,8 +43,8 @@ machine that ran them.
 
 - **Prepare** — finds the previous report and picks the mode, then lists the changed files, the
   commit count and how far the branch is behind `master`. The generated OpenAPI client,
-  `styled-system/`, snapshots and binaries are skipped and listed; the lockfile goes only to the
-  supply-chain reviewer.
+  `styled-system/`, snapshots and binaries are skipped and listed; the lockfile is named only to the
+  supply-chain reviewer, which also runs alone when an incremental run finds nothing else changed.
 - **Review**, all in parallel:
   - **area reviewers** — every file goes to the first matching entry of `AREAS` (sync, core, ux,
     web-ui, desktop main/preload/native, desktop renderer, mobile native, mobile, other packages,

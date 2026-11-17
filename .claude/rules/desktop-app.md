@@ -169,14 +169,10 @@ group, so the addon reports itself unavailable and `pnpm start` runs on the deve
 in `vite.main.config.ts`: plain files in the development `userData`, protecting nothing, warning on
 every start. A packaged build refuses to start rather than degrade to it. Anything you want to
 believe about the store has to be checked on a signed build — `signing/verify-signature.sh` for the
-signature, the running app for securityd. What exercises it by hand is the `SECRET STORE` section of
-the dev tools (`packages/web-ui/src/pages/main/settings/KeychainSection.tsx`, the `devTools`
-settings section reached by a long press on the version line in settings): it lists, adds, edits and
-deletes entries of either secret scope through the same `IAppContext` storage the rest of the UI
-uses — `storage.sync.encrypted` and `storage.sync.getSecureEncrypted()`, so it sees the `sync` node
-of the scope and not the whole keychain service. Reaching the secure scope there needs
-`UNSAFE_SKIP_SECURITY_CHECK_unlock()`, exactly as onboarding does before a passcode exists; that
-call belongs to those two places and must not spread into anything shipping a flow.
+signature, the running app for securityd. There is no dev-tools panel for it any more (the keychain
+tool was removed in `4f11829a`): creating an account in onboarding writes the secret scopes —
+the secure one through `UNSAFE_SKIP_SECURITY_CHECK_unlock()`, before a passcode exists — so going
+through onboarding on the signed build is the check.
 
 **The gate is real, but the renderer is the one enforcing it.** `securityGate` is a module-level
 const in `src/renderer/app/AppProviders.tsx` — the composition of the two factors is the app's, not
@@ -211,7 +207,8 @@ would be served as a file — see below); the paths and the zod shapes of params
 - `/onboarding` — `WelcomeScreen`; its steps are `useOnboardingFlow` state, not routes
 - a pathless layout route `main` (`MainScreen`) with `?modal=send|receive|addWallet|addAccount` as
   its search, and the children `/`, `/updates`, `/safety`, `/settings/{-$section}/{-$tool}` — the
-  second optional segment is a dev-tools detail (`keychain`, `logs`) and is dropped under any other
+  second optional segment is a dev-tools detail (`config`, `logs` — `DEV_TOOLS` in
+  `packages/web-ui/src/pages/main/settings/types.ts`) and is dropped under any other
   section. The children have no component: they exist for the URL, the params and the history, and
   `MainScreen` turns the matched child plus the search into the `MainLocation` that `MainPage` takes
   (`screens/main-location.ts`, round-trip tested in `test/renderer/`). A layout route rather than a

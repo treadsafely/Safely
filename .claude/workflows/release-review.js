@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Deep pre-release review of a release branch against master: area reviewers, cross-cutting and security lenses, mechanical gates, adversarial verification; incremental when a previous report exists',
   whenToUse:
-    'Before a release/* branch merges into master, on a clean checkout of that branch. Args: {full?: boolean, base?: "master", head?: "HEAD", focus?: string, chunkLines?: number}',
+    'Before a release/* branch merges into master, on a clean checkout of that branch after `git fetch origin`. Args: {full?: boolean, base?: "origin/master", head?: "HEAD", focus?: string, chunkLines?: number}',
   phases: [
     { title: 'Prepare', detail: 'previous report, mode, changed files' },
     { title: 'Review', detail: 'area chunks, lenses, security reviewers, gates, re-check of open findings' },
@@ -13,7 +13,8 @@ export const meta = {
 }
 
 const opts = args || {}
-const BASE = opts.base || 'master'
+// The local master goes stale behind a release branch; origin/master is what the merge will meet.
+const BASE = opts.base || 'origin/master'
 const HEAD = opts.head || 'HEAD'
 const RANGE = `${BASE}...${HEAD}`
 const CHUNK_LINES = opts.chunkLines || 1200
@@ -43,13 +44,13 @@ const AREAS = [
     key: 'core',
     match: (p) => p.startsWith('packages/core/'),
     focus:
-      'Wallet domain: BTC amounts and units (sat vs BTC, number vs bigint, rounding), PSBT construction and signing, fee estimation, address and network handling, Ledger and Flame flows, validation of external API responses, swallowed errors, sensitive data reaching logs without filterSensitiveData.',
+      'Wallet domain: BTC amounts and units (sat vs BTC, number vs bigint, rounding; amount formatting per .claude/rules/amount-input.md), PSBT construction and signing, fee estimation, address and network handling, Ledger and Flame flows, validation of external API responses, swallowed errors, sensitive data reaching logs without filterSensitiveData.',
   },
   {
     key: 'ux',
     match: (p) => p.startsWith('packages/ux/'),
     focus:
-      'Shared React layer: react-query keys and invalidation, zustand stores, xstate v5 machines (unhandled events, invoke without onError, unreachable states), hook rules and stale closures, effects without cleanup, strings outside i18n, en/ru key parity, import cycles that break module-load helpers such as defineQueryKeys.',
+      'Shared React layer: react-query keys and invalidation, zustand stores, xstate v5 machines (unhandled events, invoke without onError, unreachable states), hook rules and stale closures, effects without cleanup, the send form amount input (.claude/rules/amount-input.md), strings outside i18n, en/ru key parity, import cycles that break module-load helpers such as defineQueryKeys.',
   },
   {
     key: 'web-ui',
@@ -238,8 +239,10 @@ const SCOPE_SCHEMA = {
     changed_since_previous: { type: 'array', items: { type: 'string' } },
     commits: { type: 'integer' },
     behind_base: { type: 'integer' },
+    base_sha: { type: 'string' },
+    merge_base: { type: 'string' },
   },
-  required: ['files', 'changed_since_previous', 'commits', 'behind_base'],
+  required: ['files', 'changed_since_previous', 'commits', 'behind_base', 'base_sha', 'merge_base'],
 }
 
 const GATES_SCHEMA = {
@@ -384,7 +387,9 @@ const scope = await agent(
 1. \`git diff --numstat --no-renames ${RANGE}\` — one entry per line: added, deleted, path; a binary file shows "-", record it as 0. Return every file, none dropped.
 2. ${SINCE ? `\`git diff --name-only --no-renames ${SINCE}..${HEAD}\` → changed_since_previous.` : 'changed_since_previous is [].'}
 3. \`git rev-list --count --no-merges ${BASE}..${HEAD}\` → commits.
-4. \`git rev-list --count ${HEAD}..${BASE}\` → behind_base.`,
+4. \`git rev-list --count ${HEAD}..${BASE}\` → behind_base.
+5. \`git rev-parse --short=12 ${BASE}\` → base_sha.
+6. \`git merge-base ${BASE} ${HEAD}\` → merge_base, shortened to 12 characters.`,
   { label: 'scope', phase: 'Prepare', schema: SCOPE_SCHEMA, effort: 'low' },
 )
 if (!scope) throw new Error('scope agent returned nothing')
@@ -407,12 +412,12 @@ for (const f of files) {
   byArea.get(area.key).files.push(f)
 }
 const chunks = [...byArea.values()].flatMap(({ area, files: fs }) => chunkArea(area, fs))
-const wholeDiff = files.length || lockChanged
-const lenses = wholeDiff ? LENSES : []
-const security = wholeDiff ? SECURITY : []
+const lenses = files.length ? LENSES : []
+const security = SECURITY.filter((s) => files.length || (lockChanged && s.key === 'supply-chain'))
 log(`${chunks.length} area chunks, ${lenses.length} lenses, ${security.length} security reviewers, gates, ${previousOpen.length} re-checks`)
 
-const fileList = files.map(fmtFile).join('\n') + (lockChanged ? '\npnpm-lock.yaml (changed; read it only for dependency questions)' : '')
+const fileList = files.map(fmtFile).join('\n')
+const lockNote = lockChanged ? '\npnpm-lock.yaml (changed)' : ''
 const SCOPE_NOTE = SINCE
   ? `This is an incremental run: review only what changed in \`git diff ${SINCE}..${HEAD} -- <path>\`, inside the release diff \`git diff ${RANGE}\` which an earlier run already reviewed. Changes in the range that arrived by merging ${BASE} are already released; leave them alone.`
   : `Get a file's change with \`git diff ${RANGE} -- <path>\`, one command per call.`
@@ -475,7 +480,7 @@ ${SECURITY_NOTE}
 ${s.prompt}
 
 Changed files in scope (+added -deleted); pick the ones your topic needs:
-${fileList}`,
+${fileList}${s.key === 'supply-chain' ? lockNote : ''}`,
       true,
     ),
   ),
@@ -610,7 +615,7 @@ const counts = (list) => SEVERITIES.map((s) => `${s} ${list.filter((f) => f.seve
 const markdown = [
   `# Release review: ${state.branch} @ ${state.sha}`,
   '',
-  `${mode === 'incremental' ? `Incremental since \`${SINCE}\`` : 'Full run'} · range \`${RANGE}\` · ${scope.commits} commits · ${files.length} files reviewed · ${scope.behind_base} commits on ${BASE} not merged in${state.dirty ? ' · **working tree was dirty**' : ''}`,
+  `${mode === 'incremental' ? `Incremental since \`${SINCE}\`` : 'Full run'} · range \`${RANGE}\` (${BASE} at \`${scope.base_sha}\`, merge-base \`${scope.merge_base}\`) · ${scope.commits} commits · ${files.length} files reviewed · ${scope.behind_base} commits on ${BASE} not merged in${state.dirty ? ' · **working tree was dirty**' : ''}`,
   '',
   `**Open:** ${counts(openAll)} · **fixed since previous:** ${fixed.length} · **gates failing:** ${gateFailures.length}`,
   '',

@@ -112,7 +112,8 @@ the error message.
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
 `web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-ledger.md`, `desktop-secret-store.md`,
-`desktop-signing.md`, `release.md`, `release-review.md`, `testing.md`, `android-minification.md`.
+`desktop-signing.md`, `release.md`, `release-review.md`, `testing.md`, `android-minification.md`,
+`amount-input.md`, `dependency-security.md`.
 `git.md` has no `paths:` and loads always.
 
 `release.md` is the release scheme of both apps — shared `major.minor`, per-platform patch, the

@@ -343,10 +343,9 @@ All logic sits in `SafelyFlameModule.swift` / `.kt`, and what can be tested live
 - Core and ux tests run with a fake `flameSdk` installed by their `test/setup-crypto.ts` (creating a
   devnet portfolio calls `viewKey` and `address`; ux's fake tells a receiving address apart by its
   two HRP parts, for the send form); Flame-specific tests swap in their own mock.
-- **Desktop has no Flame yet** (planned before the release): it installs a rejecting `flameSdk` mock
-  (`unsupportedFlameSdk`, where `validateReceivingAddress` answers `false` so BTC address detection
-  keeps working) and nothing else — no flag, no filtering, so a synced devnet portfolio
-  reaches the desktop UI as is.
+- **Desktop implements the same `SafelyFlame`** over `@runflame/wallet-wasm`
+  (`apps/desktop/src/renderer/platform/flame.ts`, `desktop-app.md`): a change to the contract goes into
+  the Swift, Kotlin and wasm adapters together.
 - Under R8 the module relies on two sets of consumer rules, nothing in `extraProguardRules`:
   `@runflame/wallet-rn`'s keeps JNA and the generated `com.flame.wallet` classes (see
   `android-minification.md`), and `expo-modules-core`'s keeps every `Record` with its field names,
