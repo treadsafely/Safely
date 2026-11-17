@@ -15,7 +15,6 @@
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/base.h>
 
-#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -152,23 +151,30 @@ std::vector<uint8_t> BytesOf(const IBuffer& buffer) {
 
 // The Hello dialog belongs to another process, and Windows does not let that process take the
 // foreground from ours: after the first prompt of a launch it opens behind the app and only
-// flashes in the taskbar. We hold the foreground, so we hand it over — once, so a user who then
-// switches away is not dragged back. KeePassXC and Bitwarden find the dialog the same way.
+// flashes in the taskbar, and a wrong PIN sends it back there. Whenever one of our own windows
+// holds the foreground while the dialog is up, we hand it over; a user who switched to another
+// application is not dragged back. KeePassXC and Bitwarden find the dialog the same way.
+// The completion handler is assigned exactly once: an operation refuses a second one with
+// E_ILLEGAL_DELEGATE_ASSIGNMENT, which is what wait_for() in a loop, or get() after it, runs into.
 template <typename Operation>
 auto AwaitPrompt(Operation operation) {
-  bool handedOver = false;
+  winrt::handle done{CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+  winrt::check_bool(static_cast<bool>(done));
+  operation.Completed([event = done.get()](auto&&, AsyncStatus) { SetEvent(event); });
 
-  while (operation.wait_for(std::chrono::milliseconds(200)) == AsyncStatus::Started) {
-    if (handedOver) {
+  while (WaitForSingleObject(done.get(), 200) == WAIT_TIMEOUT) {
+    HWND prompt = FindWindowW(L"Credential Dialog Xaml Host", nullptr);
+    if (prompt == nullptr) {
       continue;
     }
-    HWND prompt = FindWindowW(L"Credential Dialog Xaml Host", nullptr);
-    if (prompt != nullptr) {
-      handedOver = GetForegroundWindow() == prompt || SetForegroundWindow(prompt) != 0;
+    DWORD foregroundProcess = 0;
+    GetWindowThreadProcessId(GetForegroundWindow(), &foregroundProcess);
+    if (foregroundProcess == GetCurrentProcessId()) {
+      SetForegroundWindow(prompt);
     }
   }
 
-  return operation.get();
+  return operation.GetResults();
 }
 
 Napi::Value IsSupported(const Napi::CallbackInfo& info) {

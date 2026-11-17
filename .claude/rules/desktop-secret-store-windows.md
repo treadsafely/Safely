@@ -206,13 +206,18 @@ local build with a development certificate it creates.
 Everything below is the first session on a Windows machine, in this order; the design stands or
 falls on the first two:
 
-1. the signature over the same challenge is identical across calls and reboots;
+1. the signature over the same challenge is identical across calls and reboots — measured
+   2026-11-16 in the VM across launches and across a package removal and reinstall (software-backed
+   key, with the attestation check taken out of a local build); a reboot and a TPM-backed key are
+   still to be checked;
 2. `RequestSignAsync` from Electron's main process raises the prompt over our window — partly
    measured 2026-11-16: the first prompt of a launch opens over the window, one after a cancel and
-   "try again" opens behind it and only flashes in the taskbar, because the dialog is another
-   process's window. `AwaitPrompt` in `hello.cpp` hands it the foreground (the class name
+   "try again" opens behind it and only flashes in the taskbar, and a wrong PIN sends an open one
+   back there, because the dialog is another process's window. `AwaitPrompt` in `hello.cpp` hands
+   it the foreground whenever a window of ours holds it (the class name
    `Credential Dialog Xaml Host`, as KeePassXC and Bitwarden do), verified the same day in the VM
-   on Cancel → "try again"; real hardware is still to be checked;
+   on Cancel → "try again" and on a wrong PIN; real hardware is still to be checked. A first
+   launch raises one prompt, not two: the signature right after creation asks nothing;
 3. attestation on real hardware (a Parallels vTPM does not attest, above);
 4. `IsSupportedAsync` without a PIN, in a VM without a TPM, under a policy that disables Hello;
 5. what the Hello dialog shows as the requesting application for the packaged app;
