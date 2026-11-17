@@ -12,10 +12,11 @@ interface Props {
     word: string;
     index: number;
     params: WordCellParams;
+    wordTestID?: string;
 }
 
 export const WordCell = (props: Props) => {
-    const { index, word, params } = props;
+    const { index, word, params, wordTestID } = props;
     const { isLast = false, isRightColumn = false } = params;
 
     styles.useVariants({ isLast, isRightColumn });
@@ -25,7 +26,9 @@ export const WordCell = (props: Props) => {
             <Text variant="bodyM" color="tertiary" style={styles.number}>
                 {index}.
             </Text>
-            <Text variant="bodyM">{word}</Text>
+            <Text variant="bodyM" testID={wordTestID}>
+                {word}
+            </Text>
         </View>
     );
 };

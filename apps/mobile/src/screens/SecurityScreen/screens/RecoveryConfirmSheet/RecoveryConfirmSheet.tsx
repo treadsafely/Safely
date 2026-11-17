@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { PortfolioType } from '@safely/core';
 import { useActivePortfolio, useRecordActivePortfolioSecretReveal } from '@safely/ux';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { Button, Text, useBottomSheet, useCloseOnReturn } from '@mobile/shared/ui';
 import { Icon, ListKey96 } from '@mobile/shared/ui/Icon';
@@ -69,6 +70,7 @@ const RecoveryConfirmContent = () => {
                     {t('security.recoverySheet.cancel')}
                 </Button>
                 <Button
+                    testID={TEST_ID.recovery.revealButton}
                     type="primary"
                     size="large"
                     style={[styles.button, styles.buttonPrimary]}

@@ -8,6 +8,7 @@ import { useAnimatedScrollHandler } from 'react-native-reanimated';
 import type { HistoryGroupView } from '@safely/ux';
 
 import { ActivityItem, ActivityItemSkeleton } from '@mobile/entities/activity';
+import { TEST_ID } from '@mobile/shared/constants';
 import { List, Screen, Text } from '@mobile/shared/ui';
 import type { ListRef } from '@mobile/shared/ui/Screen/components/List';
 
@@ -93,7 +94,12 @@ export const HistoryList = <TActivity,>(props: HistoryListProps<TActivity>) => {
                 case 'activity':
                     return (
                         <View style={styles.row}>
-                            <ActivityItem {...item.props} />
+                            <ActivityItem
+                                {...item.props}
+                                testID={
+                                    item.props.isPending ? TEST_ID.history.pendingItem : undefined
+                                }
+                            />
                         </View>
                     );
             }

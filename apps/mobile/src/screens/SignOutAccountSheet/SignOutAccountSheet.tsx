@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { resolveSignOutCopy, useHasActivePeer } from '@safely/ux';
 
+import { TEST_ID } from '@mobile/shared/constants';
 import { BottomSheetScreen } from '@mobile/shared/navigation';
 import { Button, ConfirmCheckbox, Text, useBottomSheet } from '@mobile/shared/ui';
 
@@ -53,6 +54,7 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
 
             {copy.checkboxKey !== undefined && (
                 <ConfirmCheckbox
+                    testID={TEST_ID.signOutAccount.checkbox}
                     text={t(copy.checkboxKey)}
                     isChecked={isConfirmed}
                     onToggle={() => setIsConfirmed(prev => !prev)}
@@ -61,6 +63,7 @@ const SignOutAccountContent = (props: SignOutAccountParams) => {
 
             <View style={styles.footer}>
                 <Button
+                    testID={TEST_ID.signOutAccount.confirmButton}
                     type="destructive"
                     size="large"
                     disabled={copy.checkboxKey !== undefined && !isConfirmed}

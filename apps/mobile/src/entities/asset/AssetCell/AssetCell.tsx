@@ -26,6 +26,7 @@ export type AssetCellProps = {
     style?: ViewStyle;
     background?: 'tertiary' | 'secondary';
     onPress?: () => void;
+    testID?: string;
 };
 
 function formatFiatAmount(
@@ -47,7 +48,8 @@ export const AssetCell = (props: AssetCellProps) => {
         showDivider = true,
         style,
         background,
-        onPress
+        onPress,
+        testID
     } = props;
 
     const { t } = useTranslation();
@@ -62,6 +64,7 @@ export const AssetCell = (props: AssetCellProps) => {
 
     return (
         <Cell
+            testID={testID}
             showDivider={showDivider}
             onPress={onPress}
             background={background}
