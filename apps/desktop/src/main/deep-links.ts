@@ -2,10 +2,30 @@ import type { BrowserWindow } from 'electron';
 import { app } from 'electron';
 
 import type { Logger } from '@safely/sync';
+import { APP_URL_SCHEME } from '@safely/ux/deep-link';
 
 import { DEEP_LINK_MAX_LENGTH, IPC_CHANNEL } from '../shared/ipc';
 
 const BROWSING_WEB_ACTIVITY = 'NSUserActivityTypeBrowsingWeb';
+
+/* on Windows the OS passes the link as a process argument; anything else on the line is not a link */
+export function findDeepLinkArgument(argv: readonly string[]): string | null {
+    const prefix = `${APP_URL_SCHEME}:`;
+
+    for (const argument of argv.slice(1)) {
+        if (!argument.startsWith(prefix)) {
+            continue;
+        }
+
+        try {
+            return new URL(argument).protocol === prefix ? argument : null;
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
+}
 
 export class DeepLinkReceiver {
     private pendingUrl: string | null = null;
@@ -30,6 +50,16 @@ export class DeepLinkReceiver {
             event.preventDefault();
             this.receive(details.webpageURL);
         });
+
+        this.receiveArguments(process.argv);
+    }
+
+    public receiveArguments(argv: readonly string[]): void {
+        const url = findDeepLinkArgument(argv);
+
+        if (url !== null) {
+            this.receive(url);
+        }
     }
 
     public take(): string | null {

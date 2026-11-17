@@ -4,8 +4,10 @@ import { mainLogger } from './logger';
 import type { CameraAccessStatus } from '../shared/ipc';
 
 /* Where the user has to go once the answer is `denied`: macOS asks once and then only remembers. */
-const PRIVACY_CAMERA_PANE =
-    'x-apple.systempreferences:com.apple.preference.security?Privacy_Camera';
+const PRIVACY_CAMERA_PANE: Partial<Record<NodeJS.Platform, string>> = {
+    darwin: 'x-apple.systempreferences:com.apple.preference.security?Privacy_Camera',
+    win32: 'ms-settings:privacy-webcam'
+};
 
 export function getCameraAccessStatus(): CameraAccessStatus {
     if (process.platform !== 'darwin') {
@@ -32,5 +34,9 @@ export async function requestCameraAccess(): Promise<boolean> {
 /* Opened from a constant here rather than through the renderer's `openExternal` channel, which
    deliberately allows no such scheme. */
 export async function openCameraPrivacySettings(): Promise<void> {
-    await shell.openExternal(PRIVACY_CAMERA_PANE);
+    const pane = PRIVACY_CAMERA_PANE[process.platform];
+
+    if (pane !== undefined) {
+        await shell.openExternal(pane);
+    }
 }

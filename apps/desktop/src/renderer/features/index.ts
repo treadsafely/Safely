@@ -1,6 +1,8 @@
 export { AppLock, type AppLockProps } from './app-lock';
 export {
-    authenticateBiometry,
+    biometryCopy,
+    BiometryPrompt,
+    BiometryPromptContext,
     EnableBiometryFlow,
     type EnableBiometryFlowProps,
     isBiometryUnlockEnabled
@@ -15,5 +17,6 @@ export {
     usePasscode,
     type UsePasscodeResult
 } from './passcode';
+export { SecretStoreGate } from './secret-store';
 export { SecuritySection } from './security';
 export { QrScanFlow, qrScanPrompt, type QrScanPromptOptions } from './qr-scan';

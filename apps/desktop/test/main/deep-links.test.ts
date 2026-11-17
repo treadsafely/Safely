@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Logger } from '@safely/sync';
 
-import { DeepLinkReceiver } from '../../src/main/deep-links';
+import { DeepLinkReceiver, findDeepLinkArgument } from '../../src/main/deep-links';
 import { DEEP_LINK_MAX_LENGTH, IPC_CHANNEL } from '../../src/shared/ipc';
 
 type AppListener = (event: { preventDefault: () => void }, ...args: unknown[]) => void;
@@ -90,6 +90,16 @@ describe('DeepLinkReceiver', () => {
         expect(receiver.take()).toBe('https://link.safely.app/tab');
     });
 
+    it('takes a link from the arguments of a second instance', () => {
+        const receiver = new DeepLinkReceiver(logger, () => window as never, reveal);
+
+        receiver.listen();
+        receiver.receiveArguments(['Safely.exe', 'safely:///tab/updates']);
+
+        expect(send).toHaveBeenCalledWith(IPC_CHANNEL.deepLink.received);
+        expect(receiver.take()).toBe('safely:///tab/updates');
+    });
+
     it('drops a URL over the limit without logging it', () => {
         const receiver = new DeepLinkReceiver(logger, () => null, reveal);
         const url = `safely:///${'a'.repeat(DEEP_LINK_MAX_LENGTH)}`;
@@ -100,5 +110,30 @@ describe('DeepLinkReceiver', () => {
         expect(receiver.take()).toBeNull();
         expect(warn).toHaveBeenCalledOnce();
         expect(JSON.stringify(warn.mock.calls)).not.toContain('aaaa');
+    });
+});
+
+describe('findDeepLinkArgument', () => {
+    it('finds the one argument that is a link of our scheme', () => {
+        expect(findDeepLinkArgument(['Safely.exe', '--allow-file-access', 'safely:///tab'])).toBe(
+            'safely:///tab'
+        );
+    });
+
+    it('ignores the executable, switches and foreign schemes', () => {
+        expect(findDeepLinkArgument(['safely:///tab'])).toBeNull();
+        expect(findDeepLinkArgument(['Safely.exe', '--inspect=9229'])).toBeNull();
+        expect(findDeepLinkArgument(['Safely.exe', 'https://link.safely.app/tab'])).toBeNull();
+        expect(findDeepLinkArgument(['Safely.exe'])).toBeNull();
+    });
+
+    /* a link is data, never a command line: a switch smuggled in after it stays inside the string */
+    it('never lets a switch travel inside a link', () => {
+        const smuggled = 'safely:///tab" --gpu-launcher=calc';
+
+        expect(findDeepLinkArgument(['Safely.exe', smuggled])).toBe(smuggled);
+        expect(findDeepLinkArgument(['Safely.exe', '--gpu-launcher=calc', 'safely:///tab'])).toBe(
+            'safely:///tab'
+        );
     });
 });

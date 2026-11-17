@@ -21,6 +21,33 @@ const WINDOW = {
     minHeight: 640
 };
 
+const TITLE_BAR_HEIGHT = 52;
+
+const firstShow = new WeakMap<BrowserWindow, Promise<void>>();
+
+/* settled on the first `show` or on `closed`; `isVisible()` is no substitute, it is false for a minimised window */
+export function whenShown(window: BrowserWindow): Promise<void> {
+    return firstShow.get(window) ?? Promise.resolve();
+}
+
+type TitleBarOptions = Pick<
+    Electron.BrowserWindowConstructorOptions,
+    'titleBarStyle' | 'trafficLightPosition' | 'titleBarOverlay'
+>;
+
+/* macOS draws the traffic lights into our hidden title bar; Windows draws its own controls as an overlay; elsewhere Electron's own bar */
+const TITLE_BAR: Partial<Record<NodeJS.Platform, TitleBarOptions>> = {
+    darwin: { titleBarStyle: 'hidden', trafficLightPosition: { x: 19, y: 19 } },
+    win32: {
+        titleBarStyle: 'hidden',
+        titleBarOverlay: {
+            color: darkTheme.colors.background.secondary,
+            symbolColor: darkTheme.colors.text.primary,
+            height: TITLE_BAR_HEIGHT
+        }
+    }
+};
+
 export function createMainWindow(
     devServerUrl: string | undefined,
     appInfo: AppInfo,
@@ -29,9 +56,8 @@ export function createMainWindow(
     const window = new BrowserWindow({
         ...WINDOW,
         ...windowState.options,
+        ...TITLE_BAR[process.platform],
         show: false,
-        titleBarStyle: 'hidden',
-        trafficLightPosition: { x: 19, y: 19 },
         /* from the design tokens, so the window never flashes white before the first frame */
         backgroundColor: darkTheme.colors.background.primary,
         webPreferences: {
@@ -46,6 +72,14 @@ export function createMainWindow(
             devTools: !app.isPackaged
         }
     });
+
+    firstShow.set(
+        window,
+        new Promise(resolve => {
+            window.once('show', () => resolve());
+            window.once('closed', () => resolve());
+        })
+    );
 
     window.once('ready-to-show', () => {
         if (windowState.isFullScreen) {

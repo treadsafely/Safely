@@ -18,7 +18,7 @@ Dependencies flow strictly bottom-up in this table; imports in the other directi
 | `packages/ux`               | React layer shared by every app: FSD (`shared` → `entities` → `features`), react-query, zustand, xstate forms, plus the design tokens (`./theme`) and the strings (`./translations`). No RN/DOM specifics. |
 | `packages/web-ui`           | React layer shared by the web targets: design system (Base UI + Panda), the screens built from it and the flows that drive them over `@safely/ux`. FSD + `pages`. No router, no Electron/extension code, no platform contract, no globals, no build config. |
 | `apps/mobile`               | Expo dev-client (iOS/Android): FSD + `screens`, native modules `modules/safely-*`, unistyles, i18n.                                            |
-| `apps/desktop`              | Electron (forge + vite), **Mac App Store–only build for now**: split by process (`main`/`preload`/`renderer`/`shared`), native addon `native/keychain`, platform implementation, the security module (passcode, lockout, Touch ID) and the routing that drives the web UI. |
+| `apps/desktop`              | Electron (forge + vite), Mac App Store and Microsoft Store builds: split by process (`main`/`preload`/`renderer`/`shared`), native addons `native/keychain` (macOS) and `native/hello` (Windows), platform implementation, the security module (passcode, lockout, Touch ID / Windows Hello) and the routing that drives the web UI. |
 | `apps/browser`              | MV3 extension — placeholder, see its README.                                                                                                    |
 | `packages/xhr-event-source` | EventSource over XHR for platforms without native SSE.                                                                                         |
 
@@ -49,15 +49,18 @@ Node version comes from `.nvmrc` (`nvm use`); pnpm only (`preinstall` blocks npm
   cannot scan; CI runs it on every pull request. An intentional one goes in as an escape
   (`\u200D`), never as the raw character
 - mobile: `pnpm --filter @safely/mobile ios|android|start` — dev-client, not Expo Go
-- desktop: `pnpm --filter @safely/desktop start|package:mas|make:mas` — one `package:<target>` /
-  `make:<target>` pair per platform, while `forge.config.ts` holds everything platform-specific and
-  refuses a target it does not support; Mac App Store (sandboxed) is the only one for now.
-  `build:native` compiles the keychain addon (the package/make scripts run it first, `pnpm install`
-  never does). Store builds are signed only by `.github/workflows/desktop-build.yml`, which uploads
+- desktop: `pnpm --filter @safely/desktop start|package:mas|make:mas|package:win32|make:win32` —
+  one `package:<target>` / `make:<target>` pair per platform, while `forge.config.ts` holds
+  everything platform-specific and refuses a target its host cannot build: `mas` (sandboxed Mac App
+  Store) on macOS, `win32` (an MSIX for the Microsoft Store) on Windows. `build:native:<target>`
+  compiles that platform's addon (the package/make scripts run it first, `pnpm install` never
+  does). Mac Store builds are signed only by `.github/workflows/desktop-build.yml`, which uploads
   them to App Store Connect for TestFlight and is called by `desktop-staging.yml` (a push to
   `release/*`) and `desktop-release.yml` (a `release/*` merge into `master`, which also publishes
-  the GitHub release `v<desktop version>-desktop`); locally a developer builds `package:mas` with
-  their own development identity.
+  the GitHub release `v<desktop version>-desktop`); `desktop-build-windows.yml`, called by
+  `desktop-staging.yml` only, builds the unsigned MSIX on a Windows runner and keeps it as a run
+  artifact — the Store signs it, and submissions are by hand for now. Locally a developer builds
+  `package:mas` with their own development identity, or `package:win32` on a Windows machine.
   `.claude/rules/desktop-signing.md` has the certificates, the environment, the `release/*` ruleset and what each job
   may hold
 - `packages/web-ui` generates `styled-system/` with `panda codegen`; its `compile`/`lint`/`test`
@@ -113,12 +116,13 @@ the error message.
 Topic rules in `.claude/rules/` load automatically when you open files in the matching area:
 `typescript-style.md`, `code-comments.md`, `fsd-layers.md`, `sync-and-crypto.md`, `mobile-app.md`,
 `web-ui.md`, `desktop-app.md`, `desktop-qr.md`, `desktop-ledger.md`, `desktop-secret-store.md`,
-`desktop-signing.md`, `testing.md`, `android-minification.md`.
+`desktop-secret-store-windows.md`, `desktop-signing.md`, `testing.md`, `android-minification.md`.
 
 `desktop-secret-store.md` is the desktop secret store in full — threat model, the keychain item
-schema, the signing chain it depends on and why the build is macOS-only. It loads with the store,
-keychain and signing files; read it before touching the `encrypted`/`secureEncrypted` scopes, the
-desktop security module or the signing configuration.
+schema and the signing chain it depends on on macOS; `desktop-secret-store-windows.md` is the
+Windows half — the Windows Hello–sealed store, its unlock states and what the Windows threat model
+loses. They load with the store, addon and signing files; read them before touching the
+`encrypted`/`secureEncrypted` scopes, the desktop security module or the build configuration.
 
 Specs — read before changing the sync protocol or the state format; the rules files do not restate
 them:

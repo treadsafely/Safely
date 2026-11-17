@@ -37,7 +37,7 @@ import {
     useReceiveFlow,
     useSendFlow
 } from '../../features';
-import type { DisclosureProps } from '../../shared';
+import type { DisclosureProps, WindowControls } from '../../shared';
 import { AppLayout, useResizableWidth } from '../../shared';
 
 const SIDEBAR_WIDTH = { default: 300, min: 240, max: 400 };
@@ -45,7 +45,7 @@ const SIDEBAR_WIDTH = { default: 300, min: 240, max: 400 };
 export type MainPageProps = {
     location: MainLocation;
     onNavigate: (next: MainLocation) => void;
-    hasWindowControls?: boolean;
+    windowControls?: WindowControls;
     isFullScreen?: boolean;
     sidebarWidth?: number;
     onSidebarWidthChange: (width: number) => void;
@@ -57,7 +57,7 @@ export const MainPage: FC<MainPageProps> = props => {
     const {
         location,
         onNavigate,
-        hasWindowControls,
+        windowControls,
         isFullScreen,
         sidebarWidth,
         onSidebarWidthChange,
@@ -167,7 +167,7 @@ export const MainPage: FC<MainPageProps> = props => {
     return (
         <AppLayout
             sidebarWidth={sidebar.width}
-            hasWindowControls={hasWindowControls}
+            windowControls={windowControls}
             isFullScreen={isFullScreen}
             isSecondaryOpen={view.kind === 'settings'}
             isPanelOpen={selectedActivity !== null}

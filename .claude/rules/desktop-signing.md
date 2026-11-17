@@ -13,11 +13,16 @@ through the access group a provisioning profile grants, and an unsigned build re
 unavailable and falls back to the development stub. The entitlements and what they buy are in
 `desktop-secret-store.md`; this file is where the profiles and certificates come from.
 
-**The app ships through the Mac App Store and nowhere else.** No Developer ID build was ever
-distributed, so there is nothing to stay compatible with: `package:mas` and `make:mas` package
+**On a Mac the app ships through the Mac App Store and nowhere else.** No Developer ID build was
+ever distributed, so there is nothing to stay compatible with: `package:mas` and `make:mas` package
 Electron's MAS variant (no private APIs, no Squirrel) and sign it sandboxed, and `forge.config.ts`
-refuses any other target. `pnpm start` still runs the ordinary darwin Electron, unsigned and
-unsandboxed, on the keychain stub — the sandbox is exercised only by a signed `package:mas`.
+refuses any other target on a macOS host. `pnpm start` still runs the ordinary darwin Electron,
+unsigned and unsandboxed, on the secret-store stub — the sandbox is exercised only by a signed
+`package:mas`. The Windows package (`make:win32`, an MSIX for the Microsoft Store) carries **no
+signature of ours at all** — the Store signs after certification, and a local build gets a
+throwaway development certificate — so nothing in this file applies to it;
+`desktop-secret-store-windows.md` has its build and `.github/workflows/desktop-build-windows.yml`
+its pipeline, which holds none of the secrets below.
 
 **Store builds are signed in CI and nowhere else.** The distribution keys exist only as secrets of
 the `desktop-release` environment: no developer machine holds them, so `make:mas` does not run

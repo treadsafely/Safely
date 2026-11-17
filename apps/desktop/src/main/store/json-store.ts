@@ -2,6 +2,33 @@ import fs from 'node:fs/promises';
 
 import type { Store } from './types';
 import { writeFileAtomic } from '../utils/atomic-file';
+import { isMissingFile } from '../utils/missing-file';
+
+export interface FileCodec {
+    encode(data: Map<string, string>): string;
+    decode(content: string): Map<string, string>;
+}
+
+export const plainJsonCodec: FileCodec = {
+    encode: data => JSON.stringify(Object.fromEntries(data)),
+    decode: content => {
+        if (content === '') {
+            return new Map();
+        }
+
+        const parsed: unknown = JSON.parse(content);
+
+        if (typeof parsed !== 'object' || parsed === null) {
+            throw new Error('Store file is not an object');
+        }
+
+        return new Map(
+            Object.entries(parsed).filter((entry): entry is [string, string] => {
+                return typeof entry[1] === 'string';
+            })
+        );
+    }
+};
 
 /**
  * A flat key/value file written **through** on every mutation: a `set` does not resolve until
@@ -10,7 +37,8 @@ import { writeFileAtomic } from '../utils/atomic-file';
  * mutation; if the data outgrows that, the way out is an embedded store with a write-ahead
  * log, not a buffer.
  *
- * Plaintext: the scopes that hold secrets are keychain items instead (`keychain-store.ts`).
+ * The codec decides what the file holds: plaintext JSON for `regular`, one sealed blob per
+ * scope for the secret scopes on Windows (`sealed-codec.ts`).
  */
 export class JsonStore implements Store {
     /** Read cache only — committed after the file write, so it cannot outrun the disk. */
@@ -19,7 +47,10 @@ export class JsonStore implements Store {
     /** Mutations are serialised: two concurrent read-modify-writes would lose an update. */
     private queue: Promise<unknown> = Promise.resolve();
 
-    constructor(private readonly filePath: string) {}
+    constructor(
+        private readonly filePath: string,
+        private readonly codec: FileCodec = plainJsonCodec
+    ) {}
 
     public async get(key: string): Promise<string | null> {
         const stored = (await this.load()).get(key);
@@ -61,6 +92,14 @@ export class JsonStore implements Store {
         });
     }
 
+    /* inside the queue: a write still pending must land before the file goes, not recreate it after */
+    public erase(): Promise<void> {
+        return this.serialise(async () => {
+            await fs.rm(this.filePath, { force: true });
+            this.data = null;
+        });
+    }
+
     private async load(): Promise<Map<string, string>> {
         if (this.data) {
             return this.data;
@@ -71,7 +110,7 @@ export class JsonStore implements Store {
                 return this.data;
             }
 
-            this.data = await readStore(this.filePath);
+            this.data = await readStore(this.filePath, this.codec);
 
             return this.data;
         });
@@ -79,12 +118,12 @@ export class JsonStore implements Store {
 
     private async mutate(apply: (data: Map<string, string>) => void): Promise<void> {
         await this.serialise(async () => {
-            const current = this.data ?? (await readStore(this.filePath));
+            const current = this.data ?? (await readStore(this.filePath, this.codec));
             const next = new Map(current);
 
             apply(next);
 
-            await writeStore(this.filePath, next);
+            await writeFileAtomic(this.filePath, this.codec.encode(next));
 
             this.data = next;
         });
@@ -99,29 +138,19 @@ export class JsonStore implements Store {
     }
 }
 
-async function readStore(filePath: string): Promise<Map<string, string>> {
+/* only an absent file is an empty store; any other read failure must surface, or the next write wipes the data */
+async function readStore(filePath: string, codec: FileCodec): Promise<Map<string, string>> {
     let raw: string;
 
     try {
         raw = await fs.readFile(filePath, 'utf8');
-    } catch {
-        /* first run: an absent file is an empty store */
-        return new Map();
+    } catch (error) {
+        if (isMissingFile(error)) {
+            return codec.decode('');
+        }
+
+        throw error;
     }
 
-    const parsed: unknown = JSON.parse(raw);
-
-    if (typeof parsed !== 'object' || parsed === null) {
-        throw new Error(`Store file ${filePath} is not an object`);
-    }
-
-    return new Map(
-        Object.entries(parsed).filter((entry): entry is [string, string] => {
-            return typeof entry[1] === 'string';
-        })
-    );
-}
-
-async function writeStore(filePath: string, data: Map<string, string>): Promise<void> {
-    await writeFileAtomic(filePath, JSON.stringify(Object.fromEntries(data)));
+    return codec.decode(raw);
 }

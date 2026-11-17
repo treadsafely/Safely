@@ -8,6 +8,7 @@ import type { DesktopBridge } from '../../shared/bridge';
 import type { AppState } from '../../shared/ipc';
 
 export type { DesktopPlatform, DesktopPlatformStorage } from './types';
+export type { DesktopOs } from '../../shared/bridge';
 
 const REPORTED_BUILD: Build = DESKTOP_BUILD;
 
@@ -46,6 +47,7 @@ bridge.onAppStateChange(next => {
 
 export const platform: DesktopPlatform = {
     appInfo: { ...bridge.appInfo, build: REPORTED_BUILD },
+    os: bridge.os,
     storage: {
         REGULAR_DESKTOP_STORAGE_ONLY_APP_LEVEL_USE: createEnumerableStorage(bridge.store),
         ENCRYPTED_DESKTOP_STORAGE_ONLY_APP_LEVEL_USE: createEnumerableStorage(
@@ -57,6 +59,7 @@ export const platform: DesktopPlatform = {
         synchronous: synchronousStorage
     },
     biometry: bridge.biometry,
+    secretStore: bridge.secretStore,
     camera: bridge.camera,
     deepLinks: bridge.deepLinks,
     logs: {

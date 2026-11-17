@@ -16,9 +16,9 @@ describe('keychain addon', () => {
        — that reaches Electron's own handler, which raises a modal dialog and waits. */
     it('logs and exits when the keychain cannot be reached', async () => {
         const exit = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+        const { loadKeychain } = await import('../../../../src/main/plugins/keychain/keychain-addon');
 
-        vi.resetModules();
-        await import('../../../../src/main/plugins/keychain/keychain-addon');
+        loadKeychain();
 
         expect(exit).toHaveBeenCalledWith(1);
         expect(error).toHaveBeenCalledOnce();

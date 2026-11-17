@@ -79,6 +79,36 @@
         "restartButton": "Restart app",
         "shareLogsButton": "Send logs"
     },
+    "secretStore": {
+        "unsupported": {
+            "title": "Windows Hello is required",
+            "description": "Safely keeps your keys behind Windows Hello on a TPM-equipped PC. Set up a PIN in Windows settings and try again."
+        },
+        "cancelled": {
+            "title": "Unlock to continue",
+            "description": "Confirm with Windows Hello to open your wallet."
+        },
+        "lost": {
+            "title": "The wallet key is no longer available",
+            "description": "Windows Hello was reset, so the data stored on this PC can no longer be opened. Erase it and sign in again with your recovery phrase."
+        },
+        "mismatch": {
+            "title": "The stored data does not match this PC",
+            "description": "The data on this PC was sealed by a different Windows Hello key and cannot be opened. Erase it and sign in again with your recovery phrase."
+        },
+        "failed": {
+            "title": "Windows Hello did not respond",
+            "description": "Something went wrong while unlocking. Try again in a moment."
+        },
+        "retry": "Try again",
+        "erase": "Erase and start over",
+        "confirm": {
+            "title": "Erase the data on this PC?",
+            "message": "Wallets and accounts stored in Safely on this PC will be removed. You will need your recovery phrase or another linked device to get them back.",
+            "confirm": "Erase",
+            "cancel": "Cancel"
+        }
+    },
     "logs": {
         "warning": {
             "title": "Logs contain your wallet data ⚠️",
@@ -747,6 +777,11 @@
                 "title": "Fingerprint unlock",
                 "description": "Unlock securely with your fingerprint. No password needed."
             }
+        },
+        "presence": "Confirm it is you to continue in Safely",
+        "hello": {
+            "title": "Windows Hello",
+            "description": "Unlock securely with your PIN, fingerprint or face. No passcode needed."
         }
     },
     "settings": {

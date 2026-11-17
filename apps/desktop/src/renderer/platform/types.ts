@@ -6,7 +6,9 @@ import type { AppInfo } from '../../shared/app-info';
 import type {
     DesktopBiometryBridge,
     DesktopCameraBridge,
-    DesktopDeepLinkBridge
+    DesktopDeepLinkBridge,
+    DesktopOs,
+    DesktopSecretStoreBridge
 } from '../../shared/bridge';
 
 /**
@@ -27,9 +29,13 @@ export interface DesktopPlatformStorage {
 export interface DesktopPlatform {
     readonly appInfo: AppInfo & { build: Build };
 
+    readonly os: DesktopOs;
+
     readonly storage: DesktopPlatformStorage;
 
     readonly biometry: DesktopBiometryBridge;
+
+    readonly secretStore: DesktopSecretStoreBridge;
 
     readonly camera: DesktopCameraBridge;
 

@@ -10,7 +10,7 @@ import {
 import { SecuritySettings } from '@safely/web-ui';
 
 import { useLockScreen } from '../app-lock';
-import { useBiometryQuery, useSetBiometryEnabled } from '../biometry';
+import { biometryCopy, useBiometryQuery, useSetBiometryEnabled } from '../biometry';
 import { ChangePasscodeFlow } from '../passcode';
 
 export const SecuritySection: FC = () => {
@@ -42,8 +42,8 @@ export const SecuritySection: FC = () => {
                 biometry={
                     biometry?.isAvailable
                         ? {
-                              title: t('biometry.fingerprint.ios.title'),
-                              description: t('biometry.fingerprint.ios.description'),
+                              title: t(biometryCopy.title),
+                              description: t(biometryCopy.description),
                               isEnabled: biometry.isEnabled,
                               onToggle: isEnabled =>
                                   void guarded(t('passcode.verify.title'), () =>

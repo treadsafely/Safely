@@ -13,15 +13,19 @@ The desktop app is a thin adapter: the UI comes from `@safely/web-ui`, the domai
 `@safely/core`/`@safely/sync`/`@safely/ux`. What lives here is the build, the Electron-specific
 services and the platform implementation injected into the shared UI.
 
-**The Mac App Store is the only build target for now** (`package:mas`/`make:mas`; `desktop-signing.md`
-has the sandbox it brings). A script only names the target; `forge.config.ts` owns everything
-platform-specific and its `prePackage` hook refuses any target but `mas`, because forge otherwise
-falls back to the host platform and would sign a darwin build with the sandbox entitlements. A new
-platform is a `package:<target>`/`make:<target>` pair plus its branch in the config. That is a security
-decision, not just a scheduling one: the secret store relies on keychain access groups being bound
-to the app's code signature, and Windows has no equivalent — see `desktop-secret-store.md`. Platform
-guards already in the code (`process.platform` checks, the `win32` branch in `utils/atomic-file.ts`)
-stay: they are correct cross-platform behaviour, not dead code.
+**Two build targets, one per store**: `package:mas`/`make:mas` for the Mac App Store
+(`desktop-signing.md` has the sandbox it brings) and `package:win32`/`make:win32` for the Microsoft
+Store (an MSIX; `desktop-secret-store-windows.md` has its build). A script only names the target;
+`forge.config.ts` owns everything platform-specific, chooses by the **host** OS — the config is
+evaluated before `--platform` is known, and each native addon builds only on its own host — and its
+`prePackage` hook refuses any other target, because forge otherwise falls back to the host platform
+and would sign a darwin build with the sandbox entitlements. The two targets differ in what the
+secret store rests on: keychain access groups bound to our code signature on macOS, a Windows Hello
+key and the user's own prompt on Windows — `desktop-secret-store.md` and its Windows half say what
+each protects. Platform guards in the code (`process.platform` checks, the `win32` branches in
+`utils/atomic-file.ts`, `window.ts`, `camera.ts`) are correct cross-platform behaviour, not dead
+code; what differs *structurally* — the addon, the store, the presence check — is chosen once, in
+`src/main/store/secret-backend.ts`, and never branched inline.
 
 ## Split by process first, by feature inside the renderer
 
@@ -150,11 +154,14 @@ disk does not have; concurrent mutations are serialised, or two read-modify-writ
 update. `test/main/store/json-store.test.ts` pins this by reading the file back instead of trusting
 the instance.
 
-That applies to `regular` only. The secret scopes hold no file and run no crypto of ours: a value is
-a keychain item, and what it is worth is decided by the access group in our code signature. There is
-**no unlocked state** anywhere in main, so nothing has to be locked on hide or suspend and no
-channel exists for unlocking or sealing anything — `desktop-secret-store.md` lists what was tried
-before this design and why it is not coming back.
+That applies to `regular` only. On macOS the secret scopes hold no file and run no crypto of ours: a
+value is a keychain item, and what it is worth is decided by the access group in our code signature.
+There is **no unlocked state** in main on macOS, so nothing has to be locked on hide or suspend —
+`desktop-secret-store.md` lists what was tried before this design and why it is not coming back.
+**Windows is the one exception**: its scopes are sealed files, main holds their data key from the
+`safely:secret-store:unlock` call the renderer makes at boot until the process ends, and nothing
+locks it on hide or suspend on purpose, because sync keeps reading keys under the lock screen
+(`desktop-secret-store-windows.md`). On macOS that channel answers `unlocked` at once.
 
 The price of the file's write-through is a full rewrite per mutation, which is fine at wallet scale;
 if the data outgrows it, the way out is an embedded store with a write-ahead log (SQLite) — not a
@@ -268,12 +275,15 @@ The platform-free pieces it composes from come from `@safely/ux` and are shared 
 split is deliberate and `fsd-layers.md` states the rule; do not move a hook that binds a query key
 to a storage location up into `ux`.
 
-Touch ID is Electron's `systemPreferences.canPromptTouchID` / `promptTouchID`, wrapped in
-`src/main/biometry.ts` and reached through the `safely:biometry:*` channels. Two things about it: a
-cancelled prompt and a broken sensor both answer `false`, because the caller's next move is the
-passcode either way; and the reason string crosses IPC already translated, since macOS renders it as
-"Safely is trying to <reason>" and main has no i18n. That is why the i18next instance is a module
-value in `src/renderer/i18n.ts` — the gate translates outside React.
+The presence check is the secret backend's (`SecretBackend.verifyPresence`, reached through the
+`safely:biometry:*` channels): Electron's `systemPreferences.canPromptTouchID` / `promptTouchID` in
+`KeychainBackend` on macOS, Windows Hello's consent prompt through the addon on Windows. Two things
+about it: a cancelled prompt and a broken sensor both answer `false`, because the caller's next move
+is the passcode either way; and the reason string crosses IPC already translated, since macOS
+renders it as "Safely is trying to <reason>" while Windows prints it as given — the key is chosen
+per platform in `features/biometry/biometry-copy.ts`, as are the names of the factor — and main has
+no i18n. That is why the i18next instance is a module value in `src/renderer/i18n.ts` — the gate
+translates outside React.
 
 **Either factor clears the lockout.** A successful Touch ID resets the failed-attempt counter
 exactly as a correct passcode does. Without that the counter only ever grows for anyone who mistypes
@@ -357,8 +367,12 @@ wallet keeps synced state — unreliable, and weakens CSP. The dev server is a d
 
 ## Deep links
 
-Two kinds, the same two mobile handles, both arriving in main and nowhere else — on macOS a URL
-never comes through argv or `second-instance`:
+Two kinds, the same two mobile handles, both arriving in main and nowhere else. On macOS a URL
+never comes through argv or `second-instance`; on Windows the `safely://` link comes **only** that
+way — `process.argv` on a cold start, the `second-instance` argv afterwards — because the MSIX
+manifest declares the scheme and the OS launches the app with the link as an argument.
+`DeepLinkReceiver.receiveArguments` takes the one argument that parses as a URL of our scheme and
+nothing else, so a switch cannot ride in with a link:
 
 - `safely://…` through `app.on('open-url')`. The bundle declares the scheme with `protocols` in
   `forge.config.ts` (`CFBundleURLTypes`), and macOS registers only what the Info.plist declares, so
@@ -413,9 +427,10 @@ else: `pnpm start` exits 0 the moment the window closes — measured, not assume
 windowless is the macOS convention and would take that handler; until it exists, the next launch is
 a cold start that boots the engine from scratch and re-reads everything from the store, and
 `revealMainWindow` (`src/main/index.ts`) only ever reveals a window that is still there — `activate`
-or a second launch on a hidden or minimised one — with its recreate branch unreachable. So nothing
-may depend on renderer memory outliving the window: whatever has to survive is written through a
-store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium throttle its timers —
+or a second launch on a hidden or minimised one — and returns when there is none, which is only
+ever the moment `whenReady` is still creating it (a recreate branch there opened a second window
+once window creation became asynchronous). So nothing may depend on renderer memory outliving the
+window: whatever has to survive is written through a store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium throttle its timers —
 `backgroundThrottling` stays at its default — and main reports the hide and the show to the renderer
 as app-state events. A single instance lock guarantees one sync engine per machine. Neither path
 needs store handling, there being no unlocked state to lock, but a renderer-side passcode session
@@ -461,9 +476,10 @@ the renderer only has a console transport there.
 
 `electron-forge` (7.x) + `vite` (6.x) — `pnpm --filter @safely/desktop start | package | make`.
 
-- **The native addon is built by one script**: `pnpm --filter @safely/desktop run build:native`,
-  which is `node-gyp rebuild -C native/keychain`. `package:mas` and `make:mas` run it first; `start` does
-  not need it, because development is aliased to the stub. The build tooling belongs to the app:
+- **Each native addon is built by one script**: `build:native:mas` is `node-gyp rebuild -C
+  native/keychain`, `build:native:win32` is the same over `native/hello`. `package:<target>` and
+  `make:<target>` run theirs first; `start` needs neither, because development is aliased to the
+  stub. The build tooling belongs to the app:
   `node-gyp` and `node-addon-api` are its devDependencies, and `binding.gyp` still resolves the
   headers because gyp runs `<!(…)` commands with the gyp file's directory as the working directory,
   from which node resolution walks up into `apps/desktop/node_modules`.
@@ -484,12 +500,12 @@ the renderer only has a console transport there.
   app directory where there is no `node_modules`, and the `.forge-meta` marker it leaves behind made
   `start` skip the rebuild after a source change.
 - **The dev/prod plugin split is the bundler's**, not the code's: the development stub is a string
-  inside `vite.main.config.ts`, resolved in place of `keychain-addon` — the specifier
-  `plugins/keychain/index.ts` re-exports — by a plugin registered only for `serve`. Nothing branches
-  at runtime, no module in `src/` can import the stub, and a packaged build has nothing to resolve
-  it with. The test double is a separate file that `src/` never exports
-  (`test/main/store/fake-keychain.ts`); `desktop-secret-store.md` has the reasoning and the
-  trade-off.
+  inside `vite.main.config.ts`, resolved in place of `store/secret-backend` — the module that picks
+  the platform's backend, so neither addon is loaded — by a plugin registered only for `serve`.
+  Nothing branches at runtime, no module in `src/` can import the stub, and a packaged build has
+  nothing to resolve it with. The test doubles are separate files that `src/` never exports
+  (`test/main/store/fake-keychain.ts`, `fake-hello.ts`); `desktop-secret-store.md` has the reasoning
+  and the trade-off.
 - **The camera needs three build-time entries**, in `forge.config.ts` and `signing/`:
   `usageDescription.Camera` (Electron's own plist carries a generic string, which is what the macOS
   prompt would otherwise show), `extendInfo` plus `extendHelperInfo` with

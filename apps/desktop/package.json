@@ -7,9 +7,12 @@
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
-    "build:native": "node-gyp rebuild -C native/keychain",
-    "package:mas": "pnpm run build:native && electron-forge package --platform=mas",
-    "make:mas": "pnpm run build:native && electron-forge make --platform=mas",
+    "build:native:mas": "node-gyp rebuild -C native/keychain",
+    "build:native:win32": "node-gyp rebuild -C native/hello",
+    "package:mas": "pnpm run build:native:mas && electron-forge package --platform=mas",
+    "make:mas": "pnpm run build:native:mas && electron-forge make --platform=mas",
+    "package:win32": "pnpm run build:native:win32 && electron-forge package --platform=win32",
+    "make:win32": "pnpm run build:native:win32 && electron-forge make --platform=win32",
     "compile": "tsc --noEmit",
     "lint": "eslint ./src",
     "test": "vitest run"
@@ -35,6 +38,7 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-msix": "7.11.2",
     "@electron-forge/maker-pkg": "7.11.2",
     "@electron-forge/plugin-fuses": "7.11.2",
     "@electron-forge/plugin-vite": "7.11.2",

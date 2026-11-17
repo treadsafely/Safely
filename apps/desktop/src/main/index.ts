@@ -41,10 +41,8 @@ function notifyFullScreen(isFullScreen: boolean): void {
 }
 
 function revealMainWindow(): void {
+    /* no window means `whenReady` is still creating it: closing the window quits the app, so there is nothing to recreate */
     if (!mainWindow) {
-        void attachMainWindow().then(window => {
-            mainWindow = window;
-        });
         return;
     }
 
@@ -101,7 +99,10 @@ if (!app.requestSingleInstanceLock()) {
     /* Two renderers would run two sync engines against the same storage. */
     app.quit();
 } else {
-    app.on('second-instance', revealMainWindow);
+    app.on('second-instance', (_event, argv) => {
+        deepLinks.receiveArguments(argv);
+        revealMainWindow();
+    });
 
     app.on('web-contents-created', (_event, contents) => {
         hardenWebContents(contents, allowedOrigins);
@@ -117,8 +118,8 @@ if (!app.requestSingleInstanceLock()) {
                 registerAppProtocol(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`));
             }
 
-            /* macOS registers only a scheme the Info.plist declares — `protocols` in forge.config.ts */
-            if (app.isPackaged) {
+            /* macOS registers only a scheme the Info.plist declares; the MSIX manifest declares it on Windows */
+            if (app.isPackaged && process.platform === 'darwin') {
                 app.setAsDefaultProtocolClient(APP_URL_SCHEME);
             }
 

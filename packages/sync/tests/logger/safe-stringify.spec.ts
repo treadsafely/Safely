@@ -9,6 +9,14 @@ describe('safeStringify', () => {
         );
     });
 
+    it('prints bytes as hex, never as a decimal array', () => {
+        const key = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
+
+        expect(safeStringify({ key, nested: { buffer: Buffer.from([1, 2]) } })).toBe(
+            '{"key":"deadbeef","nested":{"buffer":"0102"}}'
+        );
+    });
+
     it('honours toJSON so an infra object collapses to its tag', () => {
         const logger = {
             toJSON: () => '[Logger]',

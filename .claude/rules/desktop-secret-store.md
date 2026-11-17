@@ -25,8 +25,10 @@ no secret file on disk. This is the same design the mobile app runs
 `SecItem` API.
 
 The threat it is designed against is *code running as the user on the same machine*, not a remote
-attacker. The build targets macOS only, and the design uses a macOS-only guarantee; "When Windows
-comes back" records what has to change if that target returns.
+attacker. The design uses a macOS-only guarantee; Windows has none, and its store is a different
+thing behind the same interface — `desktop-secret-store-windows.md`, which also says what the
+Windows threat model loses. Both sit behind `SecretBackend` (`src/main/store/types.ts`), chosen
+once per platform in `src/main/store/secret-backend.ts`; `KeychainBackend` is this file's half.
 
 ## The subject is a code signature, not a process
 
@@ -217,16 +219,17 @@ app's hot path — running that on the main thread would stall the Electron main
 be, and `KeychainStore` decides that a value which fails a strict decode is `CORRUPT` rather than
 silently lossy.
 
-**It is one exported constant, not a factory.** `keychain-addon.ts` requires the binary and checks
-`isAvailable()` at import, then exports the addon itself; `KeychainStore` imports it directly and
-takes only a service name. So a build that cannot reach the keychain dies while main's module graph
-is still evaluating — before a window, a store or an IPC handler exists — and there is no `null` to
-thread through the call sites.
+**It is loaded by a function, `loadKeychain()`, called once by `createSecretBackend()`** — not at
+import: the module graph of main is the same on both platforms, and a Windows build must not load
+the macOS binary while evaluating it. `KeychainStore` takes the addon through its constructor next
+to the service name, so the tests hand it a fake without `vi.mock`. The load still happens before a
+window, a store or an IPC handler exists — `createStores()` runs first in `whenReady` — and there is
+no `null` to thread through the call sites.
 
-That failure **logs and calls `process.exit(1)`; it must not throw.** A throw during module
-evaluation reaches Electron's own uncaught-exception handler, which raises a modal dialog and waits
-forever with nothing on stdout — measured on a packaged build, not feared. `process.exit` also types
-as `never`, which is what narrows the export to a non-null `Keychain`.
+That failure **logs and calls `process.exit(1)`; it must not throw.** A throw there reaches
+Electron's own uncaught-exception handler, which raises a modal dialog and waits forever with
+nothing on stdout — measured on a packaged build, not feared. `process.exit` also types as `never`,
+which is what narrows the return to a non-null `Keychain`.
 `test/main/plugins/keychain/keychain-addon.test.ts` pins both halves — that it exits, and that it
 does not throw — by mocking the logger and spying on `process.exit`.
 
@@ -254,7 +257,7 @@ instead of keeping the weaker class it was created with. The class itself is wri
 the addon; the port cannot pass another.
 
 Packaging: an N-API addon in Objective-C++ at `apps/desktop/native/keychain`, built by the app's
-`build:native` script, which `package:mas` and `make:mas` run first — deliberately not by `pnpm install`, see
+`build:native:mas` script, which `package:mas` and `make:mas` run first — deliberately not by `pnpm install`, see
 `desktop-app.md`. Two things about shipping it were found the hard way:
 
 - the forge vite plugin makes the packager ignore everything but `.vite`, so `node_modules` never
@@ -270,12 +273,13 @@ An unsigned `pnpm start` has no provisioning profile, so no access group exists 
 cannot work. Development builds get a stub instead: plain files in the development `userData`
 (`dev-keychain-encrypted.json`), the same interface, a warning on every start.
 
-**The choice between the addon and the stub is made by the bundler, not by code.** The stub is not a
-module: `vite.main.config.ts` carries its source as a string and resolves `keychain-addon` to it,
-through a plugin registered only while the dev server runs. So the code that uses it never branches,
-nothing in `src/` can import it, and a packaged build has nothing to resolve it with — an import of
-the stub there fails the build instead of shipping. The price is that the string is not type checked:
-a member added to `Keychain` has to be added to it by hand, and its absence surfaces as a
+**The choice between the real backend and the stub is made by the bundler, not by code.** The stub
+is not a module: `vite.main.config.ts` carries its source as a string and resolves
+`store/secret-backend` — the whole backend selection, so neither addon is touched — to it, through a
+plugin registered only while the dev server runs. So the code that uses it never branches, nothing
+in `src/` can import it, and a packaged build has nothing to resolve it with — an import of the stub
+there fails the build instead of shipping. The price is that the string is not type checked: a
+member added to `SecretBackend` has to be added to it by hand, and its absence surfaces as a
 `TypeError` on the first store operation in development.
 
 The stub stores values in the clear, and that is deliberate: obfuscating them under a constant key
@@ -355,16 +359,17 @@ before the store is relied upon.
 
 ## Tests
 
-The store imports the keychain rather than taking it, so the tests replace the module with
-`vi.mock` and a fake (`apps/desktop/test/main/store/fake-keychain.ts` — a test double, not the
-development stub, which is not importable; it is one shared instance, hence its `reset()`). Covered:
-round trip, absent key, replace rather than duplicate, prefix listing and prefix deletion, empty
-prefix behaving as `clear`, one service never touching another, values staying byte-exact across the
-UTF-8 round trip, a non-UTF-8 item reported as `CORRUPT`, and a platform failure arriving as
-`UNAVAILABLE` with the cause preserved.
+The store takes the keychain through its constructor, so the tests hand it a fake
+(`apps/desktop/test/main/store/fake-keychain.ts` — a test double, not the development stub, which
+is not importable). Covered: round trip, absent key, replace rather than duplicate, prefix listing
+and prefix deletion, empty prefix behaving as `clear`, one service never touching another, values
+staying byte-exact across the UTF-8 round trip, a non-UTF-8 item reported as `CORRUPT`, and a
+platform failure arriving as `UNAVAILABLE` with the cause preserved.
+`test/main/store/keychain-backend.test.ts` covers the Touch ID half of `KeychainBackend` against a
+mocked `systemPreferences`.
 
-`test/main/plugins/keychain/keychain-addon.test.ts` covers the other half: with no addon to load,
-the module logs and exits instead of throwing.
+`test/main/plugins/keychain/keychain-addon.test.ts` covers the loader: with no addon to load,
+`loadKeychain()` logs and exits instead of throwing.
 
 The native part has no unit tests. What stands in for it is `verify-signature.sh` on the signature
 and the app itself on a signed build.
@@ -392,12 +397,13 @@ run on a Mac whose class keys are not hardware-bound. The premise was never meas
 possibly software-backed Keystore on Android without comment, and a gate CI needs an env var to
 bypass is not a gate. Excluding old hardware belongs in the minimum system requirements.
 
-## When Windows comes back
+## Windows
 
-The research behind the macOS-only choice is in `apps/desktop/doc/windows-secret-store.md`, so it
-does not have to be redone: why Windows Hello, TPM keys and DPAPI are all user-scoped rather than
-app-scoped, what a non-exportable TPM key and a passcode as its PIN would still buy, why the
-installer has to be per-machine, and why an elevated helper service is not worth building.
+Is the other half of this store and has its own file, `desktop-secret-store-windows.md`: a Windows
+Hello `KeyCredential` sealing one AES-GCM blob per scope, unlocked once per launch, with the
+threat-model losses that follow from Windows having no code-identity scope. The choice rests on
+four findings: Hello, TPM keys and DPAPI are all user-scoped; the AppContainer is closed to
+Electron; the Store MSIX replaces an installer; an elevated helper service is not worth building.
 
 ## Implementation status
 

@@ -1,0 +1,141 @@
+name: Desktop build (Windows)
+
+# Builds the Microsoft Store package on a Windows runner: the native addon and `makeappx` exist
+# nowhere else. Called by `desktop-staging.yml` next to the macOS pipeline, never on its own. It
+# holds no signing key — the Store signs what it distributes — and no App Store Connect secret:
+# the Apple pipeline's `desktop-release` environment is deliberately not referenced here.
+# `.claude/rules/desktop-secret-store-windows.md` has the store this package carries.
+
+on:
+  workflow_call:
+    inputs:
+      report-success:
+        description: Post a Slack report for a successful build too, not only for a failure
+        type: boolean
+        default: true
+    outputs:
+      artifact:
+        value: ${{ jobs.build.outputs.artifact }}
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    outputs:
+      artifact: ${{ steps.name.outputs.artifact }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # An unset repository variable arrives as an empty string, and the manifest would then carry
+      # an empty publisher — fail here, in seconds, not after the build.
+      - name: Check the Store identity
+        shell: bash
+        env:
+          DESKTOP_MSIX_IDENTITY_NAME: ${{ vars.DESKTOP_MSIX_IDENTITY_NAME }}
+          DESKTOP_MSIX_PUBLISHER: ${{ vars.DESKTOP_MSIX_PUBLISHER }}
+          DESKTOP_MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.DESKTOP_MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          set -euo pipefail
+          for name in DESKTOP_MSIX_IDENTITY_NAME DESKTOP_MSIX_PUBLISHER DESKTOP_MSIX_PUBLISHER_DISPLAY_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "::error::the repository variable $name is not set"
+              exit 1
+            fi
+          done
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `make` in one app does not run web-ui's codegen, and the renderer imports styled-system.
+      - name: Generate styled-system
+        run: pnpm --filter @safely/web-ui run codegen
+
+      - name: Name the artifact
+        id: name
+        shell: bash
+        run: echo "artifact=safely-desktop-msix-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      # The identity is Partner Center's and public: it is what the Store matches the package to.
+      # Unsigned on purpose — the Store signs after certification; a local build signs itself.
+      - name: Make the Store package
+        env:
+          SAFELY_MSIX_IDENTITY_NAME: ${{ vars.DESKTOP_MSIX_IDENTITY_NAME }}
+          SAFELY_MSIX_PUBLISHER: ${{ vars.DESKTOP_MSIX_PUBLISHER }}
+          SAFELY_MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.DESKTOP_MSIX_PUBLISHER_DISPLAY_NAME }}
+          SAFELY_MSIX_UNSIGNED: 'true'
+        run: pnpm --filter @safely/desktop run make:win32
+
+      - name: List resolved dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(jq -r .version apps/desktop/package.json)"
+          {
+            echo "Safely desktop $version — Windows (${GITHUB_SHA:0:7})"
+            echo
+            echo "Electron:"
+            pnpm --filter @safely/desktop list electron --depth 0
+            echo
+            echo "Production dependencies:"
+            pnpm --filter @safely/desktop list --prod --depth Infinity
+          } > "$RUNNER_TEMP/desktop-dependencies-windows.txt"
+
+      - name: Store the package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.name.outputs.artifact }}
+          path: |
+            apps/desktop/out/make/msix/**/*.msix
+            ${{ runner.temp }}/desktop-dependencies-windows.txt
+          if-no-files-found: error
+          retention-days: 3
+
+  report:
+    needs: build
+    if: always() && (inputs.report-success || needs.build.result != 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compose the status
+        id: status
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          version="$(jq -r .version apps/desktop/package.json)"
+          if [ "$BUILD_RESULT" = "success" ]; then
+            status="✅ Windows package built for $version — download it from the run's artifacts"
+          else
+            status="❌ Windows package build failed — retry with Re-run all jobs"
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Post the build status to Slack
+        uses: ./.github/actions/desktop-slack-report
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ steps.status.outputs.status }}
+          url: ${{ steps.status.outputs.url }}

@@ -10,18 +10,17 @@ export type UseQrDetectionOptions = {
     video: HTMLVideoElement | null;
     isEnabled: boolean;
     onDetected: (value: string) => void;
-    onUnsupported?: () => void;
 };
 
 export function useQrDetection(options: UseQrDetectionOptions): void {
-    const { video, isEnabled, onDetected, onUnsupported } = options;
+    const { video, isEnabled, onDetected } = options;
 
-    /* the callbacks close over the caller's render, and re-running the effect would rebuild the
+    /* the callback closes over the caller's render, and re-running the effect would rebuild the
        detector and pay its cold start again */
-    const callbacks = useRef({ onDetected, onUnsupported });
+    const callbacks = useRef({ onDetected });
 
     useEffect(() => {
-        callbacks.current = { onDetected, onUnsupported };
+        callbacks.current = { onDetected };
     });
 
     useEffect(() => {
@@ -41,11 +40,6 @@ export function useQrDetection(options: UseQrDetectionOptions): void {
             const detector = await createQrDetector();
 
             if (isCancelled) {
-                return;
-            }
-
-            if (detector === null) {
-                callbacks.current.onUnsupported?.();
                 return;
             }
 

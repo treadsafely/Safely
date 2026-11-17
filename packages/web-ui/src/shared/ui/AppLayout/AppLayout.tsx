@@ -4,9 +4,11 @@ import { createContext, useContext } from 'react';
 import { cx } from '@safely/web-ui/styled-system/css';
 import { appLayout } from '@safely/web-ui/styled-system/recipes';
 
+export type WindowControls = 'left' | 'right' | null;
+
 export type AppLayoutRootProps = {
     sidebarWidth: number;
-    hasWindowControls?: boolean;
+    windowControls?: WindowControls;
     isFullScreen?: boolean;
     isSecondaryOpen?: boolean;
     isPanelOpen?: boolean;
@@ -25,7 +27,7 @@ const useAppLayoutStyles = () => useContext(AppLayoutContext);
 const AppLayoutRoot: FC<AppLayoutRootProps> = props => {
     const {
         sidebarWidth,
-        hasWindowControls,
+        windowControls,
         isFullScreen,
         isSecondaryOpen,
         isPanelOpen,
@@ -33,7 +35,12 @@ const AppLayoutRoot: FC<AppLayoutRootProps> = props => {
         children
     } = props;
 
-    const styles = appLayout({ hasWindowControls, isFullScreen, isSecondaryOpen, isPanelOpen });
+    const styles = appLayout({
+        windowControls: windowControls ?? undefined,
+        isFullScreen,
+        isSecondaryOpen,
+        isPanelOpen
+    });
     const style = { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties;
 
     return (

@@ -1,3 +1,5 @@
+import jsQR from 'jsqr';
+
 type DetectedBarcode = {
     rawValue: string;
 };
@@ -20,16 +22,36 @@ declare global {
 
 const QR_FORMAT = 'qr_code';
 
-export type QrDetector = BarcodeDetectorInstance;
+export type QrDetector = {
+    detect(source: HTMLCanvasElement): Promise<DetectedBarcode[]>;
+};
 
-export async function createQrDetector(): Promise<QrDetector | null> {
+/* the platform decoder where it exists; elsewhere jsQR reads the same canvas on the main thread */
+export async function createQrDetector(): Promise<QrDetector> {
     const Detector = window.BarcodeDetector;
 
-    if (Detector === undefined) {
-        return null;
+    if (Detector !== undefined) {
+        const formats = await Detector.getSupportedFormats().catch((): string[] => []);
+
+        if (formats.includes(QR_FORMAT)) {
+            return new Detector({ formats: [QR_FORMAT] });
+        }
     }
 
-    const formats = await Detector.getSupportedFormats().catch((): string[] => []);
+    return {
+        detect: canvas => {
+            const context = canvas.getContext('2d');
 
-    return formats.includes(QR_FORMAT) ? new Detector({ formats: [QR_FORMAT] }) : null;
+            if (context === null || canvas.width === 0 || canvas.height === 0) {
+                return Promise.resolve([]);
+            }
+
+            const image = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(image.data, image.width, image.height, {
+                inversionAttempts: 'dontInvert'
+            });
+
+            return Promise.resolve(code === null ? [] : [{ rawValue: code.data }]);
+        }
+    };
 }

@@ -5,6 +5,8 @@ import {
     createRouter
 } from '@tanstack/react-router';
 
+import type { WindowControls } from '@safely/web-ui';
+
 import { FatalError } from './FatalError';
 import { OnboardingGuard } from './OnboardingGuard';
 import { logger } from '../logger';
@@ -12,7 +14,7 @@ import { MainScreen, WelcomeScreen } from '../screens';
 import { ROUTE, sMainSearch, sSettingsParams } from '../shared';
 
 export type RouterContext = {
-    hasWindowControls?: boolean;
+    windowControls?: WindowControls;
     isFullScreen?: boolean;
 };
 

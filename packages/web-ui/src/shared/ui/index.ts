@@ -12,6 +12,7 @@ export * from './Input';
 export * from './List';
 export * from './LockoutContent';
 export * from './Modal';
+export * from './NoticeScreen';
 export * from './PageHeader';
 export * from './Passcode';
 export * from './PasscodeLengthToggle';

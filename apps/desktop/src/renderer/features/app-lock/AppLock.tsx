@@ -11,13 +11,14 @@ import {
 import { EraseDataModal, LockScreen, PasscodeVerification } from '@safely/web-ui';
 
 import { useLockScreen } from './useLockScreen';
-import { isBiometryPromptOpen } from '../biometry';
+import { useBiometryPrompt, useSuspenseBiometryQuery } from '../biometry';
 import {
     usePasscode,
     usePasscodeLockout,
     usePasscodePromptStore,
     usePasscodeVerification
 } from '../passcode';
+import { useSecretStoreSession } from '../secret-store';
 
 export type AppLockProps = {
     children: ReactNode;
@@ -28,12 +29,21 @@ export const AppLock: FC<AppLockProps> = ({ children }) => {
     const lockScreen = useLockScreen();
 
     const cancelPrompt = usePasscodePromptStore(state => state.cancel);
+    const secretStore = useSecretStoreSession();
+    const biometryPrompt = useBiometryPrompt();
+    const { data: biometry } = useSuspenseBiometryQuery();
 
     const isEnabled = passcode.isSet && lockScreen.isEnabled;
-    const [isLocked, setIsLocked] = useState(isEnabled);
+    const [isLocked, setIsLocked] = useState(
+        () => isEnabled && !(biometry.isEnabled && secretStore.hasColdStartPresence())
+    );
+
+    useEffect(() => {
+        secretStore.clearColdStartPresence();
+    }, [secretStore]);
 
     useEnteredBackground(() => {
-        if (isEnabled && !isBiometryPromptOpen()) {
+        if (isEnabled && !biometryPrompt.isPromptOpen()) {
             cancelPrompt();
             setIsLocked(true);
         }

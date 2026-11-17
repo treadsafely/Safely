@@ -2,35 +2,39 @@ import { app } from 'electron';
 import path from 'node:path';
 
 import { JsonStore } from './json-store';
-import { KeychainStore } from './keychain-store';
-import type { Store, StoreScope } from './types';
+import { createSecretBackend } from './secret-backend';
+import type { SecretBackend, Store, StoreScope } from './types';
 
-/**
- * Tied to the bundle id: an item is reachable only through this app's keychain access group, so
- * changing either a service or the bundle id abandons everything stored under it.
- */
-const KEYCHAIN_SERVICE: Record<Exclude<StoreScope, 'regular'>, string> = {
-    encrypted: 'com.safely.wallet-desktop.encrypted',
-    secureEncrypted: 'com.safely.wallet-desktop.secureEncrypted'
-};
+type Stores = { regular: Store; backend: SecretBackend };
 
-let stores: Record<StoreScope, Store> | null = null;
+let stores: Stores | null = null;
 
 /** Created after the app is ready: the path depends on `userData`. */
 export function createStores(): void {
+    const directory = path.join(app.getPath('userData'), 'store');
+
     stores = {
-        regular: new JsonStore(path.join(app.getPath('userData'), 'store', 'regular.json')),
-        encrypted: new KeychainStore(KEYCHAIN_SERVICE.encrypted),
-        secureEncrypted: new KeychainStore(KEYCHAIN_SERVICE.secureEncrypted)
+        regular: new JsonStore(path.join(directory, 'regular.json')),
+        backend: createSecretBackend(directory)
     };
 }
 
-export function getStore(scope: StoreScope): Store {
+function requireStores(): Stores {
     if (!stores) {
         throw new Error('Stores are not initialised yet');
     }
 
-    return stores[scope];
+    return stores;
+}
+
+export function getStore(scope: StoreScope): Store {
+    const current = requireStores();
+
+    return scope === 'regular' ? current.regular : current.backend[scope];
+}
+
+export function getSecretBackend(): SecretBackend {
+    return requireStores().backend;
 }
 
 /* No flush counterpart on purpose: every write is already on disk before it resolves. */
@@ -39,8 +43,8 @@ export async function clearStores(): Promise<void> {
         return;
     }
 
-    await Promise.all(Object.values(stores).map(store => store.clear()));
+    await Promise.all([stores.regular.clear(), stores.backend.erase()]);
 }
 
-export { KeychainError } from './keychain-store';
-export type { Store, StoreScope } from './types';
+export { KeychainError } from './keychain-error';
+export type { SecretBackend, Store, StoreScope } from './types';
