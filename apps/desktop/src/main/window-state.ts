@@ -38,7 +38,14 @@ export class WindowStateStore {
     ) {}
 
     public async read(): Promise<RestoredWindowState> {
-        const raw = await this.store.get(KEY);
+        let raw: string | null;
+
+        try {
+            raw = await this.store.get(KEY);
+        } catch (error) {
+            this.logger.warn('window state store unreadable', error);
+            return DEFAULT_STATE;
+        }
 
         if (raw === null) {
             return DEFAULT_STATE;

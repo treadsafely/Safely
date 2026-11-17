@@ -413,7 +413,10 @@ else: `pnpm start` exits 0 the moment the window closes — measured, not assume
 windowless is the macOS convention and would take that handler; until it exists, the next launch is
 a cold start that boots the engine from scratch and re-reads everything from the store, and
 `revealMainWindow` (`src/main/index.ts`) only ever reveals a window that is still there — `activate`
-or a second launch on a hidden or minimised one — with its recreate branch unreachable. So nothing
+or a second launch on a hidden or minimised one. The one window it can find missing is the one
+startup is still creating: before `createStores` it does nothing (startup shows the window anyway),
+after it joins the creation in flight (`ensureMainWindow`, so a Dock click never builds a second
+window) and shows and focuses the result. So nothing
 may depend on renderer memory outliving the window: whatever has to survive is written through a
 store before it matters. Hiding (Cmd+H) keeps the renderer and lets Chromium throttle its timers —
 `backgroundThrottling` stays at its default — and main reports the hide and the show to the renderer
@@ -425,7 +428,9 @@ The window comes back where it was closed: `WindowStateStore` (`src/main/window-
 the normal bounds and the full-screen flag under `main..windowState` in the `regular` store,
 written 500 ms after the last resize or move and once more on `close`, and `createMainWindow`
 spreads them over the defaults; a position that no longer overlaps a display by 100px keeps only
-the size. Being in the store, it goes with `clearAllData` — a wiped app opens like a fresh one.
+the size. A store that cannot be read (a corrupt `regular.json`) yields the defaults with a warning
+instead of an error: the window must still open, because the renderer is what reaches the store
+again and shows `FatalError`. Being in the store, it goes with `clearAllData` — a wiped app opens like a fresh one.
 
 The renderer's logger writes to its devtools console, which is invisible when the app is driven from
 a terminal, so `src/main/window.ts` forwards renderer console messages, `did-fail-load` and

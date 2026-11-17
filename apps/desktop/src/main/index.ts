@@ -26,6 +26,11 @@ const allowedOrigins = devServerUrl ? [new URL(devServerUrl).origin, APP_ORIGIN]
 
 let mainWindow: BrowserWindow | null = null;
 
+let pendingMainWindow: Promise<BrowserWindow> | null = null;
+
+/* Set once startup has created the stores the window is built from. */
+let canCreateMainWindow = false;
+
 const deepLinks = new DeepLinkReceiver(
     mainLogger,
     () => mainWindow,
@@ -40,20 +45,57 @@ function notifyFullScreen(isFullScreen: boolean): void {
     mainWindow?.webContents.send(IPC_CHANNEL.windowFullScreen, isFullScreen);
 }
 
-function revealMainWindow(): void {
-    if (!mainWindow) {
-        void attachMainWindow().then(window => {
+function ensureMainWindow(): Promise<BrowserWindow> {
+    if (mainWindow) {
+        return Promise.resolve(mainWindow);
+    }
+
+    pendingMainWindow ??= attachMainWindow()
+        .then(window => {
             mainWindow = window;
+            return window;
+        })
+        .finally(() => {
+            pendingMainWindow = null;
         });
+
+    return pendingMainWindow;
+}
+
+function showWindow(window: BrowserWindow): void {
+    if (window.isMinimized()) {
+        window.restore();
+    }
+
+    window.show();
+    window.focus();
+}
+
+function revealMainWindow(): void {
+    if (mainWindow) {
+        showWindow(mainWindow);
         return;
     }
 
-    if (mainWindow.isMinimized()) {
-        mainWindow.restore();
+    /* Startup creates and shows the window itself, and a failure there is its own to report. */
+    if (!canCreateMainWindow) {
+        return;
     }
 
-    mainWindow.show();
-    mainWindow.focus();
+    ensureMainWindow().then(
+        window => {
+            if (window.isVisible()) {
+                showWindow(window);
+                return;
+            }
+
+            /* Showing before `ready-to-show` flashes an empty window; window.ts shows it then, this focuses after. */
+            window.once('ready-to-show', () => window.focus());
+        },
+        (error: unknown) => {
+            mainLogger.error('Main window not created', error);
+        }
+    );
 }
 
 async function attachMainWindow(): Promise<BrowserWindow> {
@@ -125,6 +167,7 @@ if (!app.requestSingleInstanceLock()) {
             hardenSession(devServerUrl);
             /* Before the handlers: an IPC call that arrives without a store must not be served. */
             createStores();
+            canCreateMainWindow = true;
             logStore.cleanup();
             registerIpcHandlers(() => mainWindow, deepLinks);
 
@@ -133,7 +176,7 @@ if (!app.requestSingleInstanceLock()) {
             powerMonitor.on('lock-screen', () => notifyAppState('background'));
             powerMonitor.on('suspend', () => notifyAppState('background'));
 
-            mainWindow = await attachMainWindow();
+            await ensureMainWindow();
         })
         .catch((error: unknown) => {
             /* A keychain that cannot be reached is fatal, and quitting is the whole point: a window

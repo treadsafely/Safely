@@ -1,13 +1,13 @@
 import type { FC } from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { BTC_ASSET } from '@safely/core';
 import {
-    CHART_CONFIG,
     ChartPeriod,
     useChart,
     useChartCollapsedQuery,
     useChartPeriodQuery,
+    useChartStartDate,
     useSetChartCollapsed,
     useSetChartPeriod
 } from '@safely/ux';
@@ -27,12 +27,7 @@ export const Chart: FC = () => {
     const { data: isCollapsed = false } = useChartCollapsedQuery();
     const { mutate: setCollapsed } = useSetChartCollapsed();
     const [active, setActive] = useState<ChartActive | null>(null);
-
-    const startDate = useMemo(() => {
-        const config = CHART_CONFIG[period];
-
-        return config.startOfPeriod(new Date(Date.now() - config.fullPeriodLength));
-    }, [period]);
+    const startDate = useChartStartDate(period);
 
     const chart = useChart(asset, startDate);
     const prices = chart.data?.prices ?? [];
