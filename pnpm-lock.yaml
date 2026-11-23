@@ -318,20 +318,20 @@ importers:
         specifier: ~56.0.26
         version: 56.0.26(@babel/core@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(expo@56.0.21)(react-dom@19.2.3(react@19.2.3))(react-native-worklets@0.8.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
       '@formatjs/intl-getcanonicallocales':
-        specifier: ^3.2.12
-        version: 3.2.12
+        specifier: ^3.4.0
+        version: 3.4.0
       '@formatjs/intl-locale':
-        specifier: ^5.3.12
-        version: 5.3.12
+        specifier: ^5.5.0
+        version: 5.5.0
       '@formatjs/intl-numberformat':
-        specifier: ^9.4.3
-        version: 9.4.3
+        specifier: ^10.1.0
+        version: 10.1.0
       '@formatjs/intl-pluralrules':
-        specifier: ^6.3.15
-        version: 6.3.15
+        specifier: ^7.1.0
+        version: 7.1.0
       '@formatjs/intl-relativetimeformat':
-        specifier: ^12.3.15
-        version: 12.3.15
+        specifier: ^13.0.3
+        version: 13.0.3
       '@gorhom/bottom-sheet':
         specifier: ^5.2.14
         version: 5.2.14(@types/react@19.2.14)(react-native-gesture-handler@2.31.2(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native-reanimated@4.3.1(react-native-worklets@0.8.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
@@ -2148,32 +2148,32 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@formatjs/bigdecimal@0.2.7':
-    resolution: {integrity: sha512-B4+XY/e4u5v261r3a37Kq2ax91gPZSKGyVpx8X5dygAggLlUz+6MeBpmAhaBFGB8WQ4JB1qD+QtKHk9aJkEb9Q==}
+  '@formatjs/bigdecimal@0.2.10':
+    resolution: {integrity: sha512-npIs6UARNOg5amJY5UOVsd6HUQQfzYjet0sa0SWIqzsnVhxLSpaIx2DjoIVrr/vqmjURjvroeW6dItjfy3Uf8A==}
 
   '@formatjs/fast-memoize@3.1.7':
     resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
 
-  '@formatjs/intl-getcanonicallocales@3.2.12':
-    resolution: {integrity: sha512-THqQLTJUH2z2A7oE1guW8VzpGpsGFxwWZ+l8cI8Bk75xUU8DxtJoLfKl+5a6fYK26GeDWDWE0UbDhE5SwcLoFg==}
+  '@formatjs/intl-getcanonicallocales@3.4.0':
+    resolution: {integrity: sha512-7VfxOKr+ZUL4r5XO+LWiabp+m5595LacC+upPqSYf5RXxY5NDWEs/DJfHrjv59SWXt6UicKZbtNuHcAUZ45AEw==}
 
-  '@formatjs/intl-locale@5.3.12':
-    resolution: {integrity: sha512-bI5CrvuC6A5PMOIiHX+6ETTHXzUofHw1U/fkI59sQJ+BFbkglxIVVncFPxHf4IHmAqAs/Rlp2bdzTEcLaq2tQw==}
+  '@formatjs/intl-locale@5.5.0':
+    resolution: {integrity: sha512-PmM3wB2Uo5Bu8y8itD5Z4NZGOak+1NKsiQydFgxuSXVzOV1GQd3ytkqQ/jOCLDNowcqw7xbL42fYBN9xzm08gA==}
 
-  '@formatjs/intl-localematcher@0.9.0':
-    resolution: {integrity: sha512-Z7TD3ssNry1Av1dVDoq/mzpxGyxqWwU0ClWEo+BB3k0JQTeQvUGmeK9WZGYvlqStS0UqkaKXk3dfjsb6NaHAxw==}
+  '@formatjs/intl-localematcher@0.10.1':
+    resolution: {integrity: sha512-gBqglQK9rXuHsLmM8wzTMBy4Xo4d0jamirIVKuEL8F1rwbskWdpMA1kZarSkny+uvr5q/K6GSzE0Rcq1wZLl3g==}
 
-  '@formatjs/intl-numberformat@9.4.3':
-    resolution: {integrity: sha512-absVu2I7FlWl+Buictw2PL8Fl385uab3bEA3TCCTu+0DBHHFE+RTbmPmj0nUVO82U1b2Qw3/OA2I7KKLI48EpQ==}
+  '@formatjs/intl-numberformat@10.1.0':
+    resolution: {integrity: sha512-/uAIUEKpVleUU6MMIOHVcA4EetRsEZeMkOeKbQUvWLsDYlVCXl25jDFIbcCjG8uGrBD4fT5p6j3JDXgNYnqodQ==}
 
-  '@formatjs/intl-pluralrules@6.3.15':
-    resolution: {integrity: sha512-/K6Up6SrvLcTP5mWVHp58A9Uk7I4jYbDYqtYdgKDeSY1HG0bhBMS4eVtqK2nFx8mWWdcHbt9ZqHBcCto573PNg==}
+  '@formatjs/intl-pluralrules@7.1.0':
+    resolution: {integrity: sha512-4uPvqKd9uke8VuimXDbPlK8jEdqpH9q0wFTCOtth15F2xtjLOOfadnCxBNn5eZjOt/7dbTmMCsN8W6FGSDftzg==}
 
-  '@formatjs/intl-relativetimeformat@12.3.15':
-    resolution: {integrity: sha512-AUn+GJmU4z0098f4K8VYTxrOl0hfoTzXVeO0MmunJbn9fP5u0hSK2i8LntLQnediQ1oJDL8pyqZMWCBBSAhPDA==}
+  '@formatjs/intl-relativetimeformat@13.0.3':
+    resolution: {integrity: sha512-5nyIp4F/59A5hcfU6lZphSslpildVSirqudWfygBENGdGSHmggZVjhoad458XWEgtUd6d0JoiwsiUBFLfbqJ9Q==}
 
-  '@formatjs/intl-supportedvaluesof@2.3.11':
-    resolution: {integrity: sha512-oRzzAbJA08psr6AO0jgXAdx4HZ2vGNeja1fgaio2R2ne8DLtGPV+fa3gxI/t8J2dNPOndrwVAZVVfbH6GDFDwA==}
+  '@formatjs/intl-supportedvaluesof@3.1.0':
+    resolution: {integrity: sha512-JPnyvQq+ze3ek7A4xqjYUDaOLT9uE2OGnovxdkDHPoKHTz2MuxuuMyDyv37jrSn6NJgbR3vtu2VFTvBUdql99Q==}
 
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -7653,6 +7653,9 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
+
   tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
@@ -9956,36 +9959,36 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@formatjs/bigdecimal@0.2.7': {}
+  '@formatjs/bigdecimal@0.2.10': {}
 
   '@formatjs/fast-memoize@3.1.7': {}
 
-  '@formatjs/intl-getcanonicallocales@3.2.12': {}
+  '@formatjs/intl-getcanonicallocales@3.4.0': {}
 
-  '@formatjs/intl-locale@5.3.12':
+  '@formatjs/intl-locale@5.5.0':
     dependencies:
-      '@formatjs/intl-getcanonicallocales': 3.2.12
-      '@formatjs/intl-supportedvaluesof': 2.3.11
+      '@formatjs/intl-getcanonicallocales': 3.4.0
+      '@formatjs/intl-supportedvaluesof': 3.1.0
 
-  '@formatjs/intl-localematcher@0.9.0':
+  '@formatjs/intl-localematcher@0.10.1':
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
 
-  '@formatjs/intl-numberformat@9.4.3':
+  '@formatjs/intl-numberformat@10.1.0':
     dependencies:
-      '@formatjs/bigdecimal': 0.2.7
-      '@formatjs/intl-localematcher': 0.9.0
+      '@formatjs/bigdecimal': 0.2.10
+      '@formatjs/intl-localematcher': 0.10.1
 
-  '@formatjs/intl-pluralrules@6.3.15':
+  '@formatjs/intl-pluralrules@7.1.0':
     dependencies:
-      '@formatjs/bigdecimal': 0.2.7
-      '@formatjs/intl-localematcher': 0.9.0
+      '@formatjs/bigdecimal': 0.2.10
+      '@formatjs/intl-localematcher': 0.10.1
 
-  '@formatjs/intl-relativetimeformat@12.3.15':
+  '@formatjs/intl-relativetimeformat@13.0.3':
     dependencies:
-      '@formatjs/intl-localematcher': 0.9.0
+      '@formatjs/intl-localematcher': 0.10.1
 
-  '@formatjs/intl-supportedvaluesof@2.3.11':
+  '@formatjs/intl-supportedvaluesof@3.1.0':
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
 
@@ -15756,7 +15759,7 @@ snapshots:
 
   rxjs@7.8.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   safe-array-concat@1.1.3:
     dependencies:
@@ -16255,6 +16258,8 @@ snapshots:
   tslib@1.14.1: {}
 
   tslib@2.8.1: {}
+
+  tslib@2.9.1: {}
 
   tweetnacl@1.0.3: {}
 
