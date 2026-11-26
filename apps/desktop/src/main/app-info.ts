@@ -2,7 +2,7 @@ import { app } from 'electron';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 
-import type { AppInfo } from '../shared/app-info';
+import { desktopBuildOf, type AppInfo } from '../shared/app-info';
 
 /* the hostname is the network name (`MacBook-Pro.local`), not the name the user set */
 function readHostname(): string {
@@ -40,6 +40,7 @@ function readDeviceName(): string {
 export function readAppInfo(): AppInfo {
     return {
         version: app.getVersion(),
+        build: desktopBuildOf(process.platform),
         environment: app.isPackaged ? 'production' : 'development',
         deviceName: readDeviceName(),
         osVersion: os.release(),

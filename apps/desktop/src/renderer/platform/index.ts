@@ -1,16 +1,12 @@
-import type { Build } from '@safely/core';
 import { FileTransport, compareLogRecords } from '@safely/sync';
 
 import { createEnumerableStorage, synchronousStorage } from './storage';
 import type { DesktopPlatform } from './types';
-import { DESKTOP_BUILD } from '../../shared/app-info';
 import type { DesktopBridge } from '../../shared/bridge';
 import type { AppState } from '../../shared/ipc';
 
 export type { DesktopPlatform, DesktopPlatformStorage } from './types';
 export type { DesktopOs } from '../../shared/bridge';
-
-const REPORTED_BUILD: Build = DESKTOP_BUILD;
 
 function getBridge(): DesktopBridge {
     const bridge = window.safelyDesktop;
@@ -46,7 +42,7 @@ bridge.onAppStateChange(next => {
 });
 
 export const platform: DesktopPlatform = {
-    appInfo: { ...bridge.appInfo, build: REPORTED_BUILD },
+    appInfo: bridge.appInfo,
     os: bridge.os,
     storage: {
         REGULAR_DESKTOP_STORAGE_ONLY_APP_LEVEL_USE: createEnumerableStorage(bridge.store),

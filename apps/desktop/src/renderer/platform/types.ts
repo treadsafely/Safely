@@ -1,4 +1,4 @@
-import type { Build, IEnumerableStorage, ISyncKeyValueStorage } from '@safely/core';
+import type { IEnumerableStorage, ISyncKeyValueStorage } from '@safely/core';
 import type { ILogFileStore } from '@safely/sync';
 import type { AppStateStatus } from '@safely/ux';
 
@@ -27,7 +27,7 @@ export interface DesktopPlatformStorage {
 }
 
 export interface DesktopPlatform {
-    readonly appInfo: AppInfo & { build: Build };
+    readonly appInfo: AppInfo;
 
     readonly os: DesktopOs;
 

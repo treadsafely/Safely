@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 import { parseAppInfoArgument } from '../shared/app-info';
-import type { DesktopBridge, DesktopOs, DesktopStoreBridge } from '../shared/bridge';
+import type { DesktopBridge, DesktopStoreBridge } from '../shared/bridge';
 import { BRIDGE_KEY } from '../shared/bridge';
+import { desktopOsOf } from '../shared/desktop-os';
 import type { AppState, StoreChannels } from '../shared/ipc';
 import {
     IPC_CHANNEL,
@@ -47,10 +48,8 @@ function createStoreBridge(channels: StoreChannels): DesktopStoreBridge {
  * Transport only. Requests are validated in main; responses are parsed here so a malformed
  * reply cannot slip into the UI as a typed value.
  */
-const osOf = (name: string): DesktopOs => (name === 'darwin' || name === 'win32' ? name : 'other');
-
 const bridge: DesktopBridge = {
-    os: osOf(process.platform),
+    os: desktopOsOf(process.platform),
     versions: {
         electron: process.versions.electron,
         chrome: process.versions.chrome

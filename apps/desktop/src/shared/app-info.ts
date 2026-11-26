@@ -1,9 +1,31 @@
 import { z } from 'zod';
 
-export const DESKTOP_BUILD = 'macos';
+import type { Build } from '@safely/core';
+
+import { desktopOsOf, type DesktopOs } from './desktop-os';
+
+const sDesktopBuild = z.enum(['macos', 'windows']) satisfies z.ZodType<Build>;
+export type DesktopBuild = z.infer<typeof sDesktopBuild>;
+
+const DESKTOP_BUILDS: Record<DesktopOs, DesktopBuild | null> = {
+    darwin: 'macos',
+    win32: 'windows',
+    other: null
+};
+
+export function desktopBuildOf(platform: string): DesktopBuild {
+    const build = DESKTOP_BUILDS[desktopOsOf(platform)];
+
+    if (build === null) {
+        throw new Error(`No desktop build is defined for ${platform}`);
+    }
+
+    return build;
+}
 
 export const sAppInfo = z.object({
     version: z.string(),
+    build: sDesktopBuild,
     environment: z.enum(['production', 'development']),
     deviceName: z.string(),
     osVersion: z.string(),

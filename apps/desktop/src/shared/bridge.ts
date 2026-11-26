@@ -1,4 +1,5 @@
 import type { AppInfo } from './app-info';
+import type { DesktopOs } from './desktop-os';
 import type { AppState, CameraAccessStatus, UnlockOutcome } from './ipc';
 
 /**
@@ -46,7 +47,7 @@ export interface DesktopLogsBridge {
     share(): Promise<void>;
 }
 
-export type DesktopOs = 'darwin' | 'win32' | 'other';
+export type { DesktopOs };
 
 export interface DesktopBridge {
     os: DesktopOs;

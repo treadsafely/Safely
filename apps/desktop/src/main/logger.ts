@@ -12,14 +12,14 @@ import {
 } from '@safely/sync';
 
 import { LogFileStore } from './logs/log-file-store';
-import { DESKTOP_BUILD } from '../shared/app-info';
+import { desktopBuildOf } from '../shared/app-info';
 
 /* `~/Library/Logs/Safely`: the directory Console.app and electron-log use, one path for support */
 export const logStore = new LogFileStore(app.getPath('logs'));
 
 export const fileTransport = new FileTransport(logStore, {
     appVersion: app.getVersion(),
-    build: DESKTOP_BUILD,
+    build: desktopBuildOf(process.platform),
     device: `${os.hostname()}, ${os.release()}`
 });
 
