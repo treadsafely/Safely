@@ -201,10 +201,10 @@ describe('cors rewrite', () => {
     };
 
     it('allows every custom header the api clients send on a preflight', async () => {
-        const headers = await preflight('https://analytics.safely.app/v1/events');
+        const headers = await preflight('https://sync.safely.app/v1/snapshots');
         const allowed = headers['access-control-allow-headers']?.[0]?.split(', ') ?? [];
 
-        expect(allowed).toEqual(expect.arrayContaining(['authorization', 'x-project-token']));
+        expect(allowed).toEqual(expect.arrayContaining(['authorization', 'last-event-id']));
     });
 
     it('leaves a foreign host untouched', async () => {

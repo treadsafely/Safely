@@ -155,7 +155,7 @@ beforeEach(async () => {
 });
 
 describe('useCreateAccount (add)', () => {
-    it('calls factory.createSyncAccount, writes meta + devicesMeta + analyticsId, invalidates list', async () => {
+    it('calls factory.createSyncAccount, writes meta + devicesMeta, invalidates list', async () => {
         const newAccount = createMockSyncAccount({ accountId: 'new-account-id' });
         const factory = createFactoryStub({
             createSyncAccount: vi.fn(async () => newAccount)
@@ -185,9 +185,6 @@ describe('useCreateAccount (add)', () => {
 
         const devicesMetaSlot = recorder.slots.get('devicesMeta');
         expect(devicesMetaSlot?.orDefault).toHaveBeenCalled();
-
-        const analyticsSlot = recorder.slots.get('analyticsId');
-        expect(analyticsSlot?.set).toHaveBeenCalled();
 
         expect(newAccount.deriveKeyFromMasterKey).toHaveBeenCalledWith(
             MKDerivationDomain.ACCOUNT_DATA_KEY,

@@ -1,1 +1,0 @@
-export { EventsApi } from './client';

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import {
     useActivePortfolioWallets,
-    useAnalytics,
     useFlag,
     useIsActivePortfolioWatchOnly,
     useScanQrScheme
@@ -20,7 +19,6 @@ const WATCH_ONLY_OPACITY = 0.56;
 
 export const HomeActions = () => {
     const { t } = useTranslation();
-    const analytics = useAnalytics();
     const navigation = useNavigation();
     const isWatchOnly = useIsActivePortfolioWatchOnly();
     const isOnrampsEnabled = useFlag('enable_onramps');
@@ -52,9 +50,8 @@ export const HomeActions = () => {
     }, [navigation]);
 
     const handleNavigateToSendAsset = useCallback(() => {
-        void analytics.trackSendStart();
         navigation.navigate('SendAssetModal');
-    }, [navigation, analytics]);
+    }, [navigation]);
 
     const handleWatchOnlyAction = useCallback(() => {
         navigation.navigate('WatchOnlySheet');

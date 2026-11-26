@@ -7,7 +7,7 @@ import type {
     ISilentSecretEncryptor,
     ITreeStorage
 } from '@safely/core';
-import { deriveAnalyticsAccountUuid, MnemonicResource, QrScanCancelledError } from '@safely/core';
+import { MnemonicResource, QrScanCancelledError } from '@safely/core';
 import {
     PortfolioBip39,
     PortfolioFlameDevnet,
@@ -329,18 +329,11 @@ export function useCreateAccount(options?: { setActive?: boolean }) {
                 nextDerivingInfo = built.nextDerivingInfo;
             }
 
-            const analyticsId = await deriveAnalyticsAccountUuid(
-                account,
-                params.secureEncryptedStorage
-            );
-
             await updateSyncStorage(account, draft => {
                 draft.set('meta', { name: params?.name ?? newAccountName });
 
                 const { key, value } = generateOwnMeta(account);
                 draft.at('devicesMeta').orDefault({}).set(key, value);
-
-                draft.at('analyticsId').set(analyticsId);
 
                 if (createdPortfolio) {
                     draft.set('portfolios', [createdPortfolio]);

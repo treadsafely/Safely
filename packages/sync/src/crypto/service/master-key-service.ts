@@ -6,7 +6,6 @@ import type { SecureEncryptedKeyRepository } from '../secure-encrypted-key-repos
 
 export enum MKDerivationDomain {
     ROOT_SEED_KEY = 'root-seed-key',
-    ANALYTICS_ID = 'analytics-id',
     ACCOUNT_DATA_KEY = 'account-data-key'
 }
 

@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 
-import { useBootConfig, useLinking, useTrackOnboardingOpen, useTranslate } from '@safely/ux';
+import { useBootConfig, useLinking, useTranslate } from '@safely/ux';
 import {
     BiometryCard,
     ImportFlameDevnetWalletModal,
@@ -27,8 +27,6 @@ export const WelcomeScreen: FC = () => {
     const onboarding = useOnboardingFlow();
     const { openURL } = useLinking();
     const legal = useBootConfig().references.legal;
-
-    useTrackOnboardingOpen();
 
     const [importLink, setImportLink] = useState<ImportFlameDevnetLink | null>(null);
     useDeepLinks(target => {

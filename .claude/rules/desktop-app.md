@@ -340,8 +340,8 @@ Do not weaken these without a threat-model note:
     - **Every custom request header a `@safely/core` client sends has to be in that list**
       (`ALLOWED_REQUEST_HEADERS`): the backend's own allow headers are dropped with the rest, so a
       header missing there fails the preflight inside Chromium and the request never leaves the
-      renderer — a proxy outside the app shows a successful `OPTIONS` and no `POST`, which is how
-      the analytics `X-Project-Token` went missing. `test/main/security.test.ts` pins the list.
+      renderer — a proxy outside the app shows a successful `OPTIONS` and no `POST`.
+      `test/main/security.test.ts` pins the list.
     - Existing `access-control-*` headers from the backend are dropped, not respected: the sync API
       answers with its own host as the origin (`Access-Control-Allow-Origin: sync.safely.app`),
       which no browser accepts, and two values are invalid as well. When the backends serve a

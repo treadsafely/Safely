@@ -10,8 +10,7 @@ import {
     useCreateExistingAccountConnector,
     useErrorToast,
     useHasAccount,
-    useLinking,
-    useTrackOnboardingOpen
+    useLinking
 } from '@safely/ux';
 
 import { usePasscode } from '@mobile/entities/security';
@@ -40,8 +39,6 @@ export const WelcomeScreen = () => {
         }
     } = useAppContext();
     const { openURL } = useLinking();
-
-    useTrackOnboardingOpen();
 
     const handleSignIn = useCallback(async () => {
         signIn.reset();

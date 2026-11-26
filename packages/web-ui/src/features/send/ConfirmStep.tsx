@@ -14,11 +14,9 @@ import {
     isSendEstimateEnabled,
     orderAmounts,
     selectSendChain,
-    useActiveFiat,
     useActivePortfolio,
     useActivePortfolioLedgerIndex,
     useActiveWalletMeta,
-    useAnalytics,
     useEstimateAssetTransfer,
     useExplorerFactory,
     useFiatEquivalent,
@@ -199,14 +197,12 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const { result, onSent, onClose } = props;
 
     const t = useTranslate();
-    const fiat = useActiveFiat();
     const walletMeta = useActiveWalletMeta();
     const fromAddress = selectSendChain(useSendChains(), result.blockchain)?.address ?? '';
     const isLedger = useActivePortfolio().type === PortfolioType.LEDGER;
     const ledgerIndex = useActivePortfolioLedgerIndex();
     const explorerFactory = useExplorerFactory();
     const { openURL } = useLinking();
-    const analytics = useAnalytics();
 
     const [sendError, setSendError] = useState<unknown>(null);
     const [sendResult, setSendResult] = useState<SendResult | null>(null);
@@ -229,31 +225,17 @@ export const ConfirmStep: FC<ConfirmStepProps> = props => {
     const handleSend = async (): Promise<void> => {
         setSendError(null);
 
-        const fiatAmount = result.amount.fiatAssetAmount?.amount.toNumber() ?? 0;
-        const cryptoCurrency = result.amount.cryptoAssetAmount.asset.symbol;
-
         try {
             const broadcasted = await send(transaction);
 
             setSendResult(broadcasted);
             onSent();
-            void analytics.trackSendFinish({
-                cryptoCurrency,
-                fiatAmount,
-                fiatSymbol: fiat.id.symbol
-            });
         } catch (error) {
             if (error instanceof LedgerSigningCancelledError) {
                 return;
             }
 
             setSendError(error);
-            void analytics.trackSendFinish({
-                cryptoCurrency,
-                fiatAmount,
-                fiatSymbol: fiat.id.symbol,
-                error
-            });
         }
     };
 

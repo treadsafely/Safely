@@ -119,14 +119,7 @@ export const bootConfigSchema = z.looseObject({
                 })
             })
         })
-        .optional(),
-
-    telemetry: z.looseObject({
-        analytics: z.looseObject({
-            url: sHttpsUrl,
-            token: z.string()
-        })
-    })
+        .optional()
 });
 
 export type BootConfig = z.infer<typeof bootConfigSchema>;

@@ -9,7 +9,7 @@ import {
 import type { FC } from 'react';
 import { Suspense, useMemo, useState } from 'react';
 
-import { useHasPortfolio, useTrackWalletOpen } from '@safely/ux';
+import { useHasPortfolio } from '@safely/ux';
 import type { DevConfig, MainLocation } from '@safely/web-ui';
 import {
     DevConfigProvider,
@@ -28,8 +28,6 @@ const MainScreenContent: FC = () => {
     const { windowControls, isFullScreen } = useRouteContext({ from: '__root__' });
     const navigate = useNavigate();
     const hasPortfolio = useHasPortfolio();
-
-    useTrackWalletOpen();
 
     const { value: devToken, set, remove } = useDesktopLayerSynchronousGlobalStorage('devToken');
     const sidebarWidth = useDesktopLayerSynchronousGlobalStorage('sidebarWidth');

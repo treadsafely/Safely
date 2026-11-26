@@ -5,7 +5,6 @@ export * from './api/price';
 export * from './api/rate';
 export * from './api/exchange';
 export * from './api/notifications';
-export * from './analytics';
 export * from './blockchain-api';
 export * from './di';
 export * from './entities';

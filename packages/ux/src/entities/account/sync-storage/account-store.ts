@@ -22,7 +22,6 @@ export type AccountStoreData = {
     devicesSyncState: SDevicesSyncState;
     devicesArchive: SDevicesArchive;
     nextDerivingPortfolioInfo: SNextDerivingPortfolioInfo;
-    analyticsId: string | null;
     amountDisplay: SAmountDisplay;
     notifications: SNotifications;
 };
@@ -36,7 +35,6 @@ export const SYNCED_SLOT_KEYS = [
     'devicesSyncState',
     'devicesArchive',
     'nextDerivingPortfolioInfo',
-    'analyticsId',
     'amountDisplay',
     'notifications'
 ] as const satisfies readonly (keyof Omit<AccountStoreData, 'accountId'>)[];

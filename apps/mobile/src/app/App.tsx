@@ -3,7 +3,6 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import {
-    AnalyticsProvider,
     createPersister,
     createQueryClient,
     LedgerSessionProvider,
@@ -51,16 +50,14 @@ export const App = () => {
                                                 onSigningStart={openLedgerConnectScreen}
                                             >
                                                 <RootSuspenseGate>
-                                                    <AnalyticsProvider>
-                                                        <SecurityCheckInitializer />
-                                                        <LoaderProvider>
-                                                            <LockScreenProvider>
-                                                                <AppNavigation />
-                                                                <LockOverlay />
-                                                            </LockScreenProvider>
-                                                            <ToastProvider />
-                                                        </LoaderProvider>
-                                                    </AnalyticsProvider>
+                                                    <SecurityCheckInitializer />
+                                                    <LoaderProvider>
+                                                        <LockScreenProvider>
+                                                            <AppNavigation />
+                                                            <LockOverlay />
+                                                        </LockScreenProvider>
+                                                        <ToastProvider />
+                                                    </LoaderProvider>
                                                 </RootSuspenseGate>
                                             </LedgerSessionProvider>
                                             <BlurOverlay />
